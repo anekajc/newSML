@@ -1,0 +1,95 @@
+  #sidebar {
+    position: sticky;
+    position: -webkit-sticky;
+    height: 100vh;
+    top: 0;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 1), rgba(238, 232, 170, 1));
+    /* background-color: #EEE8AA; */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  #sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -14.3rem;
+    -webkit-transition: margin .25s ease-out;
+    -moz-transition: margin .25s ease-out;
+    -o-transition: margin .25s ease-out;
+    transition: margin .25s ease-out;
+  }
+
+  #sidebar-wrapper .sidebar-heading {
+    padding: .875rem 1.25rem;
+    font-size: 1.2rem;
+  }
+
+  #sidebar-wrapper .list-group {
+    width: 14.3rem;
+  }
+
+  #page-content-wrapper {
+    min-width: 100vw;
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+  }
+
+  #sidebar .list-group-item {
+    border-radius: 0;
+    /* background-image: linear-gradient(to right, rgba(0, 0, 0, 1), rgba(238, 232, 170, 1)); */
+    background-color: transparent;
+    color: white;
+    border-left: 0;
+    border-right: 0;
+    /* border-color: red; */
+    white-space: nowrap;
+    text-decoration: none;
+    border: 0;
+  }
+
+  #sidebar .list-group-item:not(.collapsed) {
+    /* background-image: linear-gradient(to right, rgba(0, 0, 0, 1), rgba(238, 232, 170, 1)); */
+    /* background-color: #EEE8AA; */
+    background-color: transparent;
+  }
+
+  #sidebar .list-group .list-group-item[aria-expanded=false]::after {
+    content: " \f0d7";
+    font-family: 'Font Awesome 5 Free';
+    display: inline;
+    text-align: right;
+    padding-left: 5px;
+    font-weight: 900;
+  }
+
+  #sidebar .list-group .list-group-item[aria-expanded=true] {
+    /* background-image: linear-gradient(to right, rgba(0, 0, 0, 1), rgba(238, 232, 170, 1)); */
+    /* background-color: #EEE8AA; */
+    background-color: transparent;
+  }
+
+  #sidebar .list-group .list-group-item[aria-expanded=true]::after {
+    content: " \f0da";
+    font-family: 'Font Awesome 5 Free';
+    display: inline;
+    text-align: right;
+    padding-left: 5px;
+    font-weight: 900;
+  }
+
+  #sidebar .list-group .collapse .list-group-item {
+    padding-left: 35px;
+  }
+
+  #sidebar .list-group .collapse > .collapse .list-group-item {
+    padding-left: 45px;
+  }
+
+  #sidebar .list-group .collapse > .collapse > .collapse .list-group-item {
+    padding-left: 55px;
+  }
+
+  #sidebar .list-group .collapse > .collapse > .collapse > .collapse .list-group-item {
+    padding-left: 65px;
+  }

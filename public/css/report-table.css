@@ -1,0 +1,2104 @@
+/*
+ * report-table.css
+ * Shared styling for the .tb-report styled report table (Trial Balance, etc.).
+ * Moved out of the report blade so every report* page can reuse it.
+ * Loaded globally in resources/views/report/newmaster2.blade.php.
+ */
+
+.checkmark-red {
+  color: red !important;
+  font-weight: bold;
+  margin-left: 6px;
+}
+
+/* Everything below is scoped to the .tb-report wrapper so this mockup CSS
+   only affects the Trial Balance table - never the master template's
+   Bootstrap layout, its modals, or the #tabel report engine.
+   (The unused .shell/.sidebar/.s-* rules from the mockup were removed.) */
+.tb-report,
+.tb-report *,
+.tb-report *::before,
+.tb-report *::after {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+.tb-report::-webkit-scrollbar {
+  height: 10px; /* Changes the width of the vertical side scrollbar */
+}
+
+:root{
+      --sp-bg:        #f4f5f7;
+      --sp-surface:   #ffffff;
+      --sp-border:    #e7e9ee;
+      --sp-text:      #1f2430;
+      --sp-text-soft: #6b7280;
+      --sp-primary:   #6f42f3;
+      --sp-primary-dk:#5b32d6;
+      --sp-blue:      #2563eb;
+      --sp-blue-bg:   #e8edff;
+      --sp-green:     #16a34a;
+      --sp-green-bg:  #e7f7ed;
+      --sp-amber:     #b45309;
+      --sp-amber-bg:  #fef3e0;
+      --sp-red:       #dc2626;
+      --sp-red-bg:    #fdeaea;
+      --sp-radius:    10px;
+      --sp-radius-sm: 7px;
+      --sp-shadow:    0 1px 2px rgba(20,20,43,.04), 0 1px 1px rgba(20,20,43,.03);
+    }
+
+    .sp-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .sp-badge::before{
+      content:"";
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      background: currentColor;
+    }
+    .sp-badge.is-user        { background: var(--sp-blue-bg);  color: var(--sp-blue); }
+    .sp-badge.is-supervisor  { background: var(--sp-amber-bg); color: var(--sp-amber); }
+    .sp-badge.is-admin       { background: var(--sp-green-bg); color: var(--sp-green); }
+    .sp-badge.is-active      { background: var(--sp-green-bg); color: var(--sp-green); }
+    .sp-badge.is-inactive    { background: var(--sp-red-bg); color: var(--sp-red); }
+
+.tb-report * {
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #F8FAFF;
+  --white: #fff;
+  --border: #E2E8F4;
+  --text: #0F172A;
+  --muted: #5A6A85;
+  --accent: #4F46E5;
+  --radius: 10px;
+  /* account type colours */
+  --c-asset: #1D4ED8;
+  --c-asset-bg: #EFF6FF;
+  --c-liab: #7C3AED;
+  --c-liab-bg: #F5F3FF;
+  --c-equity: #0F766E;
+  --c-equity-bg: #F0FDFA;
+  --c-rev: #15803D;
+  --c-rev-bg: #F0FDF4;
+  --c-exp: #B45309;
+  --c-exp-bg: #FFFBEB;
+}
+
+.tb-report {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* -- MAIN -- */
+.tb-report .main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+}
+
+/* HEADER */
+.tb-report .header {
+  height: 60px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+}
+
+.tb-report .bc {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tb-report .bc a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tb-report .bc b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.tb-report .header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tb-report .user-badge {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.tb-report .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4F46E5, #DB2777);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* -- CONTENT -- */
+.tb-report .content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 0;
+  /* newmaster.css (the gudang/report layout shell) defines a bare ".content"
+     rule (flex:1; overflow-y:auto; height:0) meant for its own #content pane.
+     That class name collides with this div, and since the shell rule sets
+     properties this rule doesn't touch, they leak through regardless of this
+     selector's higher specificity — collapsing this box toward its padding
+     (height:0 under box-sizing:border-box) and giving it its own scrollbar,
+     clipping the toolbar/title. Explicitly reset them here. */
+  height: auto;
+  flex: none;
+  overflow: visible;
+}
+
+/* TOOLBAR */
+.tb-report .toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  /* Lift above the master layout's #contentContainer (margin-top:-150px), which
+     otherwise overlaps the toolbar and swallows clicks on the buttons at wide
+     widths. z-index works because #contentContainer is statically positioned.
+     Must also stay ABOVE the table's sticky header (.tb thead th, z-index:20),
+     otherwise the toolbar's dropdowns (Otorisasi / Order By / Export) get
+     capped inside this stacking context and render *under* the table. */
+  position: relative;
+  z-index: 50;
+}
+
+.tb-report .page-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tb-report .page-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* Period selector */
+.tb-report .period-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 12px;
+}
+
+.tb-report .period-select-wrap label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+.tb-report .period-select {
+  border: none;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  outline: none;
+}
+
+/* Date-range filter toolbar + Load button (Buku Besar's variant of the toolbar) */
+.tb-report .filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 12px;
+}
+.tb-report .filter-wrap label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+.tb-report .filter-inp {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  padding: 2px 0;
+}
+.tb-report .filter-inp[type=date] { color: var(--accent); font-weight: 700; }
+.tb-report .filter-sep { color: var(--muted); font-size: 12px; }
+.tb-report .btn-pick {
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--accent);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+.tb-report .btn-pick:hover { border-color: var(--accent); background: #EEF2FF; }
+.tb-report .action-group { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.tb-report .btn-load {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  background: linear-gradient(135deg, #16A34A, #15803D);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, .28);
+  transition: all .15s;
+}
+.tb-report .btn-load:hover { box-shadow: 0 6px 20px rgba(22, 163, 74, .4); transform: translateY(-1px); }
+
+/* search */
+.tb-report .search-inp {
+  padding: 8px 12px 8px 34px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--white);
+  color: var(--text);
+  outline: none;
+  width: 200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%235A6A85' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  transition: border-color .14s;
+}
+
+.tb-report .search-inp:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
+  outline: none;
+}
+
+/* toggle buttons */
+.tb-report .tgl-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .14s;
+  white-space: nowrap;
+}
+
+.tb-report .tgl-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-report .tgl-btn.on {
+  background: #EEF2FF;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-report .tgl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background .14s;
+}
+
+.tb-report .tgl-btn.on .tgl-dot {
+  background: var(--accent);
+}
+
+/* type filter */
+.tb-report .type-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.tb-report .tf {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .14s;
+  white-space: nowrap;
+}
+
+.tb-report .tf:hover {
+  opacity: .8;
+}
+
+.tb-report .tf.all.on {
+  background: #EEF2FF;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-report .tf.asset.on {
+  background: var(--c-asset-bg);
+  border-color: var(--c-asset);
+  color: var(--c-asset);
+}
+
+.tb-report .tf.liab.on {
+  background: var(--c-liab-bg);
+  border-color: var(--c-liab);
+  color: var(--c-liab);
+}
+
+.tb-report .tf.equity.on {
+  background: var(--c-equity-bg);
+  border-color: var(--c-equity);
+  color: var(--c-equity);
+}
+
+.tb-report .tf.rev.on {
+  background: var(--c-rev-bg);
+  border-color: var(--c-rev);
+  color: var(--c-rev);
+}
+
+.tb-report .tf.exp.on {
+  background: var(--c-exp-bg);
+  border-color: var(--c-exp);
+  color: var(--c-exp);
+}
+
+/* export */
+.tb-report .export-wrap {
+  margin-left: auto;
+  position: relative;
+}
+
+.tb-report .export-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, .28);
+  transition: all .15s;
+}
+
+.tb-report .export-btn:hover {
+  box-shadow: 0 6px 20px rgba(79, 70, 229, .4);
+  transform: translateY(-1px);
+}
+
+.tb-report .export-drop {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 170px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  z-index: 100;
+}
+
+.tb-report .export-drop.open {
+  display: block;
+}
+
+.tb-report .export-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .12s;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-report .export-opt:last-child {
+  border-bottom: none;
+}
+
+.tb-report .export-opt:hover {
+  background: #EEF2FF;
+}
+
+.tb-report .export-opt .ext {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+/* -- KPI STRIP -- */
+.tb-report .kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tb-report .kpi-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tb-report .kpi-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tb-report .kpi-body .kpi-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.tb-report .kpi-body .kpi-val {
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.tb-report .kpi-body .kpi-count {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* -- TABLE WRAPPER -- */
+.tb-report .table-outer {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed-height scroll box so the sticky thead stays put and only rows
+   scroll. Replaces the flex:1 height that relied on the .shell/100vh
+   layout the mockup originally lived in. */
+.tb-report .table-wrap {
+  max-height: 65vh;
+  overflow: auto;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.tb-report .table-wrap::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.tb-report .table-wrap::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* -- MAIN TABLE -- */
+.tb-report .tb {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+/* TABLE HEADER */
+.tb-report .tb thead th {
+  position: sticky;
+  z-index: 20;
+  background: #FAFBFF;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.tb-report .tb thead th.num {
+  text-align: right;
+}
+
+.tb-report .tb thead .th-group {
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  background: #F4F6FF;
+}
+
+/* Two-row sticky header: pin the group-title row (Mutasi / Penyesuaian /
+   Rugi-Laba …) at the top, and the Debet/Kredit row directly beneath it, so
+   neither row hides the other while scrolling. The fixed 40px height on row 1
+   makes row 2's offset exact (it's >= the row's natural height, so no gap). */
+.tb-report .tb thead tr:first-child th  { top: 0;    height: 40px; }
+.tb-report .tb thead tr:nth-child(2) th { top: 40px; }
+
+/* group header row */
+.tb-report .group-row td {
+  padding: 8px 14px !important;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  border-bottom: 1px solid var(--border);
+  border-top: 2px solid;
+}
+
+.tb-report .group-row.g-asset td {
+  background: var(--c-asset-bg);
+  color: var(--c-asset);
+  border-top-color: var(--c-asset);
+}
+
+.tb-report .group-row.g-liab td {
+  background: var(--c-liab-bg);
+  color: var(--c-liab);
+  border-top-color: var(--c-liab);
+}
+
+.tb-report .group-row.g-equity td {
+  background: var(--c-equity-bg);
+  color: var(--c-equity);
+  border-top-color: var(--c-equity);
+}
+
+.tb-report .group-row.g-rev td {
+  background: var(--c-rev-bg);
+  color: var(--c-rev);
+  border-top-color: var(--c-rev);
+}
+
+.tb-report .group-row.g-exp td {
+  background: var(--c-exp-bg);
+  color: var(--c-exp);
+  border-top-color: var(--c-exp);
+}
+
+/* data row */
+.tb-report .data-row {
+  border-bottom: 1px solid #F1F5F9;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.tb-report .data-row:hover td {
+  background: #F8F9FF;
+}
+
+.tb-report .data-row.highlighted td {
+  background: #FEF2F2;
+}
+
+.tb-report .data-row.highlighted .neg {
+  color: #DC2626;
+  font-weight: 700;
+}
+
+/* placeholder row ("Atur filter lalu klik Tampilkan..." / "Tidak ada data
+   ditemukan") — previously had no rule at all, so it fell through to the
+   blanket .tb-report * { margin:0; padding:0 } reset and rendered cramped. */
+.tb-report .empty-row td {
+  padding: 9px 14px !important;
+  color: var(--muted);
+  font-style: italic;
+}   
+
+.tb-report .data-row td {
+  /* !important: defeats public/css/newmaster.css's blanket
+     `table tbody td { padding: 0 10px !important }` (loaded after this file
+     on masterreport2/newmaster2x pages), which otherwise crushes this to
+     0 vertical padding regardless of this rule's higher specificity. */
+  padding: 9px 14px !important;
+}
+
+.tb-report .data-row td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .data-row td.code {
+  font-family: monospace;
+  font-size: 13.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tb-report .data-row td.name {
+  font-weight: 500;
+}
+
+/* type stripe on left */
+.tb-report .data-row.t-asset td:first-child {
+  border-left: 3px solid var(--c-asset);
+}
+
+.tb-report .data-row.t-liab td:first-child {
+  border-left: 3px solid var(--c-liab);
+}
+
+.tb-report .data-row.t-equity td:first-child {
+  border-left: 3px solid var(--c-equity);
+}
+
+.tb-report .data-row.t-rev td:first-child {
+  border-left: 3px solid var(--c-rev);
+}
+
+.tb-report .data-row.t-exp td:first-child {
+  border-left: 3px solid var(--c-exp);
+}
+
+/* subtotal row */
+.tb-report .subtotal-row td {
+  padding: 9px 14px !important;
+  background: #F8F9FF;
+  border-top: 1.5px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.tb-report .subtotal-row td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .subtotal-row.g-asset td {
+  color: var(--c-asset);
+}
+
+.tb-report .subtotal-row.g-liab td {
+  color: var(--c-liab);
+}
+
+.tb-report .subtotal-row.g-equity td {
+  color: var(--c-equity);
+}
+
+.tb-report .subtotal-row.g-rev td {
+  color: var(--c-rev);
+}
+
+.tb-report .subtotal-row.g-exp td {
+  color: var(--c-exp);
+}
+
+/* grand total row */
+.tb-report .grand-total td {
+  padding: 11px 14px !important;
+  background: linear-gradient(135deg, #EEF2FF, #F5F3FF);
+  font-weight: 800;
+  font-size: 14.5px;
+  border-top: 2px solid var(--accent);
+}
+
+.tb-report .grand-total td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+/* zero row (dimmed) */
+.tb-report .data-row.zero-row td {
+  opacity: .45;
+}
+
+/* drill-down indicator */
+.tb-report .drill-hint {
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity .12s;
+  margin-left: 6px;
+}
+
+.tb-report .data-row:hover .drill-hint {
+  opacity: 1;
+}
+
+/* -- DRILL PANEL -- */
+.tb-report .drill-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .3);
+  z-index: 200;
+  backdrop-filter: blur(3px);
+}
+
+.tb-report .drill-overlay.open {
+  display: block;
+}
+
+.tb-report .drill-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 65vw;
+  background: var(--white);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, .12);
+}
+
+.tb-report .drill-panel.open {
+  transform: translateX(0);
+}
+
+.tb-report .dp-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.tb-report .dp-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.tb-report .dp-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.tb-report .dp-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--muted);
+  transition: all .14s;
+  flex-shrink: 0;
+}
+
+.tb-report .dp-close:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.tb-report .dp-meta {
+  padding: 14px 22px;
+  background: #FAFBFF;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.tb-report .dp-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tb-report .dp-meta-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.tb-report .dp-meta-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .dp-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px;
+}
+
+.tb-report .dp-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tb-report .dp-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.tb-report .dp-section-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 10px;
+}
+
+.tb-report .ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tb-report .ledger-table thead th {
+  background: #F4F6FF;
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-report .ledger-table thead th.num {
+  text-align: right;
+}
+
+.tb-report .ledger-table tbody td {
+  padding: 9px 12px !important;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.tb-report .ledger-table tbody td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .ledger-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tb-report .ledger-table tbody tr:hover td {
+  background: #F8F9FF;
+}
+
+.tb-report .ledger-total td {
+  padding: 9px 12px !important;
+  background: #EEF2FF;
+  font-weight: 800;
+  border-top: 1.5px solid var(--accent);
+  font-size: 12.5px;
+}
+
+.tb-report .ledger-total td.num {
+  text-align: right;
+  color: var(--accent);
+}
+
+.tb-report .ref-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #EEF2FF;
+  color: var(--accent);
+  font-family: monospace;
+}
+
+/* -- TABLE FOOTER -- */
+.tb-report .table-footer {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.tb-report .pager-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.tb-report .pg {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  transition: all .14s;
+}
+
+.tb-report .pg:hover {
+  border-color: #C4B5FD;
+  color: var(--accent);
+}
+
+.tb-report .pg.active {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* toast */
+.tb-report .toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--white);
+  border: 1px solid var(--border);
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  transition: transform .3s, opacity .3s;
+  opacity: 0;
+  z-index: 300;
+}
+
+.tb-report .toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* neg value */
+.neg {
+  color: #DC2626;
+}
+
+/* -- Override the base layout's global rule
+     `table, th, td { border: 1px solid black !important }`
+   (used to give the printable #tabel report grid). Scoped to .tb-report and
+   marked !important so ONLY this styled table reverts to its intended light
+   borders; the shared report/print tables keep their black grid. -- */
+.tb-report .tb,
+.tb-report .tb th,
+.tb-report .tb td,
+.tb-report .ledger-table th,
+.tb-report .ledger-table td {
+  border: 0 !important;
+}
+.tb-report .tb thead th        { border-bottom: 2px solid var(--border) !important; }
+.tb-report .tb thead .th-group { border-bottom: 1px solid var(--border) !important; border-right: 2px solid var(--border) !important; border-left: 2px solid var(--border) !important;}
+.tb-report .group-row td       { border-top: 2px solid currentColor !important;
+                                 border-bottom: 1px solid var(--border) !important; }
+.tb-report .data-row td        { border-bottom: 1px solid #F1F5F9 !important; }
+.tb-report .subtotal-row td    { border-top: 1.5px solid var(--border) !important;
+                                 border-bottom: 2px solid var(--border) !important; }
+.tb-report .grand-total td     { border-top: 2px solid var(--accent) !important; }
+
+.tb-report .ledger-table                        { border: 1px solid var(--border) !important; }
+.tb-report .ledger-table thead th               { border-bottom: 1px solid var(--border) !important; }
+.tb-report .ledger-table tbody td               { border-bottom: 1px solid #F1F5F9 !important; }
+.tb-report .ledger-table tbody tr:last-child td { border-bottom: 0 !important; }
+.tb-report .ledger-total td                     { border-top: 1.5px solid var(--accent) !important; }
+
+/* ledger rows that open the Bukti Kas voucher */
+.tb-report .ledger-table tbody tr.kas-clickable { cursor: pointer; }
+
+/* -- KAS HARIAN PANEL (bottom slide-up voucher) -- */
+.tb-report .kas-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 55vh;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, .16);
+  z-index: 401;                 /* above the right drill (201) */
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.tb-report .kas-panel.open {
+  transform: translateY(0);
+}
+
+.tb-report .kas-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tb-report .kas-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tb-report .kas-body {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 22px;
+}
+
+/* -- Bukti Kas voucher table (black grid like the printout) -- */
+.tb-report .kas-voucher {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.tb-report .kas-voucher td,
+.tb-report .kas-voucher th {
+  padding: 5px 10px !important;
+  vertical-align: top;          /* borders come from the global table grid rule */
+}
+
+.tb-report .kas-voucher .kas-doctitle {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  padding: 8px 0;
+}
+
+.tb-report .kas-voucher .kas-lbl   { font-weight: 600; white-space: nowrap; }
+.tb-report .kas-voucher .kas-colhead th { text-align: center; font-weight: 700; }
+.tb-report .kas-voucher .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.tb-report .kas-voucher .kas-totlbl { text-align: right; font-weight: 700; }
+.tb-report .kas-voucher .kas-foot td { font-weight: 700; }
+
+/* -- Invoice voucher header (INVC) -- */
+.tb-report .inv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 14px;
+}
+.tb-report .inv-head-left  { font-size: 12.5px; max-width: 440px; }
+.tb-report .inv-cust-lbl   { color: var(--muted); }
+.tb-report .inv-cust-name  { font-weight: 700; margin-top: 2px; }
+.tb-report .inv-cust-addr  { margin-top: 2px; line-height: 1.4; }
+.tb-report .inv-head-right { text-align: left; }
+.tb-report .inv-doctitle {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+/* meta table has no grid — override the global black-border rule (table box + cells) */
+.tb-report .inv-meta { border-collapse: collapse; font-size: 12.5px; border: 0 !important; }
+.tb-report .inv-meta td,
+.tb-report .inv-meta th {
+  border: 0 !important;
+  background: transparent;
+  padding: 1px 8px 1px 0 !important;
+  vertical-align: top;
+}
+/* invoice line-items table: keep the body grid, but drop the header-row border.
+   Scoped via .inv-noheadborder so only the invoice header is affected. */
+.tb-report .inv-noheadborder thead th {
+  border: 0 !important;
+}
+
+/* ============================================================
+ * Merged from public/css/report-table-v2.css (superseded, kept on disk
+ * as an archived copy but no longer loaded — see report-table-v2.css).
+ *
+ * Header tabel interaktif ("tanpa modal") untuk halaman report yang memakai
+ * .tb-report .tb — drag judul kolom untuk mengurutkan, plus menu roda gigi
+ * per kolom (sembunyikan / desimal / tampilkan total). Paired with the
+ * ReportTable engine in public/js/report-table.js (window.ReportTable).
+ * Does not replace the rules above — only adds an interaction layer on top,
+ * so sticky header, subtotal-row, and grand-total stay as before.
+ * ============================================================ */
+
+:root {
+  --rt-card: #FFFFFF;
+  --rt-ink: #1D2130;
+  --rt-ink-soft: #6B7180;
+  --rt-border: #E7E8F0;
+  --rt-border-soft: #EFEFF6;
+  --rt-indigo: #4F46E5;
+  --rt-indigo-soft: #EEF0FE;
+  --rt-bg: #F5F5FA;
+  --rt-radius: 12px;
+}
+
+/* ============ Judul kolom (di dalam .tb-report .tb) ============ */
+
+/* Padding pindah ke .th-inner supaya area drag mengisi penuh sel.
+   Selector cukup spesifik untuk mengalahkan .tb-report .tb thead th di atas
+   dan reset .tb-report * { padding:0 }. */
+.tb-report .tb thead th.rt-th {
+  padding: 0;
+  vertical-align: middle;
+}
+
+.tb-report .tb thead th.rt-th .th-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  cursor: grab;
+}
+
+.tb-report .tb thead th.rt-th .th-inner.dragging { opacity: .4; }
+.tb-report .tb thead th.rt-th.drag-over .th-inner { box-shadow: inset 3px 0 0 var(--rt-indigo); }
+
+.tb-report .tb thead th.rt-th .th-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* kolom numerik: judul rata kanan seperti angkanya */
+.tb-report .tb thead th.rt-th.num .th-label { text-align: right; }
+
+/* pegangan drag */
+.tb-report .tb thead th.rt-th .th-grip {
+  display: grid;
+  grid-template-columns: repeat(2, 3px);
+  gap: 3px;
+  flex-shrink: 0;
+  opacity: .55;
+  transition: opacity .12s;
+}
+
+.tb-report .tb thead th.rt-th .th-grip i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #C7C9D6;
+}
+
+.tb-report .tb thead th.rt-th:hover .th-grip { opacity: 1; }
+
+/* tombol roda gigi */
+.tb-report .tb thead th.rt-th .th-gear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #B8BACA;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s, background .12s, color .12s;
+}
+
+.tb-report .tb thead th.rt-th:hover .th-gear { opacity: 1; }
+
+.tb-report .tb thead th.rt-th .th-gear:hover,
+.tb-report .tb thead th.rt-th .th-gear.active {
+  opacity: 1;
+  background: var(--rt-indigo-soft);
+  color: var(--rt-indigo);
+}
+
+/* ============ Menu kolom (dipasang di <body>, position:fixed) ============
+   Sengaja di luar .table-wrap: kontainer itu overflow:auto sehingga popover
+   absolute akan terpotong. */
+
+.rt-colmenu {
+  position: fixed;
+  z-index: 1080;
+  width: 216px;
+  padding: 6px;
+  background: var(--rt-card);
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  box-shadow: 0 16px 40px -12px rgba(30, 30, 60, .25);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--rt-ink);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.rt-colmenu * { box-sizing: border-box; }
+
+.rt-colmenu .rt-colmenu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rt-colmenu .rt-colmenu-item:hover { background: var(--rt-bg); }
+
+/* baris stepper/switch bukan aksi tunggal — jangan beri efek klik di seluruh baris */
+.rt-colmenu .rt-colmenu-item.is-static { cursor: default; }
+.rt-colmenu .rt-colmenu-item.is-static:hover { background: transparent; }
+
+.rt-colmenu .rt-colmenu-divider {
+  height: 1px;
+  margin: 5px 2px;
+  background: var(--rt-border-soft);
+}
+
+.rt-colmenu .rt-stepper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.rt-colmenu .rt-stepper button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--rt-border);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--rt-ink);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.rt-colmenu .rt-stepper button:hover { background: var(--rt-bg); }
+
+.rt-colmenu .rt-stepper b {
+  display: inline-block;
+  min-width: 14px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.rt-colmenu .rt-miniswitch {
+  position: relative;
+  width: 24px;
+  height: 14px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #D7D9E4;
+  cursor: pointer;
+}
+
+.rt-colmenu .rt-miniswitch.on { background: var(--rt-indigo); }
+
+.rt-colmenu .rt-miniswitch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .12s;
+}
+
+.rt-colmenu .rt-miniswitch.on::after { transform: translateX(10px); }
+
+/* ============ Bar di atas tabel (kolom tersembunyi + Tampilan) ============ */
+
+.tb-report .rt-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+  /* di atas sticky thead (z-index 20) supaya dropdown tidak tertimpa */
+  position: relative;
+  z-index: 45;
+}
+
+.tb-report .rt-bar .rt-drop { position: relative; }
+
+.tb-report .rt-bar .rt-hidden-btn,
+.tb-report .rt-bar .rt-view-btn,
+.tb-report .rt-bar .rt-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  background: var(--rt-card);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tb-report .rt-bar .rt-hidden-btn { color: var(--rt-ink-soft); }
+.tb-report .rt-bar .rt-hidden-btn:hover:not(:disabled) { color: var(--rt-ink); border-color: #D6D8E4; }
+.tb-report .rt-bar .rt-hidden-btn:disabled { opacity: .6; cursor: default; }
+
+/* Reset kolom — kembalikan susunan kolom ke setDefaultHeader() halaman.
+   Aksi destruktif (menghapus layout tersimpan user), jadi diberi warna merah
+   saat hover supaya beda dari tombol lain di bar. */
+.tb-report .rt-bar .rt-reset-btn { color: var(--rt-ink-soft); }
+.tb-report .rt-bar .rt-reset-btn:hover {
+  color: var(--rt-red);
+  border-color: var(--rt-red);
+  background: #FEF2F2;
+}
+
+.tb-report .rt-bar .rt-view-btn { color: var(--rt-ink); }
+.tb-report .rt-bar .rt-view-btn:hover { border-color: #D6D8E4; }
+
+.tb-report .rt-bar .rt-view-btn .rt-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--rt-indigo-soft);
+  color: var(--rt-indigo);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.tb-report .rt-bar .rt-drop-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 230px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--rt-card);
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  box-shadow: 0 16px 40px -12px rgba(30, 30, 60, .2);
+  z-index: 60;
+}
+
+.tb-report .rt-bar .rt-drop-menu.open { display: block; }
+
+.tb-report .rt-bar .rt-drop-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--rt-border-soft);
+  font-size: 13px;
+  color: var(--rt-ink);
+  cursor: pointer;
+}
+
+.tb-report .rt-bar .rt-drop-item:last-child { border-bottom: none; }
+.tb-report .rt-bar .rt-drop-item:hover { background: var(--rt-bg); }
+
+.tb-report .rt-bar .rt-drop-item.active {
+  background: var(--rt-indigo-soft);
+  color: var(--rt-indigo);
+  font-weight: 700;
+}
+
+.tb-report .rt-bar .rt-drop-item small {
+  color: var(--rt-ink-soft);
+  font-weight: 500;
+  font-size: 11.5px;
+}
+
+.tb-report .rt-bar .rt-drop-empty {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--rt-ink-soft);
+}
+
+/* ============ Catatan kaki ============ */
+
+.tb-report .rt-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--rt-ink-soft);
+}
+
+.tb-report .rt-hint .bi { opacity: .6; }
+
+@media (max-width: 767.98px) {
+  .tb-report .rt-bar { justify-content: flex-start; flex-wrap: wrap; }
+}
+
+/* ============================================================
+ * Modal "Filter Laporan" (#modalFilter.rt-filter) dan modal
+ * pemilih entitas (.rt-picker-v2), lihat
+ * references/filter-laporan-redesign.html.
+ *
+ * Keduanya HANYA aktif lewat marker class di elemen .modal itu
+ * sendiri (bukan .tb-report), supaya:
+ *   - #modalFilter.rt-filter cuma menyala di halaman yang
+ *     ditandai (saat ini reportmarketingso.blade.php)
+ *   - .rt-picker-v2 adalah class generik (bukan id-scoped): dipakai
+ *     oleh #formSelect saat window.g_pickerV2 di-set (lihat
+ *     modalMarketingSO.blade.php, ~34 halaman lain yang meng-include
+ *     modal itu tidak ikut berubah karena flag-nya falsy), DAN oleh
+ *     modal Supp Awal/Akhir/Valas yang di-hardcode di masing-masing
+ *     halaman report (id modal & id tabel beda-beda per halaman,
+ *     makanya selector di sini tidak boleh id-scoped).
+ * ============================================================ */
+
+:root {
+  --rt-blue: #2F6FED;
+  --rt-blue-soft: #EAF1FF;
+  --rt-green: #1E9E5A;
+  --rt-green-soft: #E9F8EF;
+  --rt-red: #D64550;
+  --rt-radius-sm: 9px;
+}
+
+#modalFilter.rt-filter .modal-content,
+.rt-picker-v2 .modal-content {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--rt-ink);
+  border: none;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px -20px rgba(20, 30, 60, .25), 0 0 0 1px rgba(20, 30, 60, .03);
+  overflow: hidden;
+}
+
+#modalFilter.rt-filter .modal-content *,
+.rt-picker-v2 .modal-content * {
+  box-sizing: border-box;
+}
+
+/* ---------- Header (dipakai kedua modal) ---------- */
+
+#modalFilter.rt-filter .modal-header,
+.rt-picker-v2 .modal-header {
+  padding: 20px 24px;
+  /* border-bottom: 1px solid var(--rt-border-soft); */
+  align-items: center;
+  gap: 12px;
+}
+
+#modalFilter.rt-filter .modal-title,
+.rt-picker-v2 .modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--rt-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#modalFilter.rt-filter .modal-title .fas,
+#modalFilter.rt-filter .modal-title i {
+  color: var(--rt-blue);
+  font-size: 14px;
+}
+
+.rt-active-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rt-blue);
+  background: var(--rt-blue-soft);
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-left: 10px;
+}
+
+/* ---------- Filter modal: form view ---------- */
+
+#modalFilter.rt-filter .modal-body {
+  padding: 20px 24px;
+}
+
+#modalFilter.rt-filter .rt-section {
+  margin-bottom: 22px;
+}
+
+#modalFilter.rt-filter .rt-section:last-child {
+  margin-bottom: 0;
+}
+
+#modalFilter.rt-filter .rt-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #A6ABBD;
+  margin: 0 0 10px;
+}
+
+#modalFilter.rt-filter .rt-group-label .rt-group-hint {
+  font-weight: 500;
+  text-transform: none;
+  color: #B7BBC8;
+  letter-spacing: normal;
+}
+
+#modalFilter.rt-filter .rt-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+#modalFilter.rt-filter .rt-grid-2 + .rt-grid-2 {
+  margin-top: 10px;
+}
+
+#modalFilter.rt-filter .rt-field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #9297A8;
+  margin-bottom: 6px;
+}
+
+#modalFilter.rt-filter select.rt-native {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: var(--rt-radius);
+  border: none;
+  border: 1px solid var(--rt-border);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--rt-ink);
+  background: #fff;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237B8194' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+
+#modalFilter.rt-filter select.rt-native:focus {
+  outline: none;
+  border-color: var(--rt-blue);
+  box-shadow: 0 0 0 3px var(--rt-blue-soft);
+}
+
+/* ---------- Combo trigger (Customer / Group / PIC / ...) ---------- */
+
+#modalFilter.rt-filter .rt-combo {
+  position: relative;
+}
+
+#modalFilter.rt-filter .rt-combo-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 6px 10px;
+  border-radius: var(--rt-radius);
+  border: none;
+  /* border: 1px solid var(--rt-border); */
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  cursor: pointer;
+  transition: border-color .12s, box-shadow .12s;
+}
+
+#modalFilter.rt-filter .rt-combo-input:hover {
+  border-color: #C7CCDC;
+}
+
+#modalFilter.rt-filter .rt-combo-placeholder {
+  color: #AEB3C4;
+  font-size: 13.5px;
+  padding: 2px 4px;
+}
+
+#modalFilter.rt-filter .rt-combo-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--rt-blue-soft);
+  color: var(--rt-blue);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 6px 5px 10px;
+  border-radius: 999px;
+}
+
+#modalFilter.rt-filter .rt-combo-tag button {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rt-blue);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#modalFilter.rt-filter .rt-combo-tag button:hover {
+  background: rgba(47, 111, 237, .15);
+}
+
+#modalFilter.rt-filter .rt-combo-chevron {
+  margin-left: auto;
+  color: #AEB3C4;
+  flex-shrink: 0;
+  padding-right: 2px;
+  display: flex;
+}
+
+/* ---------- Footer (form view) ---------- */
+
+#modalFilter.rt-filter .modal-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--rt-border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#modalFilter.rt-filter .rt-reset-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rt-red);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+#modalFilter.rt-filter .rt-reset-link:hover {
+  text-decoration: underline;
+}
+
+#modalFilter.rt-filter .rt-footer-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+#modalFilter.rt-filter .rt-btn {
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--rt-radius);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#modalFilter.rt-filter .rt-btn-ghost {
+  background: var(--rt-bg);
+  color: var(--rt-ink-soft);
+}
+
+#modalFilter.rt-filter .rt-btn-ghost:hover {
+  background: var(--rt-border);
+}
+
+#modalFilter.rt-filter .rt-btn-primary {
+  background: var(--rt-blue);
+  color: #fff;
+}
+
+#modalFilter.rt-filter .rt-btn-primary:hover {
+  opacity: .92;
+}
+
+@media (max-width: 520px) {
+  #modalFilter.rt-filter .rt-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============ Picker (.rt-picker-v2) ============
+   Class generik: cocok untuk #formSelect (SO, saat window.g_pickerV2)
+   maupun modal Supp Awal/Akhir/Valas yang di-hardcode per halaman
+   report (id modal & id <table> beda-beda tiap halaman, karena itu
+   selector tabel di sini generik ("table"), bukan id-scoped — aman
+   karena tiap modal picker hanya berisi satu <table>. */
+/* Lebar dialog (1200px) diatur lewat inline style di modalMarketingSO.blade.php
+   (dipakai 35 halaman lain juga) — inline style selalu menang atas aturan di sini,
+   jadi sengaja tidak di-override. */
+
+.rt-picker-v2 .modal-body {
+  padding: 0 24px 16px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.rt-picker-v2 table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.rt-picker-v2 table.table-bordered,
+.rt-picker-v2 table.table-bordered tr,
+.rt-picker-v2 table.table-bordered th,
+.rt-picker-v2 table.table-bordered td {
+  border: none;
+}
+
+.rt-picker-v2 table.table-striped tbody tr:nth-of-type(odd) {
+  background: #fff;
+  --bs-table-accent-bg: transparent;
+  box-shadow: none;
+}
+
+/* ---- Sama seperti .tb-report .tb (main report table) — lihat sekitar
+   report-table.css:565-602 & :646-667. Tidak digantungkan ke class
+   Bootstrap apa pun (table/table-bordered/table-striped), jadi kebal dari
+   border/box-shadow yang dibawa class Bootstrap tsb (lihat catatan di
+   atas tentang .table-bordered dan base .table yang taruh
+   border-bottom-width langsung di tiap <td>/<th>). ---- */
+
+.rt-picker-v2 table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #FAFBFF;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.rt-picker-v2 table tbody tr.pick-row {
+  border-bottom: 1px solid #F1F5F9;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.rt-picker-v2 table tbody tr.pick-row td {
+  padding: 9px 14px !important;
+  vertical-align: middle;
+}
+
+.rt-picker-v2 table tbody tr.pick-row:hover td {
+  background: #F8F9FF;
+}
+
+.rt-picker-v2 table tbody tr.pick-row td:first-child {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* Baris terpilih (multi-select, mis. #formFilterData) -- ditandai lewat class
+   .is-selected (bukan inline style) supaya tidak ketiban warna hover di atas.
+   Diletakkan SETELAH aturan :hover & :first-child di atas supaya menang lewat
+   urutan sumber pada specificity yang sama; kombinasi :hover eksplisit dijaga
+   juga supaya tidak bergantung diam-diam ke urutan itu. */
+.rt-picker-v2 table tbody tr.pick-row.is-selected td,
+.rt-picker-v2 table tbody tr.pick-row.is-selected:hover td {
+  background: var(--rt-blue-soft);
+  color: var(--rt-blue);
+  font-weight: 600;
+}
+
+.rt-picker-v2 table tbody tr.pick-row.is-selected td:first-child {
+  color: var(--rt-blue);
+}
+
+/* skin kontrol bawaan DataTables (search box, info, pagination) */
+
+.rt-picker-v2 .dataTables_wrapper {
+  font-size: 13px;
+  color: var(--rt-ink-soft);
+  padding-top: 12px;
+}
+
+.rt-picker-v2 .dataTables_filter input {
+  /* border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius-sm); */
+  padding: 7px 10px;
+  font-size: 13px;
+  margin-left: 6px;
+  outline: none;
+}
+
+.rt-picker-v2 .dataTables_filter input:focus {
+  border-color: var(--rt-blue);
+  box-shadow: 0 0 0 3px var(--rt-blue-soft);
+}
+
+/* Dropdown "Tampilkan" (page length selector) — hanya muncul di picker yang mengaktifkan
+   lengthChange (mis. tabel_add_list_* di accounting/kas & bank lewat kasInitPicker/
+   bankInitPicker). Picker lain memakai lengthChange:false, jadi aturan ini tak berdampak. */
+.rt-picker-v2 .dataTables_length label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.rt-picker-v2 .dataTables_length select {
+  width: auto;
+  padding: 4px 24px 4px 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.rt-picker-v2 .dataTables_length select:focus {
+  border-color: var(--rt-blue);
+  box-shadow: 0 0 0 3px var(--rt-blue-soft);
+}
+
+/* Pager terkunci di bawah: hanya <table> yang di-scroll (.rt-picker-scroll), baris info
+   + tombol halaman (.rt-picker-bawah) berada DI LUAR area scroll, jadi selalu terlihat
+   berapa pun baris yang ditampilkan (termasuk "Semua"). Keduanya dibuat lewat opsi `dom`
+   DataTables: 'lfr<"rt-picker-scroll"t><"rt-picker-bawah"ip>' — dipakai kasInitPicker()/
+   bankInitPicker() (public/js/kas.js & bank.js) dan picker Barang di
+   gudang/permintaanpemakaian.blade.php. Picker yang tidak memakai dom itu tidak terpengaruh.
+   Sengaja bukan position:sticky: tabel picker Kas/Bank dibungkus <div style="overflow:auto">
+   tanpa tinggi, sehingga sticky menempel ke div itu dan tidak pernah benar-benar menempel.
+   thead tetap menempel di atas area scroll ini (.rt-picker-v2 table thead th sticky top:0). */
+/* clear:both WAJIB: overflow-y:auto membuat div ini jadi block formatting context, yang
+   (berbeda dengan <table> biasa) tidak turun ke bawah float .dataTables_length (kiri) dan
+   .dataTables_filter (kanan) melainkan terjepit di SAMPING keduanya - baris Tampilkan/Search
+   jadi berantakan. clear:both menurunkannya ke bawah kedua float itu. */
+.rt-picker-v2 .rt-picker-scroll {
+  clear: both;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+/* DataTables (autoWidth) bisa menulis style="width:NNNpx" ke <table> saat init - kalau
+   init terjadi selagi area ini masih sempit, tabel terkunci sempit di tengah. Paksa penuh. */
+.rt-picker-v2 .rt-picker-scroll > table {
+  width: 100% !important;
+}
+
+/* Baris atas: Tampilkan (kiri) & Search (kanan) sejajar tengah dan diberi jarak ke tabel.
+   Tingginya disamakan supaya dua float itu tidak berbeda posisi vertikal. */
+.rt-picker-v2 .dataTables_length,
+.rt-picker-v2 .dataTables_filter {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  margin-bottom: 8px;
+}
+
+.rt-picker-v2 .rt-picker-bawah {
+  display: flow-root;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.rt-picker-v2 .dataTables_paginate .paginate_button {
+  /* border: 1px solid var(--rt-border) !important;
+  border-radius: var(--rt-radius-sm) !important; */
+  margin-left: 4px;
+  padding: 4px 10px !important;
+  color: var(--rt-ink) !important;
+  background: #fff !important;
+}
+
+.rt-picker-v2 .dataTables_paginate .paginate_button:hover {
+  background: var(--rt-bg) !important;
+  border-color: var(--rt-border) !important;
+  color: var(--rt-ink) !important;
+}
+
+.rt-picker-v2 .dataTables_paginate .paginate_button.current {
+  background: var(--rt-blue) !important;
+  border-color: var(--rt-blue) !important;
+  color: #fff !important;
+}
+
+/* ===================================================================
+   Tombol OK / Cancel dialog AlertifyJS — gaya bersama
+   -------------------------------------------------------------------
+   Dipakai dengan menempel kelas ke root dialog dari JS:
+
+     var dlg = alertify.confirm(...);            // atau alertify.prompt(...)
+     dlg.elements.root.classList.add('ajs-app-buttons');
+
+   Tambahkan 'is-danger' untuk aksi merusak (tombol OK jadi merah):
+
+     dlg.elements.root.classList.add('ajs-app-buttons', 'is-danger');
+
+   Pemakai saat ini:
+     - Reset Kolom      -> public/js/report-table.js (resetHeader())
+     - Batal Otorisasi  -> resources/views/gudang/permintaanpemakaian.blade.php
+
+   Tanpa kelas itu rule di bawah tidak jalan, jadi dialog alertify lain
+   di aplikasi tidak ikut berubah.
+
+   .ajs-ok     = tombol OK     (alertify.defaults.theme.ok)
+   .ajs-cancel = tombol Cancel (alertify.defaults.theme.cancel)
+
+   Selector dibuat spesifik (.ajs-footer .ajs-buttons .ajs-button) supaya
+   menang atas alertify.css tanpa perlu !important.
+=================================================================== */
+.ajs-app-buttons .ajs-footer .ajs-buttons .ajs-button {
+  border-radius: var(--sp-radius-sm);
+  border: 1px solid var(--sp-border);
+  background: #fff;
+  color: var(--sp-text);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  text-transform: none;
+  box-shadow: none;
+  transition: all .12s ease;
+}
+
+/* OK default = aksi normal -> biru */
+.ajs-app-buttons .ajs-footer .ajs-buttons .ajs-button.ajs-ok {
+  color: var(--sp-blue);
+  border-color: #cfdcff;
+  background: var(--sp-blue-bg);
+}
+
+/* OK pada .is-danger = aksi merusak -> merah, samakan dengan .btn-action-danger */
+.ajs-app-buttons.is-danger .ajs-footer .ajs-buttons .ajs-button.ajs-ok {
+  color: var(--sp-red);
+  border-color: #f7cfcf;
+  background: var(--sp-red-bg);
+}
+
+/* Cancel = aksi netral */
+.ajs-app-buttons .ajs-footer .ajs-buttons .ajs-button.ajs-cancel {
+  color: var(--sp-text-soft);
+  border-color: var(--sp-border);
+  background: #fff;
+}
+
+.ajs-app-buttons .ajs-footer .ajs-buttons .ajs-button:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+.ajs-app-buttons .ajs-footer .ajs-buttons .ajs-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+}
+
+.ajs-app-buttons.is-danger .ajs-footer .ajs-buttons .ajs-button:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, .15);
+}

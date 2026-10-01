@@ -1,0 +1,500 @@
+/* ============================================================================
+ * master-list.css
+ *
+ * Tampilan bersama menu Master (resources/views/master/**) setelah pindah dari layout
+ * newmaster ke newmasterTest, mengikuti purchasing/newpo.blade.php dan accounting
+ * (bonsementara/pengajuandph).
+ *
+ * Yang SUDAH dimuat layout newmasterTest dan tidak disalin ke sini:
+ *   - po-table-header.css : .po-toolbar, .po-search-inp, dan blok .po-list-page (tabel
+ *                           .data-table, kolom Aksi pastel yang muncul saat hover,
+ *                           dropdown "Tampilkan" .po-len-wrap).
+ *   - newmaster.css       : #formBsGrid (.bs-form grid label + input) dan .btn-chip-biru.
+ *
+ * Dipasangkan dengan public/js/master-list.js dan
+ * resources/views/master/partials/toolbarMaster.blade.php.
+ * ========================================================================== */
+
+/* Jarak isi ke bar atas - sama seperti halaman purchasing. */
+#content { padding-top: 12px; }
+
+/* ---------- Kolom Aksi tabel daftar ----------
+   po-table-header.css hanya menggaya tombol .btn di kolom pertama #tabel. Tabel daftar
+   lain (mis. tab kedua mastergiro) cukup diberi class po-aksi-hover juga. */
+:where(.po-list-page) table.data-table td:first-child:not([colspan]) .po-aksi-wrap {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+:where(.po-list-page) table.data-table:not(#tabel) td:first-child .btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: all .12s ease;
+}
+
+:where(.po-list-page) table.data-table:not(#tabel) td:first-child .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+:where(.po-list-page) table.data-table:not(#tabel) td:first-child .btn-warning { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
+:where(.po-list-page) table.data-table:not(#tabel) td:first-child .btn-primary { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
+:where(.po-list-page) table.data-table:not(#tabel) td:first-child .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+:where(.po-list-page) table.data-table:not(#tabel) td:first-child .btn-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
+
+/* Isi tabel sebaris; kolom panjang digeser lewat scroll .po-table-wrap. */
+:where(.po-list-page) .po-table-wrap table.dataTable thead th,
+:where(.po-list-page) .po-table-wrap table.dataTable tbody td {
+  white-space: nowrap;
+}
+
+/* ---------- Tombol ikon kecil di tabel dalam modal (detail/harga/lokasi, dst) ----------
+   Dulu datang dari tableMaster2.css yang tidak dimuat lagi. Nilai disalin apa adanya. */
+.btn-action-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid #e7e9ee;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  margin: 2px;
+  color: #6b7280;
+  transition: all .12s ease;
+}
+
+.btn-action-sm:hover { filter: brightness(0.97); transform: translateY(-1px); }
+
+.btn-action-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+.btn-action-warning { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
+.btn-action-primary { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
+.btn-action-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+.btn-action-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
+
+.action-buttons-wrap {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* ---------- Modal Add/Edit ---------- */
+.modal-content { border: none; border-radius: var(--rt-radius, 12px); }
+.modal-header  { align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--rt-border-soft, #EFEFF6); }
+.modal-body    { padding: 20px 24px; }
+.modal-footer  { padding: 14px 24px 18px; border-top: 1px solid var(--rt-border-soft, #EFEFF6); }
+
+/* Tombol close (x) - kotak abu biar target klik jelas, sama seperti newpo. */
+.modal-header .close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 0 auto;
+  border: 1px solid #d5d9e0;
+  border-radius: 6px;
+  background: #f8f9fb;
+  color: #6b7280;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  line-height: 1;
+  opacity: 1;
+  transition: background-color .12s, border-color .12s;
+}
+
+.modal-header .close:hover {
+  background: #eceef1;
+  border-color: #adb5bd;
+}
+
+/* Input di form modal setinggi 38px seperti accounting; textarea & input di dalam tabel
+   tetap setinggi aslinya. */
+#formBsGrid .form-control { height: 38px; }
+#formBsGrid textarea.form-control,
+#formBsGrid table .form-control { height: auto; }
+
+/* Tombol browse (kaca pembesar) di dalam #formBsGrid disamakan tingginya dengan input. */
+#formBsGrid .input-group .btn { height: auto; align-self: stretch; }
+
+/* Varian .bs-form untuk modal sempit: satu pasang label + input per baris. */
+#formBsGrid .bs-form.bs-form-1 { grid-template-columns: 120px minmax(0, 1fr); }
+#formBsGrid .bs-form.bs-form-1 .bs-full { grid-column: 2 / -1; }
+
+/* Label yang isinya panjang boleh turun baris supaya kolom label tidak melebar. */
+#formBsGrid .bs-form label.bs-wrap { white-space: normal; }
+
+/* Checkbox di dalam grid: dirapatkan ke kiri sel input. */
+#formBsGrid .bs-form .bs-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+}
+
+#formBsGrid .bs-form .bs-check input[type="checkbox"] { margin: 0; transform: scale(1.3); }
+
+@media (max-width: 575.98px) {
+  #formBsGrid .bs-form.bs-form-1 { grid-template-columns: 1fr; }
+  #formBsGrid .bs-form.bs-form-1 .bs-full { grid-column: 1 / -1; }
+}
+
+/* Tombol footer: Batal abu soft + Simpan biru soft (.btn-chip-biru ada di newmaster.css). */
+.btn-batal-add {
+  background-color: #f1f3f5;
+  border-color: #dee2e6;
+  color: #495057;
+}
+
+.btn-batal-add:hover,
+.btn-batal-add:focus {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+  color: #343a40;
+}
+
+.btn-batal-add:active {
+  background-color: #dee2e6 !important;
+  border-color: #ced4da !important;
+  color: #343a40 !important;
+}
+
+.modal-footer .btn-chip-biru,
+.modal-footer .btn-batal-add {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 16px;
+}
+
+/* Select2 di dalam modal ikut tinggi input. */
+#formBsGrid .select2-container .select2-selection--single { height: 38px; border-radius: 8px; border-color: var(--rt-border, #E7E8F0); }
+#formBsGrid .select2-container .select2-selection--single .select2-selection__rendered { line-height: 36px; }
+#formBsGrid .select2-container .select2-selection--single .select2-selection__arrow { height: 36px; }
+
+/* Tombol aksi lama (.btn-action-sm) di kolom pertama tabel daftar ikut pola newpo: baru
+   muncul saat barisnya di-hover. */
+:where(.po-list-page) table.data-table.po-aksi-hover tbody td:first-child .btn-action-sm {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+
+:where(.po-list-page) table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn-action-sm {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Pembungkus .container-fluid lama di dalam modal-body tidak menambah jarak lagi -
+   jaraknya sudah diatur padding .modal-body. */
+#formBsGrid > .container-fluid,
+#formBsGrid .modal-body > .container-fluid { padding-left: 0; padding-right: 0; }
+
+/* ---------- Sisa kelas dari tableMaster2.css yang masih dipakai halaman master ----------
+   tableMaster2.css tidak dimuat lagi (ia menimpa gaya tabel daftar .data-table). Aturan di
+   bawah disalin nilainya apa adanya supaya tombol "+" di modal pemilih, tombol pill, dan
+   form di modal yang belum memakai .bs-form tetap tampil seperti sebelumnya. */
+.btn-action-md {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  margin: 2px;
+  border: none;
+  color: #6b7280;
+  transition: all .12s ease;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-action-md:hover { filter: brightness(0.97); transform: translateY(-1px); }
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn.btn-pill-primary.btn-action-primary { color: #2563eb; background: #e8edff; border-color: #cfdcff; }
+.btn.btn-pill-primary.btn-action-danger  { color: #dc2626; background: #fdeaea; border-color: #f7cfcf; }
+.btn.btn-pill-primary.btn-action-success { color: #16a34a; background: #e7f7ed; border-color: #cdebd7; }
+
+.btn.btn-pill-primary.btn-action-primary:hover,
+.btn.btn-pill-primary.btn-action-primary:focus { color: #fff; background: #0069d9; border-color: #0062cc; }
+.btn.btn-pill-primary.btn-action-danger:hover,
+.btn.btn-pill-primary.btn-action-danger:focus  { color: #fff; background: #c82333; border-color: #bd2130; }
+.btn.btn-pill-primary.btn-action-success:hover,
+.btn.btn-pill-primary.btn-action-success:focus { color: #fff; background: #218838; border-color: #1e7e34; }
+
+.btn.btn-pill-primary:hover,
+.btn.btn-pill-secondary:hover { opacity: 1; }
+
+.modal .btn.btn-pill-primary,
+.modal .btn.btn-pill-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title { font-size: 16px; font-weight: 700; color: #1f2430; }
+.modal-content { box-shadow: 0 20px 50px rgba(15, 15, 35, .18); }
+
+/* Modal yang belum memakai .bs-form (tabel detail, dst). */
+.modal-body label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.modal-body .form-control {
+  border-radius: 7px;
+  border: 1px solid #e7e9ee;
+  font-size: 14px;
+}
+
+.modal-body .form-control:focus {
+  border-color: var(--rt-indigo, #4F46E5);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft, #EEF0FE);
+}
+
+/* Tombol soft untuk tombol biru lain di dalam modal (Add Item, pilih, dst). */
+.modal-body .btn.btn-chip-biru { border-radius: 8px; }
+
+/* Badge status/tipe di sel tabel (dulu dari tableMaster2.css). */
+.sp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sp-badge::before {
+  content: "";
+  width: 6px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.sp-badge.is-user       { background: #e8edff; color: #2563eb; }
+.sp-badge.is-supervisor { background: #fef3e0; color: #b45309; }
+.sp-badge.is-admin      { background: #e7f7ed; color: #16a34a; }
+.sp-badge.is-active     { background: #e7f7ed; color: #16a34a; }
+.sp-badge.is-inactive   { background: #fdeaea; color: #dc2626; }
+
+/* Beberapa checkbox sebaris di satu sel .bs-form (mis. Sample/Pusat/Sampit/Aktif gudang). */
+#formBsGrid .bs-form .bs-check { flex-wrap: wrap; column-gap: 18px; row-gap: 6px; }
+#formBsGrid .bs-form .bs-cek {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--rt-ink, #1D2130);
+  cursor: pointer;
+}
+
+/* Form tambah/edit yang tertanam di modal besar (sub group, detail, dst): kartu ber-judul
+   seperti form Add purchasing/newpo (.form-card), isinya .bs-form dua pasang per baris. */
+.form-card {
+  background: var(--rt-card, #fff);
+  border: 1px solid var(--rt-border, #e7e9ee);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.form-card-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #6b7280;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eef0f3;
+}
+
+#formBsGrid .bs-form.bs-form-lebar { grid-template-columns: 130px minmax(0, 1fr) 130px minmax(0, 1fr); }
+@media (max-width: 767.98px) {
+  #formBsGrid .bs-form.bs-form-lebar { grid-template-columns: 1fr; }
+  #formBsGrid .bs-form.bs-form-lebar .bs-full { grid-column: 1 / -1; }
+}
+
+/* Tombol utama toolbar (Tambah) - disalin dari accounting/memorialkoreksi.blade.php. */
+.btn-dpp-utama {
+  height: 36px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0 16px;
+  background-color: #e8edff;
+  border: 1px solid #cfdcff;
+  color: #2563eb;
+  box-shadow: none;
+}
+.btn-dpp-utama:hover,
+.btn-dpp-utama:focus { background-color: #dce6ff; border-color: #b9c9ff; color: #1d4ed8; }
+.btn-dpp-utama:active { background-color: #cfdcff !important; border-color: #a8bdff !important; color: #1d4ed8 !important; }
+
+/* Kartu form yang disembunyikan JS lewat atribut hidden. */
+.form-card[hidden] { display: none !important; }
+
+/* Beberapa blok .bs-form berurutan (hasil konversi baris lama) dibuat berjarak sama seperti
+   jarak antarbaris di dalam satu blok. */
+#formBsGrid .bs-form + .bs-form { margin-top: 14px; }
+
+/* Label form master lebih panjang dari form accounting (mis. "Tanggal Faktur", "Jatuh Tempo"),
+   jadi kolom labelnya dilebarkan. */
+#formBsGrid .bs-form { grid-template-columns: 120px minmax(0, 1fr) 110px minmax(0, 1fr); }
+#formBsGrid .bs-form.bs-form-1 { grid-template-columns: 120px minmax(0, 1fr); }
+
+/* Beberapa isian sebaris di satu sel .bs-form (mis. Satuan | Isi | Harga di master barang):
+   dibagi rata dan pembungkus .form-group lama tidak lagi memberi margin bawah. */
+#formBsGrid .bs-form .d-flex > .form-group { flex: 1 1 0; margin-bottom: 0; min-width: 0; }
+#formBsGrid .bs-form .d-flex > .form-control,
+#formBsGrid .bs-form .d-flex > select { flex: 1 1 0; min-width: 0; }
+#formBsGrid .bs-form .d-flex > span,
+#formBsGrid .bs-form .d-flex > b { white-space: nowrap; }
+
+/* Header kolom interaktif (report-table.js) untuk dua tabel mastergiro - aturan po-table-header.css
+   di-scope per id tabel, jadi aturan #tabel disalin untuk #tabel_dibuka & #tabel_diterima. */
+#tabel_dibuka thead th.rt-th,
+#tabel_diterima thead th.rt-th {
+  padding: 0;
+  vertical-align: middle;
+}
+#tabel_dibuka thead th.rt-th .th-inner,
+#tabel_diterima thead th.rt-th .th-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  cursor: grab;
+}
+#tabel_dibuka thead th.rt-th .th-inner.dragging,
+#tabel_diterima thead th.rt-th .th-inner.dragging { opacity: .4;
+}
+#tabel_dibuka thead th.rt-th.drag-over .th-inner,
+#tabel_diterima thead th.rt-th.drag-over .th-inner { box-shadow: inset 3px 0 0 var(--rt-indigo);
+}
+#tabel_dibuka thead th.rt-th .th-label,
+#tabel_diterima thead th.rt-th .th-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+#tabel_dibuka thead th.rt-th.num .th-label,
+#tabel_diterima thead th.rt-th.num .th-label { text-align: right;
+}
+#tabel_dibuka thead th.rt-th .th-grip,
+#tabel_diterima thead th.rt-th .th-grip {
+  display: grid;
+  grid-template-columns: repeat(2, 3px);
+  gap: 3px;
+  flex-shrink: 0;
+  opacity: .55;
+  transition: opacity .12s;
+}
+#tabel_dibuka thead th.rt-th .th-grip i,
+#tabel_diterima thead th.rt-th .th-grip i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #C7C9D6;
+}
+#tabel_dibuka thead th.rt-th:hover .th-grip,
+#tabel_diterima thead th.rt-th:hover .th-grip { opacity: 1;
+}
+#tabel_dibuka thead th.rt-th .th-gear,
+#tabel_diterima thead th.rt-th .th-gear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #B8BACA;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s, background .12s, color .12s;
+}
+#tabel_dibuka thead th.rt-th:hover .th-gear,
+#tabel_diterima thead th.rt-th:hover .th-gear { opacity: 1;
+}
+#tabel_dibuka thead th.rt-th .th-gear:hover,
+#tabel_diterima thead th.rt-th .th-gear:hover,
+#tabel_dibuka thead th.rt-th .th-gear.active,
+#tabel_diterima thead th.rt-th .th-gear.active {
+  opacity: 1;
+  background: var(--rt-indigo-soft);
+  color: var(--rt-indigo);
+}
+#tabel_dibuka thead th.rt-th,
+#tabel_diterima thead th.rt-th { background-position: right 26px center;
+}
+#tabel_dibuka thead th,
+#tabel_diterima thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* DataTables menulis lebar hasil ukurnya di <table>; min-width supaya tabel daftar lain
+   (selain #tabel) juga selebar kotaknya. */
+:where(.po-list-page) table.data-table { min-width: 100%; }
+
+/* ---------- Tombol Filter toolbar (#btnFilterMaster, toolbarMaster.blade.php) ----------
+   Tombol & modal memakai .po-btn-filter / .rt-filter dari po-table-header.css. Di sampingnya
+   ditampilkan pilihan filter yang sedang berlaku (#masterFilterAktif). */
+.po-filter-aktif {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rt-indigo, #4f46e5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* ---------- Label & input form Add/Edit selalu sejajar ----------
+   Grid .bs-form memusatkan label terhadap selnya (align-items: center). Sisa kelas tata letak
+   lama di sel input - mb-3 pada select, pembungkus .form-group (margin-bottom 1rem),
+   .input-group mb-1, dsb - membuat sel lebih tinggi dari inputnya sehingga label tampak
+   "tinggi sebelah". Margin vertikal di dalam sel dinolkan; jarak antarbaris cukup dari gap
+   grid. !important karena utilitas mb-* Bootstrap juga !important. Label dikecualikan supaya
+   aturan layar sempit (label di atas input, margin-top 8px) tetap berlaku. */
+#formBsGrid .bs-form > :not(label),
+#formBsGrid .bs-form > :not(label) :is(.form-group, .input-group, .form-control, .row, select, input, textarea) {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+/* Label yang terselip di dalam sel (mis. "Kurs" di samping input) ikut sejajar tengah. */
+#formBsGrid .bs-form > :not(label) label { margin-bottom: 0; }

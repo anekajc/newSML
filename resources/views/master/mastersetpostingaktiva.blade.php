@@ -1,0 +1,420 @@
+@extends('newmaster')
+@section('buttons')
+
+@endsection
+
+
+
+@section('content')
+<div class="container-fluid">
+
+  <!-- <div id="qrcode"></div> -->
+  {{-- <div class="row">
+    <div class="col-6 text-left">
+      <h1>Master Set Posting Aktiva</h1>
+    </div>
+    <div class="col-6 text-right">
+      <button type="button" class="btn btn-primary btn-lg " style="height: 60px; " onclick="buttonAdd()"  >Add Daftar Devisi</button>
+    </div>
+  </div> --}}
+<!-- <button onclick="loadAll()">tes</button> -->
+</div>
+
+<div>
+    <div class="col-6 text-right">
+        <button type="button" class="btn btn-danger btn-lg " style="height: 60px; width: 100px; " onclick="backToSetPosting()"  >Kembali ke Set Posting</button>
+    </div>
+</div>
+
+<div id="printContainer" style="display:none">
+
+</div>
+<div id="contentContainer" class="container-fluid" style="max-width: 900px">
+  <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
+  <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
+  <input type="hidden" name="_token" id="_token" value="{!! csrf_token() !!}" />
+          <div class="row mt-4">
+              <!-- <div class="col-12 text-right">
+                  <button type="button" class="btn btn-primary btn-lg " style="height: 60px; " onclick="buttonAdd()"  >Add Koreksi Stock Gudang</button>
+              </div> -->
+          </div>
+          <div class="row mt-3">
+            <div class="col-12" style="overflow:auto;">
+              <div class="">
+
+                    <table id="tabel" class="table table-bordered table-striped"  >
+                      <thead class="text-center">
+                        <tr>
+                          <th scope="col">Devisi</th>
+                          <th scope="col">Nama Devisi</th>
+                          <th scope="col">Actions</th>
+
+                        </tr>
+                      </thead>
+
+
+                      <tbody id="tabel_data" class="text-left" >
+                        @for ($i = 0; $i < count($listData); $i++)
+                        <tr >
+
+                          <td>{{ $listData[$i]->Devisi }}</td>
+                          <td>{{ $listData[$i]->NamaDevisi }}</td>
+
+
+                            <td class="text-center">
+                              <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
+                              <button class="btn btn-success btn-sm" type="button" onclick="buttonEdit('{{ $listData[$i]->Devisi }}')"><i class="bi bi-pen"></i></button>
+                              <button class="btn btn-danger btn-sm" type="button" onclick="buttonDelete('{{ $listData[$i]->Devisi }}')"><i class="bi bi-trash"></i></button>
+                            </td>
+                      </tr>
+                      @endfor
+                      </tbody>
+
+
+                    </table>
+              </div>
+            </div>
+          </div>
+
+
+</div>
+
+<!-- start modal add -->
+<div class="modal fade"  id="form" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered"  role="document" style="max-width: 500px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- <h1>Tes Modal</h1> -->
+
+        <div class="container-fluid">
+          <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
+
+            <div class="row">
+              <div class="col-4 text-left">
+                <div class="form-group text-left">
+                  <label class="text-left">Devisi</label>
+                </div>
+              </div>
+              <div class="col-8">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="input_add_kode" placeholder="Kode Devisi">
+                </div>
+              </div>
+
+            </div>
+
+            <div class="row">
+              <div class="col-4 text-left">
+                <div class="form-group text-left">
+                  <label class="text-left">Nama Devisi</label>
+                </div>
+              </div>
+              <div class="col-8">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="input_add_nama" placeholder="Nama Devisi">
+                </div>
+              </div>
+
+            </div>
+
+
+    </div>
+  </div>
+  <div class="modal-footer">
+     
+    <button type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button>
+  </div>
+</div>
+</div>
+</div>
+<!-- End modal add-->
+
+
+
+
+
+<!-- start modal edit -->
+<div class="modal fade"  id="formEdit" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered"  role="document" style="max-width: 500px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Edit</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- <h1>Tes Modal</h1> -->
+
+        <div class="container-fluid">
+          <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
+
+            <div class="row">
+              <div class="col-4 text-left">
+                <div class="form-group text-left">
+                  <label class="text-left">Kode Devisi</label>
+                </div>
+              </div>
+              <div class="col-8">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="input_edit_kode" placeholder="Kode Devisi" disabled>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="row">
+              <div class="col-4 text-left">
+                <div class="form-group text-left">
+                  <label class="text-left">Nama Devisi</label>
+                </div>
+              </div>
+              <div class="col-8">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="input_edit_nama" placeholder="Nama Devisi">
+                </div>
+              </div>
+
+            </div>
+
+
+    </div>
+  </div>
+  <div class="modal-footer">
+     
+    <button type="button" class="btn btn-primary" onclick="submitEdit()">Submit</button>
+  </div>
+</div>
+</div>
+</div>
+<!-- End modal edit-->
+
+
+
+
+
+
+
+@endsection
+
+@section('js')
+<script type="text/javascript">
+
+let dataRefresh = []
+
+$(document).ready(function(){
+      $("#tabel").DataTable({
+        "lengthChange": false,
+          "paging": false ,
+        //    "columnDefs": [
+        // { "type": "date", "targets": [1] },
+        // {  "className": "text-center", "targets": [3] },
+      // ]
+    });
+});
+//
+function loadAll () {
+  console.log('asd')
+  let _token = $("#_token").val();
+
+  document.getElementById('breadcrumb').innerHTML = "Master Posting Aktiva";
+
+  $('#tabel').DataTable().destroy();
+
+  $.ajax({
+    url: "{!! url('masterdaftardevisiloadall') !!}",
+    type: "get",
+    async: false,
+    data: {
+      _token : _token,
+    },
+    success: function(res) {
+      console.log(res)
+      dataRefresh = res
+  }})
+
+  let rowTable = ""
+  dataRefresh.forEach((item, i) => {
+    let temp = ""
+
+    rowTable += `<tr>
+    <td>${item.Devisi}</td>
+    <td>${item.NamaDevisi}</td>
+    <td class="text-center">
+      <button class="btn btn-success btn-sm" type="button" onclick="buttonEdit('${item.Devisi}')"><i class="bi bi-pen"></i></button>
+      <button class="btn btn-danger btn-sm" type="button" onclick="buttonDelete('${item.Devisi}')"><i class="bi bi-trash"></i></button>
+    </td>
+    </tr>`
+  });
+
+
+
+
+
+  document.getElementById("tabel_data").innerHTML = rowTable
+  $("#tabel").DataTable({
+    "lengthChange": false,
+      "paging": false ,
+    });
+
+}
+//
+function buttonAdd () {
+
+
+  $("#form").modal('toggle')
+
+}
+
+function buttonEdit (kode) {
+  console.log(kode)
+  let _token = $("#_token").val();
+  $.ajax({
+    url: "{!! url('masterdaftardevisispdetail') !!}",
+    type: "get",
+    async: false,
+    data: {
+      _token : _token,
+      kode
+    },
+    success: function(res) {
+
+      console.log(res)
+      document.getElementById("input_edit_kode").value = res[0].Devisi
+      document.getElementById("input_edit_nama").value = res[0].NamaDevisi
+
+    }})
+    $("#formEdit").modal('toggle')
+}
+
+function buttonDelete (kode) {
+  console.log(kode)
+  let _token = $("#_token").val();
+
+
+  alertify.confirm('Hapus Devisi', 'Apakah yakin ingin menghapus Kode Devisi ' + kode + ' ?',
+      function() {
+        console.log('yes')
+
+        $.ajax({
+          url: "{!! url('masterdaftardevisispdelete') !!}",
+          type: "post",
+          async: false,
+          data: {
+            _token : _token,
+            kode
+          },
+          success: function(res) {
+            if (res != 1) {
+              alertify.warning(res);
+            } else {
+              console.log(res)
+              loadAll()
+              alertify.success("Kode Devisi telah dihapus");
+
+            }
+          }})
+      }
+    ,function(){
+      console.log('no')
+    });
+
+
+}
+//
+function submitEdit () {
+
+  let _token = $("#_token").val();
+  let kode = $("#input_edit_kode").val();
+  let nama = $("#input_edit_nama").val();
+  console.log(kode,nama)
+  if (!kode) {
+    alertify.warning("Kode  harus diisi");
+    return
+  }
+
+  if (!nama) {
+    alertify.warning("Nama  harus diisi");
+    return
+  }
+
+  $.ajax({
+    url: "{!! url('masterdaftardevisispedit') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token : _token,
+      kode,
+      nama
+    },
+    success: function(res) {
+
+      if (res != 1) {
+        alertify.warning(res);
+      }  else {
+        console.log(res ,'!')
+        // $("#formEdit").modal('toggle')
+        alertify.success("Data Devisi telah diedit");
+        loadAll()
+        $("#formEdit").modal('toggle')
+      }
+
+    }})
+
+}
+//
+function submitAdd () {
+
+  let _token = $("#_token").val();
+  let kode = $("#input_add_kode").val();
+  let nama = $("#input_add_nama").val();
+
+  if (!kode) {
+    alertify.warning("Kode harus diisi");
+    return
+  }
+
+  if (!nama) {
+    alertify.warning("Nama harus diisi");
+    return
+  }
+
+  $.ajax({
+    url: "{!! url('masterdaftardevisispadd') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token : _token,
+      kode,
+      nama
+    },
+    success: function(res) {
+
+      if (res != 1) {
+        alertify.warning(res);
+      }  else {
+        console.log(res ,'!')
+        // $("#formEdit").modal('toggle')
+        alertify.success("Data Devisi telah ditambah");
+        loadAll()
+        $("#form").modal('toggle')
+      }
+
+    }})
+
+  // console.log(kodearea, namaarea)
+}
+
+function backToSetPosting() {
+  window.location.href = "{{ ('mastersetposting') }}";
+}
+
+
+</script>
+
+
+
+
+@endsection

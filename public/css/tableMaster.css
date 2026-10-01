@@ -1,0 +1,1060 @@
+/*
+ * report-table.css
+ * Shared styling for the .tb-report styled report table (Trial Balance, etc.).
+ * Moved out of the report blade so every report* page can reuse it.
+ * Loaded globally in resources/views/report/newmaster2.blade.php.
+ */
+
+.checkmark-red {
+  color: red !important;
+  font-weight: bold;
+  margin-left: 6px;
+}
+
+/* Everything below is scoped to the .tb-report wrapper so this mockup CSS
+   only affects the Trial Balance table - never the master template's
+   Bootstrap layout, its modals, or the #tabel report engine.
+   (The unused .shell/.sidebar/.s-* rules from the mockup were removed.) */
+.tb-report,
+.tb-report *,
+.tb-report *::before,
+.tb-report *::after {
+  box-sizing: border-box;
+}
+
+.tb-report * {
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #F8FAFF;
+  --white: #fff;
+  --border: #E2E8F4;
+  --text: #0F172A;
+  --muted: #5A6A85;
+  --accent: #4F46E5;
+  --radius: 10px;
+  /* account type colours */
+  --c-asset: #1D4ED8;
+  --c-asset-bg: #EFF6FF;
+  --c-liab: #7C3AED;
+  --c-liab-bg: #F5F3FF;
+  --c-equity: #0F766E;
+  --c-equity-bg: #F0FDFA;
+  --c-rev: #15803D;
+  --c-rev-bg: #F0FDF4;
+  --c-exp: #B45309;
+  --c-exp-bg: #FFFBEB;
+}
+
+.tb-report {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* -- MAIN -- */
+.tb-report .main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+}
+
+/* HEADER */
+.tb-report .header {
+  height: 60px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+}
+
+.tb-report .bc {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tb-report .bc a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tb-report .bc b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.tb-report .header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tb-report .user-badge {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.tb-report .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4F46E5, #DB2777);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* -- CONTENT -- */
+.tb-report .content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 0;
+}
+
+/* TOOLBAR */
+.tb-report .toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.tb-report .page-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tb-report .page-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* Period selector */
+.tb-report .period-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 12px;
+}
+
+.tb-report .period-select-wrap label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+.tb-report .period-select {
+  border: none;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  outline: none;
+}
+
+/* search */
+.tb-report .search-inp {
+  padding: 8px 12px 8px 34px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--white);
+  color: var(--text);
+  outline: none;
+  width: 200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%235A6A85' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  transition: border-color .14s;
+}
+
+.tb-report .search-inp:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, .08);
+  outline: none;
+}
+
+/* toggle buttons */
+.tb-report .tgl-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .14s;
+  white-space: nowrap;
+}
+
+.tb-report .tgl-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-report .tgl-btn.on {
+  background: #EEF2FF;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-report .tgl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background .14s;
+}
+
+.tb-report .tgl-btn.on .tgl-dot {
+  background: var(--accent);
+}
+
+/* type filter */
+.tb-report .type-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.tb-report .tf {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .14s;
+  white-space: nowrap;
+}
+
+.tb-report .tf:hover {
+  opacity: .8;
+}
+
+.tb-report .tf.all.on {
+  background: #EEF2FF;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tb-report .tf.asset.on {
+  background: var(--c-asset-bg);
+  border-color: var(--c-asset);
+  color: var(--c-asset);
+}
+
+.tb-report .tf.liab.on {
+  background: var(--c-liab-bg);
+  border-color: var(--c-liab);
+  color: var(--c-liab);
+}
+
+.tb-report .tf.equity.on {
+  background: var(--c-equity-bg);
+  border-color: var(--c-equity);
+  color: var(--c-equity);
+}
+
+.tb-report .tf.rev.on {
+  background: var(--c-rev-bg);
+  border-color: var(--c-rev);
+  color: var(--c-rev);
+}
+
+.tb-report .tf.exp.on {
+  background: var(--c-exp-bg);
+  border-color: var(--c-exp);
+  color: var(--c-exp);
+}
+
+/* export */
+.tb-report .export-wrap {
+  margin-left: auto;
+  position: relative;
+}
+
+.tb-report .export-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, .28);
+  transition: all .15s;
+}
+
+.tb-report .export-btn:hover {
+  box-shadow: 0 6px 20px rgba(79, 70, 229, .4);
+  transform: translateY(-1px);
+}
+
+.tb-report .export-drop {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 170px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  z-index: 100;
+}
+
+.tb-report .export-drop.open {
+  display: block;
+}
+
+.tb-report .export-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .12s;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-report .export-opt:last-child {
+  border-bottom: none;
+}
+
+.tb-report .export-opt:hover {
+  background: #EEF2FF;
+}
+
+.tb-report .export-opt .ext {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+/* -- KPI STRIP -- */
+.tb-report .kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tb-report .kpi-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tb-report .kpi-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tb-report .kpi-body .kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.tb-report .kpi-body .kpi-val {
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.tb-report .kpi-body .kpi-count {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* -- TABLE WRAPPER -- */
+.tb-report .table-outer {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed-height scroll box so the sticky thead stays put and only rows
+   scroll. Replaces the flex:1 height that relied on the .shell/100vh
+   layout the mockup originally lived in. */
+.tb-report .table-wrap {
+  max-height: 65vh;
+  overflow: auto;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.tb-report .table-wrap::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.tb-report .table-wrap::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* -- MAIN TABLE -- */
+.tb-report .tb {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tb-report .tb thead th {
+  position: sticky;
+  z-index: 20;
+  background: #FAFBFF;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.tb-report .tb thead th.num {
+  text-align: right;
+}
+
+.tb-report .tb thead .th-group {
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  background: #F4F6FF;
+}
+
+/* Two-row sticky header: pin the group-title row (Mutasi / Penyesuaian /
+   Rugi-Laba …) at the top, and the Debet/Kredit row directly beneath it, so
+   neither row hides the other while scrolling. The fixed 40px height on row 1
+   makes row 2's offset exact (it's >= the row's natural height, so no gap). */
+.tb-report .tb thead tr:first-child th  { top: 0;    height: 40px; }
+.tb-report .tb thead tr:nth-child(2) th { top: 40px; }
+
+/* group header row */
+.tb-report .group-row td {
+  padding: 8px 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  border-bottom: 1px solid var(--border);
+  border-top: 2px solid;
+}
+
+.tb-report .group-row.g-asset td {
+  background: var(--c-asset-bg);
+  color: var(--c-asset);
+  border-top-color: var(--c-asset);
+}
+
+.tb-report .group-row.g-liab td {
+  background: var(--c-liab-bg);
+  color: var(--c-liab);
+  border-top-color: var(--c-liab);
+}
+
+.tb-report .group-row.g-equity td {
+  background: var(--c-equity-bg);
+  color: var(--c-equity);
+  border-top-color: var(--c-equity);
+}
+
+.tb-report .group-row.g-rev td {
+  background: var(--c-rev-bg);
+  color: var(--c-rev);
+  border-top-color: var(--c-rev);
+}
+
+.tb-report .group-row.g-exp td {
+  background: var(--c-exp-bg);
+  color: var(--c-exp);
+  border-top-color: var(--c-exp);
+}
+
+/* data row */
+.tb-report .data-row {
+  border-bottom: 1px solid #F1F5F9;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.tb-report .data-row:hover td {
+  background: #F8F9FF;
+}
+
+.tb-report .data-row.highlighted td {
+  background: #FEF2F2;
+}
+
+.tb-report .data-row.highlighted .neg {
+  color: #DC2626;
+  font-weight: 700;
+}
+
+.tb-report .data-row td {
+  padding: 9px 14px;
+}
+
+.tb-report .data-row td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .data-row td.code {
+  font-family: monospace;
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tb-report .data-row td.name {
+  font-weight: 500;
+}
+
+/* type stripe on left */
+.tb-report .data-row.t-asset td:first-child {
+  border-left: 3px solid var(--c-asset);
+}
+
+.tb-report .data-row.t-liab td:first-child {
+  border-left: 3px solid var(--c-liab);
+}
+
+.tb-report .data-row.t-equity td:first-child {
+  border-left: 3px solid var(--c-equity);
+}
+
+.tb-report .data-row.t-rev td:first-child {
+  border-left: 3px solid var(--c-rev);
+}
+
+.tb-report .data-row.t-exp td:first-child {
+  border-left: 3px solid var(--c-exp);
+}
+
+/* subtotal row */
+.tb-report .subtotal-row td {
+  padding: 9px 14px;
+  background: #F8F9FF;
+  border-top: 1.5px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+.tb-report .subtotal-row td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .subtotal-row.g-asset td {
+  color: var(--c-asset);
+}
+
+.tb-report .subtotal-row.g-liab td {
+  color: var(--c-liab);
+}
+
+.tb-report .subtotal-row.g-equity td {
+  color: var(--c-equity);
+}
+
+.tb-report .subtotal-row.g-rev td {
+  color: var(--c-rev);
+}
+
+.tb-report .subtotal-row.g-exp td {
+  color: var(--c-exp);
+}
+
+/* grand total row */
+.tb-report .grand-total td {
+  padding: 11px 14px;
+  background: linear-gradient(135deg, #EEF2FF, #F5F3FF);
+  font-weight: 800;
+  font-size: 13.5px;
+  border-top: 2px solid var(--accent);
+}
+
+.tb-report .grand-total td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+/* zero row (dimmed) */
+.tb-report .data-row.zero-row td {
+  opacity: .45;
+}
+
+/* drill-down indicator */
+.tb-report .drill-hint {
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity .12s;
+  margin-left: 6px;
+}
+
+.tb-report .data-row:hover .drill-hint {
+  opacity: 1;
+}
+
+/* -- DRILL PANEL -- */
+.tb-report .drill-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .3);
+  z-index: 200;
+  backdrop-filter: blur(3px);
+}
+
+.tb-report .drill-overlay.open {
+  display: block;
+}
+
+.tb-report .drill-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 65vw;
+  background: var(--white);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, .12);
+}
+
+.tb-report .drill-panel.open {
+  transform: translateX(0);
+}
+
+.tb-report .dp-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.tb-report .dp-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.tb-report .dp-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.tb-report .dp-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--muted);
+  transition: all .14s;
+  flex-shrink: 0;
+}
+
+.tb-report .dp-close:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.tb-report .dp-meta {
+  padding: 14px 22px;
+  background: #FAFBFF;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.tb-report .dp-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tb-report .dp-meta-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.tb-report .dp-meta-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .dp-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px;
+}
+
+.tb-report .dp-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tb-report .dp-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.tb-report .dp-section-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 10px;
+}
+
+.tb-report .ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tb-report .ledger-table thead th {
+  background: #F4F6FF;
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-report .ledger-table thead th.num {
+  text-align: right;
+}
+
+.tb-report .ledger-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.tb-report .ledger-table tbody td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-report .ledger-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tb-report .ledger-table tbody tr:hover td {
+  background: #F8F9FF;
+}
+
+.tb-report .ledger-total td {
+  padding: 9px 12px;
+  background: #EEF2FF;
+  font-weight: 800;
+  border-top: 1.5px solid var(--accent);
+  font-size: 12.5px;
+}
+
+.tb-report .ledger-total td.num {
+  text-align: right;
+  color: var(--accent);
+}
+
+.tb-report .ref-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #EEF2FF;
+  color: var(--accent);
+  font-family: monospace;
+}
+
+/* -- TABLE FOOTER -- */
+.tb-report .table-footer {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.tb-report .pager-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.tb-report .pg {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  transition: all .14s;
+}
+
+.tb-report .pg:hover {
+  border-color: #C4B5FD;
+  color: var(--accent);
+}
+
+.tb-report .pg.active {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* toast */
+.tb-report .toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--white);
+  border: 1px solid var(--border);
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  transition: transform .3s, opacity .3s;
+  opacity: 0;
+  z-index: 300;
+}
+
+.tb-report .toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* neg value */
+.neg {
+  color: #DC2626;
+}
+
+/* -- Override the base layout's global rule
+     `table, th, td { border: 1px solid black !important }`
+   (used to give the printable #tabel report grid). Scoped to .tb-report and
+   marked !important so ONLY this styled table reverts to its intended light
+   borders; the shared report/print tables keep their black grid. -- */
+.tb-report .tb,
+.tb-report .tb th,
+.tb-report .tb td,
+.tb-report .ledger-table th,
+.tb-report .ledger-table td {
+  border: 0 !important;
+}
+.tb-report .tb thead th        { border-bottom: 2px solid var(--border) !important; }
+.tb-report .tb thead .th-group { border-bottom: 1px solid var(--border) !important; }
+.tb-report .group-row td       { border-top: 2px solid currentColor !important;
+                                 border-bottom: 1px solid var(--border) !important; }
+.tb-report .data-row td        { border-bottom: 1px solid #F1F5F9 !important; }
+.tb-report .subtotal-row td    { border-top: 1.5px solid var(--border) !important;
+                                 border-bottom: 2px solid var(--border) !important; }
+.tb-report .grand-total td     { border-top: 2px solid var(--accent) !important; }
+
+.tb-report .ledger-table                        { border: 1px solid var(--border) !important; }
+.tb-report .ledger-table thead th               { border-bottom: 1px solid var(--border) !important; }
+.tb-report .ledger-table tbody td               { border-bottom: 1px solid #F1F5F9 !important; }
+.tb-report .ledger-table tbody tr:last-child td { border-bottom: 0 !important; }
+.tb-report .ledger-total td                     { border-top: 1.5px solid var(--accent) !important; }
+
+/* ledger rows that open the Bukti Kas voucher */
+.tb-report .ledger-table tbody tr.kas-clickable { cursor: pointer; }
+
+/* -- KAS HARIAN PANEL (bottom slide-up voucher) -- */
+.tb-report .kas-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50vh;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, .16);
+  z-index: 401;                 /* above the right drill (201) */
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.tb-report .kas-panel.open {
+  transform: translateY(0);
+}
+
+.tb-report .kas-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tb-report .kas-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tb-report .kas-body {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 22px;
+}
+
+/* -- Bukti Kas voucher table (black grid like the printout) -- */
+.tb-report .kas-voucher {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.tb-report .kas-voucher td,
+.tb-report .kas-voucher th {
+  padding: 5px 10px;
+  vertical-align: top;          /* borders come from the global table grid rule */
+}
+
+.tb-report .kas-voucher .kas-doctitle {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  padding: 8px 0;
+}
+
+.tb-report .kas-voucher .kas-lbl   { font-weight: 600; white-space: nowrap; }
+.tb-report .kas-voucher .kas-colhead th { text-align: center; font-weight: 700; }
+.tb-report .kas-voucher .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.tb-report .kas-voucher .kas-totlbl { text-align: right; font-weight: 700; }
+.tb-report .kas-voucher .kas-foot td { font-weight: 700; }
+
+.action-buttons-wrap {
+display: flex;
+gap: 6px;
+justify-content: center;
+}
+
+.btn-action-sm {
+padding: 6px 10px;
+border-radius: 6px;
+font-size: 12px;
+font-weight: 600;
+cursor: pointer;
+border: none;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+}
+.btn-action-warning { background: #FEF3C7; color: #D97706; }
+.btn-action-primary { background: #DBEAFE; color: #1D4ED8; }
+.btn-action-success { background: #DCFCE7; color: #15803D; }
+.btn-action-danger  { background: #FEF2F2; color: #B91C1C; }
+
+

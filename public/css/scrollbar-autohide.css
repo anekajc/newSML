@@ -1,0 +1,46 @@
+/* Scrollbar auto-hide - dipakai halaman purchasing.
+   Ruang scrollbar tetap disisakan (16px) supaya isi tabel tidak bergeser saat thumb
+   muncul; track dan thumb dibuat transparan sehingga tidak terlihat.
+   Thumb HANYA muncul saat kursor benar-benar berada di atas batang scrollbar-nya,
+   bukan saat kursor sekadar ada di atas tabel.
+
+   PENTING: properti standar scrollbar-width / scrollbar-color TIDAK boleh dipasang
+   di sini tanpa pagar @supports. Chrome 121+ sudah mendukung keduanya, dan begitu
+   salah satunya diset, Chrome memakai scrollbar native (lengkap dengan tombol panah)
+   lalu MENGABAIKAN semua aturan ::-webkit-scrollbar di bawah - efeknya thumb ikut
+   muncul saat kursor cuma lewat di atas tabel. */
+
+*::-webkit-scrollbar        { width: 16px; height: 16px; }
+*::-webkit-scrollbar-track  { background: transparent; }
+*::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-thumb  {
+  background-color: transparent;
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Muncul saat kursor tepat di atas batang scrollbar, dan tetap terlihat selama
+   batangnya sedang di-drag walau kursor keluar dari area scrollbar. */
+*::-webkit-scrollbar-thumb:hover  { background-color: rgba(107,112,117,.75); }
+*::-webkit-scrollbar-thumb:active { background-color: rgba(107,112,117,.9); }
+
+/* po-table-header.css (dipakai bareng marketing, tidak boleh diubah) memberi
+   .po-table-wrap thumb berwarna tetap setebal 5px - di-override di sini saja. */
+.po-table-wrap::-webkit-scrollbar              { width: 16px; height: 16px; }
+.po-table-wrap::-webkit-scrollbar-thumb        { background-color: transparent; border: 3px solid transparent; background-clip: padding-box; }
+.po-table-wrap::-webkit-scrollbar-thumb:hover  { background-color: rgba(107,112,117,.75); }
+.po-table-wrap::-webkit-scrollbar-thumb:active { background-color: rgba(107,112,117,.9); }
+
+/* Sidebar tetap tipis seperti sebelumnya */
+.sidebar-nav::-webkit-scrollbar { width: 6px; height: 6px; }
+
+/* Firefox saja. Firefox tidak mengenal ::-webkit-scrollbar dan tidak punya selector
+   khusus untuk batang scrollbar, jadi di sana scrollbar tersembunyi dan baru terlihat
+   saat kursor ada di area yang bisa di-scroll. Dipagari @supports supaya blok ini
+   tidak pernah dibaca Chrome/Edge/Safari. */
+@supports not selector(::-webkit-scrollbar) {
+  *       { scrollbar-width: auto; scrollbar-color: transparent transparent; }
+  *:hover { scrollbar-color: rgba(107,112,117,.55) transparent; }
+}

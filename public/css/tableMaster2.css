@@ -1,0 +1,702 @@
+
+    /* ===================================================================
+       Set Pemakai — visual refresh
+       Scope: only cosmetic / layout rules. No element IDs, classes used by
+       JS (onclick targets, #tabel, #tabel_data, etc.) were renamed.
+    =================================================================== */
+
+    :root{
+      --sp-bg:        #f4f5f7;
+      --sp-surface:   #ffffff;
+      --sp-border:    #e7e9ee;
+      --sp-text:      #1f2430;
+      --sp-text-soft: #6b7280;
+      --sp-primary:   #6f42f3;
+      --sp-primary-dk:#5b32d6;
+      --sp-blue:      #2563eb;
+      --sp-blue-bg:   #e8edff;
+      --sp-green:     #16a34a;
+      --sp-green-bg:  #e7f7ed;
+      --sp-amber:     #b45309;
+      --sp-amber-bg:  #fef3e0;
+      --sp-red:       #dc2626;
+      --sp-red-bg:    #fdeaea;
+      --sp-cyan:      #0891b2;
+      --sp-cyan-bg:   #ecfeff;
+      --sp-radius:    10px;
+      --sp-radius-sm: 7px;
+      --sp-shadow:    0 1px 2px rgba(20,20,43,.04), 0 1px 1px rgba(20,20,43,.03);
+    }
+
+    #contentContainer, #contentContainer * { box-sizing: border-box; }
+
+    #contentContainer{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--sp-text);
+    }
+
+    /* ---------- Page header / breadcrumb ------------------------------ */
+    .sp-breadcrumb{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size: 13px;
+      color: var(--sp-text-soft);
+      margin-bottom: 18px;
+    }
+    .sp-breadcrumb span.sp-crumb-active{ color: var(--sp-text); font-weight: 600; }
+    .sp-breadcrumb .sp-sep{ color: #c7cad1; }
+
+    .sp-page-head{
+      display:flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 22px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .sp-page-head h1{
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0 0 4px 0;
+      color: var(--sp-text);
+    }
+    .sp-page-head p{
+      margin: 0;
+      font-size: 14px;
+      color: var(--sp-text-soft);
+    }
+
+    /* ---------- Buttons ------------------------------------------------ */
+    #contentContainer .btn,
+    .sp-page-head .btn{
+      border-radius: var(--sp-radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 9px 16px;
+      box-shadow: none;
+      border: 1px solid transparent;
+      transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .04s ease;
+    }
+    #contentContainer .btn:active{ transform: translateY(1px); }
+
+    /* #contentContainer .btn-primary{
+      background: var(--sp-primary);
+      border-color: var(--sp-primary);
+      color: #fff;
+    }
+    #contentContainer .btn-primary:hover,
+    #contentContainer .btn-primary:focus{
+      background: var(--sp-primary-dk);
+      border-color: var(--sp-primary-dk);
+      color: #fff;
+    } */
+    #contentContainer .btn-secondary{
+      background: #fff;
+      border-color: var(--sp-border);
+      color: var(--sp-text);
+    }
+    #contentContainer .btn-secondary:hover{
+      background: #f4f5f7;
+    }
+
+    /* small action icon buttons inside table rows */
+    .btn-action-sm{
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      border: 1px solid var(--sp-border);
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      margin: 2px;
+      color: var(--sp-text-soft);
+      transition: all .12s ease;
+    }
+
+    .btn-action-md{
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin: 2px;
+    border:none;
+    color: var(--sp-text-soft);
+    transition: all .12s ease;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    /* transition: background-color 0.3s, box-shadow 0.3s; */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action-sm:hover{ filter: brightness(0.97); transform: translateY(-1px); }
+    /* Deliberately NO !important on these five, even though it is tempting:
+       newmasterTest.blade.php / accounting/newmaster.blade.php / purchasing/newmasterx.blade.php
+       / report/newmasterxreport.blade.php each define their own unscoped
+       .btn-primary/.btn-danger in a <style> placed right after @yield('css') — i.e. loaded
+       AFTER this file. Equal specificity (single class each) + later source order means their
+       generic colors win over this tint at rest on every button that combines both
+       (e.g. class="btn btn-primary btn-action-primary btn-pill-primary", the standard gudang
+       pill-button convention) on any page using one of those four layouts.
+
+       !important here would win that rest state, but it would ALSO outrank
+       canvas/bootstrap.css's .btn-primary:hover / .btn-danger:hover — and those are what
+       supply the solid hover color the pill buttons animate towards (see the
+       `transition: background-color .3s` in the .btn-pill-* rule further down). The result
+       was a correctly-tinted button with no hover response at all, so !important was removed
+       again on purpose. Do not re-add it.
+
+       The fix for an affected page is page-local extra specificity, not !important —
+       e.g. `.mainpage/.modal .btn.btn-action-primary` (0,3,0 at rest, 0,4,0 on :hover) as
+       done in accounting/cetakpengajuandph.blade.php, which has the worked example and the
+       full cascade write-up in its @section('css'). */
+    .btn-action-success{ color: var(--sp-green); border-color: #cdebd7; background: var(--sp-green-bg); }
+    .btn-action-warning{ color: var(--sp-amber); border-color: #fbe3bd; background: var(--sp-amber-bg); }
+    .btn-action-primary{ color: var(--sp-blue); border-color: #cfdcff; background: var(--sp-blue-bg); }
+    .btn-action-danger { color: var(--sp-red);  border-color: #f7cfcf; background: var(--sp-red-bg); }
+    /* Cyan — dipakai tombol Print di kolom Aksi, warnanya disamakan dengan
+       #tabel2 .btn-info di purchasing/purchaseOrder.blade.php. */
+    .btn-action-info   { color: var(--sp-cyan); border-color: #a5f3fc; background: var(--sp-cyan-bg); }
+
+    /* ---- Pill-button rest + hover, pinned ------------------------------------------
+       The tint rules above are single-class (0,1,0), so on the four layouts that define
+       their own unscoped .btn-primary/.btn-danger after @yield('css') — newmasterTest,
+       purchasing/newmasterx, report/newmasterxreport, accounting/newmaster — the layout won
+       the REST state and forced these buttons solid. canvas/bootstrap.css's .btn-*:hover
+       (0,2,0) still won the HOVER state, so the button animated from solid #1a73e8 to solid
+       #0069d9: the `transition: background-color .3s` in the .btn-pill-* rule below was
+       running the whole time, just between two near-identical colours, which reads as no
+       transition at all. (Batal escaped notice only because newmasterTest's .btn-danger
+       happens to be pale, so its hover to #c82333 stayed dramatic.)
+
+       Pinned here by specificity rather than !important: !important on the tints above would
+       win the rest state but also outrank bootstrap's :hover, which is what SUPPLIES the
+       solid colour these buttons animate towards — so it trades a wrong colour for no hover
+       at all. That is why it was removed; don't re-add it. These are 0,3,0 at rest (beats any
+       layout's 0,1,0) and 0,4,0 on :hover/:focus (beats bootstrap's 0,2,0).
+
+       .btn-pill-primary is part of the selector ON PURPOSE, not decoration. Repo-wide, 58
+       buttons use the full pill convention (btn + btn-primary + btn-action-primary +
+       btn-pill-primary) — those are these. But 64 others are plain `btn btn-action-primary`
+       with no bootstrap colour class and no pill: they have no hover rule today, and a
+       selector of merely `.btn.btn-action-primary` would hand all 64 a solid hover they never
+       had. Requiring the pill class excludes them, as it excludes the 238 .btn-action-sm and
+       67 .btn-action-md icon buttons (those carry no .btn class and keep their own
+       filter/translateY hover).
+
+       Hover/focus colours are bootstrap's own .btn-*:hover values, copied verbatim, so the
+       four broken layouts land on exactly the colour the four already-correct ones
+       (gudang/newmasterx, gudang/newmaster, master/newmaster, report/newmaster2x) show
+       today — on those, this whole block is a no-op that just makes the result explicit.
+
+       Deliberately no `border` shorthand and no #contentContainer variant: `#contentContainer
+       .btn { border: 1px solid transparent }` above is 1,1,0 and outranks these, so pill
+       buttons inside #contentContainer have always had transparent borders while those in
+       .modal show the tint border. Left exactly as-is — fighting it would change the look of
+       every already-correct page. */
+    .btn.btn-pill-primary.btn-action-primary {
+      color: var(--sp-blue);
+      background: var(--sp-blue-bg);
+      border-color: #cfdcff;
+    }
+
+    .btn.btn-pill-primary.btn-action-danger {
+      color: var(--sp-red);
+      background: var(--sp-red-bg);
+      border-color: #f7cfcf;
+    }
+
+    .btn.btn-pill-primary.btn-action-success {
+      color: var(--sp-green);
+      background: var(--sp-green-bg);
+      border-color: #cdebd7;
+    }
+
+    .btn.btn-pill-primary.btn-action-primary:hover,
+    .btn.btn-pill-primary.btn-action-primary:focus {
+      color: #fff;
+      background: #0069d9;
+      border-color: #0062cc;
+    }
+
+    .btn.btn-pill-primary.btn-action-danger:hover,
+    .btn.btn-pill-primary.btn-action-danger:focus {
+      color: #fff;
+      background: #c82333;
+      border-color: #bd2130;
+    }
+
+    .btn.btn-pill-primary.btn-action-success:hover,
+    .btn.btn-pill-primary.btn-action-success:focus {
+      color: #fff;
+      background: #218838;
+      border-color: #1e7e34;
+    }
+
+    /* The same four layouts also set `.btn:hover { opacity: .85 }`. opacity is not in the
+       .btn-pill-* transition list below, so it snaps instead of fading and muddies the colour
+       change above. Cancelled on pill buttons only; a no-op on the layouts that never had it. */
+    .btn.btn-pill-primary:hover,
+    .btn.btn-pill-secondary:hover {
+      opacity: 1;
+    }
+
+    .action-buttons-wrap {
+        display: flex;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        gap: 4px;              /* optional spacing */
+        justify-content: center;
+        align-items: center;
+    }
+
+    .action-buttons-wrap .btn-action-sm {
+        flex-shrink: 0;
+    }
+
+    /* ---------- Stat cards --------------------------------------------- */
+    .sp-stats-row{
+      display:flex;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .sp-stat-card{
+      background: var(--sp-surface);
+      border: 1px solid var(--sp-border);
+      border-radius: var(--sp-radius);
+      box-shadow: var(--sp-shadow);
+      padding: 16px 18px;
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      min-width: 200px;
+      flex: 1 1 200px;
+    }
+    .sp-stat-icon{
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 18px;
+      flex: none;
+    }
+    .sp-stat-icon.is-purple{ background:#efe9ff; color: var(--sp-primary); }
+    .sp-stat-icon.is-green { background: var(--sp-green-bg); color: var(--sp-green); }
+    .sp-stat-icon.is-blue  { background: var(--sp-blue-bg);  color: var(--sp-blue); }
+    .sp-stat-label{
+      font-size: 13px;
+      color: var(--sp-text-soft);
+      margin-bottom: 2px;
+    }
+    .sp-stat-value{
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--sp-text);
+    }
+    .sp-stat-sub{
+      font-size: 12px;
+      color: var(--sp-text-soft);
+      margin-top: 2px;
+    }
+
+    /* ---------- Toolbar (search + actions) ------------------------------ */
+    .sp-toolbar{
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--sp-surface);
+      border: 1px solid var(--sp-border);
+      border-bottom: none;
+      border-radius: var(--sp-radius) var(--sp-radius) 0 0;
+      padding: 14px 16px;
+    }
+    .sp-search-wrap{
+      position:relative;
+      flex: 1 1 260px;
+      max-width: 340px;
+    }
+    .sp-search-wrap input{
+      width:100%;
+      border: 1px solid var(--sp-border);
+      border-radius: var(--sp-radius-sm);
+      padding: 9px 12px 9px 34px;
+      font-size: 14px;
+      background: #fbfbfc;
+      color: var(--sp-text);
+    }
+    .sp-search-wrap input:focus{
+      outline: none;
+      border-color: var(--sp-primary);
+      background: #fff;
+    }
+    .sp-search-wrap .sp-search-icon{
+      position:absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #a3a8b3;
+      font-size: 14px;
+      pointer-events:none;
+    }
+.table-wrap{
+    overflow-x:auto;
+    overflow-y:hidden;
+    width:100%;
+}
+
+.tb{
+    min-width:100%;
+    width:max-content;
+    white-space:nowrap;
+}
+    /* ---------- Table card shell ---------------------------------------- */
+    .sp-table-card{
+      background: var(--sp-surface);
+      border: 1px solid var(--sp-border);
+      border-radius: 0 0 var(--sp-radius) var(--sp-radius);
+      box-shadow: var(--sp-shadow);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .sp-table-card .table-responsive,
+    .sp-table-card .container-fluid{ padding: 0; }
+
+    /* Re-skin the existing #tabel without touching its id/classes */
+    #tabel{
+      margin-bottom: 0;
+      border: none;
+      width: 100%;
+    }
+    #tabel thead th{
+      background: #f8f9fb !important;
+      color: var(--sp-text-soft) !important;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-weight: 600;
+      border-bottom: 1px solid var(--sp-border);
+      border-top: none;
+      padding: 12px 14px;
+      white-space: nowrap;
+    }
+    #tabel tbody td{
+      border-color: var(--sp-border);
+      border-left: none;
+      border-right: none;
+      padding: 13px 14px;
+      font-size: 14px;
+      vertical-align: middle;
+      color: var(--sp-text);
+    }
+    #tabel.table-striped tbody tr:nth-of-type(odd){
+      background-color: #fbfbfc;
+    }
+    #tabel tbody tr:hover{
+      background-color: #f5f3ff;
+    }
+    #tabel, #tabel th, #tabel td{
+      border-color: var(--sp-border) !important;
+    }
+
+    /* Level / role pill, mirrors the "Debit/Kredit" badges in the reference */
+    #tabel td:last-child{
+      font-weight: 600;
+    }
+
+    /* DataTables chrome (length/info/pagination) — keep functional, restyle */
+    .dataTables_wrapper .dataTables_paginate .paginate_button{
+      border-radius: 6px !important;
+      margin-left: 4px;
+      border: 1px solid var(--sp-border) !important;
+      color: var(--sp-text) !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current{
+      background: var(--sp-primary) !important;
+      border-color: var(--sp-primary) !important;
+      color: #fff !important;
+    }
+    .dataTables_wrapper .dataTables_info{
+      color: var(--sp-text-soft);
+      font-size: 13px;
+      padding-top: 14px !important;
+    }
+    .dataTables_wrapper{
+      padding: 4px 14px 14px 14px;
+    }
+
+    /* ---------- Status / role badge helper (used in inline JS rows too) - */
+    .sp-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .sp-badge::before{
+      content:"";
+      width:6px;
+      height:10px;
+      border-radius:50%;
+      background: currentColor;
+    }
+    .sp-badge.is-user        { background: var(--sp-blue-bg);  color: var(--sp-blue); }
+    .sp-badge.is-supervisor  { background: var(--sp-amber-bg); color: var(--sp-amber); }
+    .sp-badge.is-admin       { background: var(--sp-green-bg); color: var(--sp-green); }
+
+    .sp-badge.is-active      { background: var(--sp-green-bg); color: var(--sp-green); }
+    .sp-badge.is-inactive    { background: var(--sp-red-bg); color: var(--sp-red); }
+
+    /* ---------- Modals --------------------------------------------------- */
+    .modal-content{
+      border: none;
+      border-radius: var(--sp-radius);
+      box-shadow: 0 20px 50px rgba(15,15,35,.18);
+    }
+    .modal-header{
+      border-bottom: 1px solid var(--sp-border);
+      padding: 16px 20px;
+    }
+    .modal-title{
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--sp-text);
+    }
+    .modal-footer{
+      border-top: 1px solid var(--sp-border);
+      padding: 14px 20px;
+    }
+    .modal-body label{
+      font-size: 13px;
+      color: var(--sp-text-soft);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .modal-body .form-control{
+      border-radius: var(--sp-radius-sm);
+      border: 1px solid var(--sp-border);
+      font-size: 14px;
+    }
+    .modal-body .form-control:focus{
+      border-color: var(--sp-primary);
+      box-shadow: 0 0 0 3px rgba(111,66,243,.12);
+    }
+
+    @media (max-width: 768px){
+      .sp-page-head{ flex-direction: column; align-items: flex-start; }
+      .sp-stats-row{ flex-direction: column; }
+      .sp-toolbar{ flex-direction: column; align-items: stretch; }
+      .sp-search-wrap{ max-width: none; }
+    }
+
+    /* Hide action buttons until the row is hovered */
+    #tabel tbody .action-buttons-wrap {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-6px);
+      transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+    }
+
+    /* Show them when hovering the table row */
+    #tabel tbody tr:hover .action-buttons-wrap {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+
+    /* Keep actions visible while keyboard users focus a button */
+    #tabel tbody tr:focus-within .action-buttons-wrap {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+
+    #tabel th:first-child {
+      width: 1%;
+      white-space: nowrap;
+    }
+
+    /* .action-buttons-wrap (below) makes this <td> display:flex, which takes it
+       out of normal table-cell layout -- "width: 1%" then resolves against the
+       whole table's width instead of shrink-wrapping to its buttons, collapsing
+       the cell to ~20px and making the centered (justify-content:center) buttons
+       overflow symmetrically past both edges of that sliver, spilling off the
+       left edge of the table entirely on wide tables. min-width instead of a
+       percentage keeps it sized to its own 3 action buttons regardless of how
+       many columns the rest of the table has. */
+    #tabel td:first-child {
+      width: auto;
+      min-width: 110px;
+      white-space: nowrap;
+    }
+
+    /* ---------------------------------------------------------------------
+       Moved from gudang/permintaanpemakaian.blade.php so other gudang pages
+       (this file is loaded globally by gudang/newmaster.blade.php) can reuse
+       the tab strip / pill buttons / fixed action column / .tb-report
+       DataTables chrome without copy-pasting the page-local <style> block.
+    ----------------------------------------------------------------------- */
+
+    /* Tab strip (e.g. "PPI Belum/Sudah Otorisasi") — segmented toggle, pairs
+       with Bootstrap's data-toggle="tab" (switch instan tanpa reload). */
+    .tab-toggle {
+      display: inline-flex;
+      /* .tb-report .content (parent) is display:flex; flex-direction:column with
+         default align-items:stretch, so every direct child gets stretched full-width
+         regardless of its own display value — align-self:flex-start opts this one out. */
+      align-self: flex-start;
+      background-color: #f1f3f5;
+      border-radius: 20px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .tab-toggle-btn {
+      display: inline-block;
+      border: none;
+      background: transparent;
+      color: #495057;
+      border-radius: 17px;
+      padding: 5px 16px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+
+    .tab-toggle-btn:hover {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .tab-toggle-btn.active {
+      background-color: #007bff;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
+    }
+
+    /* Kolom Aksi pada tabel .tb-report — fixed, tidak ikut drag/gear kolom, dan
+       lebar menyempit mengikuti tombol (bukan ikut melebar rata kolom lain). */
+    .tb-report .tb thead th.rt-fixed-th {
+      cursor: default;
+      width: 1%;
+      white-space: nowrap;
+    }
+
+    #contentContainer .btn.btn-pill-primary,
+    #contentContainer .btn.btn-pill-secondary,
+    .modal .btn.btn-pill-primary,
+    .modal .btn.btn-pill-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 30px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Tombol aksi bulat di kolom Aksi (tabel .tb-report) — Detail/Edit/Otorisasi/dst. */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* Tombol di kolom Aksi baru muncul saat barisnya di-hover. Opt-in lewat kelas
+       .aksi-hover pada <table> supaya tabel lain yang juga memakai .action-buttons
+       tidak ikut berubah — pola yang sama dengan .po-aksi-hover di
+       purchasing/purchaseOrder.blade.php.
+       visibility (bukan display) supaya lebar kolomnya tetap dipesan — tabel tidak
+       melompat saat tombol muncul/hilang. :focus-within supaya tombol tetap bisa
+       dicapai lewat keyboard (Tab), bukan hanya mouse. */
+    table.aksi-hover tbody .action-buttons .btn-action-sm {
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity .12s ease;
+    }
+    table.aksi-hover tbody tr:hover .action-buttons .btn-action-sm,
+    table.aksi-hover tbody tr:focus-within .action-buttons .btn-action-sm {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Tabel di dalam .tb-report yang masih pakai DataTables bawaan (bukan mesin
+       ReportTable interaktif): report-table.css hanya menata DataTables di bawah
+       .rt-picker-v2, jadi reset .tb-report * { margin:0; padding:0 } perlu
+       dikompensasi di sini. */
+    .tb-report .dataTables_wrapper {
+      padding: 0 0 10px;
+    }
+
+    .tb-report .dataTables_filter {
+      text-align: right;
+      padding-bottom: 10px;
+    }
+
+    .tb-report .dataTables_filter input {
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+
+    .tb-report .dataTables_info {
+      padding-top: 8px;
+      font-size: 0.8rem;
+    }
+
+    .tb-report table.dataTable thead th.sorting,
+    .tb-report table.dataTable thead th.sorting_asc,
+    .tb-report table.dataTable thead th.sorting_desc {
+      padding-right: 26px;
+    }
+
+    /* Gaya tombol OK/Cancel dialog AlertifyJS ("Batal Otorisasi" dll) dipindah ke
+       public/css/report-table.css — cari blok .ajs-app-buttons di sana. Alasannya
+       report-table.css dimuat 46 view (termasuk semua halaman report yang punya
+       dialog "Reset Kolom"), sedangkan tableMaster2.css cuma dimuat 2 view. */
+
+       .bi-plus {
+        font-size: 1.5rem;
+        line-height: 0;
+        vertical-align: middle;
+        }
+
+        .btn-browsing {
+            height: 38px;
+            width: 40px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0 6px 6px 0;
+            background-color: #e8edff;
+            border: 1px solid #cfdcff;
+            color: #2563eb;
+            font-size: 15px;
+            box-shadow: none;
+            border-radius: 0 6px 6px 0 !important;
+        }
+.btn-browsing:hover,
+.btn-browsing:focus { background-color: #dce6ff; border-color: #b9c9ff; color: #1d4ed8; }
+.btn-browsing:disabled { background-color: #f1f3f5; border-color: #dee2e6; color: #adb5bd; }

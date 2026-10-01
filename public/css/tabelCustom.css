@@ -1,0 +1,29 @@
+
+  #tabel_filter {
+      display: flex;
+      align-items: flex-end;
+      margin-top: 8px;  
+      margin-right: 10px;
+      margin-bottom: -10px;
+    }
+
+  #tabel_filter label input {
+      width: 150px;
+      padding: 5px 10px; 
+      border-radius: 10px; 
+      border: 1px solid #ccc; 
+      box-shadow: none; 
+      font-size: 0.65rem; 
+    }
+
+  #tabel_filter label {
+      font-weight: 600; 
+      font-size: 0.9rem; 
+      color: #333;
+      
+    }
+
+    #theadCustom {
+        color:white;
+        background-color: #0d6efd;
+    }

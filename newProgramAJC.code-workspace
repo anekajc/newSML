@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.colorTheme": "Monokai Classic",
+		"workbench.iconTheme": "material-icon-theme",
+		"workbench.productIconTheme": "fluent-icons"
+	}
+}

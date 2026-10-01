@@ -1,0 +1,1085 @@
+/* ============================================================
+ * po-table-header.css
+ *
+ * Header tabel interaktif (drag kolom + menu roda gigi + bar "kolom
+ * tersembunyi" + tombol "Reset kolom" + modal filter) untuk halaman-halaman
+ * purchasing yang memakai report-table.js.
+ *
+ * Aturan di sini disalin dari public/css/report-table.css, TAPI scope-nya
+ * diganti. Di file aslinya semua aturan header/bar diikat ke
+ * `.tb-report .tb ...`, dan file itu juga membawa reset ganas
+ * `.tb-report * { margin:0; padding:0 }` plus beberapa blok :root dengan
+ * nama variabel generik (--bg, --border, --text, --accent). Memuat
+ * report-table.css di layout purchasing akan merusak layout Bootstrap
+ * halaman-halaman purchasing, jadi yang disalin hanya bagian yang dipakai
+ * komponen, dengan scope khusus halaman-halaman ini:
+ *
+ *   .tb-report .tb thead th.rt-th   ->  #tabel / #tabel2 / #tabelso thead th.rt-th
+ *   .tb-report .rt-bar              ->  #rtBar (satu elemen per halaman, dipindah
+ *                                       lewat JS - lihat poPindahBar()/prPindahBar())
+ *   .tb-report .rt-hint             ->  .po-rt-hint
+ *   .rt-colmenu                     ->  disalin apa adanya (menunya memang
+ *                                       di-appendChild ke <body>)
+ *   #modalFilter.rt-filter          ->  .rt-filter (dipakai lebih dari satu id modal,
+ *                                       lihat #modalFilterPO & #modalFilterPR di bawah)
+ *
+ * Dipakai oleh:
+ *   - resources/views/purchasing/purchaseOrder.blade.php (#modalFilterPO)
+ *   - resources/views/purchasing/pembelianpermintaannonagen.blade.php (#modalFilterPR)
+ * ============================================================ */
+
+/* Hanya variabel --rt-* yang benar-benar dipakai aturan di bawah.
+   Prefix --rt- cukup khas sehingga aman didefinisikan di :root. */
+:root {
+  --rt-card: #FFFFFF;
+  --rt-ink: #1D2130;
+  --rt-ink-soft: #6B7180;
+  --rt-border: #E7E8F0;
+  --rt-border-soft: #EFEFF6;
+  --rt-indigo: #4F46E5;
+  --rt-indigo-soft: #EEF0FE;
+  --rt-bg: #F5F5FA;
+  --rt-radius: 12px;
+  --rt-red: #D64550;
+
+  --sp-blue:  #2563eb;  --sp-blue-bg:  #e8edff;
+  --sp-green: #16a34a;  --sp-green-bg: #e7f7ed;
+  --sp-amber: #b45309;  --sp-amber-bg: #fef3e0;
+  --sp-red:   #dc2626;  --sp-red-bg:   #fdeaea;
+}
+
+/* ============ Judul kolom (#tabel, #tabel2, #tabel3, #tabel7, #tabelso) ============
+   Setiap halaman memakai subset id-nya sendiri untuk tabel interaktif (drag +
+   roda gigi) -- #tabel/#tabel7 di so.blade.php, #tabel/#tabel2/#tabelso di
+   purchaseOrder.blade.php, #tabel/#tabel2/#tabel3 di invoicepenjualan.blade.php,
+   #tabel/#tabelRetur di returpembeliangudang.blade.php, #tabelPdpp di
+   accounting/penerimaandpp.blade.php, #tabelDpp di
+   accounting/pengajuandpp.blade.php, #tabelOut/#tabelPenerimaan di
+   accounting/cetakpengajuandph.blade.php (dua tabel, satu per tab), dan halaman
+   marketing sejenis. Semua id itu didaftarkan di tiap aturan di bawah supaya tidak
+   ada halaman yang kehilangan styling saat salah satu id ditambah/diganti nama.
+   #tabelDph masih terdaftar tapi sudah tidak dipakai halaman manapun -
+   accounting/pengajuandph.blade.php sendiri sudah dipindah ke id #tabel; dibiarkan
+   sebagai pendaftaran mati yang tidak berbahaya, bukan dihapus, supaya tidak perlu
+   audit ulang kalau suatu saat id itu dipakai lagi. */
+
+/* Padding pindah ke .th-inner supaya area drag mengisi penuh sel. */
+#tabelDpp thead th.rt-th,
+#tabelDph thead th.rt-th,
+#tabelOut thead th.rt-th,
+#tabelPenerimaan thead th.rt-th,
+#tabelPdpp thead th.rt-th,
+#tabel thead th.rt-th,
+#tabel2 thead th.rt-th,
+#tabel3 thead th.rt-th,
+#tabel7 thead th.rt-th,
+#tabelso thead th.rt-th,
+#tabelRetur thead th.rt-th,
+#tabel_pembelian thead th.rt-th {
+  padding: 0;
+  vertical-align: middle;
+}
+
+#tabelDpp thead th.rt-th .th-inner,
+#tabelDph thead th.rt-th .th-inner,
+#tabelOut thead th.rt-th .th-inner,
+#tabelPenerimaan thead th.rt-th .th-inner,
+#tabelPdpp thead th.rt-th .th-inner,
+#tabel thead th.rt-th .th-inner,
+#tabel2 thead th.rt-th .th-inner,
+#tabel3 thead th.rt-th .th-inner,
+#tabel7 thead th.rt-th .th-inner,
+#tabelso thead th.rt-th .th-inner,
+#tabelRetur thead th.rt-th .th-inner,
+#tabel_pembelian thead th.rt-th .th-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  cursor: grab;
+}
+
+#tabelDpp thead th.rt-th .th-inner.dragging,
+#tabelDph thead th.rt-th .th-inner.dragging,
+#tabelOut thead th.rt-th .th-inner.dragging,
+#tabelPenerimaan thead th.rt-th .th-inner.dragging,
+#tabelPdpp thead th.rt-th .th-inner.dragging,
+#tabel thead th.rt-th .th-inner.dragging,
+#tabel2 thead th.rt-th .th-inner.dragging,
+#tabel3 thead th.rt-th .th-inner.dragging,
+#tabel7 thead th.rt-th .th-inner.dragging,
+#tabelso thead th.rt-th .th-inner.dragging,
+#tabel_pembelian thead th.rt-th .th-inner.dragging { opacity: .4; }
+#tabelRetur thead th.rt-th .th-inner.dragging { opacity: .4; }
+
+#tabelDpp thead th.rt-th.drag-over .th-inner,
+#tabelDph thead th.rt-th.drag-over .th-inner,
+#tabelOut thead th.rt-th.drag-over .th-inner,
+#tabelPenerimaan thead th.rt-th.drag-over .th-inner,
+#tabelPdpp thead th.rt-th.drag-over .th-inner,
+#tabel thead th.rt-th.drag-over .th-inner,
+#tabel2 thead th.rt-th.drag-over .th-inner,
+#tabel3 thead th.rt-th.drag-over .th-inner,
+#tabel7 thead th.rt-th.drag-over .th-inner,
+#tabelso thead th.rt-th.drag-over .th-inner,
+#tabel_pembelian thead th.rt-th.drag-over .th-inner { box-shadow: inset 3px 0 0 var(--rt-indigo); }
+#tabelRetur thead th.rt-th.drag-over .th-inner { box-shadow: inset 3px 0 0 var(--rt-indigo); }
+
+#tabelDpp thead th.rt-th .th-label,
+#tabelDph thead th.rt-th .th-label,
+#tabelOut thead th.rt-th .th-label,
+#tabelPenerimaan thead th.rt-th .th-label,
+#tabelPdpp thead th.rt-th .th-label,
+#tabel thead th.rt-th .th-label,
+#tabel2 thead th.rt-th .th-label,
+#tabel3 thead th.rt-th .th-label,
+#tabel7 thead th.rt-th .th-label,
+#tabelso thead th.rt-th .th-label,
+#tabelRetur thead th.rt-th .th-label,
+#tabel_pembelian thead th.rt-th .th-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* kolom numerik: judul rata kanan seperti angkanya */
+#tabelDpp thead th.rt-th.num .th-label,
+#tabelDph thead th.rt-th.num .th-label,
+#tabelOut thead th.rt-th.num .th-label,
+#tabelPenerimaan thead th.rt-th.num .th-label,
+#tabelPdpp thead th.rt-th.num .th-label,
+#tabel thead th.rt-th.num .th-label,
+#tabel2 thead th.rt-th.num .th-label,
+#tabel3 thead th.rt-th.num .th-label,
+#tabel7 thead th.rt-th.num .th-label,
+#tabelso thead th.rt-th.num .th-label,
+#tabel_pembelian thead th.rt-th.num .th-label { text-align: right; }
+#tabelRetur thead th.rt-th.num .th-label { text-align: right; }
+
+/* pegangan drag */
+#tabelDpp thead th.rt-th .th-grip,
+#tabelDph thead th.rt-th .th-grip,
+#tabelOut thead th.rt-th .th-grip,
+#tabelPenerimaan thead th.rt-th .th-grip,
+#tabelPdpp thead th.rt-th .th-grip,
+#tabel thead th.rt-th .th-grip,
+#tabel2 thead th.rt-th .th-grip,
+#tabel3 thead th.rt-th .th-grip,
+#tabel7 thead th.rt-th .th-grip,
+#tabelso thead th.rt-th .th-grip,
+#tabelRetur thead th.rt-th .th-grip,
+#tabel_pembelian thead th.rt-th .th-grip {
+  display: grid;
+  grid-template-columns: repeat(2, 3px);
+  gap: 3px;
+  flex-shrink: 0;
+  opacity: .55;
+  transition: opacity .12s;
+}
+
+#tabelDpp thead th.rt-th .th-grip i,
+#tabelDph thead th.rt-th .th-grip i,
+#tabelOut thead th.rt-th .th-grip i,
+#tabelPenerimaan thead th.rt-th .th-grip i,
+#tabelPdpp thead th.rt-th .th-grip i,
+#tabel thead th.rt-th .th-grip i,
+#tabel2 thead th.rt-th .th-grip i,
+#tabel3 thead th.rt-th .th-grip i,
+#tabel7 thead th.rt-th .th-grip i,
+#tabelso thead th.rt-th .th-grip i,
+#tabelRetur thead th.rt-th .th-grip i,
+#tabel_pembelian thead th.rt-th .th-grip i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #C7C9D6;
+}
+
+#tabelDpp thead th.rt-th:hover .th-grip,
+#tabelDph thead th.rt-th:hover .th-grip,
+#tabelOut thead th.rt-th:hover .th-grip,
+#tabelPenerimaan thead th.rt-th:hover .th-grip,
+#tabelPdpp thead th.rt-th:hover .th-grip,
+#tabel thead th.rt-th:hover .th-grip,
+#tabel2 thead th.rt-th:hover .th-grip,
+#tabel3 thead th.rt-th:hover .th-grip,
+#tabel7 thead th.rt-th:hover .th-grip,
+#tabelso thead th.rt-th:hover .th-grip,
+#tabel_pembelian thead th.rt-th:hover .th-grip { opacity: 1; }
+#tabelRetur thead th.rt-th:hover .th-grip { opacity: 1; }
+
+/* tombol roda gigi */
+#tabelDpp thead th.rt-th .th-gear,
+#tabelDph thead th.rt-th .th-gear,
+#tabelOut thead th.rt-th .th-gear,
+#tabelPenerimaan thead th.rt-th .th-gear,
+#tabelPdpp thead th.rt-th .th-gear,
+#tabel thead th.rt-th .th-gear,
+#tabel2 thead th.rt-th .th-gear,
+#tabel3 thead th.rt-th .th-gear,
+#tabel7 thead th.rt-th .th-gear,
+#tabelso thead th.rt-th .th-gear,
+#tabelRetur thead th.rt-th .th-gear,
+#tabel_pembelian thead th.rt-th .th-gear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #B8BACA;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s, background .12s, color .12s;
+}
+
+#tabelDpp thead th.rt-th:hover .th-gear,
+#tabelDph thead th.rt-th:hover .th-gear,
+#tabelOut thead th.rt-th:hover .th-gear,
+#tabelPenerimaan thead th.rt-th:hover .th-gear,
+#tabelPdpp thead th.rt-th:hover .th-gear,
+#tabel thead th.rt-th:hover .th-gear,
+#tabel2 thead th.rt-th:hover .th-gear,
+#tabel3 thead th.rt-th:hover .th-gear,
+#tabel7 thead th.rt-th:hover .th-gear,
+#tabelso thead th.rt-th:hover .th-gear,
+#tabel_pembelian thead th.rt-th:hover .th-gear { opacity: 1; }
+#tabelRetur thead th.rt-th:hover .th-gear { opacity: 1; }
+
+#tabelDpp thead th.rt-th .th-gear:hover,
+#tabelDph thead th.rt-th .th-gear:hover,
+#tabelOut thead th.rt-th .th-gear:hover,
+#tabelPenerimaan thead th.rt-th .th-gear:hover,
+#tabelPdpp thead th.rt-th .th-gear:hover,
+#tabel thead th.rt-th .th-gear:hover,
+#tabelDpp thead th.rt-th .th-gear.active,
+#tabelDph thead th.rt-th .th-gear.active,
+#tabelOut thead th.rt-th .th-gear.active,
+#tabelPenerimaan thead th.rt-th .th-gear.active,
+#tabelPdpp thead th.rt-th .th-gear.active,
+#tabel thead th.rt-th .th-gear.active,
+#tabel2 thead th.rt-th .th-gear:hover,
+#tabel2 thead th.rt-th .th-gear.active,
+#tabel3 thead th.rt-th .th-gear:hover,
+#tabel3 thead th.rt-th .th-gear.active,
+#tabel7 thead th.rt-th .th-gear:hover,
+#tabel7 thead th.rt-th .th-gear.active,
+#tabelso thead th.rt-th .th-gear:hover,
+#tabelso thead th.rt-th .th-gear.active,
+#tabel_pembelian thead th.rt-th .th-gear:hover,
+#tabelRetur thead th.rt-th .th-gear:hover,
+#tabelRetur thead th.rt-th .th-gear.active,
+#tabel_pembelian thead th.rt-th .th-gear.active {
+  opacity: 1;
+  background: var(--rt-indigo-soft);
+  color: var(--rt-indigo);
+}
+
+/* DataTables memasang ikon sort sebagai background-image pada th.sorting*.
+   Dengan .th-inner yang mengisi penuh sel, ikon itu bertabrakan dengan roda
+   gigi, jadi digeser sedikit ke kiri. */
+#tabelDpp thead th.rt-th,
+#tabelDph thead th.rt-th,
+#tabelOut thead th.rt-th,
+#tabelPenerimaan thead th.rt-th,
+#tabelPdpp thead th.rt-th,
+#tabel thead th.rt-th,
+#tabel2 thead th.rt-th,
+#tabel3 thead th.rt-th,
+#tabel7 thead th.rt-th,
+#tabelso thead th.rt-th,
+#tabel_pembelian thead th.rt-th { background-position: right 26px center; }
+#tabelRetur thead th.rt-th { background-position: right 26px center; }
+
+/* ============ Menu kolom (dipasang di <body>, position:fixed) ============
+   Disalin apa adanya dari report-table.css � memang sudah tanpa scope,
+   karena menunya di-appendChild ke document.body. */
+
+.rt-colmenu {
+  position: fixed;
+  z-index: 1080;
+  width: 216px;
+  padding: 6px;
+  background: var(--rt-card);
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  box-shadow: 0 16px 40px -12px rgba(30, 30, 60, .25);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--rt-ink);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.rt-colmenu * { box-sizing: border-box; }
+
+.rt-colmenu .rt-colmenu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rt-colmenu .rt-colmenu-item:hover { background: var(--rt-bg); }
+
+/* baris stepper/switch bukan aksi tunggal � jangan beri efek klik di seluruh baris */
+.rt-colmenu .rt-colmenu-item.is-static { cursor: default; }
+.rt-colmenu .rt-colmenu-item.is-static:hover { background: transparent; }
+
+/* Baris .is-static terakhir pada menu roda gigi selalu "Tampilkan total"
+   (report-table.js menyusun: Sembunyikan kolom, divider, Desimal, Tampilkan
+   total). Tabel Purchase Order tidak punya baris subtotal/grand total, jadi
+   item itu disembunyikan supaya tidak jadi tombol mati.
+   Dipakai :last-child, bukan [data-rtact="total"], karena atribut itu ada di
+   tombol switch-nya (anak), bukan di barisnya. */
+.rt-colmenu .rt-colmenu-item.is-static:last-child { display: none; }
+
+.rt-colmenu .rt-colmenu-divider {
+  height: 1px;
+  margin: 5px 2px;
+  background: var(--rt-border-soft);
+}
+
+.rt-colmenu .rt-stepper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.rt-colmenu .rt-stepper button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--rt-border);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--rt-ink);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.rt-colmenu .rt-stepper button:hover { background: var(--rt-bg); }
+
+.rt-colmenu .rt-stepper b {
+  display: inline-block;
+  min-width: 14px;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* ============ Bar di atas tabel (kolom tersembunyi + Reset kolom) ============ */
+
+.rt-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 0 14px;
+  position: relative;
+  z-index: 45;
+}
+
+.rt-bar .rt-drop { position: relative; }
+
+.rt-bar .rt-hidden-btn,
+.rt-bar .rt-view-btn,
+.rt-bar .rt-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  background: var(--rt-card);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rt-bar .rt-hidden-btn { color: var(--rt-ink-soft); }
+
+.rt-bar .rt-hidden-btn:hover:not(:disabled) { color: var(--rt-ink); border-color: #D6D8E4; }
+
+.rt-bar .rt-hidden-btn:disabled { opacity: .6; cursor: default; }
+
+/* Reset kolom � aksi destruktif (menghapus pengaturan kolom tersimpan user),
+   jadi diberi warna merah saat hover supaya beda dari tombol lain di bar. */
+.rt-bar .rt-reset-btn { color: var(--rt-ink-soft); }
+
+.rt-bar .rt-reset-btn:hover {
+  color: var(--rt-red);
+  border-color: var(--rt-red);
+  background: #FEF2F2;
+}
+
+.rt-bar .rt-drop-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 230px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--rt-card);
+  border: 1px solid var(--rt-border);
+  border-radius: var(--rt-radius);
+  box-shadow: 0 16px 40px -12px rgba(30, 30, 60, .2);
+  z-index: 60;
+}
+
+.rt-bar .rt-drop-menu.open { display: block; }
+
+.rt-bar .rt-drop-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--rt-border-soft);
+  font-size: 13px;
+  color: var(--rt-ink);
+  cursor: pointer;
+}
+
+.rt-bar .rt-drop-item:last-child { border-bottom: none; }
+
+.rt-bar .rt-drop-item:hover { background: var(--rt-bg); }
+
+.rt-bar .rt-drop-item small {
+  color: var(--rt-ink-soft);
+  font-weight: 500;
+  font-size: 11.5px;
+}
+
+.rt-bar .rt-drop-empty {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--rt-ink-soft);
+}
+
+/* ============ Catatan kaki ============ */
+
+.po-rt-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--rt-ink-soft);
+}
+
+.po-rt-hint .bi { opacity: .6; }
+
+/* ============ Toolbar di atas tabel (kotak search + tombol Add/Tambah PR) ============
+   Statis di blade (di luar #tabelN_wrapper), jadi tidak ikut terhapus saat
+   .DataTable().destroy() menulis ulang wrapper - lihat catatan .rt-bar di atas. */
+
+.po-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 12px 14px 0;
+}
+
+.po-toolbar-act {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.po-search-inp {
+  width: 200px;
+  padding: 8px 12px 8px 34px;
+  border: 1.5px solid var(--rt-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--rt-card);
+  color: var(--rt-ink);
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%235A6A85' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  transition: border-color .14s;
+}
+
+.po-search-inp:focus {
+  border-color: var(--rt-indigo);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft);
+}
+
+/* Periode tanggal di toolbar tab Purchase Order. Kelasnya diberi prefix po- karena
+   .filter-wrap milik report-table.css di-scope di bawah .tb-report yang tidak ada di sini. */
+
+.po-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rt-card);
+  border: 1.5px solid var(--rt-border);
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
+.po-filter-wrap label {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--rt-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+.po-filter-inp {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rt-indigo);
+  outline: none;
+  padding: 2px 0;
+}
+
+.po-filter-sep {
+  color: var(--rt-ink-soft);
+  font-size: 12px;
+}
+
+/* ============ Badge status (Sudah/Belum/Sebagian/Batal) ============
+   Disalin dari public/css/report-table.css (.sp-badge), dipakai di kolom Status
+   tab Purchase Order - lihat poBadgeStatus() di purchaseOrder.blade.php. */
+
+.sp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sp-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.sp-badge.is-user       { background: var(--sp-blue-bg);  color: var(--sp-blue); }
+.sp-badge.is-supervisor { background: var(--sp-amber-bg); color: var(--sp-amber); }
+.sp-badge.is-active     { background: var(--sp-green-bg); color: var(--sp-green); }
+.sp-badge.is-inactive   { background: var(--sp-red-bg);   color: var(--sp-red); }
+
+/* ============ Tombol Filter di toolbar ============
+   Meniru .tb-report .btn-load milik report-table.css. Warnanya tetap hijau baik
+   ada filter aktif atau tidak - indikator "ada filter" cukup lewat badge
+   #poFilterBadge di dalam modal, bukan warna tombolnya. */
+
+.po-btn-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  background: linear-gradient(135deg, #16A34A, #15803D);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, .28);
+  transition: all .15s;
+}
+
+.po-btn-filter:hover {
+  box-shadow: 0 6px 20px rgba(22, 163, 74, .4);
+  transform: translateY(-1px);
+}
+
+/* ============ Modal filter status (.rt-filter) ============
+   Disalin dari public/css/report-table.css (#modalFilter.rt-filter ...), dengan
+   selector diganti ke .rt-filter (dipakai #modalFilterPO & #modalFilterPR) dan
+   var(--rt-blue*) diganti var(--rt-indigo*) karena file ini tidak mendefinisikan
+   --rt-blue. */
+
+.rt-filter .modal-header {
+  padding: 20px 24px;
+  align-items: center;
+  gap: 12px;
+}
+
+.rt-filter .modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--rt-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rt-filter .modal-title i {
+  color: var(--rt-indigo);
+  font-size: 14px;
+}
+
+.rt-filter .rt-active-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rt-indigo);
+  background: var(--rt-indigo-soft);
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-left: 10px;
+}
+
+.rt-filter .modal-body {
+  padding: 20px 24px;
+}
+
+.rt-filter .rt-section {
+  margin-bottom: 22px;
+}
+
+.rt-filter .rt-section:last-child {
+  margin-bottom: 0;
+}
+
+.rt-filter .rt-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #A6ABBD;
+  margin: 0 0 10px;
+}
+
+.rt-filter .rt-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.rt-filter .rt-grid-2 + .rt-grid-2 {
+  margin-top: 10px;
+}
+
+.rt-filter .rt-field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #9297A8;
+  margin-bottom: 6px;
+}
+
+.rt-filter select.rt-native {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: var(--rt-radius);
+  border: 1px solid var(--rt-border);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--rt-ink);
+  background: #fff;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237B8194' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+
+.rt-filter select.rt-native:focus {
+  outline: none;
+  border-color: var(--rt-indigo);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft);
+}
+
+.rt-filter .modal-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--rt-border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rt-filter .rt-reset-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rt-red);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.rt-filter .rt-reset-link:hover {
+  text-decoration: underline;
+}
+
+.rt-filter .rt-footer-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.rt-filter .rt-btn {
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--rt-radius);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.rt-filter .rt-btn-ghost {
+  background: var(--rt-bg);
+  color: var(--rt-ink-soft);
+}
+
+.rt-filter .rt-btn-ghost:hover {
+  background: var(--rt-border);
+}
+
+.rt-filter .rt-btn-primary {
+  background: var(--rt-indigo);
+  color: #fff;
+}
+
+.rt-filter .rt-btn-primary:hover {
+  opacity: .92;
+}
+
+@media (max-width: 520px) {
+  .rt-filter .rt-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============ Kotak scroll tabel ============
+   Header (th) menempel (sticky) di atas kotak ini; hanya isi tabel yang bergerak
+   saat discroll, sehingga toolbar dan .rt-bar di atasnya selalu terlihat. */
+
+.po-table-wrap {
+  max-height: 65vh;
+  overflow: auto;
+}
+
+.po-table-wrap::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.po-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--rt-border);
+  border-radius: 3px;
+}
+
+#tabelDpp thead th,
+#tabelDph thead th,
+#tabelOut thead th,
+#tabelPenerimaan thead th,
+#tabelPdpp thead th,
+#tabel thead th,
+#tabel2 thead th,
+#tabel3 thead th,
+#tabel7 thead th,
+#tabelso thead th,
+#tabelRetur thead th,
+#tabel_pembelian thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+@media (max-width: 767.98px) {
+  .rt-bar { justify-content: flex-start; flex-wrap: wrap; }
+  .po-toolbar { flex-wrap: wrap; }
+  .po-toolbar-act { margin-left: 0; }
+  .po-filter-wrap { flex: 1 1 100%; justify-content: space-between; }
+}
+
+/* ============ Halaman daftar gaya memorialkoreksi (.po-list-page) ============
+   Disalin dari accounting/memorialkoreksi.blade.php supaya halaman lain yang memakai
+   layout newmasterTest cukup menambah class "po-list-page" di div pembungkus daftar
+   (#page1/#pageHome) tanpa menyalin ulang blok <style> ini.
+   :where() membuat awalan .po-list-page TIDAK menambah spesifisitas, jadi hasil
+   cascade-nya persis sama dengan aturan inline di memorialkoreksi (termasuk kalah dari
+   `table tbody td { padding: 0 10px !important }` di newmaster.css - sengaja, baris rapat). */
+
+/* Isi tabel dibuat sebaris; kolom panjang digeser lewat scroll horizontal .po-table-wrap. */
+:where(.po-list-page) .po-table-wrap table.dataTable thead th,
+:where(.po-list-page) .po-table-wrap table.dataTable tbody td {
+  white-space: nowrap;
+}
+
+/* Rule .card global di layout (flex + align-items:center + efek melayang saat hover)
+   diperuntukkan kartu menu dashboard, bukan kartu berisi tabel. */
+:where(.po-list-page) .card {
+  display: block !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  text-align: left !important;
+  cursor: default !important;
+}
+
+:where(.po-list-page) .card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--border, #e5e7eb) !important;
+}
+
+/* ---------- Gaya dasar tabel daftar ---------- */
+:where(.po-list-page) .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+:where(.po-list-page) .data-table thead th {
+  background: #f9fafb;
+  padding: 11px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+:where(.po-list-page) .data-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  color: var(--text-main, #1f2937);
+}
+
+:where(.po-list-page) .data-table tbody tr:last-child td { border-bottom: none; }
+:where(.po-list-page) .data-table tbody tr:hover td { background: #f9fafb; }
+
+/* DataTables (autoWidth bawaan = true) selalu menulis hasil pengukurannya sebagai
+   inline style pada <table>, yang mengalahkan `.data-table { width: 100% }`.
+   Dipakai min-width, BUKAN width. */
+:where(.po-list-page) #tabel { min-width: 100%; }
+
+/* ---------- Kolom Aksi - tombol bulat kecil warna pastel ---------- */
+:where(.po-list-page) #tabel td:first-child:not([colspan]) { vertical-align: middle; }
+
+:where(.po-list-page) #tabel td:first-child .po-aksi-wrap {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+:where(.po-list-page) #tabel td:first-child .btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: all .12s ease;
+}
+
+:where(.po-list-page) #tabel td:first-child .btn:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+:where(.po-list-page) #tabel td:first-child .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+:where(.po-list-page) #tabel td:first-child .btn-warning { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
+:where(.po-list-page) #tabel td:first-child .btn-primary { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
+:where(.po-list-page) #tabel td:first-child .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+:where(.po-list-page) #tabel td:first-child .btn-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
+
+/* Tombol di kolom Aksi baru muncul saat barisnya di-hover. */
+:where(.po-list-page) table.data-table.po-aksi-hover tbody td:first-child .btn {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+
+:where(.po-list-page) table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ---------- Dropdown "Tampilkan" (jumlah baris per halaman) di toolbar ---------- */
+:where(.po-list-page) .po-len-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rt-card, #fff);
+  border: 1.5px solid var(--rt-border, #E7E8F0);
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
+:where(.po-list-page) .po-len-wrap label {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--rt-ink-soft, #6B7180);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+:where(.po-list-page) .po-len-inp {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rt-ink, #1D2130);
+  outline: none;
+  cursor: pointer;
+  padding: 2px 20px 2px 0;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right center;
+}
+
+/* ============ Tombol form (Add/Edit/Detail) tanpa tableMaster2.css (.po-form-page) ============
+   Halaman yang memakai layout newmasterTest tapi TIDAK memuat tableMaster2.css (supaya #tabel
+   di daftar tetap bergaya memorialkoreksi) kehilangan gaya tombol .btn-action-* dan
+   .btn-pill-primary. Aturannya disalin dari tableMaster2.css (nilai sama, termasuk --sp-*
+   sebagai nilai cadangan) dan hanya berlaku di dalam div pembungkus form yang diberi class
+   "po-form-page" (#page2/#page3/#pageForm) - sengaja class terpisah dari .po-list-page,
+   supaya `#contentContainer .btn` di bawah tidak ikut mengenai toolbar/kolom Aksi daftar.
+   :where() = tanpa tambahan spesifisitas, jadi cascade-nya sama seperti saat tableMaster2.css
+   dimuat di @section('css') (contoh: accounting/kas.blade.php). */
+
+:where(.po-form-page) #contentContainer .btn {
+  border-radius: var(--sp-radius-sm, 7px);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 16px;
+  box-shadow: none;
+  border: 1px solid transparent;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .04s ease;
+}
+
+:where(.po-form-page) #contentContainer .btn:active { transform: translateY(1px); }
+
+/* Tombol ikon kecil di baris tabel item (Edit/Hapus). */
+:where(.po-form-page) .btn-action-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--sp-border, #e7e9ee);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  margin: 2px;
+  color: var(--sp-text-soft, #6b7280);
+  transition: all .12s ease;
+}
+
+:where(.po-form-page) .btn-action-sm:hover { filter: brightness(0.97); transform: translateY(-1px); }
+
+:where(.po-form-page) .btn-action-success { color: var(--sp-green, #16a34a); border-color: #cdebd7; background: var(--sp-green-bg, #e7f7ed); }
+:where(.po-form-page) .btn-action-warning { color: var(--sp-amber, #b45309); border-color: #fbe3bd; background: var(--sp-amber-bg, #fef3e0); }
+:where(.po-form-page) .btn-action-primary { color: var(--sp-blue, #2563eb);  border-color: #cfdcff; background: var(--sp-blue-bg, #e8edff); }
+:where(.po-form-page) .btn-action-danger  { color: var(--sp-red, #dc2626);   border-color: #f7cfcf; background: var(--sp-red-bg, #fdeaea); }
+:where(.po-form-page) .btn-action-info    { color: var(--sp-cyan, #0891b2);  border-color: #a5f3fc; background: var(--sp-cyan-bg, #ecfeff); }
+
+/* Tombol pill (Close / Simpan / Batal / Tambah Item). 0,3,0 saat diam mengalahkan
+   .btn-primary/.btn-danger milik layout (0,1,0); 0,4,0 saat hover mengalahkan
+   .btn-*:hover bootstrap (0,2,0) - lihat catatan panjangnya di tableMaster2.css. */
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-primary {
+  color: var(--sp-blue, #2563eb);
+  background: var(--sp-blue-bg, #e8edff);
+  border-color: #cfdcff;
+}
+
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-danger {
+  color: var(--sp-red, #dc2626);
+  background: var(--sp-red-bg, #fdeaea);
+  border-color: #f7cfcf;
+}
+
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-success {
+  color: var(--sp-green, #16a34a);
+  background: var(--sp-green-bg, #e7f7ed);
+  border-color: #cdebd7;
+}
+
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-primary:hover,
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-primary:focus {
+  color: #fff;
+  background: #0069d9;
+  border-color: #0062cc;
+}
+
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-danger:hover,
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-danger:focus {
+  color: #fff;
+  background: #c82333;
+  border-color: #bd2130;
+}
+
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-success:hover,
+:where(.po-form-page) .btn.btn-pill-primary.btn-action-success:focus {
+  color: #fff;
+  background: #218838;
+  border-color: #1e7e34;
+}
+
+/* Layout menulis `.btn:hover { opacity: .85 }` - dibatalkan di tombol pill saja. */
+:where(.po-form-page) .btn.btn-pill-primary:hover,
+:where(.po-form-page) .btn.btn-pill-secondary:hover {
+  opacity: 1;
+}
+
+:where(.po-form-page) #contentContainer .btn.btn-pill-primary,
+:where(.po-form-page) #contentContainer .btn.btn-pill-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Pembungkus tombol aksi di sel tabel item. */
+:where(.po-form-page) .action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}

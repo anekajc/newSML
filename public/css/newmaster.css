@@ -1,0 +1,365 @@
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table tbody th,
+    table tbody td { padding: 0 10px !important; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sidebar-col: 64px;
+      --sidebar-exp: 240px;
+      --hdr: 52px;
+      --blue: #1A73E8;
+      --sidebar-bg: #1E2A3A;
+      --sidebar-hover: #2A3A50;
+      --text-main: #1F2937;
+      --text-muted: #6B7280;
+      --bg: #F3F4F6;
+      --white: #fff;
+      --border: #E5E7EB;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-col);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.22s ease;
+      overflow: hidden;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .sidebar:hover { width: var(--sidebar-exp); }
+
+    .sidebar-logo {
+      height: var(--hdr);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: white; font-size: 14px;
+      flex-shrink: 0;
+    }
+    .logo-text {
+      color: white; font-weight: 700; font-size: 15px;
+      white-space: nowrap; opacity: 0; transition: opacity 0.18s;
+    }
+    .sidebar:hover .logo-text { opacity: 1; }
+
+    .sidebar-nav { flex: 1; padding: 8px 0; overflow-y: auto; overflow-x: hidden; }
+    .sidebar-nav::-webkit-scrollbar { width: 3px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+    .nav-group { position: relative; }
+    .nav-item {
+      display: flex; align-items: center;
+      padding: 11px 16px; gap: 12px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--sidebar-hover); }
+    .nav-group.active > .nav-item { background: rgba(26,115,232,0.18); border-left-color: var(--blue); }
+
+    .nav-icon { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.7; color: white; }
+    .nav-group.active > .nav-item .nav-icon { opacity: 1; color: #60A5FA; }
+
+    /* Icon markup is an inline <svg> with only a viewBox, no width/height attribute —
+       without this, a bare <svg> defaults to a 300x150 intrinsic box regardless of its
+       viewBox, so it overflows the 20x20 span and throws off flex vertical centering. */
+    .nav-icon svg { display: block; width: 100%; height: 100%; }
+
+    .nav-label {
+      color: rgba(255,255,255,0.75);
+      font-size: 13px; font-weight: 500;
+      opacity: 0; transition: opacity 0.18s; flex: 1;
+    }
+    .sidebar:hover .nav-label { opacity: 1; }
+    .nav-group.active > .nav-item .nav-label { color: #fff; }
+
+    .nav-chevron {
+      width: 14px; height: 14px;
+      color: rgba(255,255,255,0.35);
+      opacity: 0; transition: opacity 0.18s, transform 0.2s; flex-shrink: 0;
+    }
+
+    /* Same unsized-<svg> issue as .nav-icon above: without this the polyline arrow
+       renders at its 300x150 default box, so rotating it spins a huge invisible
+       rectangle around a center far from the visible arrow instead of turning the
+       arrow in place. */
+    .nav-chevron svg { display: block; width: 100%; height: 100%; }
+    .sidebar:hover .nav-chevron { opacity: 1; }
+    .nav-group.open > .nav-item .nav-chevron,
+    .nav-group:hover > .nav-item .nav-chevron { transform: rotate(90deg); color: rgba(255,255,255,0.6); }
+
+    .nav-children {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.25s ease;
+      background: rgba(0,0,0,0.15);
+    }
+    .nav-group:hover .nav-children,
+    .nav-group.open .nav-children { max-height: 600px; }
+    .sidebar:not(:hover) .nav-children { max-height: 0 !important; }
+
+    .nav-child {
+      display: flex; align-items: center;
+      padding: 8px 16px 8px 48px; gap: 8px;
+      cursor: pointer; font-size: 12.5px;
+      color: rgba(255,255,255,0.6);
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+    .nav-child:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .nav-child.active-child { color: #93C5FD; background: rgba(26,115,232,0.12); }
+    .nav-child::before {
+      content: ''; width: 4px; height: 4px;
+      border-radius: 50%; background: currentColor;
+      flex-shrink: 0; opacity: 0.6;
+    }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .header {
+      height: var(--hdr);
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 24px; gap: 16px; flex-shrink: 0;
+    }
+    .breadcrumb { font-size: 20px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .breadcrumb b { color: var(--text-main); font-weight: 600; }
+    .bc-sep { opacity: 0.4; }
+
+    .titleText{
+      font-size:20px;
+    }
+
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .period-badge {
+      background: #EFF6FF; color: var(--blue);
+      font-size: 12px; font-weight: 600;
+      padding: 4px 10px; border-radius: 20px;
+      border: 1px solid #BFDBFE;
+    }
+    .avatar {
+      width: 32px; height: 32px; background: var(--blue);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; color: white; font-size: 13px; font-weight: 700;
+    }
+    .logout-link {
+      color: #e3342f; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 4px;
+      text-decoration: none;
+    }
+    .logout-link:hover { opacity: 0.75; }
+
+    /* CONTENT (shell) */
+    .content { flex: 1; overflow-y: auto; padding: 28px 32px; height: 0; }
+
+    /* -- Demo-page content kit below -- these class names (.card, .btn, .btn-danger,
+       .badge, .data-table, ...) collide with Bootstrap 4, which every page in this repo
+       already uses (gudang alone has 24 .card and .btn-danger on ~20 pages). Nothing
+       here renders the reference's card-grid/toolbar markup, so these rules are scoped
+       under an opt-in ".nm-ui" wrapper instead of applying globally. Add that class to
+       a container only if you actually build a page using this kit. See
+       docs/sidebar-navigation-migration.md §9. */
+    .nm-ui .page-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .nm-ui .page-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+
+    .nm-ui .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .nm-ui .card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 24px 16px 20px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 14px; cursor: pointer;
+      border: 1.5px solid var(--border);
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      text-align: center;
+    }
+    .nm-ui .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.09); border-color: transparent; }
+    .nm-ui .card-icon-wrap { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+    .nm-ui .card-icon-wrap svg { width: 28px; height: 28px; }
+    .nm-ui .card-label { font-size: 13px; font-weight: 600; color: var(--text-main); line-height: 1.3; }
+
+    .nm-ui .c-blue   { background:#EFF6FF; color:#1D4ED8; }
+    .nm-ui .c-green  { background:#F0FDF4; color:#15803D; }
+    .nm-ui .c-orange { background:#FFF7ED; color:#C2410C; }
+    .nm-ui .c-purple { background:#F5F3FF; color:#6D28D9; }
+    .nm-ui .c-teal   { background:#F0FDFA; color:#0F766E; }
+    .nm-ui .c-pink   { background:#FDF2F8; color:#9D174D; }
+    .nm-ui .c-yellow { background:#FEFCE8; color:#A16207; }
+    .nm-ui .c-red    { background:#FEF2F2; color:#B91C1C; }
+    .nm-ui .c-indigo { background:#EEF2FF; color:#3730A3; }
+    .nm-ui .c-cyan   { background:#ECFEFF; color:#0E7490; }
+
+    .nm-ui .subpage { display: none; flex-direction: column; gap: 20px; }
+    .nm-ui .subpage.visible { display: flex; }
+
+    .nm-ui .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .nm-ui .btn { padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; }
+    .nm-ui .btn:hover { opacity: 0.85; }
+    .nm-ui .btn-primary { background: var(--blue); color: white; }
+    .nm-ui .btn-outline { background: white; color: var(--text-main); border: 1.5px solid var(--border); }
+    .nm-ui .btn-danger  { background: #FEF2F2; color: #B91C1C; border: 1.5px solid #FECACA; }
+
+    .nm-ui .data-table-wrap { background: white; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .nm-ui .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .nm-ui .data-table thead th {
+      background: #F9FAFB; padding: 11px 16px;
+      text-align: left; font-weight: 600; font-size: 12px;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em;
+      border-bottom: 1px solid var(--border);
+    }
+    .nm-ui .data-table tbody td { padding: 12px 16px; border-bottom: 1px solid #F3F4F6; color: var(--text-main); }
+    .nm-ui .data-table tbody tr:last-child td { border-bottom: none; }
+    .nm-ui .data-table tbody tr:hover td { background: #F9FAFB; }
+
+    .nm-ui .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+    .nm-ui .badge-green  { background: #DCFCE7; color: #15803D; }
+    .nm-ui .badge-blue   { background: #DBEAFE; color: #1D4ED8; }
+    .nm-ui .badge-gray   { background: #F3F4F6; color: #6B7280; }
+    .nm-ui .badge-orange { background: #FEF3C7; color: #B45309; }
+    .nm-ui .badge-red    { background: #ffe0e0; color: #e30000; }
+
+    .nm-ui .summary-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 4px; }
+    .nm-ui .summary-card { background: white; border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--border); }
+    .nm-ui .summary-card .sc-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+    .nm-ui .summary-card .sc-value { font-size: 20px; font-weight: 700; }
+    .nm-ui .summary-card .sc-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+
+    .nm-ui .grid-view { display: none; }
+    .nm-ui .grid-view.visible { display: block; }
+    .nm-ui .list-view { display: none; }
+    .nm-ui .list-view.visible { display: block; }
+
+      /* ---------- Chip biru: Show/Hide Header (ikon truk), + Tambah Item, Simpan Data ----------
+     Satu kelas dipakai bertiga supaya warnanya tidak lagi jalan sendiri-sendiri. Tint-nya
+     sederet dengan chip hijau/merah/abu di bawah, memakai palet biru yang sudah ada di file
+     ini (dipakai juga oleh tombol aksi di dalam tabel). */
+  .btn-chip-biru {
+    background-color: #e8edff;
+    border-color: #cfdcff;
+    color: #2563eb;
+  }
+
+  .btn-chip-biru:hover,
+  .btn-chip-biru:focus {
+    background-color: #dce6ff;
+    border-color: #b9c9ff;
+    color: #1d4ed8;
+  }
+
+  .btn-chip-biru:active {
+    background-color: #cfdcff !important;
+    border-color: #a8bdff !important;
+    color: #1d4ed8 !important;
+  }
+
+  /* #formBsGrid — NOT #form: #form is already the id of the entity-picker modal in
+     accounting/kas/_pickers.blade.php (same convention as bank/pengajuandph/
+     bonsementara.blade.php's own #form .bs-form, which is that page's *modal*).
+     A second element sharing id="form" would make $("#form") resolve to whichever one
+     comes first in the DOM, silently breaking every $("#form").modal(...) call used to
+     open the picker (this happened once already on kas — see _form.blade.php's own note
+     on the div this targets). Keep this id unique per use. */
+  #formBsGrid .bs-form {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 68px minmax(0, 1fr);
+  gap: 14px 12px;
+  align-items: center;
+}
+
+/* Label tema Canvas punya margin-bottom: 10px global - dinetralkan di sini supaya
+   jarak antarbaris diatur gap grid, bukan hack margin-top negatif seperti dulu. */
+#formBsGrid .bs-form label {
+  margin-bottom: 0;
+  text-align: left;
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--rt-ink-soft);
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* Input yang membentang dari kolom input pertama sampai tepi kanan. */
+#formBsGrid .bs-form .bs-full { grid-column: 2 / -1; }
+
+/* height: 38px dipakai ~20 halaman (Kas, Bank, Memorial Koreksi, Bon Sementara, DPP/DPH,
+   form purchasing, dll.) yang tombol cari-nya juga dipaku 38px. Halaman yang butuh ukuran
+   lain membuat pengecualian SENDIRI di halamannya (pola yang sama seperti pengecualian
+   textarea di memorialkoreksi.blade.php, mis. marketing/invoicejasa.blade.php untuk tombol
+   cari 31px) - jangan hapus tinggi ini di sini, karena semua halaman lain ikut rusak. */
+#formBsGrid .form-control {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--rt-border);
+  font-size: 13.5px;
+  color: var(--rt-ink);
+  box-shadow: none;
+}
+
+#formBsGrid .form-control:focus {
+  border-color: var(--rt-indigo);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft);
+}
+
+/* Field terkunci - abu-abu supaya jelas tidak bisa diisi di mode tersebut.
+   Hanya tampilan; yang mengunci tetap atribut disabled & lockFormAdd(). */
+#formBsGrid .form-control:disabled,
+#formBsGrid .form-control[disabled] {
+  background-color: #f1f3f5;
+  border-color: #e3e6ea;
+  color: #8A8F9C;
+  cursor: not-allowed;
+}
+
+/* Layar sempit: label pindah ke atas input, semua jadi satu kolom. */
+@media (max-width: 575.98px) {
+  #formBsGrid .bs-form { grid-template-columns: 1fr; gap: 4px 0; }
+  #formBsGrid .bs-form label { text-align: left; margin-top: 8px; }
+  #formBsGrid .bs-form .bs-full { grid-column: 1 / -1; }
+}
+
+/* accounting/kas/_form.blade.php's field rows use style="margin-top: -10px" (not this
+   .bs-form grid) to pull rows closer together, sized for the fixed col-md-3/6/2 layout
+   those rows sit in. That layout now switches to col-12 below lg (992px) so the section
+   stacks full-width instead of squeezing into a 3-way split on a narrower laptop window —
+   but a fixed -10px pull still assumes the row above is exactly one line tall, and once
+   Bootstrap's own col-md-4/8 label+input pairs stack (below md, 768px) a row can grow to
+   two lines and get clipped by the row below pulling up into it. Same -10px rows were
+   inlined throughout the "Tambah" item panel for the same reason, so centralizing the
+   value here as .kas-row-tight lets both breakpoints below reset it in one place instead
+   of hunting down every inline style="margin-top: -10px". Not scoped to #formAdd: this
+   class is also reused on kas/_detail.blade.php and bank/_form.blade.php, whose wrapper
+   divs don't (and, for _detail's #formAdd, must not — kas.js's $('#formAdd').show() would
+   break if a second element on the same page shared that id) carry that id. */
+.kas-row-tight {
+  margin-top: -10px;
+}
+
+@media (max-width: 991.98px) {
+  .kas-row-tight {
+    margin-top: 0;
+  }
+}

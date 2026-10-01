@@ -1,0 +1,297 @@
+/* accounting/pengajuandphtunai.blade.php — page-local styles, extracted out of its
+   @section('css') to shrink the blade file. Not shared with any other page — safe to edit
+   freely without checking a blast radius, unlike report-table.css/tableMaster2.css. */
+
+/* Dropdown "Tampilkan" (jumlah baris per halaman) di toolbar #page1 — bukan bagian dari
+   report-table.css, lihat catatan di docs/new-design-gudang-style-guide.md §8 kenapa
+   ditulis lokal per halaman (bukan report-table.css) supaya halaman lain yang memakai
+   report-table.css tidak ikut berubah. var(--white)/--border/--muted berasal dari
+   report-table.css, yang di-load sebelum file ini di @section('css'). */
+.len-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 12px;
+}
+
+.len-wrap label {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+}
+
+.len-inp {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1D2130;
+    outline: none;
+    cursor: pointer;
+    padding: 2px 20px 2px 0;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+
+.tb-report .pg.disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* tampilan search bar — kotak filter DataTables di modal-modal picker (Valas/Devisi/
+   Lawan/Departemen/Custsupp/Perkiraan LB) dan tab DPH lama. Pre-existing, dipertahankan
+   apa adanya saat dipindah keluar dari blade. */
+#tabel_add_list_customer_filter {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: -10px;
+}
+
+#tabel_add_list_customer_filter label input {
+    width: 150px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    font-size: 0.65rem;
+}
+
+#tabel_add_list_noinvoice_filter {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: -10px;
+}
+
+#tabel_add_list_noinvoice_filter label input {
+    width: 150px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    font-size: 0.65rem;
+}
+
+#tabel_add_list_barang_filter {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: -10px;
+}
+
+#tabel_add_list_barang_filter label input {
+    width: 150px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    font-size: 0.65rem;
+}
+
+#tabel_add_list_nobeli_filter {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: -10px;
+}
+
+#tabel_add_list_nobeli_filter label input {
+    width: 150px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    font-size: 0.65rem;
+}
+
+#tabel_filter {
+    display: flex;
+    align-items: flex-end;
+    margin-top: 8px;
+    margin-right: 10px;
+    margin-bottom: -10px;
+}
+
+#tabel_filter label input {
+    width: 150px;
+    padding: 5px 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    font-size: 0.65rem;
+}
+
+#tabel_filter label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* tampilan search bar 2 */
+#tabel2_filter {
+    display: flex;
+    align-items: flex-end;
+    margin-top: 8px;
+    margin-right: 10px;
+    margin-bottom: -10px;
+}
+
+#tabel2_filter label input {
+    width: 150px;
+    padding: 5px 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    font-size: 0.65rem;
+}
+
+#tabel2_filter label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+#tabel2_filter input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* #page4 (Tambah DPH invoice picker, was the "#form" modal) — table look modelled on
+   report-table.css's .tb-report/.tb visual language (bordered card, sticky header, hover
+   rows, right-aligned numeric columns), but written standalone instead of reusing
+   .tb-report: that class also does a hard `.tb-report * { margin:0; padding:0 }` reset,
+   which would squash the live .form-control/.input-group/.btn-chip-biru controls that
+   live inside this table's rows. See docs/new-design-gudang-style-guide.md for the
+   landmine this avoids. */
+.dph-table-outer {
+    border: 1px solid #E3E6F0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.dph-table-wrap {
+    max-height: 65vh;
+    overflow: auto;
+    background: #fff;
+}
+
+.dph-tb {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.dph-tb thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #FAFBFF;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 2px solid #E3E6F0;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.dph-tb thead th.num {
+    text-align: right;
+}
+
+.dph-tb tbody td {
+    /* !important: defeats public/css/newmaster.css's blanket
+       `table tbody td { padding: 0 10px !important }` (loaded by the newmasterTest layout
+       this page extends) — see report-table.css's identical note for the same issue. */
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+
+/* newmaster.css also carries `table.dataTable tbody td { padding: 0 10px !important }` in the
+   same rule group — that selector's extra class (.dataTable, which DataTables' own JS adds to
+   any table it's initialized on) outranks the plain `.dph-tb tbody td` above (1 class + 3 types
+   beats 1 class + 2 types), so any .dph-tb picker table that also gets $(...).DataTable() called
+   on it (e.g. accounting/bank's Lawan/Bon/Custsupp/Akumulasi Biaya/Customer pickers) silently
+   lost its vertical padding back to 0. Match the extra class here too so this rule wins again. */
+.dph-tb.dataTable tbody td {
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+
+.dph-tb tbody tr:hover {
+    background: #F8F9FF;
+}
+
+/* Every cell in a row already gets vertical-align:middle above, but that only centers the
+   TD's content BOX — it can't fix block children whose own layout fights it: Bootstrap's
+   .form-group has a margin-bottom that inflates the box unevenly, and .form-check-input is
+   position:absolute inside a .form-check that isn't a positioning context, so it doesn't
+   really participate in the row's flow at all. Neutralize both so every cell (checkbox,
+   date, input-group, plain text) lines up on the same center line. */
+.dph-tb .form-group {
+    margin-bottom: 0;
+}
+
+.dph-tb .form-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0;
+    margin: 0;
+    min-height: 30px;
+}
+
+.dph-tb .form-check-input {
+    position: static;
+    margin: 0;
+}
+
+.dph-tb .input-group {
+    align-items: center;
+}
+
+/* Column-specific sizing for #page4's invoice row, previously written as inline style=""
+   attributes in the row's JS template (buttonRefreshListPengajuan in @section('js')) —
+   moved here so the template only carries class names. */
+.dph-col-supplier {
+    min-width: 250px;
+}
+
+.dph-col-jth {
+    min-width: 150px;
+}
+
+.dph-dibayar-group {
+    min-width: 180px;
+}
+
+.dph-inp-sm {
+    height: 30px;
+    width: 150px;
+}
+
+.dph-inp-kl {
+    height: 30px;
+    min-width: 150px;
+}
+
+.dph-btn-plus {
+    height: 30px;
+    width: 25px;
+    padding: 0;
+}
+
+.bi-plus {
+    font-size: 1.2rem;
+    line-height: 0;
+    vertical-align: middle;
+  }
