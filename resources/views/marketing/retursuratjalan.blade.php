@@ -351,14 +351,6 @@
 </style>
 {{-- end tampilan search bar modal add pelanggan --}}
 <style>
-  /* Search-icon button appended flush to an input, ported from so.blade.php. */
-  .btn-icon-search {
-    height: 32px;
-    border-radius: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
   .btn-chip-biru {
     background-color: #e8edff;
@@ -554,7 +546,7 @@
         </button>
 
         <div class="po-toolbar-act">
-          <button type="button" class="btn btn-primary" onclick="buttonAdd()">Tambah</button>
+          <button type="button" class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
         </div>
 
       </div>
@@ -617,7 +609,7 @@
   <div class="modal-body">
     <!-- <h1>Tes Modal</h1> -->
 
-    <div class="container-fluid">
+    <div id="formBsGrid" class="container-fluid">
       <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
       <div class="row g-3">
 
@@ -630,7 +622,7 @@
             <div class="col-8">
               <div class="input-group">
                 <input type="text" class="form-control" id="input_add_kodecustomer" placeholder="" disabled>
-                <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListCustSupp" onclick="buttonAddListCustSupp()"><i class="bi bi-search"></i></button>
+                <button class="btn btn-chip-biru btn-sm" id="buttonAddListCustSupp" onclick="buttonAddListCustSupp()"><i class="bi bi-search"></i></button>
               </div>
             </div>
           </div>
@@ -646,7 +638,7 @@
             <div class="col-8">
               <div class="input-group">
                   <input type="text" class="form-control" id="input_add_nosj" placeholder="" disabled>
-                  <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListNoSJ" onclick="buttonAddListNoSJ()"><i class="bi bi-search"></i></button>
+                  <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoSJ" onclick="buttonAddListNoSJ()"><i class="bi bi-search"></i></button>
               </div>
             </div>
           </div>
@@ -687,7 +679,7 @@
 
       <hr/>
 
-      <div class="container-fluid">
+      <div id='formBsGrid' class="container-fluid">
 
 
       <div class="row g-3">
@@ -695,7 +687,7 @@
             <div class="row mb-2">
 
             <div class="col-12">
-                <textarea  style="width: 100%; resize: none" rows=4  class="form-control" id="input_add_customer"  disabled></textarea>
+                <textarea  style="width: 100%; height: 75px !important; resize: none" rows=4  class="form-control" id="input_add_customer"  disabled></textarea>
             </div>
           </div>
 
@@ -716,7 +708,7 @@
                 <label class="form-label mb-0">Catatan</label>
             </div>
             <div class="col-8">
-                <textarea  style="width: 100%; resize: none; " rows=4  class="form-control" id="input_add_catatan"  ></textarea>
+                <textarea  style="width: 100%; height: 75px !important; resize: none; " rows=4  class="form-control" id="input_add_catatan"  ></textarea>
             </div>
 
           </div>
@@ -868,6 +860,7 @@
   </div>
 </div>
 <div id="formAddAdd" class="container-fluid showhide mb-2">
+  <div id="formBsGrid">
   <!-- <div class="line"></div> -->
   <hr/>
   <div class="row">
@@ -887,7 +880,7 @@
       <div class="input-group">
 
         <input id="AddAddKodeBrg" type="text" class="form-control" disabled>
-        <button type="button" id="buttonAddListBarang" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm btn-icon-search"><i class="bi bi-search"></i></button>
+        <button type="button" id="buttonAddListBarang" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
       </div>
     </div>
 
@@ -1089,6 +1082,7 @@
   <!-- <hr/> -->
 </div>
 
+</div>
   </div>
 
   </div>
@@ -1125,7 +1119,7 @@
       </div>
     <!-- <button onclick="loadAll()">tes</button> -->
     </div>
-    <div id="" class="">
+    <div id="formBsGrid" class="">
     <div class="modal-body">
       <!-- <h1>Tes Modal</h1> -->
 
@@ -1221,7 +1215,7 @@
               </div> -->
               <div class="col-12">
                 <div class="form-group">
-                  <textarea  style="width: 100%; resize: none" rows=4  class="form-control" id="input_detail_customer"  disabled></textarea>
+                  <textarea  style="width: 100%; height: 75px !important; resize: none" rows=4  class="form-control" id="input_detail_customer"  disabled></textarea>
                 </div>
               </div>
             </div>
@@ -1254,7 +1248,7 @@
               </div>
               <div class="col-8">
                 <div class="form-group">
-                  <textarea  style="width: 100%; resize: none; " rows=4  class="form-control" id="input_detail_catatan"  disabled></textarea>
+                  <textarea  style="width: 100%; height: 75px !important; resize: none; " rows=4  class="form-control" id="input_detail_catatan"  disabled></textarea>
                 </div>
               </div>
 

@@ -41,6 +41,14 @@ class PembelianClosingPRController extends Controller
     ['field' => 'KetBatal',  'label' => 'Keterangan Batal', 'tipe' => 0],
   ];
 
+  // Tanggal filter dari browser hanya dipakai kalau formatnya Y-m-d, tanggalnya ada di kalender,
+  // dan tahunnya 1900-9999. Selain itu (mis. "0202-01-01" waktu user masih mengetik tahun)
+  // SQL Server datetime menolak dengan error out-of-range, jadi dipakai rentang default periode.
+  private function tanggalSah ($tgl) {
+    if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string) $tgl, $m)) { return false; }
+    return (int) $m[1] >= 1900 && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+  }
+
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase Order).
   private function periodeRange ($periode) {
     $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
@@ -160,8 +168,8 @@ class PembelianClosingPRController extends Controller
   public function dataOutstanding (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     list($tglawal, $tglakhir) = $this->periodeRange($periode);
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($this->tanggalSah($req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if ($this->tanggalSah($req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
     if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
 
     $draw   = (int) $req->input('draw', 1);
@@ -193,11 +201,17 @@ class PembelianClosingPRController extends Controller
       $bind = array_merge($bind, ["cari1" => $like, "cari2" => $like, "cari3" => $like, "cari4" => $like]);
     }
 
+    // OPTION (HASH JOIN, MERGE JOIN): vwOutPPL di DBSMLBARU berisi beberapa subquery group-by
+    // (DBPODET, outstanding SO, stok). Tanpa hint, SQL Server memilih nested loop yang menghitung
+    // ulang subquery itu per baris PR (~4 dtk count + ~6 dtk data). Dengan hint ~0,7 + ~1,4 dtk,
+    // hasil identik (sudah dibandingkan). JANGAN dipasang di query vwOutPPL "where Nobukti = ..."
+    // (cekSisa/lock): di bentuk query itu hint ini gagal dengan error 8622.
     $jml = DB::connection("SML")->select("
       SET NOCOUNT ON
       select count(1) as jml
       from DBO.vwOutPPL A WITH(NOLOCK)
       where $where
+      OPTION (HASH JOIN, MERGE JOIN)
     ", $bind);
     $total = count($jml) ? (int) $jml[0]->jml : 0;
 
@@ -218,6 +232,7 @@ class PembelianClosingPRController extends Controller
       ) X
       $batasBaris
       order by X.NoBaris
+      OPTION (HASH JOIN, MERGE JOIN)
     ", $bind);
 
     // QNTPO dari view belum dikurangi QntBatalPO (qty PO yang dibatalkan) - dikurangi
@@ -242,8 +257,8 @@ class PembelianClosingPRController extends Controller
   public function dataClosing (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     list($tglawal, $tglakhir) = $this->periodeRange($periode);
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($this->tanggalSah($req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if ($this->tanggalSah($req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
     if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
 
     $draw   = (int) $req->input('draw', 1);

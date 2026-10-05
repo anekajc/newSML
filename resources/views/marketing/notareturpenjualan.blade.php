@@ -104,15 +104,6 @@
   transform: translateX(0);
 }
 
-/* Search-icon button appended flush to an input, ported from so.blade.php. */
-.btn-icon-search {
-  height: 32px;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .btn-chip-biru {
   background-color: #e8edff;
   border-color: #cfdcff;
@@ -300,15 +291,14 @@
   </div>
   </div>
 
-
   </div>
 
 </div>
 
-
 <div id="page2" class="container-fluid mainpage" style="display: none">
   <!-- <div id="" class="modal-content "> -->
     <div id= "modalAdd" class="showhideform">
+      <div id='formBsGrid'>
 
       <div class="container-fluid">
 
@@ -318,17 +308,14 @@
             {{-- <h1>Nota Retur Penjualan</h1> --}}
           </div>
           <div class="col-6 text-right">
-            <button type="button" class="btn btn-danger btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+            <button type="button" class="btn btn-danger btn-lg " style="height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
       </div>
       <!-- <h5 class="modal-title" id="modalTitleDetail">Detail</h5> -->
 
-
-
-
-    <div id="" class="mt-4">
+    <div class="mt-4">
     <!-- <div class="modal-body"> -->
       <!-- <h1>Tes Modal</h1> -->
 
@@ -360,7 +347,7 @@
 
             <div class="col-md-12" style="margin-top: -10px">
               <div class="form-group">
-                <textarea  style="width: 100%; resize: none" rows=5  class="form-control" id="input_add_alamatcustomer"  disabled></textarea>
+                <textarea  style="width: 100%; height:75px !important; resize: none" rows=5  class="form-control" id="input_add_alamatcustomer"  disabled></textarea>
               </div>
 
             </div>
@@ -415,7 +402,7 @@
                 </div>
               </div>
 
-              <div class="col-md-12" style="margin-top: -10px">
+              <div class="col-md-12" style="margin-top: -15px">
                 <div class="row">
                   <div class="col-4">
                     <div class="form-group">
@@ -424,7 +411,7 @@
                   </div>
                   <div class="col-8" >
                     <div class="form-group">
-                      <textarea  style="width: 100%; resize: none" rows=3  class="form-control" id="input_add_catatan" onblur="onChangeHeader('catatan' , '' , 'input_add_catatan')"  disabled></textarea>
+                      <textarea  style="width: 100%; height: 75px !important; resize: none" rows=3  class="form-control" id="input_add_catatan" onblur="onChangeHeader('catatan' , '' , 'input_add_catatan')"  disabled></textarea>
                     </div>
 
                   </div>
@@ -490,7 +477,7 @@
                   <div class="col-8">
                     <div class="form-group input-group">
                       <input type="text" class="form-control" id="input_add_valas" placeholder="" disabled>
-                      <button onclick="buttonAddListValas()" id="buttonAddListValas" class="btn btn-chip-biru btn-sm btn-icon-search"><i class="bi bi-search"></i></button>
+                      <button onclick="buttonAddListValas()" id="buttonAddListValas" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
                     </div>
                   </div>
                 </div>
@@ -1170,17 +1157,17 @@
 
   <div class="row mt-2" style="margin-top: 0">
     <div class="col-md-12 text-right mt-4">
-      <button type="button" class="btn btn-secondary" onclick="buttonAddBatal()" style="height: 30px;
+      <button type="button" class="btn btn-danger" onclick="buttonAddBatal()" style="height: 30px;
       border-radius: 20px;
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;">Batal</button>
 
-      <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" style="height: 30px;
+      <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-chip-biru" style="height: 30px;
       border-radius: 20px;
       font-size: 0.75rem;
       font-weight: 600;
-      text-transform: uppercase;">Submit Edit</button>
+      text-transform: uppercase;">Simpan</button>
       <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
     </div>
 
@@ -1571,7 +1558,7 @@
 
 
 
-
+  </div>
 </div>
 
 
@@ -3820,15 +3807,6 @@ function submitAddAdd () {
       }
 
     })
-
-
-
-
-
-
-
-
-
 
 
 }

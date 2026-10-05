@@ -9,11 +9,12 @@
 
   <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
 
-  {{-- Blok CSS lokal halaman ini -- disalin verbatim dari @section('css') purchaseOrder.blade.php
-       (custom-tabs/tab-card override layout .card, po-len-wrap/po-len-inp, tombol aksi
-       bulat kecil pastel di kolom pertama), sesuai docs/marketing-full-menu-guide.md
-       langkah 6. Tidak ada CSS baru -- report-table.js/po-table-header.css sudah
-       menyediakan sisanya. --}}
+  {{-- Blok CSS lokal halaman ini -- disalin verbatim dari @section('css') so.blade.php
+       (custom-tabs/tab-card, #page1 .card override layout .card global, po-len-wrap/
+       po-len-inp, tombol aksi bulat kecil pastel + action-buttons-wrap hover-reveal di
+       kolom pertama, header/row tabel), hanya id tabelnya yang disesuaikan (#tabel_oto
+       milik SO -> #tabel3 di sini, yang juga tidak punya kolom Actions). Tidak ada CSS
+       baru -- report-table.js/po-table-header.css sudah menyediakan sisanya. --}}
   <style>
   .toolbar {
     display: flex;
@@ -55,18 +56,17 @@
     box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
   }
 
-  /* layout newmasterTest punya rule .card global (align-items:center, text-align:center)
-     yang bikin tab-bar ini ikut rata tengah kalau tidak ditimpa. so.blade.php/purchaseOrder
-     .blade.php's .tab-card override tidak eksplisit menimpa text-align, tapi text-align
-     ikut menurun (inherited) ke #nav-tab/.custom-tabs (display:inline-flex tetap ikut
-     rata tengah teks leluhurnya) -- itu sebabnya baris "Permintaan Transfer Barang" /
-     "Transaksi Transfer Barang" / "OutStanding Transfer" sempat muncul di tengah,
-     bukan rata kiri. Ditimpa eksplisit di sini karena halaman ini baru terkena masalah
-     yang sama. */
+  #content { padding-top: 12px; }
+
+  /* layout newmasterTest punya rule .card global (align-items:center, text-align:center,
+     cursor:pointer, dan :hover-nya translateY+box-shadow buat kartu menu dashboard) yang
+     bikin tab-bar & kartu toolbar/tabel ikut rata tengah dan "terangkat" saat di-hover
+     kalau tidak ditimpa -- port 1:1 dari #page1 .card milik so.blade.php, bukan cuma
+     ditimpa di .tab-card sendiri seperti sebelumnya (makanya animasi hover-nya masih
+     lolos dari kartu kedua yang cuma class="card" tanpa tab-card). */
   .tab-card {
     display: block !important;
     align-items: flex-start !important;
-    text-align: left !important;
     padding: 0 !important;
     border: none !important;
     margin-bottom: 6px !important;
@@ -76,56 +76,82 @@
     padding: 5px 10px !important;
   }
 
+  #page1 .card {
+    display: block !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+    text-align: left !important;
+    cursor: default !important;
+  }
+
+  #page1 .card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: var(--border) !important;
+  }
+
+  #page1 .tab-content .col-md-12 {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .po-len-wrap {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    background: var(--rt-card);
+    border: 1.5px solid var(--rt-border);
+    border-radius: 8px;
+    padding: 5px 12px;
   }
 
   .po-len-wrap label {
-    font-size: 12px;
-    font-weight: 700;
-    color: #64748b;
     margin: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--rt-ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .05em;
     white-space: nowrap;
   }
 
   .po-len-inp {
-    height: 34px;
-    border-radius: 8px;
-    border: 1px solid #dbe0e6;
-    font-size: 12.5px;
-    padding: 0 8px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--rt-ink);
+    outline: none;
+    cursor: pointer;
+    padding: 2px 20px 2px 0;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right center;
   }
 
-  /* ---------- Kolom Aksi tabel (#tabel/#tabel2/#tabel3) - tombol bulat kecil, warna
-     pastel, sama seperti punya purchaseOrder.blade.php. JANGAN pakai display:flex pada
-     <td>: sel yang di-flex berhenti jadi sel tabel, tingginya cuma setinggi tombol dan
-     tidak ikut vertical-align:middle baris. Cukup text-align + vertical-align;
-     font-size:0 membuang spasi antar tombol. */
+  /* ---------- Kolom Aksi tabel (#tabel/#tabel2) - tombol bulat kecil, warna
+     pastel, sama seperti punya so.blade.php/purchaseOrder.blade.php. JANGAN pakai
+     display:flex pada <td>: sel yang di-flex berhenti jadi sel tabel, tingginya cuma
+     setinggi tombol dan tidak ikut vertical-align:middle baris. Cukup text-align +
+     vertical-align; font-size:0 membuang spasi antar tombol. #tabel3 tidak punya
+     kolom Actions, sama seperti #tabel7 milik SO. */
   #tabel tbody td:first-child:not(.dataTables_empty),
-  #tabel2 tbody td:first-child:not(.dataTables_empty),
-  #tabel3 tbody td:first-child:not(.dataTables_empty) {
+  #tabel2 tbody td:first-child:not(.dataTables_empty) {
     text-align: center;
     vertical-align: middle;
     white-space: nowrap;
     font-size: 0;
   }
 
-  #tabel td:first-child .btn + .btn,
-  #tabel2 td:first-child .btn + .btn,
-  #tabel3 td:first-child .btn + .btn {
-    margin-left: 4px;
-  }
-
   #tabel td:first-child .btn,
-  #tabel2 td:first-child .btn,
-  #tabel3 td:first-child .btn {
+  #tabel2 td:first-child .btn {
     width: 30px;
     height: 30px;
     padding: 0;
     display: inline-flex;
-    vertical-align: middle;
     align-items: center;
     justify-content: center;
     border-radius: 7px;
@@ -136,40 +162,142 @@
   }
 
   #tabel td:first-child .btn:hover,
-  #tabel2 td:first-child .btn:hover,
-  #tabel3 td:first-child .btn:hover {
+  #tabel2 td:first-child .btn:hover {
     filter: brightness(0.97);
     transform: translateY(-1px);
   }
 
   #tabel td:first-child .btn-success,
-  #tabel2 td:first-child .btn-success,
-  #tabel3 td:first-child .btn-success {
+  #tabel2 td:first-child .btn-success {
     color: #16a34a; border-color: #cdebd7; background: #e7f7ed;
   }
 
   #tabel td:first-child .btn-warning,
-  #tabel2 td:first-child .btn-warning,
-  #tabel3 td:first-child .btn-warning {
+  #tabel2 td:first-child .btn-warning {
     color: #b45309; border-color: #fbe3bd; background: #fef3e0;
   }
 
   #tabel td:first-child .btn-primary,
-  #tabel2 td:first-child .btn-primary,
-  #tabel3 td:first-child .btn-primary {
+  #tabel2 td:first-child .btn-primary {
     color: #2563eb; border-color: #cfdcff; background: #e8edff;
   }
 
   #tabel td:first-child .btn-danger,
-  #tabel2 td:first-child .btn-danger,
-  #tabel3 td:first-child .btn-danger {
+  #tabel2 td:first-child .btn-danger {
     color: #dc2626; border-color: #f7cfcf; background: #fdeaea;
   }
 
   #tabel td:first-child .btn-info,
-  #tabel2 td:first-child .btn-info,
-  #tabel3 td:first-child .btn-info {
+  #tabel2 td:first-child .btn-info {
     color: #0891b2; border-color: #a5f3fc; background: #ecfeff;
+  }
+
+  /* Tombol "+"/buka-picker pastel biru, disalin verbatim dari so.blade.php -- dipakai
+     untuk tombol yang dulu polos btn-primary (Gudang Asal/Tujuan, PIC, Sales, No SO,
+     Lokasi Penerima, Pelanggan, Barang, dst. di form Add/Edit). */
+  .btn-chip-biru {
+    background-color: #e8edff;
+    border-color: #cfdcff;
+    color: #2563eb;
+  }
+
+  .btn-chip-biru:hover,
+  .btn-chip-biru:focus {
+    background-color: #dce6ff;
+    border-color: #b9c9ff;
+    color: #1d4ed8;
+  }
+
+  .btn-chip-biru:active {
+    background-color: #cfdcff !important;
+    border-color: #a8bdff !important;
+    color: #1d4ed8 !important;
+  }
+
+  {{-- Tabel statis (bukan #tabel/#tabel2/#tabel3) yang dulu pakai thead bg-primary
+       text-white -- diganti abu-abu + teks gelap, disamakan dengan thead th di atas,
+       sesuai UI baru yang sama di semua halaman. --}}
+  #tabel_add thead th,
+  #tabel_add_harga_terakhir thead th,
+  #tabel_add_stock_proyeksi thead th,
+  #tabel_detail thead th,
+  #detailKoreksiTable thead th,
+  #tabel thead th,
+  #tabel2 thead th,
+  #tabel3 thead th {
+    background: #f8f9fb !important;
+    color: #6b7280 !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    border-bottom: 1px solid #e7e9ee;
+    border-top: none;
+  }
+
+  #tabel tbody tr:nth-of-type(odd),
+  #tabel2 tbody tr:nth-of-type(odd),
+  #tabel3 tbody tr:nth-of-type(odd) {
+    background-color: #fbfbfc;
+  }
+
+  #tabel tbody tr:hover,
+  #tabel2 tbody tr:hover,
+  #tabel3 tbody tr:hover {
+    background-color: #f5f3ff;
+  }
+
+  .data-table th,
+  .data-table td {
+    white-space: nowrap;
+  }
+
+  #tabel_wrapper,
+  #tabel2_wrapper,
+  #tabel3_wrapper {
+    position: relative;
+  }
+
+  #tabel_wrapper > .dataTables_processing,
+  #tabel2_wrapper > .dataTables_processing,
+  #tabel3_wrapper > .dataTables_processing {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(255, 255, 255, .62);
+    z-index: 40;
+    animation: tbMunculLoading .34s ease-out both;
+  }
+
+  @keyframes tbMunculLoading {
+    0%, 45% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  /* Sembunyikan tombol aksi sampai barisnya di-hover, port 1:1 dari pola
+     .action-buttons-wrap milik master (public/css/tableMaster2.css) -- sama seperti
+     perintahreturjual.blade.php/so.blade.php. #tabel3 tidak punya kolom Actions. */
+  #tabel tbody .action-buttons-wrap,
+  #tabel2 tbody .action-buttons-wrap {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+  }
+
+  #tabel tbody tr:hover .action-buttons-wrap,
+  #tabel tbody tr:focus-within .action-buttons-wrap,
+  #tabel2 tbody tr:hover .action-buttons-wrap,
+  #tabel2 tbody tr:focus-within .action-buttons-wrap {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
   }
   </style>
 
@@ -238,45 +366,7 @@
   <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
 </div>
 
-<div id="page1" class="container-fluid">
-  <div class="">
-    <!-- <div id="qrcode"></div> -->
-    <div class="row">
-      <div class="col-6 text-left">
-        <h2 style="margin-top:-85px;">Transfer Barang</h2>
-      </div>
-      {{-- <div class="col-6 text-right">
-        <button type="button" class="btn btn-primary btn-lg" style="
-            height: 30px; 
-            margin-top: -150px; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.75rem; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="buttonAdd()">
-          Add Transfer Barang
-        </button>
-      </div> --}}
-      {{-- <div class="col-6 text-right">
-        <button type="button" class="btn btn-primary btn-lg" style="
-            height: 30px; 
-            margin-top: -150px; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.75rem; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="loadAll()">
-          tes load all
-        </button>
-      </div> --}}
-    </div>
-  </div>
+<div id="page1">
 
   <div id="contentContainer" class="">
     <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
@@ -300,11 +390,11 @@
     <div class="card mb-3 tab-card">
       <div class="card-body">
         <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
-          <a class="nav-item nav-link active" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="true">
-            Transaksi Transfer Barang
-          </a>
           <a class="nav-item nav-link" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="false">
             Permintaan Transfer Barang
+          </a>
+          <a class="nav-item nav-link active" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="true">
+            Transaksi Transfer Barang
           </a>
           <a class="nav-item nav-link" id="nav-profile1-tab" data-toggle="tab" href="#profile1" role="tab" aria-controls="profile1" aria-selected="false">
             OutStanding Transfer (Transaksi Belum Terima)
@@ -312,6 +402,53 @@
         </div>
       </div>
     </div>
+
+      {{-- Filter modal: so.blade.php's exact modalFilter markup/classes (rt-filter,
+           rt-section, rt-active-badge, rt-footer-buttons, rt-btn), BS4 close-button
+           pattern -- Otorisasi dropdown moved here from the inline toolbar so the
+           toolbar itself matches so.blade.php's "Periode + search + Tampilkan +
+           Filter button" layout 1:1, same as PRJ's own single-dropdown filter modal. --}}
+      <div class="modal fade rt-filter" id="modalFilterTransaksi">
+        <div class="modal-dialog modal-md">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="bi bi-funnel"></i>
+                Filter Data
+                <span class="rt-active-badge" id="tbFilterBadge">0 aktif</span>
+              </h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterTransaksi').modal('hide')">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <div class="rt-section">
+                <div class="rt-group-label">Status</div>
+                <div>
+                  <label class="rt-field-label" for="tbFilterOtorisasi">Otorisasi</label>
+                  <select class="rt-native" id="tbFilterOtorisasi">
+                    <option value="">Semua</option>
+                    <option value="0">Sudah Otorisasi</option>
+                    <option value="1">Belum Otorisasi</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="rt-reset-link" onclick="tbResetFilterFields()">Reset semua</button>
+              <div class="rt-footer-buttons">
+                <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
+                  onclick="$('#modalFilterTransaksi').modal('hide')">Batal</button>
+                <button type="button" class="rt-btn rt-btn-primary" onclick="tbTerapkanFilterOtorisasi(); $('#modalFilterTransaksi').modal('hide');">Terapkan</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
 
       <div class="card">
       <div class="card-body" style="padding:0;">
@@ -333,14 +470,6 @@
                       <span class="po-filter-sep">s/d</span>
                       <input type="date" onchange="onChangePeriodeTransfer()" class="po-filter-inp" id="tbTanggalAkhir" value="{!! $date2 !!}">
                     </div>
-                    <div class="po-filter-wrap">
-                      <label>Otorisasi</label>
-                      <select id="tbFilterOtorisasi" class="po-filter-inp" onchange="tbTerapkanFilterOtorisasi()">
-                        <option value="">Semua</option>
-                        <option value="0">Sudah Otorisasi</option>
-                        <option value="1">Belum Otorisasi</option>
-                      </select>
-                    </div>
                     <input type="search" id="tbSearch2" class="po-search-inp" placeholder="Cari data">
                     <div class="po-len-wrap">
                       <label for="tbLen2">Tampilkan</label>
@@ -352,6 +481,9 @@
                         <option value="-1">Semua</option>
                       </select>
                     </div>
+                    <button class="po-btn-filter" type="button" onclick="$('#modalFilterTransaksi').modal('show')">
+                      <i class="bi bi-funnel"></i> Filter
+                    </button>
                   </div>
                   <div id="rtBarTabel2"></div>
                   <table id="tabel2" class="data-table po-aksi-hover">
@@ -467,15 +599,15 @@
   
 </div>
 
-<div id="page2" class="container-fluid" style="display: none" >
+<div id="page2" class="container-fluid" style="display:none; margin-top:25px;">
   <div class="row">
     <div class="col-6 text-left">
-      <h2 style="margin-top: -80px;">Form Transfer Barang</h2>
+      <h2></h2>
     </div>
     <div class="col-6 text-right">
       <button type="button" class="btn btn-danger btn-lg" style="
           height: 30px; 
-          margin-top: -120px; 
+          margin-top: -50px;
           padding: 4px 12px; 
           border-radius: 20px; 
           font-size: 0.75rem; 
@@ -490,7 +622,7 @@
   </div>
 
   <div id="modalBodyAddMain" class="">
-    <div class="modal-body" style="margin-top:-60px;">
+    <div id='formBsGrid' class="modal-body">
       <div class="row"> 
         <div class="col-md-3">
           <div class="row">
@@ -546,16 +678,15 @@
             </div>
             <div class="col-md-6">
               <div class="input-group mb-3">
-                <input type="text" class="form-control text-center" value='-' id="input_add_kodeGudangAsal" disabled>
-                <button class="btn btn-primary btn-sm rounded-end shadow-sm" id="buttonAddListGudangAsal" onclick="buttonAddListGudangAsal()">
-                  <i class="bi bi-plus"></i>
-                </button>
+                <select class="form-control text-center" id="input_add_kodeGudangAsal" onchange="tbOnChangeGudang('Asal')">
+                  <option value="">-</option>
+                </select>
               </div>
             </div>
 
-            <div class="col-md-12" style="margin-top:-15px;">
+            <div class="col-md-12" style="margin-top:-10px;">
               <div class="form-group">
-                <textarea style="width: 100%; resize: none;" rows=3 placeholder="Gudang Asal" class="form-control text-center align-items-center" id="input_add_namaGudangAsal"  disabled></textarea>
+                <textarea style="width: 100%; height:75px !important; resize: none;" rows=3 placeholder="Gudang Asal" class="form-control text-center align-items-center" id="input_add_namaGudangAsal"  disabled></textarea>
               </div>
             </div>
           </div>
@@ -571,16 +702,15 @@
             </div>
             <div class="col-md-6">
               <div class="input-group mb-3">
-                <input type="text" class="form-control text-center" value='-' id="input_add_kodeGudangTujuan" disabled>
-                <button class="btn btn-primary btn-sm rounded-end shadow-sm" id="buttonAddListGudangTujuan" onclick="buttonAddListGudangTujuan()">
-                  <i class="bi bi-plus"></i>
-                </button>
+                <select class="form-control text-center" id="input_add_kodeGudangTujuan" onchange="tbOnChangeGudang('Tujuan')">
+                  <option value="">-</option>
+                </select>
               </div>
             </div>
 
-            <div class="col-md-12" style="margin-top:-15px;">
+            <div class="col-md-12" style="margin-top:-10px;">
               <div class="form-group">
-                <textarea style="width: 100%; resize: none;" rows=3 placeholder="Gudang Tujuan" class="form-control text-center align-items-center" id="input_add_namaGudangTujuan"  disabled></textarea>
+                <textarea style="width: 100%; height:75px !important; resize: none;" rows=3 placeholder="Gudang Tujuan" class="form-control text-center align-items-center" id="input_add_namaGudangTujuan"  disabled></textarea>
               </div>
             </div>
           </div>
@@ -590,7 +720,7 @@
         <div class="row">
           <div class="col-md-12" style="margin-top:-5px;">
             <div class="form-group">
-              <textarea style="width: 100%; resize: none;" rows=5 onblur="onChangeKeterangan()" placeholder="Keterangan" class="form-control" id="input_add_keterangan"></textarea>
+              <textarea style="width: 100%; height:120px !important; resize: none;" rows=5 onblur="onChangeKeterangan()" placeholder="Keterangan" class="form-control" id="input_add_keterangan"></textarea>
             </div>
           </div>
         </div>
@@ -626,7 +756,7 @@
                     </div>
                     <div class="form-group row">
                       <input class="form-control col-8" id="input_add_kodealamatkirim" readonly >
-                      <button onclick="buttonAddListGudang()" id="buttonAddListGudang"  style="height:32px;" class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button>
+                      <button onclick="buttonAddListGudang()" id="buttonAddListGudang"  style="height:32px;" class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button>
                     </div>
                     <div class="col-md-12">
                       <div class="input-group form-group">
@@ -645,7 +775,7 @@
                     </div>
                     <div class="form-group row">
                       <input class="form-control col-8" id="input_add_kodeekspedisi" readonly >
-                      <button onclick="buttonAddListLokasiPenerima()" id="buttonAddListLokasiPenerima" style="height:32px;" class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button>
+                      <button onclick="buttonAddListLokasiPenerima()" id="buttonAddListLokasiPenerima" style="height:32px;" class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button>
                     </div>
                     <div class="col-md-12">
                       <div class="form-group">
@@ -681,7 +811,7 @@
                         <div class="col-8" style="margin-top:-5px">
                           <div class="form-group">
                             <input type="text" class="form-control" id="input_add_noso" readonly>
-                            <button onclick="buttonAddListNoSO()" id="buttonAddListNoSo" style="height:32px;" class="btn btn-primary btn-sm text-right">
+                            <button onclick="buttonAddListNoSO()" id="buttonAddListNoSo" style="height:32px;" class="btn btn-chip-biru btn-sm text-right">
                               <i class="bi bi-plus"></i>
                             </button>
                           </div>
@@ -734,7 +864,7 @@
                     </div>
                     <div class="col-3 text-right">
                       <div class="form-group">
-                    <!-- <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+                    <!-- <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
                       </div>
                     </div>
                   </div>
@@ -748,7 +878,7 @@
                           <div class="input-group form-group">
                             <input type="hidden" class="form-control" id="input_add_kodebackoffice" >
                             <input type="text" class="form-control" id="input_add_namabackoffice"  disabled>
-                            <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button>
+                            <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button>
                           </div>
                         </div>
                       </div>
@@ -771,7 +901,7 @@
                     </div>
                     <div class="col-3 text-right">
                       <div class="form-group">
-                    <!-- <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+                    <!-- <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
                       </div>
                     </div>
                   </div>
@@ -782,7 +912,7 @@
                       <div class="input-group form-group">
                         <input type="hidden" class="form-control" id="input_add_kodepic"  >
                         <input type="text" class="form-control" id="input_add_namapic"  disabled>
-                        <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button>
+                        <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button>
                       </div>
                     </div>
                   </div>
@@ -805,7 +935,7 @@
                   <div class="input-group form-group">
                     <input type="hidden" class="form-control" id="input_add_kodesales" >
                     <input type="text" class="form-control" id="input_add_namasales"  disabled>
-                    <button onclick="buttonAddListSales()" id="buttonAddListSales"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button>
+                    <button onclick="buttonAddListSales()" id="buttonAddListSales"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button>
                   </div>
                 </div>
               </div>
@@ -841,7 +971,7 @@
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
           <div class="row">
             <table id="tabel_add" class="table table-bordered table-hover table-striped table-responsive-lg">
-              <thead class="text-center bg-primary text-white">
+              <thead class="text-center">
                 <tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
@@ -877,7 +1007,7 @@
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="buttonAddAddItem()" class="btn btn-secondary" hidden><b>+ Tambah Item</b></button>
-              <button type="button" id="buttonSimpanData" class="btn btn-primary btn-lg" style="
+              <button type="button" id="buttonSimpanData" class="btn btn-chip-biru btn-lg" style="
               height: 30px; 
               padding: 4px 12px; 
               border-radius: 20px; 
@@ -886,10 +1016,10 @@
               text-transform: uppercase; 
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-              onclick="buttonCloseFormSimpanData()">Simpan Data</button>
-              <button type="button" id="buttonSimpanEdit" class="btn btn-primary btn-lg"
+              onclick="submitAddAdd()">Simpan</button>
+              <button type="button" id="buttonSimpanEdit" class="btn btn-chip-biru btn-lg"
               style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"
-              onclick="buttonCloseFormEditData()">Simpan Edit</button>
+              onclick="buttonCloseFormEditData()">Simpan</button>
           </div>
         </div>
 
@@ -1000,7 +1130,7 @@
                       <div class="col-md-8" style="margin-top:-10px;"> 
                         <div class="input-group form-group">
                           <input type="text" class="form-control" value="-" id="input_add_add_nopnwpo" readonly>
-                          <button onclick="buttonAddAddListPWO()" id="buttonAddAddListBarang" class="btn btn-primary btn-sm text-right" tabindex="1">
+                          <button onclick="buttonAddAddListPWO()" id="buttonAddAddListBarang" class="btn btn-chip-biru btn-sm text-right" tabindex="1">
                             <i class="bi bi-plus"></i>
                           </button>
                         </div>
@@ -1016,7 +1146,7 @@
                       <div class="col-md-8" style="margin-top:-10px;"> 
                         <div class="input-group form-group">
                           <input type="text" class="form-control" id="input_add_add_kodebarang" readonly>
-                          <button onclick="buttonAddAddListBarang()" id="buttonAddAddListBarang" class="btn btn-primary btn-sm text-right" tabindex="1">
+                          <button onclick="buttonAddAddListBarang()" id="buttonAddAddListBarang" class="btn btn-chip-biru btn-sm text-right" tabindex="1">
                             <i class="bi bi-plus"></i>
                           </button>
                         </div>
@@ -1124,7 +1254,7 @@
                   <div class="col-md-12 mb-4" style="overflow:auto;">
                     <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
                       <table id="tabel_add_harga_terakhir" class="table table-bordered table-hover table-striped table-responsive-lg">
-                        <thead class="text-center bg-primary text-white">
+                        <thead class="text-center">
                           <tr>
                             <th style="padding: 4px 12px;" scope="col">Supplier</th>
                             <th style="padding: 4px 12px;" scope="col">Tanggal</th>
@@ -1171,7 +1301,7 @@
                   <div class="col-md-12 mb-4" style="overflow:auto;">
                     <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
                       <table id="tabel_add_stock_proyeksi" class="table table-bordered table-hover table-striped table-responsive-lg">
-                        <thead class="text-center bg-primary text-white">
+                        <thead class="text-center">
                           <tr>
                             <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                             <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
@@ -1289,7 +1419,7 @@
               </div>
               <div class="col-3 text-right">
                 <div class="form-group">
-              <button onclick=""  class="btn btn-primary btn-sm text-right" disabled><i class="bi bi-plus" ></i></button>
+              <button onclick=""  class="btn btn-chip-biru btn-sm text-right" disabled><i class="bi bi-plus" ></i></button>
               </div>
 
             </div>
@@ -1316,7 +1446,7 @@
               </div>
               <div class="col-3 text-right">
                 <div class="form-group">
-              <button onclick=""  class="btn btn-primary btn-sm text-right" disabled><i class="bi bi-plus"></i></button>
+              <button onclick=""  class="btn btn-chip-biru btn-sm text-right" disabled><i class="bi bi-plus"></i></button>
               </div>
 
             </div>
@@ -1344,7 +1474,7 @@
               </div>
               <div class="col-3 text-right">
                 <div class="form-group">
-              <button onclick="buttonAddEditListBarang()" id="buttonAddEditListBarang"  class="btn btn-primary btn-sm text-right" disabled><i class="bi bi-plus"></i></button>
+              <button onclick="buttonAddEditListBarang()" id="buttonAddEditListBarang"  class="btn btn-chip-biru btn-sm text-right" disabled><i class="bi bi-plus"></i></button>
               </div>
 
             </div>
@@ -1696,7 +1826,7 @@
         </div>
         <div class="col-3 text-right">
           <div class="form-group">
-        <button class="btn btn-primary btn-sm text-right" id="buttonAddListPelanggan" onclick="buttonAddListPelanggan()"><i class="bi bi-plus"></i></button>
+        <button class="btn btn-chip-biru btn-sm text-right" id="buttonAddListPelanggan" onclick="buttonAddListPelanggan()"><i class="bi bi-plus"></i></button>
         </div>
 
       </div>
@@ -1745,7 +1875,7 @@
           </div>
           <div class="col-3 text-right">
             <div class="form-group">
-          <!-- <button onclick="buttonAddListValas()" id="buttonAddListValas"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+          <!-- <button onclick="buttonAddListValas()" id="buttonAddListValas"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
           </div>
 
         </div>
@@ -1758,7 +1888,7 @@
         <div class="col-md-12" style="margin-top:-40px;">
           <div class="input-group form-group">
             <input type="text" class="form-control text-center" id="input_detail_valas"  disabled>
-            <!-- <button onclick="buttonAddListValas()" id="buttonAddListValas"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+            <!-- <button onclick="buttonAddListValas()" id="buttonAddListValas"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
 
           </div>
         </div>
@@ -1920,7 +2050,7 @@
         </div>
         <div class="col-3 text-right">
           <div class="form-group">
-        <!-- <button onclick="buttonAddListLokasiPenerima()" id="buttonAddListLokasiPenerima"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+        <!-- <button onclick="buttonAddListLokasiPenerima()" id="buttonAddListLokasiPenerima"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
         </div>
 
       </div>
@@ -1947,7 +2077,7 @@
         </div>
         <div class="col-3 text-right">
           <div class="form-group">
-        <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button>
+        <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button>
         </div>
 
       </div>
@@ -2072,7 +2202,7 @@
       </div>
       <div class="col-3 text-right">
         <div class="form-group">
-      <!-- <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+      <!-- <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
       </div>
 
     </div>
@@ -2084,7 +2214,7 @@
           <div class="input-group form-group">
             <input type="hidden" class="form-control" id="input_detail_kodepic"  >
             <input type="text" class="form-control" id="input_detail_namapic"  disabled>
-            <!-- <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+            <!-- <button onclick="buttonAddListPIC()" id="buttonAddListPIC"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
 
           </div>
         </div>
@@ -2107,7 +2237,7 @@
       </div>
       <div class="col-3 text-right">
         <div class="form-group">
-      <!-- <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+      <!-- <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
       </div>
 
     </div>
@@ -2130,7 +2260,7 @@
           <div class="input-group form-group">
             <input type="hidden" class="form-control" id="input_detail_kodebackoffice" >
             <input type="text" class="form-control" id="input_detail_namabackoffice"  disabled>
-            <!-- <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+            <!-- <button onclick="buttonAddListBackOffice()" id="buttonAddListBackOffice"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
 
           </div>
 
@@ -2164,7 +2294,7 @@
           </div>
           <div class="col-3 text-right">
             <div class="form-group">
-          <!-- <button onclick="buttonAddListSales()" id="buttonAddListSales"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+          <!-- <button onclick="buttonAddListSales()" id="buttonAddListSales"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
           </div>
 
         </div>
@@ -2175,7 +2305,7 @@
         <div class="input-group form-group">
           <input type="hidden" class="form-control" id="input_detail_kodesales" >
           <input type="text" class="form-control" id="input_detail_namasales"  disabled>
-          <!-- <button onclick="buttonAddListSales()" id="buttonAddListSales"  class="btn btn-primary btn-sm text-right"><i class="bi bi-plus"></i></button> -->
+          <!-- <button onclick="buttonAddListSales()" id="buttonAddListSales"  class="btn btn-chip-biru btn-sm text-right"><i class="bi bi-plus"></i></button> -->
 
         </div>
       </div>
@@ -2227,7 +2357,7 @@
   <!-- <input type="hidden" name="noUrut" id="input_detail_noUrut" value="" /> -->
   <div class="row" style="overflow:auto;">
     <table id="tabel_detail" class="table table-bordered table-hover table-striped table-responsive-lg">
-      <thead class="text-center bg-primary text-white">
+      <thead class="text-center">
         <tr>
           <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
           <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
@@ -2359,10 +2489,10 @@
 
 <!-- page3 end input_add -->
 
-<div id="page4" style="display: none; margin-top: -80px" class="mainpage container-fluid" >
+<div id="page4" style="display: none;" class="mainpage container-fluid" >
   <div class="row">
     <div class="col-8 text-left">
-      <h2>Detail Permintaan Transfer Barang</h2>
+      <h2></h2>
     </div>
     <div class="col-4 text-right">
       <button type="button" class="btn btn-danger btn-lg " style="
@@ -2377,7 +2507,7 @@
     </div>
   </div>
 
-  <div class="container-fluid">
+  <div id='formBsGrid' class="container-fluid">
     <div class="row"> 
         <div class="col-md-3">
           <div class="row">
@@ -2400,14 +2530,14 @@
             <div class="col-md-6" style="margin-top:-10px;">
               <div class="input-group mb-3">
                 <input type="text" class="form-control text-left" value='-' id="detail_kodeGudangAsal" disabled>
-                {{-- <button class="btn btn-primary btn-sm rounded-end shadow-sm" id="buttonAddListGudangAsal" onclick="buttonAddListGudangAsal()">
+                {{-- <button class="btn btn-chip-biru btn-sm rounded-end shadow-sm" id="buttonAddListGudangAsal" onclick="buttonAddListGudangAsal()">
                   <i class="bi bi-plus"></i>
                 </button> --}}
               </div>
             </div>
-            <div class="col-md-12" style="margin-top:-15px;">
+            <div class="col-md-12" style="margin-top:-10px;">
               <div class="form-group">
-                <textarea style="width: 100%; resize: none;" rows=3 placeholder="Gudang Asal" class="form-control text-left align-items-center" id="detail_namaGudangAsal"  disabled></textarea>
+                <textarea style="width: 100%; resize: none; height:75px !important;" rows=3 placeholder="Gudang Asal" class="form-control text-left align-items-center" id="detail_namaGudangAsal"  disabled></textarea>
               </div>
             </div>
 
@@ -2425,17 +2555,18 @@
             <div class="col-md-6">
               <div class="input-group mb-3">
                 <input type="text" class="form-control text-left" value='-' id="detail_kodeGudangTujuan" disabled>
-                {{-- <button class="btn btn-primary btn-sm rounded-end shadow-sm" id="buttonAddListGudangTujuan" onclick="buttonAddListGudangTujuan()">
+                {{-- <button class="btn btn-chip-biru btn-sm rounded-end shadow-sm" id="buttonAddListGudangTujuan" onclick="buttonAddListGudangTujuan()">
                   <i class="bi bi-plus"></i>
                 </button> --}}
               </div>
             </div>
 
-            <div class="col-md-12" style="margin-top:-15px;">
+            <div class="col-md-12" style="margin-top:-10px;">
               <div class="form-group">
-                <textarea style="width: 100%; resize: none;" rows=5 placeholder="Gudang Tujuan" class="form-control text-left align-items-center" id="detail_namaGudangTujuan"  disabled></textarea>
+                <textarea style="width: 100%; height:120px !important; resize: none;" rows=5 placeholder="Gudang Tujuan" class="form-control text-left align-items-center" id="detail_namaGudangTujuan"  disabled></textarea>
               </div>
             </div>
+
           </div>
         </div>
 
@@ -2453,7 +2584,7 @@
     <hr/>
         <div class="container-fluid mt-4" style="overflow-x: auto; padding:0; margin:0;">
               <table id="detailKoreksiTable" class="table table-bordered table-striped"  >
-                <thead class="text-center bg-primary text-white">
+                <thead class="text-center">
                 <tr>
                   <th scope="col">Kode Barang</th>
                   <th scope="col">Nama Barang</th>
@@ -2888,18 +3019,44 @@ function submitAddAdd () {
       return
   }
 
+  let checkedBoxes = $('.checkbox-add-item:checked').get()
+
+  if (!checkedBoxes.length) {
+    alertify.warning('Pilih minimal satu item untuk ditambahkan')
+    return
+  }
+
+  let uruts = []
+  let qtys = []
+
+  for (let i = 0; i < checkedBoxes.length; i++) {
+    let urut = $(checkedBoxes[i]).data('urut')
+    let item = tableIsiRefreshDataList.find(x => x.URUT == urut)
+    let qtyValue = document.getElementById('input_table_qty' + urut).value
+
+    if (!item || qtyValue === '' || Number(qtyValue) <= 0) {
+      alertify.warning('Isi Qty untuk setiap item yang dicentang (Urut ' + urut + ')')
+      return
+    }
+
+    if (Number(qtyValue) > Number(item.QTY)) {
+      alertify.warning('Qty melebihi Qty Minta (Urut ' + urut + ')')
+      return
+    }
+
+    uruts.push(urut)
+    qtys.push(qtyValue)
+  }
+
   let _token  = $("#_token").val()
   let Nobukti = dataNoBuktiSatuan
   let Nourut = dataNoUrutSatuan
   let Nob = tableIsiRefreshData[0].nobukti
-  // let IdUser dari controller 
-  // let MaxOL -1 
-  // let DBASAL
-  // let DBTUJUAN
+
   let tgl = new Date().toISOString().split('T')[0];
 
   $.ajax({
-    url: "{!! url('trfbrgspadd') !!}",
+    url: "{!! url('trfbrgspaddmultiple') !!}",
     type: "post",
     async: false,
     data: {
@@ -2907,21 +3064,22 @@ function submitAddAdd () {
       Nobukti,
       Nourut,
       Nob,
+      uruts,
+      qtys,
       tgl
 
     },
     success: function(res) {
-      
+
       if (res == 1) {
 
         loadAll()
         tipeform = 'add'
-        document.getElementById("buttonAddListPelanggan").disabled = true
         $('#divhargaterakhir').hide();
         $('#divStockProyeksi').hide();
         cleanFormAddAdd()
 
-        refreshDataTableAdd(NoBukti)
+        refreshDataTableAdd(Nob)
 
         alertify.success('Berhasil menambah item')
       }
@@ -4333,12 +4491,13 @@ function tbDefaultCart(urut) {
   }
   if (urut === 3) {
     return [
-      ['NOBUKTI',       'No. Bukti',     1, 'varchar', 0, 0],
-      ['TANGGAL',       'Tanggal',       1, 'date',    0, 0],
-      ['NOTE',          'Keterangan',    1, 'varchar', 0, 0],
-      ['NamagdgAsal',   'Gudang Asal',   1, 'varchar', 0, 0],
-      ['NamagdgTujuan', 'Gudang Tujuan', 1, 'varchar', 0, 0],
-      ['JmlItem',       'Jml Item',      1, 'float',   0, 0]
+      ['NOBUKTI',     'No Bukti',      1, 'varchar', 0, 0],
+      ['TANGGAL',     'Tanggal',       1, 'date',    0, 0],
+      ['NoPermintaan','No. Permintaan',1, 'varchar', 0, 0],
+      ['Keterangan',  'Keterangan',    1, 'varchar', 0, 0],
+      ['KODEBRG',     'Kode Barang',   1, 'varchar', 0, 0],
+      ['NAMABRG',     'Nama Barang',   1, 'varchar', 0, 0],
+      ['QNT',         'Qnt',           1, 'float',   0, 2]
     ]
   }
   return [
@@ -4564,10 +4723,10 @@ function tbValueCell(row, col) {
 // reinitTabel()/reinitTabel2() di bawah, sama seperti so.blade.php melakukannya.
 function tbTabelActionsCell (row) {
   let nobukti = tbPickCI(row, 'nobukti')
-  return '<td class="text-center" style="white-space:nowrap;">'
+  return '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">'
     + '<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetailAdd(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>'
     + '<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Add" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>'
-    + '</td>'
+    + '</div></td>'
 }
 
 // Gabungan tombol lama tabel2 (Non-Otorisasi: Detail/Edit/Hapus/Otorisasi) dan tabel4
@@ -4578,7 +4737,7 @@ function tbTabelActionsCell (row) {
 // bisnis transferbarang sendiri, PO tidak punya delete di tab ini.
 function tbTabel2ActionsCell (row) {
   let nobukti = tbPickCI(row, 'NOBUKTI')
-  let html = '<td class="text-center" style="white-space:nowrap;">'
+  let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">'
   html += '<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>'
   if (Number(tbPickCI(row, 'IsOtorisasi1')) === 0) {
     html += '<button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>'
@@ -4588,7 +4747,7 @@ function tbTabel2ActionsCell (row) {
     html += '<button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>'
     html += '<button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>'
   }
-  html += '</td>'
+  html += '</div></td>'
   return html
 }
 
@@ -4745,13 +4904,19 @@ function tbFilterListTransferOtorisasi (list) {
   return (list || []).filter(function (r) { return String(Number(tbPickCI(r, 'NeedOtorisasi'))) === val })
 }
 
-function tbFilterListTransferOutstanding (list) {
-  return (list || []).filter(function (r) { return Number(tbPickCI(r, 'IsTerima')) === 0 })
+// Dipanggil tombol "Terapkan" di #modalFilterTransaksi -- filter ulang di client saja,
+// tidak perlu memanggil server lagi. Port dari pola prjUpdateFilterBadge()/buttonFilterPRJ().
+function tbResetFilterFields () {
+  $('#tbFilterOtorisasi').val('')
 }
 
-// Dipanggil dropdown #tbFilterOtorisasi onchange -- filter ulang di client saja, tidak
-// perlu memanggil server lagi.
+function tbUpdateFilterBadge () {
+  let aktif = $('#tbFilterOtorisasi').val() !== '' ? 1 : 0
+  $('#tbFilterBadge').text(aktif + ' aktif')
+}
+
 function tbTerapkanFilterOtorisasi () {
+  tbUpdateFilterBadge()
   lastTabel2Rows = tbFilterListTransferOtorisasi(tbRawListTransfer)
   if (activeVisibleTabKey() === 'tabel2') { reinitTabel2() } else { tbPerluGambar.tabel2 = true }
 }
@@ -4775,6 +4940,7 @@ function loadAll () {
     success: function (res) {
       lastTabelRows = res.listPermintaan || []
       tbRawListTransfer = res.listTransfer || []
+      lastTabel3Rows = res.listOutstanding || []
     },
     error: function (err) {
       console.log(err)
@@ -4783,7 +4949,6 @@ function loadAll () {
   })
 
   lastTabel2Rows = tbFilterListTransferOtorisasi(tbRawListTransfer)
-  lastTabel3Rows = tbFilterListTransferOutstanding(tbRawListTransfer)
 
   let visibleKey = activeVisibleTabKey()
   tbPerluGambar = { tabel: visibleKey !== 'tabel', tabel2: visibleKey !== 'tabel2', tabel3: visibleKey !== 'tabel3' }
@@ -4792,12 +4957,45 @@ function loadAll () {
   else { reinitTabel3() }
 }
 
+// Dropdown Gudang Asal/Tujuan di form Add -- menggantikan modal picker yang tombolnya
+// sempat tidak punya fungsi JS sama sekali (buttonAddListGudangAsal/Tujuan belum pernah
+// diimplementasikan). Satu daftar DBGUDANG dipakai bareng oleh kedua dropdown.
+function tbIsiDropdownGudang () {
+  $.ajax({
+    url: "{!! url('polistgudang') !!}",
+    type: "post",
+    async: false,
+    data: { _token: $("#_token").val() },
+    success: function (res) {
+      let options = '<option value="">-</option>'
+      ;(res || []).forEach(function (item) {
+        options += '<option value="' + item.KODEGDG + '" data-nama="' + item.NAMA + '">' + item.NAMA + '</option>'
+      })
+      $('#input_add_kodeGudangAsal').html(options)
+      $('#input_add_kodeGudangTujuan').html(options)
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal memuat daftar gudang')
+    }
+  })
+}
+
+// Dipanggil onchange #input_add_kodeGudangAsal/#input_add_kodeGudangTujuan.
+function tbOnChangeGudang (suffix) {
+  let select = document.getElementById('input_add_kodeGudang' + suffix)
+  let selected = select.options[select.selectedIndex]
+  document.getElementById('input_add_namaGudang' + suffix).value = selected ? (selected.dataset.nama || '') : ''
+}
+
 $(function () {
   if (document.getElementById('breadcrumb')) { document.getElementById('breadcrumb').innerHTML = 'Transfer Barang' }
 
   window.doSetHeader(1, false)
   window.doSetHeader(2, false)
   window.doSetHeader(3, false)
+
+  tbIsiDropdownGudang()
 
   loadAll()
 
@@ -5995,12 +6193,9 @@ function cleanFormAddAdd () {
   // document.getElementById("input_add_add_discpersen3").value = '0.00'
   // // document.getElementById("input_add_add_tambahkepo").value = 0
 
-
 }
 
 function lockFormAdd () {
-  document.getElementById("buttonAddListGudangAsal").hidden = true;
-  document.getElementById("buttonAddListGudangTujuan").hidden = true;
   document.getElementById("input_add_keterangan").disabled = true;
   document.getElementById("buttonSimpanData").hidden = true;
 }
@@ -6027,8 +6222,6 @@ function buttonShowHideHeaderDetail () {
 }
 
 function unlockFormAdd () {
-  document.getElementById("buttonAddListGudangAsal").hidden = false;
-  document.getElementById("buttonAddListGudangTujuan").hidden = false;
   document.getElementById("input_add_keterangan").disabled = false;
   document.getElementById("buttonSimpanData").hidden = false;
   // document.getElementById("input_add_tipeppn").disabled = false
@@ -6171,8 +6364,7 @@ function buttonAdd (NOBUKTI) {
   unlockFormAdd()
   setNewNoBukti()
   refreshDataTableAdd(NOBUKTI)
-  
-  submitAddAdd()
+
   $('#buttonSimpanEdit').hide();
   $('#buttonSimpanData').show();
   $('#page1').hide();
@@ -6189,7 +6381,7 @@ function buttonCloseFormAdd () {
   if(tipeform == 'edit' || tipeform == 'detail'){
     
   } else {
-  deleteTransfer()
+  // deleteTransfer()
   }
 
   loadAll()
@@ -6222,12 +6414,13 @@ function changeQnt (urut, kodebrg, gudangAsal) {
   let _token = $("#_token").val();
   let qntValue = document.getElementById('input_table_qty' + urut).value;
 
-  if (!tableIsiRefreshDataList || !tableIsiRefreshDataList[urut - 1]) {
+  let item = tableIsiRefreshDataList ? tableIsiRefreshDataList.find(i => i.URUT == urut) : null;
+
+  if (!item) {
     alertify.warning('Data item tidak ditemukan');
     return;
   }
 
-  let item = tableIsiRefreshDataList[urut - 1];
   console.log(item);
 
   let QNT = 0;
@@ -6655,6 +6848,7 @@ function refreshDataTableAdd (NOBUKTI) {
 
   let headerTable = `
     <tr>
+      <th style="padding:4px 12px;">Pilih</th>
       <th style="padding:4px 12px;">Kode Barang</th>
       <th style="padding:4px 12px;">Nama Barang</th>
       <th style="padding:4px 12px;">Satuan</th>
@@ -6668,7 +6862,7 @@ function refreshDataTableAdd (NOBUKTI) {
   if (!NOBUKTI) {
     document.getElementById("tabel_data_add").innerHTML = `
       <tr>
-        <td class="text-center" colspan="${showQtyTransfer ? 6 : 5}">Belum ada barang</td>
+        <td class="text-center" colspan="${showQtyTransfer ? 7 : 6}">Belum ada barang</td>
       </tr>
     `;
     return;
@@ -6700,13 +6894,16 @@ function refreshDataTableAdd (NOBUKTI) {
       dataTableAdd.forEach((item) => {
         rowTable += `
           <tr>
+            <td style="white-space:nowrap; text-align:center; vertical-align:middle;">
+              <input type="checkbox" class="checkbox-add-item" data-urut="${item.URUT}">
+            </td>
             <td style="white-space:nowrap; vertical-align:middle;">${item.KODEBRG}</td>
             <td style="white-space:nowrap; vertical-align:middle;">${item.NAMABRG}</td>
             <td style="white-space:nowrap; text-align:center; vertical-align:middle;">${item.Satuan}</td>
             <td style="white-space:nowrap; text-align:right; vertical-align:middle;">${parseFloat(item.QTY).toLocaleString()}</td>
             ${showQtyTransfer ? `<td style="white-space:nowrap; text-align:right; vertical-align:middle;">${parseFloat(item.QTYTRANSFER || 0).toLocaleString()}</td>` : ''}
             <td style="white-space:nowrap; text-align:center; vertical-align:middle;">
-              <input 
+              <input
                 type="number"
                 class="form-control text-right"
                 id="input_table_qty${item.URUT}"
@@ -6730,6 +6927,7 @@ function refreshDataTableAdd (NOBUKTI) {
         paging: false,
         info: false,
         searching: false,
+        ordering: false,
         columnDefs: [
           { width: "170px", targets: 1 },
           { width: "775px", targets: 2 },
@@ -6863,6 +7061,7 @@ function refreshDataTableEdit (NOBUKTI) {
         paging: false,
         info: false,
         searching: false,
+        ordering: false,
         order: [[1, 'asc']],
         columnDefs: [
           { width: "170px", targets: 0 },
@@ -6987,6 +7186,7 @@ function refreshDataTableDetail (NOBUKTI) {
         paging: false,
         info: false,
         searching: false,
+        ordering: false,
         order: [[1, 'asc']],
         columnDefs: [
           { width: "170px", targets: 0 },
@@ -7068,6 +7268,7 @@ function refreshDataTableDetailAdd (NOBUKTI) {
         searching: false,
         info: false,
         autoWidth: false,
+        ordering: false,
         order: [[0, 'asc']],
         columnDefs: [
           { width: "170px", targets: 0 },
@@ -7328,92 +7529,6 @@ function calculateDiscRp() {
   document.getElementById('input_add_add_discrp').value = totalDiscount
 }
 
-
 </script>
-{{-- script buat hover po belum otorisasi dan sudah otorisasi --}}
-  <script>
-    const tabHome = document.getElementById('nav-home-tab');
-    const tabProfile = document.getElementById('nav-profile-tab');
-    const tabProfile1 = document.getElementById('nav-profile1-tab');
-    const tabProfile2 = document.getElementById('nav-profile2-tab');
-  
-    function setActiveTab(homeActive) {
-      if (homeActive == 0) {
-        tabHome.style.backgroundColor = '#007bff';
-        tabHome.style.color = '#fff';
-        tabProfile.style.backgroundColor = '#f8f9fa';
-        tabProfile.style.color = '#007bff';
-
-        tabProfile1.style.backgroundColor = '#f8f9fa';
-        tabProfile1.style.color = '#007bff';
-        
-        tabProfile2.style.backgroundColor = '#f8f9fa';
-        tabProfile2.style.color = '#007bff';
-
-      } else if (homeActive == 1){
-        tabHome.style.backgroundColor = '#f8f9fa';
-        tabHome.style.color = '#007bff';
-
-        tabProfile.style.backgroundColor = '#007bff';
-        tabProfile.style.color = '#fff';
-
-        tabProfile1.style.backgroundColor = '#f8f9fa';
-        tabProfile1.style.color = '#007bff';
-        
-        tabProfile2.style.backgroundColor = '#f8f9fa';
-        tabProfile2.style.color = '#007bff';
-      }
-      else if (homeActive == 2){
-        tabProfile.style.backgroundColor = '#f8f9fa';
-        tabProfile.style.color = '#007bff';
-
-        tabHome.style.backgroundColor = '#f8f9fa';
-        tabHome.style.color = '#007bff';
-
-        tabProfile1.style.backgroundColor = '#007bff';
-        tabProfile1.style.color = '#fff';
-
-        tabProfile2.style.backgroundColor = '#f8f9fa';
-        tabProfile2.style.color = '#007bff';
-      }
-      
-      else if (homeActive == 3){
-        tabProfile.style.backgroundColor = '#f8f9fa';
-        tabProfile.style.color = '#007bff';
-
-        tabHome.style.backgroundColor = '#f8f9fa';
-        tabHome.style.color = '#007bff';
-
-        tabProfile1.style.backgroundColor = '#f8f9fa';
-        tabProfile1.style.color = '#007bff';
-        
-        tabProfile2.style.backgroundColor = '#007bff';
-        tabProfile2.style.color = '#fff';
-      }
-    }
-  
-    // Default warna tab
-    setActiveTab(0);
-  
-    // buat ganti tab
-    tabHome.addEventListener('click', function () {
-      setActiveTab(0);
-    });
-  
-    tabProfile.addEventListener('click', function () {
-      setActiveTab(1);
-    });
-
-    tabProfile1.addEventListener('click', function () {
-      setActiveTab(2);
-    });
-    tabProfile2.addEventListener('click', function () {
-      setActiveTab(3);
-    });
-
-    window.onload = function(){
-      loadAll();
-    }
-  </script>
 
 @endsection

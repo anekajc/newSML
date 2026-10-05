@@ -304,6 +304,8 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 
 @section('content')
 
+<div id="printContainer" style="display:none"></div>
+
 <div id="page1">
   <div id="contentContainer" class="">
     <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
@@ -674,6 +676,9 @@ function clIkatPeriode (urut) {
 
   let onUbah = function () {
     if (!awal.value || !akhir.value) { return }
+    // Tahun belum lengkap (mis. "0202" waktu mengetik 2025) - tunggu sampai tahunnya wajar,
+    // jangan reload dulu (SQL Server datetime hanya menerima tahun >= 1753).
+    if (awal.value.slice(0, 4) < '1900' || akhir.value.slice(0, 4) < '1900') { return }
     if (awal.value > akhir.value) {
       alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
       return
@@ -797,7 +802,11 @@ function clRenderNilai (col, item) {
     return clFormatAngkaDes(nilai, col.desimal)
   }
   if (col.tipe === 2) {
-    return nilai ? formatDate(nilai) : ""
+    return nilai ? formatDate(nilai).split('-').reverse().join('/') : ""
+  }
+  // Tanggal yang datang sebagai teks 'yyyy-mm-dd...' (mis. hasil CONVERT di SQL) juga tampil dd/mm/yyyy.
+  if (typeof nilai === 'string' && /^\d{4}-\d{2}-\d{2}/.test(nilai)) {
+    return nilai.substr(0, 10).split('-').reverse().join('/')
   }
   return (nilai === null || nilai === undefined) ? "" : nilai
 }

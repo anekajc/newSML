@@ -966,6 +966,7 @@ td input[type="checkbox"] {
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 let listInvoice = []
+let listCustomer = []
 let listData = []
 let tempBarangAddEdit = {}
 let tipeform = ''
@@ -1039,7 +1040,11 @@ function dnRenderNilai (col, item) {
     return dnFormatAngkaDes(nilai, col.desimal)
   }
   if (col.tipe === 2) {
-    return nilai ? formatDate(nilai) : ""
+    return nilai ? formatDate(nilai).split('-').reverse().join('/') : ""
+  }
+  // Tanggal yang datang sebagai teks 'yyyy-mm-dd...' (mis. hasil CONVERT di SQL) juga tampil dd/mm/yyyy.
+  if (typeof nilai === 'string' && /^\d{4}-\d{2}-\d{2}/.test(nilai)) {
+    return nilai.substr(0, 10).split('-').reverse().join('/')
   }
   return (nilai === null || nilai === undefined) ? "" : nilai
 }
@@ -1336,7 +1341,7 @@ function renderTabelDN () {
           '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>'
       }
       <td>${item.OtoUser1 || ''}</td>
-      <td>${item.TglOto1 ? formatDate(item.TglOto1) : ''}</td>
+      <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
     </tr>`
   });
 
@@ -1382,7 +1387,14 @@ function cleanFormAdd () {
   document.getElementById("input_add_namacustomer").value = ''
   document.getElementById("input_add_alamatcustomer").value = ''
   document.getElementById("input_add_nobukti").value = ''
-  document.getElementById("input_add_tanggal").valueAsDate = new Date()
+  // Tanggal awal diambil dari jam server SQL (sama seperti menu PR), bukan jam komputer user.
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    async: false,
+    success: function(res) {
+      document.getElementById("input_add_tanggal").value = res[0].tanggal
+    }})
 }
 
 function submitAddEdit () {
@@ -1578,7 +1590,9 @@ function buttonAddPickInvoice () {
         },
         error: function (err) {
           console.log(err)
-          alertify.warning('Terjadi kesalahan silahkan refresh browser')
+          // spAdd menyimpan semua invoice dalam satu transaksi - kalau gagal, tidak ada yang tersimpan.
+          let pesan = (err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : 'Terjadi kesalahan silahkan refresh browser'
+          alertify.warning(pesan)
         }
       })
 }
@@ -1618,8 +1632,8 @@ function buttonAddListInvoice () {
         `<tr>
         <td class="text-center"><input class="" type="checkbox" value="" id="add_checkbox${i}"></td>
         <td>${item.NoFaktur}</td>
-        <td>${formatDate(item.Tanggal,'/')}</td>
-        <td>${formatDate(item.JatuhTempo,'/')}</td>
+        <td>${formatDate(item.Tanggal,'-').split('-').reverse().join('/')}</td>
+        <td>${formatDate(item.JatuhTempo,'-').split('-').reverse().join('/')}</td>
         <td>${item.KodeVls}</td>
         <td><input id="add_inputQnt${i}" style="height:30px; min-width: 130px" type="number" value='0.00' class="form-control text-right" onBlur="onChangeNilaiKurs(${i})"></td>
 
@@ -1675,10 +1689,14 @@ function buttonAddListCustomer () {
     data: {
     },
     success: function(res) {
+      // Baris dipilih lewat indeks ke listCustomer, bukan teks nama/alamat di onclick - nama
+      // supplier bertanda petik (mis. BANDUNG LEVI'S) atau alamat berisi baris baru membuat
+      // onclick error dan supplier tidak bisa dipilih.
+      listCustomer = res
       let rowTable = ``
       res.forEach((item, i) => {
         rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickCustomer('${item.KODECUSTSUPP}' , '${item.NAMACUSTSUPP}' , '${item.ALAMAT1}')">
+        <tr class="pick-row" onclick="buttonAddPickCustomer(${i})">
         <td>${item.KODECUSTSUPP}</td>
         <td>${item.NAMACUSTSUPP}</td>
         <td>${item.ALAMAT}</td>
@@ -1706,10 +1724,11 @@ function buttonAddListCustomer () {
   })
 }
 
-function buttonAddPickCustomer (kode, nama , alamat) {
-  document.getElementById("input_add_kodecustomer").value = kode
-  document.getElementById("input_add_namacustomer").value = nama
-  document.getElementById("input_add_alamatcustomer").value = alamat
+function buttonAddPickCustomer (i) {
+  let item = listCustomer[i] || {}
+  document.getElementById("input_add_kodecustomer").value = item.KODECUSTSUPP || ''
+  document.getElementById("input_add_namacustomer").value = item.NAMACUSTSUPP || ''
+  document.getElementById("input_add_alamatcustomer").value = item.ALAMAT1 || ''
 
   $('.showhideitem').hide();
   buttonAddListBatal()
@@ -1751,7 +1770,7 @@ function refreshDataTable (nobukti) {
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
                   <td class="text-right">${item.Nilai ? formatAngka(parseFloat(item.Nilai).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">0.00</td>
+                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
 
                   <td>${item.kodeVls}</td>
                   <td class="text-right">${item.Kurs ?  formatAngka(parseFloat(item.Kurs).toFixed(2)) : '0.00'}</td>
@@ -1769,7 +1788,9 @@ function refreshDataTable (nobukti) {
         document.getElementById("input_add_namacustomer").value = listData[0].NamaCustSupp
         document.getElementById("input_add_alamatcustomer").value = listData[0].Alamat1
         document.getElementById("input_add_nobukti").value = listData[0].NoBukti
-        document.getElementById("input_add_tanggal").valueAsDate = new Date(listData[0].tanggal)
+        // Diisi teks YYYY-MM-DD, bukan valueAsDate = new Date(...): tanggal dari SQL dibaca
+        // sebagai jam lokal (WIB) lalu valueAsDate memakai UTC, jadi tanggalnya mundur 1 hari.
+        document.getElementById("input_add_tanggal").value = String(listData[0].tanggal || '').substring(0, 10)
     },
     error: function (err) {
       console.log(err)
@@ -1825,7 +1846,7 @@ function buttonDetail (nobukti) {
               rowTable += `
                 <tr>
                   <td>${item.NoInv}</td>
-                  <td>${item.Keterangan}</td>
+                  <td>${item.Keterangan ? item.Keterangan : ''}</td>
                   <td class="text-right">${item.Nilai ? formatAngka(parseFloat(item.Nilai).toFixed(2)) : '0.00'}</td>
                   <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
                   <td>${item.kodeVls}</td>
@@ -1840,7 +1861,7 @@ function buttonDetail (nobukti) {
         document.getElementById("input_detail_namacustomer").value = res[0].NamaCustSupp
         document.getElementById("input_detail_alamatcustomer").value = res[0].Alamat1
         document.getElementById("input_detail_nobukti").value = res[0].NoBukti
-        document.getElementById("input_detail_tanggal").valueAsDate = new Date(res[0].tanggal)
+        document.getElementById("input_detail_tanggal").value = String(res[0].tanggal || '').substring(0, 10)
 
         document.getElementById("divOto").style.display = (Number(res[0].IsOtorisasi1) ? "none" : "block")
 
@@ -1959,11 +1980,21 @@ function buttonCloseForm () {
   $('#page1').show();
 }
 
+// Pola sama dengan buttonBatalOtorisasi di pembelianpermintaanagen.blade.php: cek hak akses
+// Batal, lalu alertify.prompt untuk alasan (wajib diisi, dicatat ke dbLogFile oleh controller).
 function buttonBatalOtorisasi(nobukti) {
-  alertify.confirm(
-    'Konfirmasi Batal Otorisasi',
-    'Yakin Ingin Membatalkan Otorisasi ' + nobukti + '?',
-    function() {
+  let akses = $("#akses_isbatal").val();
+  if (!Number(akses)) {
+    alertify.warning('No access');
+    return;
+  }
+
+  alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+    function (evt, value) {
+      if (!String(value || '').trim()) {
+        alertify.warning('Keterangan harus diisi.');
+        return false;
+      }
       let _token = $("#_token").val();
 
       $.ajax({
@@ -1972,20 +2003,31 @@ function buttonBatalOtorisasi(nobukti) {
         async: false,
         data: {
           _token,
-          nobukti
+          nobukti,
+          pket: value
         },
-        success: function(res) {
-          alertify.success('Berhasil batal otorisasi');
-          loadAll();
+        success: function (res) {
+          if (res > 0) {
+            alertify.success('Berhasil batal otorisasi');
+            loadAll();
+          } else {
+            alertify.warning('Gagal batal otorisasi');
+          }
         },
-        error: function(err) {
+        error: function (err) {
           console.log(err);
-          alertify.warning('Terjadi kesalahan, silakan refresh browser.');
+          if (err.status === 403) {
+            alertify.warning('No access');
+          } else if (err.status === 422) {
+            alertify.warning('Keterangan harus diisi.');
+          } else {
+            alertify.warning('Terjadi kesalahan. Silakan refresh browser.');
+          }
         }
       });
     },
-    function() {
-      console.log('Pembatalan otorisasi dibatalkan');
+    function () {
+      alertify.error("Action cancelled");
     }
   );
 }

@@ -31,12 +31,33 @@ class NewSetPemakaiController extends Controller
     return view('berkas.newsetpemakai' , [
       "menul0" => [],
       "periode" => $periode,
+      "filter" => $req->filter ?? '',
     ]);
 
   }
 
-  public function loadAll () {
-    $users = DB::connection("SML")->select('select USERID, username, FullName, TINGKAT, STATUS, kodeBag, KodeJab, KodeKasir, [limit], keynik from DBFLPASS order by USERID');
+  // Menu Berkas > Pemakai ACC / Pemakai Non ACC: halaman sama persis dengan Pemakai, hanya daftar
+  // user-nya dibatasi menurut departemen (DBFLPASS.kodeBag) - lihat loadAll().
+  public function indexAcc(Request $req) {
+    $req->merge(['filter' => 'acc']);
+    return $this->index($req);
+  }
+
+  public function indexNonAcc(Request $req) {
+    $req->merge(['filter' => 'nonacc']);
+    return $this->index($req);
+  }
+
+  public function loadAll (Request $req) {
+    // filter=acc: hanya user departemen ACC; filter=nonacc: semua selain ACC (termasuk yang
+    // departemennya kosong); tanpa filter: semua user (menu Pemakai).
+    $where = '';
+    if ($req->filter === 'acc') {
+      $where = "where ltrim(rtrim(isnull(kodeBag, ''))) = 'ACC'";
+    } else if ($req->filter === 'nonacc') {
+      $where = "where ltrim(rtrim(isnull(kodeBag, ''))) <> 'ACC'";
+    }
+    $users = DB::connection("SML")->select('select USERID, username, FullName, TINGKAT, STATUS, kodeBag, KodeJab, KodeKasir, [limit], keynik from DBFLPASS ' . $where . ' order by USERID');
     return $users;
 
   }

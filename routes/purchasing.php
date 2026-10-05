@@ -204,6 +204,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/polistpwo',                       [POController::class, 'listPWO']);
     Route::post('/polistgudang',                    [POController::class, 'listGudang']);
     Route::post('/polistnoso',                      [POController::class, 'listNoSo']);
+    Route::post('/polistnosotambahso',              [POController::class, 'listNoSoTambahSO']);
     Route::post('/polistlokasipenerima',            [POController::class, 'listLokasiPenerima']);
     Route::post('/pospadd',                         [POController::class, 'spAdd']);
     Route::post('/pocekharga',                      [POController::class, 'spCekHarga']);

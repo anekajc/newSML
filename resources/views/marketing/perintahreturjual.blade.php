@@ -6,14 +6,14 @@
 
 @endsection
 
-{{-- Rerouted to match Purchase Order's UI 1:1 via so.blade.php's own pattern,
-     same as invoicepenjualan/suratjalan/invoicejasa/fakturpajak/cetaktandaterima
-     before it. Only layout/toolbar/column-header interactivity changed -- all
-     business logic (loadAll, buttonAdd/buttonEdit/buttonDetail/buttonOtorisasi,
-     submitPrint/submitPrintBA print-string builders, the item add/edit workflow
-     on #page2) is untouched. --}}
 @section('css')
 <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
+
+{{-- Modal pemilih (Customer/No Invoice/No Beli/Barang) disamakan persis dengan modal
+     pemilih menu Kas - lihat public/css/picker-kas.css, pola yang sama seperti
+     so.blade.php / retursuratjalan.blade.php. --}}
+<link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
+
 <style>
 .toolbar {
   display: flex;
@@ -252,15 +252,6 @@
   transform: translateX(0);
 }
 
-/* Search-icon button appended flush to an input, ported from so.blade.php. */
-.btn-icon-search {
-  height: 32px;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .btn-chip-biru {
   background-color: #e8edff;
   border-color: #cfdcff;
@@ -394,7 +385,7 @@
           <i class="bi bi-funnel"></i> Filter
         </button>
         <div class="po-toolbar-act">
-          <button type="button" class="btn btn-primary" onclick="buttonAdd()">Tambah</button>
+          <button type="button" class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
         </div>
       </div>
       <div id="rtBarTabel"></div>
@@ -420,7 +411,7 @@
       {{-- <h2>Form PRJ</h2> --}}
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-danger btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
     </div>
   </div>
 
@@ -432,7 +423,7 @@
   <div class="">
     <!-- <h1>Tes Modal</h1> -->
 
-    <div class="container-fluid">
+    <div id="formBsGrid" class="container-fluid">
       <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
       <div class="row">
 
@@ -455,7 +446,7 @@
           <div class="col-md-8">
             <div class="form-group input-group">
               <input type="text" class="form-control" id="input_add_kodecustomer" placeholder="" disabled>
-              <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
+              <button class="btn btn-chip-biru btn-sm" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
             </div>
           </div>
           </div>
@@ -469,7 +460,7 @@
           </div>
           <div class="col-md-12 mb-3" style="margin-top:-10px">
 
-            <textarea  style="width: 100%; resize: none" rows=3  class="form-control" id="input_add_alamatcustomer"  disabled></textarea>
+            <textarea  style="width: 100%; height: 75px !important; resize: none" rows=3  class="form-control" id="input_add_alamatcustomer"  disabled></textarea>
           </div>
 
           </div>
@@ -510,7 +501,7 @@
                 <input type="hidden" class="form-control" id="input_add_flagtipe" value="">
                 <input type="hidden" class="form-control" id="input_add_ppn" value="">
                 <input type="text" class="form-control" id="input_add_noinvoice" value="" disabled >
-                <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListNoInvoice" onclick="buttonAddListNoInvoice()"><i class="bi bi-search"></i></button>
+                <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoInvoice" onclick="buttonAddListNoInvoice()"><i class="bi bi-search"></i></button>
               </div>
             </div>
           </div>
@@ -526,10 +517,10 @@
 
             <div class="col-md-8">
               <div class="form-group">
-                <textarea  style="width: 100%; resize: none" rows=3  class="form-control" id="input_add_catatan"  ></textarea>
+                <textarea  style="width: 100%; resize: none; height: 75px !important;" rows=3  class="form-control" id="input_add_catatan"  ></textarea>
               </div>
             </div>
-            
+
           </div>
         </div>
           </div>
@@ -736,6 +727,7 @@
 
 
   <div id="formAddAdd" class="container-fluid showhideitem">
+    <div id="formBsGrid">
     <!-- <div class="line"></div> -->
     <!-- <div class="row"> -->
 
@@ -777,7 +769,7 @@
       <div class="col-md-8">
         <div class="input-group form-group">
           <input id="AddAddKodeBrg" type="text" class="form-control" disabled>
-          <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm btn-icon-search"><i class="bi bi-search"></i></button>
+          <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
 
         </div>
       </div>
@@ -800,7 +792,7 @@
         <div class="input-group form-group">
           <input id="AddAddUrutBeli" type="hidden" class="form-control" >
           <input id="AddAddNoBeli" type="text" class="form-control" disabled>
-          <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-search"></i></button>
+          <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-search"></i></button>
 
         </div>
         <!-- <input id="AddAddKodeGudang" type="hidden" class="form-control" disabled> -->
@@ -1001,6 +993,7 @@
 
     <!-- <div class="line"></div> -->
     <!-- <hr/> -->
+    </div>
   </div>
 </div>
 <!-- </div> -->
@@ -1657,7 +1650,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>Customer</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -1733,7 +1726,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>No Invoice</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -1773,14 +1766,7 @@
             </div>
             </div>
 
-
-
-
-        </div>
-
-
-
-
+          </div>
 
       </div>
 
@@ -1807,7 +1793,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>No Beli</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -1876,7 +1862,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>Barang</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -1955,6 +1941,18 @@
 
 @section('js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
+<script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+{{-- Modal pemilih bersama (#form) disamakan persis dengan modal pemilih menu Kas.
+     Class picker-kas dipasang dari sini (bukan di markup modalnya) - lihat pola yang sama
+     di purchaseOrder.blade.php / marketing/so.blade.php / retursuratjalan.blade.php. --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  jQuery('#form').addClass('picker-kas')
+  jQuery('#form .modal-footer .btn').filter(function () {
+    return jQuery.trim(jQuery(this).text()) === 'Batal'
+  }).addClass('picker-kas-batal')
+})
+</script>
 <script type="text/javascript">
 
 // let tempNoBukti = ''
@@ -2906,7 +2904,7 @@ function buttonAddListBarang () {
     return
   }
 
-  $('#tabel_add_list_barang').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_barang')) { $('#tabel_add_list_barang').DataTable().destroy() }
   $.ajax({
     url: "{!! url('perintahreturjuallistbarang') !!}",
     type: "post",
@@ -2937,15 +2935,8 @@ function buttonAddListBarang () {
 
 
 
-      // if(!res.length) {
-      //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
-      // }
       document.getElementById("tabel_data_add_list_barang").innerHTML = rowTable
-      $("#tabel_add_list_barang").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[0, 'asc']],
-    });
+      pickerKasInit('tabel_add_list_barang', { order: [[0, 'asc']] })
       $('.showhidemodalbodyadd').hide();
       $('#modalAddListBarang').show();
       $("#form").modal('toggle')
@@ -2977,7 +2968,7 @@ function buttonAddListNoBeli () {
     return
   }
 
-  $('#tabel_add_list_nobeli').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_nobeli')) { $('#tabel_add_list_nobeli').DataTable().destroy() }
   $.ajax({
     url: "{!! url('perintahreturjuallistnobeli') !!}",
     type: "post",
@@ -3006,15 +2997,8 @@ function buttonAddListNoBeli () {
 
 
 
-      // if(!res.length) {
-      //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
-      // }
       document.getElementById("tabel_data_add_list_nobeli").innerHTML = rowTable
-      $("#tabel_add_list_nobeli").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[0, 'asc']],
-    });
+      pickerKasInit('tabel_add_list_nobeli', { order: [[0, 'asc']] })
       $('.showhidemodalbodyadd').hide();
       $('#modalAddListNoBeli').show();
       $("#form").modal('toggle')
@@ -3041,7 +3025,7 @@ function buttonAddListNoInvoice () {
     return
   }
 
-  $('#tabel_add_list_noinvoice').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_noinvoice')) { $('#tabel_add_list_noinvoice').DataTable().destroy() }
   $.ajax({
     url: "{!! url('perintahreturjuallistnoinvoice') !!}",
     type: "post",
@@ -3067,15 +3051,8 @@ function buttonAddListNoInvoice () {
 
 
 
-      // if(!res.length) {
-      //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
-      // }
       document.getElementById("tabel_data_add_list_noinvoice").innerHTML = rowTable
-      $("#tabel_add_list_noinvoice").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[0, 'asc']],
-    });
+      pickerKasInit('tabel_add_list_noinvoice', { order: [[0, 'asc']] })
       $('.showhidemodalbodyadd').hide();
       $('#modalAddListNoInvoice').show();
       $("#form").modal('toggle')
@@ -3092,7 +3069,7 @@ function buttonAddListNoInvoice () {
 }
 
 function buttonAddListCustomer () {
-  $('#tabel_add_list_customer').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_customer')) { $('#tabel_add_list_customer').DataTable().destroy() }
   $.ajax({
     url: "{!! url('perintahreturjuallistcustomer') !!}",
     type: "get",
@@ -3117,16 +3094,8 @@ function buttonAddListCustomer () {
 
 
 
-      if(!res.length) {
-        rowTable= `<tr><td class="text-center" colspan=3>Tidak ada data</td></tr>`
-      }
       document.getElementById("tabel_data_add_list_customer").innerHTML = rowTable
-      $("#tabel_add_list_customer").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[0, 'asc']],
-
-    });
+      pickerKasInit('tabel_add_list_customer', { order: [[0, 'asc']] })
       $('.showhidemodalbodyadd').hide();
       $('#modalAddListCustomer').show();
       $("#form").modal('toggle')

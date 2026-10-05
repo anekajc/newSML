@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
-use App\Model\NewMenuReport;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 class NewMenuController extends Controller
 {
+
 
   public function index () {
     $periode = NewPeriode::where('user_id' , \Auth::id())->first();
@@ -61,77 +61,33 @@ class NewMenuController extends Controller
     return $periode;
   }
 
-  public function getMenuL0 ($headermenu) {
-    $tempAngka = 0;
-    if ($headermenu == 2) {
+  public function getMenuL0 () {
+    // $menul0 = NewMenu::where('HeaderMenu', 1)->where('l0' , 0)->orderBy('KODEMENU')->get();
+    // $menul0 = NewMenu::where([['HeaderMenu','=', 3],['L0','=', 0]])->orderBy('KODEMENU')->get();
+    // $menul1 = NewMenu::where([['HeaderMenu','=', 3],['L0','=',1]])->orderBy('KODEMENU')->get();
 
-      $tempAngka += 1;
-    }
-
-    $menul0 = NewMenu::where('L0' ,$tempAngka)->join('DBFLMENU', 'DBFLMENU.L1' ,'=' , 'DBMENU.KODEMENU')->where('DBFLMENU.USERID' , \Auth::user()->username)->where('DBFLMENU.HASACCESS' , 1)->where('DBMENU.HeaderMenu' , $headermenu)->orderBy('KODEMENU')->get();
-    $tempAngka += 1;
-    $menul1 = NewMenu::where('L0' , $tempAngka)->join('DBFLMENU', 'DBFLMENU.L1' ,'=' , 'DBMENU.KODEMENU')->where('DBFLMENU.USERID' , \Auth::user()->username)->where('DBFLMENU.HASACCESS' , 1)->where('DBMENU.HeaderMenu' , $headermenu)->orderBy('KODEMENU')->get();
-    // $tempAngka += 1;
-    $menul2 = NewMenu::where('L0' , 2)->join('DBFLMENU', 'DBFLMENU.L1' ,'=' , 'DBMENU.KODEMENU')->where('DBFLMENU.USERID' , \Auth::user()->username)->where('DBFLMENU.HASACCESS' , 1)->where('DBMENU.HeaderMenu' , $headermenu)->orderBy('KODEMENU')->get();
-    // @dd($menul2);
-    foreach ($menul1 as $menu1) {
-
-      $array1 = [];
-      $kodecheck = $menu1['KODEMENU'];
-      foreach ($menul2 as $menu2) {
-        if (substr($menu2['KODEMENU'],0,strlen($kodecheck)) == $kodecheck) {
-          array_push($array1, $menu2);
-        }
-      }
-
-        $menu1->child = $array1;
-    }
-
-    foreach ($menul0 as $menu0) {
-
-      $array = [];
-      $kodecheck = $menu0['KODEMENU'];
-      foreach ($menul1 as $menu1) {
-        if (substr($menu1['KODEMENU'],0,strlen($kodecheck)) == $kodecheck) {
-          array_push($array, $menu1);
-        }
-      }
-        $menu0->child = $array;
-    }
-    // @dd($menul0[0]['child'][4]['child']);
-        return $menul0;
-  }
+    $menul0 = NewMenu::where('L0' , 1)->join('DBFLMENU', 'DBFLMENU.L1' ,'=' , 'DBMENU.KODEMENU')->where('DBFLMENU.USERID' , \Auth::user()->username)->where('DBFLMENU.HASACCESS' , 1)->where('DBMENU.HeaderMenu' , 3)->orderBy('KODEMENU')->get();
+    $menul1 = NewMenu::where('L0' , 2)->join('DBFLMENU', 'DBFLMENU.L1' ,'=' , 'DBMENU.KODEMENU')->where('DBFLMENU.USERID' , \Auth::user()->username)->where('DBFLMENU.HASACCESS' , 1)->where('DBMENU.HeaderMenu' , 3)->orderBy('KODEMENU')->get();
 
 
-  public function getMenuL0Report () {
-    $menul0 = NewMenuReport::where('L0' , 1)->join('DBFLMENUREPORT', 'DBFLMENUREPORT.L1' ,'=' , 'DBMENUREPORT.KODEMENU')->where('DBFLMENUREPORT.USERID' , \Auth::user()->username)->where('DBFLMENUREPORT.ACCESS' , 1)->where('DBMENUREPORT.HeaderMenu' , 1)->orderBy('KODEMENU')->get();
-    $menul1 = NewMenuReport::where('L0' , 2)->join('DBFLMENUREPORT', 'DBFLMENUREPORT.L1' ,'=' , 'DBMENUREPORT.KODEMENU')->where('DBFLMENUREPORT.USERID' , \Auth::user()->username)->where('DBFLMENUREPORT.ACCESS' , 1)->where('DBMENUREPORT.HeaderMenu' , 1)->orderBy('KODEMENU')->get();
-    $menul2 = NewMenuReport::where('L0' , 3)->join('DBFLMENUREPORT', 'DBFLMENUREPORT.L1' ,'=' , 'DBMENUREPORT.KODEMENU')->where('DBFLMENUREPORT.USERID' , \Auth::user()->username)->where('DBFLMENUREPORT.ACCESS' , 1)->where('DBMENUREPORT.HeaderMenu' , 1)->orderBy('KODEMENU')->get();
-    $menul3 = NewMenuReport::where('L0' , 4)->join('DBFLMENUREPORT', 'DBFLMENUREPORT.L1' ,'=' , 'DBMENUREPORT.KODEMENU')->where('DBFLMENUREPORT.USERID' , \Auth::user()->username)->where('DBFLMENUREPORT.ACCESS' , 1)->where('DBMENUREPORT.HeaderMenu' , 1)->orderBy('KODEMENU')->get();
+    // $menul0 = DB::connection("SML")->select("select a.* , b.HASACCESS from DBMENU a join dbflmenu b on a.KODEMENU = b.L1  where b.USERID = 'SA' and b.HASACCESS = 1  and a.L0 =0 and a.HeaderMenu = 3 order by a.KODEMENU");
+    // $menul1 = DB::connection("SML")->select("select a.* , b.HASACCESS from DBMENU a join dbflmenu b on a.KODEMENU = b.L1  where b.USERID = 'SA' and b.HASACCESS = 1  and a.L0 =1 and a.HeaderMenu = 3 order by a.KODEMENU");
+    //
+    // $menul0 = collect($menul0)->map(function($x){ return (array) $x; })->toArray();
+    // $menul1 = collect($menul1)->map(function($x){ return (array) $x; })->toArray();
 
-    foreach ($menul2 as $menu2) {
-
-      $array2 = [];
-      $kodecheck = $menu2['KODEMENU'];
-      foreach ($menul3 as $menu3) {
-        if (substr($menu3['KODEMENU'],0,strlen($kodecheck)) == $kodecheck) {
-          array_push($array2, $menu3);
-        }
-      }
-        $menu2->child = $array2;
-    }
-
-    foreach ($menul1 as $menu1) {
-
-      $array1 = [];
-      $kodecheck = $menu1['KODEMENU'];
-      foreach ($menul2 as $menu2) {
-        if (substr($menu2['KODEMENU'],0,strlen($kodecheck)) == $kodecheck) {
-          array_push($array1, $menu2);
-        }
-      }
-        $menu1->child = $array1;
-    }
+    // foreach ($menul1 as $menu1) {
+    //   $array = [];
+    //   $kodecheck = $menu1['KODEMENU'];
+    //   foreach ($menul2 as $menu2) {
+    //       // array_push($array, $kodecheck);
+    //       if (substr($menu2['KODEMENU'],0, strlen($kodecheck)) == $kodecheck) {
+    //         array_push($array, $menu2);
+    //       }
+    //   }
+    //   $menu1->child = $array;
+    //
+    // }
 
     foreach ($menul0 as $menu0) {
 

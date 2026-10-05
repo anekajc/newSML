@@ -83,6 +83,14 @@ class ClosingPOController extends Controller
     ";
   }
 
+  // Tanggal filter dari browser hanya dipakai kalau formatnya Y-m-d, tanggalnya ada di kalender,
+  // dan tahunnya 1900-9999. Selain itu (mis. "0202-01-01" waktu user masih mengetik tahun)
+  // SQL Server datetime menolak dengan error out-of-range, jadi dipakai rentang default periode.
+  private function tanggalSah ($tgl) {
+    if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string) $tgl, $m)) { return false; }
+    return (int) $m[1] >= 1900 && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+  }
+
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase Order).
   private function periodeRange ($periode) {
     $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
@@ -112,7 +120,9 @@ class ClosingPOController extends Controller
       "periode" => $periode,
       "cpoTglAwal" => $cpoTglAwal,
       "cpoTglAkhir" => $cpoTglAkhir,
-      "akses" => $akses
+      "akses" => $akses,
+      // dipakai modalClosingPOAdd (form PO lama newSML yang dipertahankan nonaktif)
+      "listBarangAll" => []
     ]);
 
 }
@@ -202,8 +212,8 @@ class ClosingPOController extends Controller
   public function dataOutstanding (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     list($tglawal, $tglakhir) = $this->periodeRange($periode);
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($this->tanggalSah($req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if ($this->tanggalSah($req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
     if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
 
     $draw   = (int) $req->input('draw', 1);
@@ -277,8 +287,8 @@ class ClosingPOController extends Controller
   public function dataClosing (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     list($tglawal, $tglakhir) = $this->periodeRange($periode);
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($this->tanggalSah($req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if ($this->tanggalSah($req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
     if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
 
     $draw   = (int) $req->input('draw', 1);

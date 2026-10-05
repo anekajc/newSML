@@ -133,6 +133,10 @@
 <link rel="stylesheet" href="{!! URL::asset('css/scrollbar-autohide.css') !!}?v={{ @filemtime(base_path('public/css/scrollbar-autohide.css')) ?: '1' }}">
 {{-- Modal pemilih (Perkiraan/Barang/Supplier/Customer/dst.) disamakan persis dengan modal pemilih menu Kas - lihat public/css/picker-kas.css. --}}
 <link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /purchaseorder itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
   <style>
   .btn .bi-plus {
     font-size: 1.5rem;
@@ -295,6 +299,7 @@
   #tabel2 thead th,
   #tabel3 thead th,
   #tabelso thead th,
+  #tabel_refpr thead th,
   #tabel_data_header th {
     background: #f8f9fb !important;
     color: #6b7280 !important;
@@ -337,6 +342,7 @@
   #tabel3 tbody tr:nth-of-type(odd),
   #tabelso tbody tr:nth-of-type(odd),
   #tabel_add tbody tr:nth-of-type(odd),
+  #tabel_refpr tbody tr:nth-of-type(odd),
   #tabel_add_harga_terakhir tbody tr:nth-of-type(odd),
   #tabel_add_stock_proyeksi tbody tr:nth-of-type(odd) {
     background-color: #fbfbfc;
@@ -346,8 +352,15 @@
   #tabel2 tbody tr:hover,
   #tabel3 tbody tr:hover,
   #tabelso tbody tr:hover,
-  #tabel_add tbody tr:hover {
+  #tabel_add tbody tr:hover,
+  #tabel_refpr tbody tr:hover {
     background-color: #f5f3ff;
+  }
+
+  /* Tabel Referensi PR (form Tambah PR): isi satu baris, tidak dipatah - tabelnya digeser mendatar. */
+  #tabel_refpr th,
+  #tabel_refpr td {
+    white-space: nowrap;
   }
 
   /* Hover baris disesuaikan warna tabelnya masing-masing, bukan ungu seperti tabel lain. */
@@ -703,6 +716,9 @@ td input[type="checkbox"] {
       border: none !important;
   }
 
+  /* Dinonaktifkan: garis vertikal/atas per sel di tab Outstanding PR (#tabel) & Outstanding SO
+     (#tabelso). Tabelnya kini bersih tanpa garis kolom, sama seperti tab Purchase Order (#tabel2)
+     yang hanya memakai garis bawah tipis per baris dari .data-table.
   #tabel td, #tabel th,
   #tabelso td, #tabelso th {
       border-left: 1px solid #dee2e6;
@@ -718,6 +734,7 @@ td input[type="checkbox"] {
   #tabelso thead tr:first-child th {
       border-top: none;
   }
+  */
 
   /* DataTables (autoWidth bawaan = true) selalu menulis hasil pengukurannya sebagai inline
      style pada <table>, mis. style="width: 1640px" - lihat `b.style.width = v(e)` di
@@ -1170,7 +1187,7 @@ td input[type="checkbox"] {
                     </button>
                     <div class="po-toolbar-act">
                       <button class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
-                      <button class="btn btn-chip-biru" onclick="buttonAddPr()">Tambah PR</button>
+                      <button class="btn btn-chip-biru" id="buttonTambahPr" onclick="buttonAddPr()">Tambah PR</button>
                     </div>
                   </div>
                   {{-- #rtBar dipindahkan ke sini lewat JS saat tab ini aktif - lihat poPindahBar(). --}}
@@ -3464,7 +3481,16 @@ td input[type="checkbox"] {
         </div>
       </div>
 
-    <button type="button" class="btn btn-primary" onclick="submitAddPr()" class="btn btn-secondary"  >Save PR</button>
+    <button type="button" class="btn btn-lg btn-chip-biru" style="
+      height: 30px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+      onclick="submitAddPr()">Simpan PR</button>
 </div>
 </div>
 <hr/>
@@ -3480,8 +3506,10 @@ td input[type="checkbox"] {
 <div class="container-fluid mt-4" style="overflow:auto;">
   <!-- <input type="hidden" name="noUrut" id="input_detail_noUrut" value="" /> -->
   <div class="row" style="overflow:auto;">
-    <table id="tabel_refpr" class="table table-bordered table-hover table-striped table-responsive-lg">
-      <thead class="text-center bg-primary text-white">
+    {{-- Pakai .data-table supaya tampilannya sama dengan tabel item (#tabel_add): tanpa garis
+         kotak per sel, hanya garis bawah tipis per baris. --}}
+    <table id="tabel_refpr" class="data-table">
+      <thead class="text-center">
         <tr>
           <th style="padding: 4px 12px;" class="text-center" scope="col">v</th>
           <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
@@ -3521,7 +3549,16 @@ td input[type="checkbox"] {
       </div>
     </div>
 
-  <button type="button" class="btn btn-primary" onclick="submitAddPr()" class="btn btn-secondary"  >Save PR</button>
+  <button type="button" class="btn btn-lg btn-chip-biru" style="
+      height: 30px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+      onclick="submitAddPr()">Simpan PR</button>
 </div>
 </div>
 
@@ -4122,11 +4159,30 @@ function choosePrint(type) {
 function buttonAddPr () {
   console.log('buttonAddPr')
   let _token = $("#_token").val();
+  // Request dibuat async (tidak membekukan halaman selama SP RefTempPR berjalan) dan
+  // tombolnya menampilkan status memuat; klik ganda selama memuat diabaikan.
+  let tombol = document.getElementById('buttonTambahPr')
+  if (tombol && tombol.disabled) { return }
+  let teksTombol = tombol ? tombol.innerHTML : ''
+  if (tombol) {
+    tombol.disabled = true
+    tombol.innerHTML = '<span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>Memuat...'
+  }
   $.ajax({
     url: "{!! url('purchaseorderlistrefpr') !!}",
     type: "get",
-    async: false,
+    async: true,
     data: {
+    },
+    complete: function () {
+      if (tombol) {
+        tombol.disabled = false
+        tombol.innerHTML = teksTombol
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal memuat Referensi PR, silahkan coba lagi')
     },
     success: function(res) {
       console.log('resbuttonAddPr' , res)
@@ -4216,7 +4272,7 @@ function buttonOtorisasi (nobukti , isoto1) {
   $('#modalOtorisasi').modal('show');
 
   // Fetch detail data
-  let _token = $("#_token").val();
+  let _token = $("#_token").val(); 
 
   $.ajax({
     url: "{!! url('pogetdetail') !!}",
@@ -4234,7 +4290,7 @@ function buttonOtorisasi (nobukti , isoto1) {
         rows += `<tr>
           <td>${item.KodeBrg}</td>
           <td>${item.NamaBrg}</td>
-          <td class="text-right">${item.Qnt ? formatAngka(item.Qnt) : '0.00'}</td>
+          <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
           <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
           <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
           <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
@@ -4242,12 +4298,13 @@ function buttonOtorisasi (nobukti , isoto1) {
           <td class="text-right">${item.SaldoRP ? formatAngka(parseFloat(item.SaldoRP).toFixed(2)) : '0.00'}</td>
         </tr>`;
 
-        totalTotal += item.Total;
-        saldoTotal += item.SaldoRP;
+        totalTotal += item.TotalX;
+        saldoTotal += item.totalsaldorp;
       });
 
-      rows += `<tr class="total-row">
-        <td colspan="4"></td>
+      rows += `<tr class="border-0">
+        <td colspan="3"></td>
+        <td class="text-right"></td>
         <td class="text-right">Total:</td>
         <td class="text-right">${formatAngka(parseFloat(totalTotal).toFixed(2))}</td>
         <td class="text-right"></td>
@@ -4261,7 +4318,7 @@ function buttonOtorisasi (nobukti , isoto1) {
     }
   });
 
-  // Handle confirm/otorisasi button   unbind first to avoid duplicate handlers
+  // Handle confirm/otorisasi button � unbind first to avoid duplicate handlers
   $('#btn-confirm-otorisasi').off('click').on('click', function() {
 
       let _token = $("#_token").val();
@@ -6317,7 +6374,7 @@ function buttonAddAddListPWO () {
         rowTable += `
         <tr class="pick-row" onclick="buttonAddPickPWO('${item.no_bukti}' , '${item.tanggal}')">
           <td>${item.no_bukti}</td>
-          <td>${item.tanggal}</td>
+          <td>${item.tanggal ? formatDate(item.tanggal).split('-').reverse().join('/') : ''}</td>
           <td>${item.supplier}</td>
           <td>${item.kode}</td>
           <td>${item.NAMABRG}</td>
@@ -6805,7 +6862,7 @@ function buttonTambahSOAll () {
     if ($.fn.DataTable.isDataTable('#tabel_tambahsoall')) { $('#tabel_tambahsoall').DataTable().destroy() }
   }
   $.ajax({
-    url: "{!! url('polistnoso') !!}",
+    url: "{!! url('polistnosotambahso') !!}",
     type: "post",
     async: false,
     data: {
@@ -6822,7 +6879,7 @@ function buttonTambahSOAll () {
         <tr>
           <td class="text-center"><input class="" type="checkbox" value="" id="add_checkboxAll${i}" onchange="onchangecheckboxtambahso(${i})"></td>
           <td>${item.NOBUKTI}</td>
-          <td>${formatDate(item.Tanggal)}</td>
+          <td>${formatDate(item.Tanggal).split('-').reverse().join('/')}</td>
           <td>${item.NoPesanan}</td>
           <td>${item.KODEBRG}</td>
           <td>${item.NAMABRG}</td>
@@ -6878,7 +6935,7 @@ function buttonAddListNoSO () {
         rowTable += `
         <tr class="pick-row" onclick="buttonAddPickNoSO('${item.NOBUKTI}' , '${item.NoPesanan}')">
           <td>${item.NOBUKTI}</td>
-          <td>${item.Tanggal}</td>
+          <td>${item.Tanggal ? formatDate(item.Tanggal).split('-').reverse().join('/') : ''}</td>
           <td>${item.NoPesanan}</td></tr>`
       });
 
@@ -6947,11 +7004,124 @@ function onChangeKodeAlamatKirim () {
   document.getElementById("input_add_alamatkirim").value = alamat
 
   if (tipeform == 'edit') {
-    onChangeHeader('NoAlamatKirim' , kode)
-    onChangeHeader('AlamatKirim' , alamat)
+    onChangeHeader('kodegdg' , kode)
+    // onChangeHeader('AlamatKirim' , alamat)
   }
 
 }
+
+// Browse "Dikirim Ke" & Valas versi newSML (sebelum diganti dropdown). Tetap disimpan.
+function buttonAddListGudang () {
+
+  let _token = $("#_token").val();
+
+  $('#tabel_add_list_alamatkirim').DataTable().destroy();
+  $.ajax({
+    url: "{!! url('polistgudang') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token
+    },
+    success: function(res) {
+      let rowTable = ``
+
+      listAlamatKirim = res
+
+      listAlamatKirim.forEach((item, i) => {
+        rowTable += `
+        <tr>
+        <td class="text-center"><button class="btn btn-primary btn-sm" style="margin-top:5px; margin-bottom:5px;" onclick="buttonAddPickAlamatKirim(${i} )" type="button" ><i class="bi bi-plus"></i></button></td>
+        <td>${item.KODEGDG}</td>
+        <td>${item.NAMA}</td>
+        <td>${item.Alamat}</td>
+
+        </tr>`
+      });
+
+      document.getElementById("tabel_data_add_list_alamatkirim").innerHTML = rowTable
+      $("#tabel_add_list_alamatkirim").DataTable({
+        "lengthChange": false,
+        "paging": true,
+      });
+
+      document.getElementById("namaHeaderTable").textContent = 'Dikirim Ke'
+
+      $('.showhidemodalbodyadd').hide();
+      $('#modalBodyAddListAlamatKirim').show();
+
+      $("#form").modal('toggle')
+
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+
+  })
+
+}
+
+function buttonAddListValas () {
+
+  $('#tabel_add_list_valas').DataTable().destroy();
+  $.ajax({
+    url: "{!! url('polistvalas') !!}",
+    type: "get",
+    async: false,
+    data: {
+
+    },
+    success: function(res) {
+      let rowTable = ``
+      res.forEach((item, i) => {
+        rowTable += `
+        <tr>
+        <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickValas('${item.kodevls}' , '${item.kurs ? parseFloat(item.kurs).toFixed(2) : '0.00'}' )" type="button" ><i class="bi bi-plus"></i></button></td>
+        <td>${item.kodevls}</td>
+        <td>${item.namavls}</td>
+        <td>${formatAngka(item.kurs ? parseFloat(item.kurs).toFixed(2) : '0.00')}</td>
+
+        </tr>`
+      });
+
+      document.getElementById("tabel_data_add_list_valas").innerHTML = rowTable
+      $("#tabel_add_list_valas").DataTable({
+        "lengthChange": false,
+        "paging": true,
+      });
+
+      document.getElementById("namaHeaderTable").textContent = 'Valas'
+
+      $('.showhidemodalbodyadd').hide();
+      $('#modalBodyAddListValas').show();
+
+      $("#form").modal('toggle')
+
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+
+  })
+
+
+}
+
+function onChangegudang () {
+  console.log("onChange gudang")
+
+  if (tipeform == 'edit') {
+    let value  = $("#input_add_kodealamatkirim").val()
+    onChangeHeader('kodegdg' , value)
+
+  }
+
+
+}
+
+
 
 
 function buttonAddListLokasiPenerima () {
@@ -7199,7 +7369,7 @@ function onChangeInputAddAddNosat () {
       res.forEach((item, i) => {
         rowTable += `
         <tr>
-        <td>${item.TANGGAL}</td>
+        <td>${item.TANGGAL ? formatDate(item.TANGGAL).split('-').reverse().join('/') : ''}</td>
         <td>-</td>
         <td>${item.SATUAN}</td>
         <td>-</td>
@@ -7869,7 +8039,11 @@ function poRenderNilai (col, item) {
     return poFormatAngkaDes(nilai, col.desimal)
   }
   if (col.tipe === 2) {
-    return nilai ? formatDate(nilai) : ""
+    return nilai ? formatDate(nilai).split('-').reverse().join('/') : ""
+  }
+  // Tanggal yang datang sebagai teks 'yyyy-mm-dd...' (mis. hasil CONVERT di SQL) juga tampil dd/mm/yyyy.
+  if (typeof nilai === 'string' && /^\d{4}-\d{2}-\d{2}/.test(nilai)) {
+    return nilai.substr(0, 10).split('-').reverse().join('/')
   }
   return (nilai === null || nilai === undefined) ? "" : nilai
 }
@@ -8258,7 +8432,7 @@ if (baris2) {
             :
             '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
           }
-          <td>${item.TglOto1 || ''}</td>
+          <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
 
           <td>${item.OtoUser1 || ''}</td>
           `
@@ -8272,7 +8446,7 @@ if (baris2) {
             }
 
             <td>${item.OtoUser2 || '' } </td>
-            <td>${item.TglOto2 || '' } </td>
+            <td>${item.TglOto2 ? formatDate(item.TglOto2).split('-').reverse().join('/') : ''} </td>
 
 
             `
@@ -8283,7 +8457,7 @@ if (baris2) {
                 :
                 '<td class="text-danger text-center">3<i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
               }
-              <td>${item.TglOto3 || ''} </td>
+              <td>${item.TglOto3 ? formatDate(item.TglOto3).split('-').reverse().join('/') : ''} </td>
 
               <td>${item.OtoUser3 || '' } </td>
               `
@@ -8294,7 +8468,7 @@ if (baris2) {
                   :
                   '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
                 }
-                <td>${item.TglOto4 || ''}</td>
+                <td>${item.TglOto4 ? formatDate(item.TglOto4).split('-').reverse().join('/') : ''}</td>
 
                 <td>${item.OtoUser4 || '' }</td>
                 `
@@ -8305,7 +8479,7 @@ if (baris2) {
                     :
                     '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
                   }
-                  <td>${item.TglOto5 || '' }</td>
+                  <td>${item.TglOto5 ? formatDate(item.TglOto5).split('-').reverse().join('/') : ''}</td>
 
                   <td>${item.OtoUser5 || '' }</td>
                   `
@@ -9299,8 +9473,8 @@ function buttonAddPickAlamatKirim (index) {
   console.log(itemX)
   // console.log(kode,nama,alamat)
   if (tipeform == 'edit') {
-    onChangeHeader('NoAlamatKirim' , itemX.KODEGDG)
-    onChangeHeader('AlamatKirim' , itemX.Alamat)
+    onChangeHeader('kodegdg' , itemX.KODEGDG)
+    // onChangeHeader('AlamatKirim' , itemX.Alamat)
   }
 
   document.getElementById("input_add_kodealamatkirim").value = itemX.KODEGDG
@@ -9326,7 +9500,7 @@ function buttonAddPickLokasiPenerima (kode, nama ) {
   console.log('buttonAddPickLokasiPenerima')
   console.log(kode,nama)
   if (tipeform == 'edit') {
-    onChangeHeader('KODEKEBUN' , kode)
+    onChangeHeader('KODEEXP' , kode)
 
   }
   document.getElementById("input_add_kodeekspedisi").value = kode
@@ -10761,7 +10935,7 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 35%;">${itemSub.NAMABRG}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: center;">${itemSub.PartNumber}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 10%;">${itemSub.NAMAMERK ?? ''}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? formatAngka(itemSub.QNT) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? parseFloat(itemSub.QNT).toFixed(2) : ''}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.SATUAN}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 10%; text-align: right;">${formatAngka(parseFloat(itemSub.harga).toFixed(2))}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: right;">${formatAngka(parseFloat(itemSub.SUBTOTALRp).toFixed(2))}</td>
@@ -10822,12 +10996,13 @@ tempPrintStr += `</table>`;
       <div>User :</div>
       <div>`+dataPrint[0].Iduser+`</div>
     </div>
-  </div>`
+  </div>
+  <div style="width: 62%; font-family: sans-serif; font-size: 10px;">`
 
   if(i == arrayDataPrint.length - 1){
 
     tempPrintStr += `
-  <div style="width: 62%; font-family: sans-serif; font-size: 10px;">
+  
 
     <div style="display: flex; font-size:10px; justify-content: flex-end; width: 92%; padding-bottom: 2px;">
       <div style="width: 5%; text-align:left;"> JUMLAH </div>
@@ -10846,7 +11021,7 @@ tempPrintStr += `</table>`;
     </div>
     <div style="display: flex; font-size:10px; justify-content: flex-end; width: 92%; padding-bottom: 2px;">
       <div style="width: 5%; text-align:left;"> DPP </div>
-      <div style="width: 30%; text-align: right">${formatAngka(parseFloat(dataPrint[0].TSUBTOTALRp).toFixed(2))}</div>
+      <div style="width: 30%; text-align: right">${formatAngka(parseFloat(dataPrint[0].Tndpprp).toFixed(2))}</div>
     </div>
     <div style="display: flex; font-size:10px; justify-content: flex-end; width: 92%; padding-bottom: 6px; position: relative;">
       <div style="width: 5%; text-align:left;"> PPN </div>
@@ -11500,7 +11675,7 @@ tempPrintStr += `
   <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 35%;">${itemSub.NAMABRG}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: center;">${itemSub.PartNumber}</td>
   <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 10%;">${itemSub.NAMAMERK ?? ''}</td>
-  <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? formatAngka(itemSub.QNT) : ''}</td>
+  <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? parseFloat(itemSub.QNT).toFixed(2) : ''}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.SATUAN}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 10%; text-align: right;">${formatAngka(parseFloat(itemSub.harga).toFixed(2))}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: right;">${formatAngka(parseFloat(itemSub.SUBTOTALRp).toFixed(2))}</td>
@@ -11561,12 +11736,12 @@ tempPrintStr += `</table>`;
   <div>User :</div>
   <div>`+dataPrint[0].Iduser+`</div>
 </div>
-</div>`
+</div>
+<div style="width: 62%; font-family: sans-serif; font-size: 10px;">`
 
 if(i == arrayDataPrint.length - 1){
 
 tempPrintStr += `
-<div style="width: 62%; font-family: sans-serif; font-size: 10px;">
 
 <div style="display: flex; font-size:10px; justify-content: flex-end; width: 92%; padding-bottom: 2px;">
   <div style="width: 5%; text-align:left;"> JUMLAH </div>

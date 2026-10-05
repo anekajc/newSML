@@ -75,6 +75,7 @@ Route::post('/newsetupperiodekerjaupdate', [NewSetupPeriodeKerjaController::clas
 Route::post('/spnobuktisimbol', [GlobalController::class, 'getNoBuktiSimbol'])->middleware('auth');
 Route::post('/spnobukti', [GlobalController::class, 'getNoBukti'])->middleware('auth');
 Route::get('/spgetstockakhir', [GlobalController::class, 'getStockAkhir'])->middleware('auth');
+Route::get('/gettanggalserver', [GlobalController::class, 'getTanggalServer'])->middleware('auth');
 
 require __DIR__.'/accounting.php';
 require __DIR__.'/marketing.php';

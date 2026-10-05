@@ -426,6 +426,24 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 /* Varian kecil untuk tombol browsing di dalam baris tabel (input tinggi 30px). */
 .btn-browsing-sm { height: 30px; width: 32px; font-size: 13px; border-radius: 0 !important; }
 
+/* Kotak cari di modal Proses Terima DPP - sama dengan #input_search_pengajuan_dpp (pengajuandpp). */
+#input_search_proses_dpp {
+  width: 260px;
+  max-width: 100%;
+  font-size: 13px;
+  padding: 7px 10px 7px 32px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236b7280' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+}
+#input_search_proses_dpp:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px #e8edff;
+}
+
 /* Tombol Save di modal Change Invoice - hijau lembut, bukan hijau bootstrap terang. */
 #buttonSaveLB {
   background-color: #e7f7ed;
@@ -1793,6 +1811,15 @@ td input[type="checkbox"] {
 
 
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
+
+          {{-- Kotak pencarian tabel Proses Terima DPP - diikat lewat pldIkatSearchProsesDpp().
+               Tampilan disamakan dengan #input_search_pengajuan_dpp di pengajuandpp. --}}
+          <div class="row mb-2">
+            <div class="col-12 d-flex justify-content-end" style="padding-right: 0px;">
+              <input id="input_search_proses_dpp" type="search" class="form-control" placeholder="Cari data">
+            </div>
+          </div>
+
           <div class="row">
             <div class="col-12" style="overflow:auto;  max-height: 400px">
             <!-- <div class="container-fluid"> -->
@@ -2495,6 +2522,7 @@ $(document).ready(function(){
       // cari buatan sendiri (pldIkatCariPerkiraanModal) diganti kotak Search bawaan DataTables.
       // pldIkatCariPerkiraanModal()
       pickerKasInit('tabel_add_list_perkiraan')
+      pldIkatSearchProsesDpp()
       $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
         if ($.fn.DataTable.isDataTable('#tabel2')) { $('#tabel2').DataTable().columns.adjust() }
         if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().columns.adjust() }
@@ -2750,6 +2778,22 @@ function pldIkatCariPerkiraanModal () {
   input.addEventListener('input', function () {
     let cari = input.value.toLowerCase()
     let baris = document.querySelectorAll('#tabel_data_add_list_perkiraan tr')
+    baris.forEach(function (tr) {
+      tr.style.display = tr.textContent.toLowerCase().indexOf(cari) !== -1 ? '' : 'none'
+    })
+  })
+}
+
+// Kotak cari modal Proses Terima DPP (#form). Tabelnya bukan DataTable dan tiap baris membawa
+// checkbox/input ber-id yang dibaca saat submit, jadi baris cukup disembunyikan - tidak dibuang.
+function pldIkatSearchProsesDpp () {
+  let input = document.getElementById('input_search_proses_dpp')
+  if (!input || input.dataset.rtBound) { return }
+  input.dataset.rtBound = '1'
+
+  input.addEventListener('input', function () {
+    let cari = input.value.toLowerCase()
+    let baris = document.querySelectorAll('#tabel_data_add_list_modal tr')
     baris.forEach(function (tr) {
       tr.style.display = tr.textContent.toLowerCase().indexOf(cari) !== -1 ? '' : 'none'
     })
@@ -3059,7 +3103,7 @@ function renderTabelOutstanding () {
       : `<button class="btn btn-primary btn-sm" type="button" title="Tambah" onclick="buttonAdd('${item.NOBUKTI}')"><i class="bi bi-plus"></i></button>`
     rowTable += `<tr><td class="text-center"><div class="po-aksi-wrap">
         ${btnAdd}
-        <button class="btn btn-success btn-sm" type="button" title="Koreksi Customer" onclick="buttonKoreksiCustomer('${item.NOBUKTI}','${item.urutTrans}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-success btn-sm" type="button" title="Koreksi Customer" onclick="buttonKoreksiCustomer('${item.NOBUKTI}','${item.urutTrans}')"><i class="bi bi-pen"></i></button>
       </div></td>`
     kolomRender.forEach((c) => {
       if (c.tipe === 1) {
@@ -4740,6 +4784,7 @@ function buttonAddItem () {
       setNum("input_modal_dibayar", $("#input_add_dibayar").val());
       setNum("input_modal_sisa", $("#input_add_sisa").val());
       document.getElementById("tabel_data_add_list_modal").innerHTML = rowTable
+      document.getElementById("input_search_proses_dpp").value = ''
 
 
         $("#form").modal('show')

@@ -325,7 +325,9 @@ QNTCR=CASE WHEN QntOpname-SaldoComp>=0  THEN 0 ELSE (QntOpname-SaldoComp)*-1  EN
       //     ];
       // }
 
-        if ((float)$req->dppx > (float)$checkqucary[0]->OutUM) {
+        // Dibandingkan per rupiah penuh: DPP dari form dihitung mundur dari subtotal sehingga
+        // bisa lebih beberapa sen dari DPP PO walau nilainya sama.
+        if (round((float)$req->dppx) > round((float)$checkqucary[0]->OutUM)) {
   // return ['input : ',(float)$req->dppx, 'out vw : ' ,  (float)$checkqucary[0]->OutUM];
 
           return 3;
@@ -335,12 +337,13 @@ QNTCR=CASE WHEN QntOpname-SaldoComp>=0  THEN 0 ELSE (QntOpname-SaldoComp)*-1  EN
           return 3;
         }
 
-        if ((float)$checkporp[0]->OUTPORP - (float)$req->subtotal < 0) {
+        // OUTPORP di view sudah dibulatkan 0 desimal, jadi subtotal ikut dibulatkan
+        if ((float)$checkporp[0]->OUTPORP - round((float)$req->subtotal) < 0) {
          return 3;
   //return [(float)$checkporp[0]->OUTPORP ,'ccccc' ,(float)$req->subtotal];
         }
       } else if ($choice == "U") {
-        if (floor($checkqucary[0]->TOTDPPUM) -  floor($req->dppdetail) + floor($req->dppx) > floor($checkqucary[0]->DPP)) {
+        if (round((float)$checkqucary[0]->TOTDPPUM - (float)$req->dppdetail + (float)$req->dppx) > round((float)$checkqucary[0]->DPP)) {
          return 3;
   // return [floor($checkqucary[0]->TOTDPPUM),  floor($req->dppdetail) ,  floor($req->dppx) ,floor($checkqucary[0]->DPP) ];
         }

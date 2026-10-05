@@ -36,8 +36,25 @@ class PembelianPermintaanNonAgenController extends Controller
     ]);
 }
 
+  // Tanggal filter dari browser hanya dipakai kalau formatnya Y-m-d, tanggalnya ada di kalender,
+  // dan tahunnya 1900-9999. Selain itu (mis. "0202-01-01" waktu user masih mengetik tahun)
+  // SQL Server datetime menolak dengan error out-of-range, jadi dipakai satu bulan periode kerja.
+  private function rentangTanggal (Request $req) {
+    $sah = function ($tgl) {
+      if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string) $tgl, $m)) { return false; }
+      return (int) $m[1] >= 1900 && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+    };
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
+    $awal  = $sah($req->tglawal)  ? $req->tglawal  : date('Y-m-01', $stamp);
+    $akhir = $sah($req->tglakhir) ? $req->tglakhir : date('Y-m-t', $stamp);
+    return [$awal, $akhir];
+  }
+
   public function loadAll (Request $req)
 {
+      list($tglawalSah, $tglakhirSah) = $this->rentangTanggal($req);
+
     $queryOtorisasi = '';
   if ($req->isoto != 2 ) {
     $queryOtorisasi = ' and IsOtorisasi1 = ' . $req->isoto;
@@ -48,7 +65,7 @@ class PembelianPermintaanNonAgenController extends Controller
     // "Qnt"/"QntBatal"/"QntPO") untuk menghitung badge Status "Sudah/Belum/Batal" di
     // pembelianpermintaannonagen.blade.php (prStatusPR()). Ketiganya dikecualikan dari
     // penurunan kolom default di bawah supaya tidak ikut jadi kolom tabel.
-    $outstanding = DB::connection("SML")->select("select NoBukti  , Tanggal  , IsOtorisasi1, TglOto1, OtoUser1, Qnt AS Qnt, QntBatal AS QntBatal, QntPO AS QntPO  from vwppl where  Tanggal between :tglawal and :tglakhir and IsJasa = 0 and pAgen = 0 " . $queryOtorisasi . " order by Tanggal desc, NoBukti desc" , ["tglawal" => $req->tglawal , "tglakhir" => $req->tglakhir ]);
+    $outstanding = DB::connection("SML")->select("select NoBukti  , Tanggal  , IsOtorisasi1, TglOto1, OtoUser1, Qnt AS Qnt, QntBatal AS QntBatal, QntPO AS QntPO  from vwppl where  Tanggal between :tglawal and :tglakhir and IsJasa = 0 and pAgen = 0 " . $queryOtorisasi . " order by Tanggal desc, NoBukti desc" , ["tglawal" => $tglawalSah , "tglakhir" => $tglakhirSah ]);
     $collection1 = collect($outstanding)->groupBy('NoBukti');
     $tempOutstanding = [];
     foreach ($collection1 as $groupedData) {

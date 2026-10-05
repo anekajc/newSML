@@ -172,6 +172,18 @@ public function getDetailPO (Request $req) {
 }
 
 public function spBeliGudang (Request $req) {
+  // Simpan Faktur & Keterangan dari modal edit (choice 'F'). sp_BeliGudang hanya punya cabang
+  // I/U/D, jadi kalau diteruskan ke SP tidak ada yang tersimpan - header dbBeli diupdate langsung.
+  // Panjang dipotong sesuai kolom (FAKTURSUPP 50, KETERANGAN 200) supaya tidak gagal truncate.
+  if ($req->input('choice') == 'F') {
+    DB::connection('SML')->update('update dbBeli set FAKTURSUPP = ?, KETERANGAN = ? where NOBUKTI = ?', [
+      mb_substr((string) $req->input('reqFakturSupp'), 0, 50),
+      mb_substr((string) $req->input('reqKeterangan'), 0, 200),
+      $req->input('reqNoBukti')
+    ]);
+    return 1;
+  }
+
   // return $req;
   // $data = $req->input('data');
   // $dataLPB = $req->input('dataLPB');

@@ -459,6 +459,18 @@
     outline: none;
   }
 
+  /* <li class="nav-item"> tab ikut kena gaya menu sidebar layout (.nav-item: padding,
+     border-left, hover berlatar gelap), jadi dikembalikan ke gaya tab biasa. */
+  .stp-main-tabs .nav-item,
+  .stp-sub-tabs .nav-item,
+  .stp-main-tabs .nav-item:hover,
+  .stp-sub-tabs .nav-item:hover {
+    display: block;
+    padding: 0;
+    border-left: none;
+    background: transparent;
+  }
+
   .stp-main-tabs .nav-link {
     font-weight: 600;
     font-size: 14px;

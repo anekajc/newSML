@@ -263,7 +263,6 @@ order by A.NoBukti
 
   public function spDetailKoreksi (Request $req) {
 
-
     $nobukti = $req->nobukti;
 
     $list = DB::connection("SML")->select("
@@ -922,9 +921,9 @@ Order by A.NoBukti
       $req->nobukti,
       1
     ];
+    
     DB::connection('SML')->statement('exec sp_ProsesPostingHutPiut ?,?,?,?,?,?', $values);
     DB::connection('SML')->statement('exec sp_ProsesPostingJurnalOto ?,?,?,?,?,?', $values);
-
 
     return 1;
   }
