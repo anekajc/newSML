@@ -329,32 +329,6 @@ input[type=number] {
 </div>
 <!--end-->
 
-
-<div class="container-fluid" >
-
-
-
-  <!-- <div id="qrcode"></div> -->
-  {{-- <div class="row">
-    <div class="col-6 text-left">
-      <h2>Cetak Tanda Terima Invoice</h2>
-    </div>
-    <div class="col-6 text-right">
-      <!-- <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600;  " onclick="buttonAdd()"  >+ Cetak DPH</button> -->
-    </div>
-  </div> --}}
-<!-- <button onclick="loadAll()">tes</button>
-<button onclick="tesConcat()">tes</button> -->
-
-<!-- <button onclick="setNewNoBukti()">tes</button> -->
-<!-- <button onclick="buttonAdd('nobukti')">Add Tes</button> -->
-</div>
-
-<div id="printContainer" style="display:none">
-
-
-
-</div>
 <div id="contentContainer" class="container-fluid">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
@@ -481,225 +455,68 @@ input[type=number] {
 
   <div id= "formAdd" class="">
 
-
-
-  <div id="" class="">
+  <div id="formBsGrid" class="">
   <div class="">
     <!-- <h1>Tes Modal</h1> -->
 
-    <div class="container-fluid">
+    <div id='formBsGrid' class="container-fluid">
 
       <div class="row">
 
         <div class="col-md-3">
-          <div class="row">
-
-            <div class="col-md-4">
-          <div class="form-group">
-            <label>No Urut</label>
-          </div>
-        </div>
-
-        <div class="col-md-8">
-          <div class="form-group">
-              <input type="text" name="noUrut" id="input_add_nourut" value="" disabled>
-          </div>
-        </div>
-      </div>
-      </div>
-
-        <div class="col-md-3">
-          <div class="row">
-
-
-        <div class="col-md-4">
-          <div class="form-group">
-            <label>No Bukti</label>
-          </div>
-        </div>
-
-        <div class="col-md-8">
-          <div class="form-group">
-              <input type="hidden" class="form-control" id="input_add_nourut" placeholder="" disabled>
-            <input type="text" class="form-control" id="input_add_nobukti" placeholder="No Bukti" disabled>
-          </div>
-        </div>
-      </div>
-
-        </div>
-        <div class="col-md-3">
-          <div class="row">
-
-
-        <div class="col-md-4">
-          <div class="form-group">
-            <label>Tanggal</label>
-          </div>
-        </div>
-        <div class="col-md-8">
-          <div class="form-group">
-            <input type="date" class="form-control text-center" id="input_add_tanggal" placeholder="" disabled>
-          </div>
-        </div>
-      </div>
-
-        </div>
-
-      </div>
-
-      <div class="row">
-        <div class="col-md-6">
-          <div class="row" style="margin-top: -10px">
-            <div class="col-md-6">
-              <!-- <div class="row">
-
-
-                <div class="col-md-4">
-                  <div class="form-group">
-                  <label>BKM/BBM</label>
-                </div>
-
-                <div class="col-md-8">
-                  <div class="input-group form-group">
-                    <input id="input_add_nobkmbbm" type="text" class="form-control" disabled>
-                  </div>
-                </div>
-
-              </div> -->
-
-
-            <!-- <div class="row" style="margin-top: -10px">
-
-
-
-                <div class="col-md-4">
-                  <div class="form-group">
-                  <label>Valas</label>
-                </div>
-                </div>
-
-                <div class="col-md-8">
-                  <div class="input-group form-group">
-                    <input id="input_add_valas" type="text" class="form-control" disabled>
-
-
-                  </div>
-                </div>
-                </div>
-
-            </div> -->
-
-            <!-- <div class="col-md-6">
-                  <div class="row">
-                    <div class="col-md-4">
-                      <div class="form-group">
-                      <label>Customer</label>
-                    </div>
-                    </div>
-
-                    <div class="col-md-8">
-                      <div class="input-group form-group">
-                        <input id="input_add_kodecust" type="text" class="form-control" disabled>
-
-
-                      </div>
-                    </div>
-
-            </div> -->
-
-            <!-- <div class="row" style="margin-top: -10px"> -->
-
-              <!-- <div class="col-md-4">
-              </div> -->
-
-              <!-- <div class="col-md-8">
-                <div class="input-group form-group">
-                  <input id="input_add_namacust" type="text" class="form-control" disabled>
-                </div>
-              </div> -->
-
-            <!-- </div> -->
-
-
-
-          </div>
-
-
-        </div>
-
-      </div>
-
-
-      </div>
-
-      <div class="row" style="margin-top: -10px">
-        <div class="col-md-3">
-              <!-- <div class="row">
-                <div class="col-md-4">
-                  <div class="form-group">
-                  <label>Jumlah</label>
-                </div>
-                </div>
-
-                <div class="col-md-8">
-                  <div class="input-group form-group">
-                    <input id="input_add_jumlah" type="number" class="form-control text-right" disabled>
-
-
-                  </div>
-                </div>
-
-             </div> -->
-      </div>
-
-      <div class="col-md-3">
-            <div class="row">
-              <!-- <div class="col-md-4">
-                <div class="form-group">
-                <label>Dibayar</label>
-              </div>
-              </div> -->
-
-              <!-- <div class="col-md-8">
-                <div class="input-group form-group">
-                  <input id="input_add_dibayar" type="number" class="form-control text-right" disabled>
-
-
-                </div>
-              </div> -->
-
-      </div>
-    </div>
-
-
-
-    <!-- <div class="col-md-3">
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-              <label>Sisa</label>
-            </div>
-            </div>
-
-            <div class="col-md-8">
-              <div class="input-group form-group">
-                <input id="input_add_sisa" type="number" class="form-control text-right" disabled>
-
-
+                <label>No Urut</label>
               </div>
             </div>
 
+            <div class="col-md-8">
+              <div class="form-group">
+                <input type="text" class="form-control" name="noUrut" id="input_add_nourut" value="" disabled>
+              </div>
+            </div>
           </div>
-    </div> -->
-</div>
+        </div>
 
+        <div class="col-md-3">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>No Bukti</label>
+              </div>
+            </div>
 
+            <div class="col-md-8">
+              <div class="form-group">
+                <input type="text" class="form-control" id="input_add_nobukti" placeholder="No Bukti" disabled>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div class="col-md-3">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Tanggal</label>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="form-group">
+                <input type="date" class="form-control text-center" id="input_add_tanggal" placeholder="" disabled>
+              </div>
+            </div>
+          </div>
+        </div>
 
-<div class="container-fluid">
-  <hr/>
+      </div>
 
-</div>
+    </div>
+
+    <div class="container-fluid">
+      <hr/>
+    </div>
 
 <div class="col-md-12 mt-2 text-right">
 <button type="button" class="btn btn-chip-biru" onclick="previewPrint()" class="btn btn-secondary" style="height: 30px;
@@ -722,7 +539,7 @@ text-transform: uppercase;" >+ Cetak</button>
 
         <table id="addTable" class="data-table">
           <thead class="text-center">
-            <tr><th style="padding: 4px 12px;" scope="col">v</th>
+            <tr><th style="padding: 4px 12px;" scope="col">Pilih</th>
               <th style="padding: 4px 12px;" scope="col">No. Invoice</th>
               <th style="padding: 4px 12px;" scope="col">Tanggal</th>
               <th style="padding: 4px 12px;" scope="col">No. PO</th>
@@ -744,28 +561,7 @@ text-transform: uppercase;" >+ Cetak</button>
         </table>
   </div>
 
-  <div class="modal" id="formAldok1" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Modal title</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>Modal body text goes here.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary">Save changes</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-  <div class="modal fade"  id="" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal fade" id="" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered"  role="document" >
     <div class="modal-content">
       <div class="modal-header">
@@ -783,10 +579,8 @@ text-transform: uppercase;" >+ Cetak</button>
                 <h3>Pelanggan</h3>
               </div>
             </div>
-            <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
             <div class="row">
               <div class="col-12" style="overflow:auto; margin-top:-60px;">
-              <!-- <div class="container-fluid"> -->
               <table id="tabel_add_list_pelanggan" class="data-table">
                 <thead class="text-center">
                   <tr>
@@ -804,20 +598,16 @@ text-transform: uppercase;" >+ Cetak</button>
                     <td>-</td>
                     <td>-</td>
                       <td class="text-center">
-                        <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
                         <button class="btn btn-primary btn-sm" style="padding-top:10px;" type="button" ><i class="bi bi-plus"></i></button>
                       </td>
                 </tr>
                 </tbody>
               </table>
-            <!-- </div> -->
-              <!-- <button onclick="buttonSubKategori()">tes</button> -->
             </div>
               </div>
               </div>
         </div>
         <div class="modal-footer">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
           <button type="button" class="btn btn-danger btn-lg"
           style="
           margin-top:-10px;
@@ -862,14 +652,9 @@ text-transform: uppercase;" >+ Cetak</button>
           <label>Faktur</label>
         </div>
         </div>
-        <!-- <div class="col-4 text-right">
-
-          </div> -->
         <div class="col-md-8">
           <div class="input-group form-group">
             <input id="AddAddFaktur" type="text" class="form-control" disabled>
-
-
           </div>
         </div>
         </div>
@@ -888,14 +673,9 @@ text-transform: uppercase;" >+ Cetak</button>
           <label>Dibayar</label>
         </div>
         </div>
-        <!-- <div class="col-4 text-right">
-
-          </div> -->
         <div class="col-md-8">
           <div class="input-group form-group">
             <input id="AddAddDibayar" type="number" class="form-control text-right" disabled>
-
- 
           </div>
         </div>
         </div>
@@ -910,14 +690,9 @@ text-transform: uppercase;" >+ Cetak</button>
           <label>Lebih Bayar</label>
         </div>
         </div>
-        <!-- <div class="col-4 text-right">
-
-          </div> -->
         <div class="col-md-8">
           <div class="input-group form-group">
             <input id="AddAddLebihBayar" type="number" class="form-control text-right" disabled>
-
-
           </div>
         </div>
         </div>
@@ -937,14 +712,9 @@ text-transform: uppercase;" >+ Cetak</button>
           <label>Kurang Bayar</label>
         </div>
         </div>
-        <!-- <div class="col-4 text-right">
-
-          </div> -->
         <div class="col-md-8">
           <div class="input-group form-group">
             <input id="AddAddKurangBayar" type="number" class="form-control text-right" disabled>
-
-
           </div>
         </div>
         </div>
@@ -964,16 +734,10 @@ text-transform: uppercase;" >+ Cetak</button>
           <label>Perkiraan</label>
         </div>
         </div>
-        <!-- <div class="col-4 text-right">
-
-          </div> -->
         <div class="col-md-8">
           <div class="input-group form-group">
             <input id="AddAddKodePerkiraan" type="text" class="form-control" disabled>
             <input type="text" class="form-control" id="AddAddNamaPerkiraan" disabled>
-
-            <!-- <button id="buttonAddListPerkiraan" type="button" onclick="" class="btn btn-primary" >+</button> -->
-
           </div>
         </div>
         </div>
@@ -1031,45 +795,10 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
 
-    <!-- <div class="line"></div> -->
-    <!-- <hr/> -->
   </div>
 </div>
-<!-- </div> -->
-
-
-<!-- ADD EDIT -->
-
-
-<!-- </div> -->
-
-
 
     </div>
-
-    <!-- <div class="row "> -->
-
-<!-- </div> -->
-
-
-
-
-
-
-
-
-
-  <!-- </div> -->
-
-  <!-- <h2 class="page3showhide detailshowhide"> Detail Pengajuan DPH</h2>
-  <h2 class="page3showhide otorisasishowhide"> Otorisasi Pengajuan DPH</h2> -->
-
-
-
-    <!-- <div class="col-6 text-right">
-      <button type="button" class="page3showhide otorisasishowhide btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600;  " onclick="submitOtorisasi()"  >Otorisasi</button>
-    </div> -->
-
 
     <div id="page3" style="display: none" class="mainpage container-fluid" >
 
@@ -1082,14 +811,6 @@ text-transform: uppercase;" >+ Cetak</button>
           <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
         </div>
       </div>
-
-      <div id= "" class="">
-
-
-
-      <div id="" class="">
-      <div class="">
-        <!-- <h1>Tes Modal</h1> -->
 
         <div class="container-fluid">
 
@@ -1142,14 +863,9 @@ text-transform: uppercase;" >+ Cetak</button>
                       <label>BKM/BBM</label>
                     </div>
                     </div>
-                    <!-- <div class="col-4 text-right">
-
-                      </div> -->
                     <div class="col-md-8">
                       <div class="input-group form-group">
                         <input id="input_detail_nobkmbbm" type="text" class="form-control" disabled>
-
-
                       </div>
                     </div>
 
@@ -1163,15 +879,9 @@ text-transform: uppercase;" >+ Cetak</button>
                       <label>Valas</label>
                     </div>
                     </div>
-                    <!-- <div class="col-4 text-right">
-
-                      </div> -->
                     <div class="col-md-8">
                       <div class="input-group form-group">
                         <input id="input_detail_valas" type="text" class="form-control" disabled>
-
-                        <!-- <button id="buttonAddListValas" type="button" onclick="buttonAddListValas()" class="btn btn-primary" disabled >+</button> -->
-
                       </div>
                     </div>
                     </div>
@@ -1185,14 +895,9 @@ text-transform: uppercase;" >+ Cetak</button>
                           <label>Customer</label>
                         </div>
                         </div>
-                        <!-- <div class="col-4 text-right">
-
-                          </div> -->
                         <div class="col-md-8">
                           <div class="input-group form-group">
                             <input id="input_detail_kodecust" type="text" class="form-control" disabled>
-
-
                           </div>
                         </div>
 
@@ -1201,14 +906,9 @@ text-transform: uppercase;" >+ Cetak</button>
                 <div class="row" style="margin-top: -10px">
                   <div class="col-md-4">
                   </div>
-                  <!-- <div class="col-4 text-right">
-
-                    </div> -->
                   <div class="col-md-8">
                     <div class="input-group form-group">
                       <input id="input_detail_namacust" type="text" class="form-control" disabled>
-
-
                     </div>
                   </div>
 
@@ -1234,14 +934,9 @@ text-transform: uppercase;" >+ Cetak</button>
                       <label>Jumlah</label>
                     </div>
                     </div>
-                    <!-- <div class="col-4 text-right">
-
-                      </div> -->
                     <div class="col-md-8">
                       <div class="input-group form-group">
                         <input id="input_detail_jumlah" type="number" class="form-control text-right" disabled>
-
-
                       </div>
                     </div>
 
@@ -1255,14 +950,9 @@ text-transform: uppercase;" >+ Cetak</button>
                     <label>Dibayar</label>
                   </div>
                   </div>
-                  <!-- <div class="col-4 text-right">
-
-                    </div> -->
                   <div class="col-md-8">
                     <div class="input-group form-group">
                       <input id="input_detail_dibayar" type="number" class="form-control text-right" disabled>
-
-
                     </div>
                   </div>
 
@@ -1278,14 +968,9 @@ text-transform: uppercase;" >+ Cetak</button>
                   <label>Sisa</label>
                 </div>
                 </div>
-                <!-- <div class="col-4 text-right">
-
-                  </div> -->
                 <div class="col-md-8">
                   <div class="input-group form-group">
                     <input id="input_detail_sisa" type="number" class="form-control text-right" disabled>
-
-
                   </div>
                 </div>
 
@@ -1352,59 +1037,20 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
     </div>
-
-
-
-
-    </div>
-
-
-
-
-
-
-
-
-        <!-- <div class="line"></div> -->
-        <!-- <hr/> -->
-      </div>
-    </div>
-    <!-- </div> -->
-
-
-    <!-- ADD EDIT -->
-
-
-    <!-- </div> -->
-
-
-
-        </div>
-
-
-
-
-
-
-<!--  -->
+  </div>
 
 <!-- start modal add -->
 <div class="modal fade" id="form" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered"  role="document" style="min-width: 1400px">
-    <div id="" class="modal-content ">
+    <div class="modal-content">
 
-      <div id= "" class="">
       <div class="modal-header">
-
-
           <h5 class="modal-title" id="">Proses Terima DPP</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
 
-
-      <div id="" class="">
       <div class="modal-body">
 
         <div class="container-fluid" >
@@ -1487,18 +1133,14 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
 
-          <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
           <div class="row">
             <div class="col-12" style="overflow:auto;  max-height: 400px">
-            <!-- <div class="container-fluid"> -->
-
-
             <table id="tabel_add_list_modal" class="data-table" style="overflow:auto; " >
               <thead class="text-center" style="position: sticky;
             top: 0;
             z-index: 1;">
                 <tr>
-                  <th style="padding: 4px 12px;" scope="col">v</th>
+                  <th style="padding: 4px 12px;" scope="col">Pilih</th>
                   <th style="padding: 4px 12px;" scope="col">No Faktur</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Customer</th>
                   <th style="padding: 4px 12px;" scope="col">N. Faktur</th>
@@ -1531,32 +1173,15 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
             </table>
-          <!-- </div> -->
-            <!-- <button onclick="buttonSubKategori()">tes</button> -->
           </div>
             </div>
             </div>
-
-
-
-
         </div>
-
-
-
-
-
-      </div>
-
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
         <button type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button>
       </div>
-      </div>
-
-
-
 
 
 
@@ -1740,12 +1365,6 @@ text-transform: uppercase;" >+ Cetak</button>
               font-size: 0.75rem;
               font-weight: 600;
               text-transform: uppercase;">+ KL</button>
-
-
-
-
-
-              <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
             </div>
 
           </div>
@@ -1754,9 +1373,6 @@ text-transform: uppercase;" >+ Cetak</button>
 
           </div>
           <div id="formAddKL" class="container-fluid showhideitemKL">
-            <!-- <div class="line"></div> -->
-            <!-- <div class="row"> -->
-
             <div class="col-12">
 
 
@@ -1784,13 +1400,9 @@ text-transform: uppercase;" >+ Cetak</button>
                     <label>Jumlah</label>
                   </div>
                   </div>
-                  <!-- <div class="col-4 text-right">
-
-                    </div> -->
                   <div class="col-md-4">
                     <div class="input-group form-group">
                       <input id="input_modalx_kurangbayar" type="number" value="0.00" class="text-right form-control" >
-
                     </div>
                   </div>
 
@@ -1866,11 +1478,6 @@ text-transform: uppercase;" >+ Cetak</button>
               font-size: 0.75rem;
               font-weight: 600;
               text-transform: uppercase;">Submit Add</button>
-
-
-
-
-              <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
             </div>
 
           </div>
@@ -1881,9 +1488,6 @@ text-transform: uppercase;" >+ Cetak</button>
 
           <div class="row" style="margin-top:20px">
             <div class="col-12" style="overflow:auto;  max-height: 400px">
-            <!-- <div class="container-fluid"> -->
-
-
             <table id="tabel_add_list_modalx" class="data-table" style="overflow:auto; " >
               <thead class="text-center" style="position: sticky;
             top: 0;
@@ -1912,20 +1516,8 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
             </table>
-          <!-- </div> -->
-            <!-- <button onclick="buttonSubKategori()">tes</button> -->
           </div>
             </div>
-
-
-
-
-
-
-
-
-          <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
-
             </div>
 
 
@@ -1946,7 +1538,6 @@ text-transform: uppercase;" >+ Cetak</button>
 
         <button type="button" class="btn btn-secondary" data-dismiss="modal"
         >Batal</button>
-        <!-- <button type="button" class="btn btn-primary" onclick="submitAddModalX()">Submit</button> -->
       </div>
       </div>
 
@@ -1986,12 +1577,8 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
 
-              <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
               <div class="row">
                 <div class="col-12" style="overflow:auto;  max-height: 400px">
-                <!-- <div class="container-fluid"> -->
-
-
                 <table id="tabel_add_list_perkiraan" class="data-table" style="overflow:auto; " >
                   <thead class="text-center" style="position: sticky;
                 top: 0;
@@ -2016,8 +1603,6 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
                 </table>
-              <!-- </div> -->
-                <!-- <button onclick="buttonSubKategori()">tes</button> -->
               </div>
                 </div>
                 </div>
@@ -2052,34 +1637,6 @@ text-transform: uppercase;" >+ Cetak</button>
 
 
   </div>
-
-  <div class="modal" id="formAldo2k" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Modal title</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>Modal body text goes here.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary">Save changes</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-
-
-
 
 @endsection
 
@@ -4617,8 +4174,6 @@ document.getElementById("input_add_nama").value = namapenerima
 
 
 function buttonAdd (kodecustsupp) {
-  
-document.getElementById('pageTitleBreadcrumb').textContent = 'Cetak Tanda Terima / Cetak Invoice'
 
   console.log('buttonAdd' ,kodecustsupp)
   let akses = $("#akses_istambah").val();
@@ -4774,7 +4329,7 @@ function buttonAddEditItem (i) {
 
 
 function buttonCloseForm () {
-document.getElementById('pageTitleBreadcrumb').textContent = 'Cetak Tanda Terima'
+  
   $('.mainpage').hide();
   // $('#page2').hide();
   $('#page1').show();

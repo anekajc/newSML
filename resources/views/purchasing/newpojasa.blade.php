@@ -413,6 +413,11 @@ td input[type="checkbox"] {
 }
 </style>
 {{-- end tampilan tampilan baru --}}
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /newpo dan /newpojasa itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah.
+     Sama seperti purchaseOrder.blade.php. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 @endsection
 
 @section('content')
@@ -2087,19 +2092,20 @@ function formatAngka (angkaString) {
           // console.log(res[0] ,'i0')
 
           console.log('=================22222===============!!!!!!')
-          dataEditPembelianEdit = res[0]
-          dataLPB = res[0][0]
+          dataEditPembelianEdit = res
+          dataLPB = res[0]
           console.log(dataLPB,'areset')
           console.log(dataEditPembelianEdit)
           console.log('=================33333===============!!!!!!')
         }
       })
 
-      if (!dataEditPembelianEdit) {
+      if (!dataEditPembelianEdit || dataEditPembelianEdit.length === 0) {
         console.log('=================44444===============!!!!!!')
         // window.location.href = "newpo";
         // editPembelian
         $("#editPembelian").modal('toggle');
+        return;
 
 
       } else {
@@ -2721,15 +2727,15 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 5%;">${itemSub.KODEBRG}</td>
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 30%;">${itemSub.NAMABRG}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: center;">${itemSub.SATUAN}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.QNTPO ? formatAngka(itemSub.QNTPO) : ''}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.QntTerima ? formatAngka(itemSub.QntTerima) : ''}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.SISA ? formatAngka(itemSub.SISA) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.QNTPO ? parseFloat(itemSub.QNTPO).toFixed(2) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.QntTerima ? parseFloat(itemSub.QntTerima).toFixed(2) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.SISA ? parseFloat(itemSub.SISA).toFixed(2) : ''}</td>
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 5%;">${itemSub.KETERANGAN}</td>
     </tr>`;
   z++;
 });
 
-// Fill remaining empty rows ï¿½ table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows — table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {
@@ -3060,7 +3066,7 @@ for (let f = 0; f < fillerCount; f++) {
       let _token = $("#_token").val();
       let choice = "U"
       let dataLPBEdit = dataEditPembelianEdit[indexEditPembelianEdit]
-      let reqQtyTerima = parseInt($("#editPembelianInputEditQty").val().replace(/,/g, ''), 10) || 0;
+      let reqQtyTerima = parseFloat($("#editPembelianInputEditQty").val().replace(/,/g, '')) || 0;
       // console.log(dataLPBEdit.QNTOUT, dataLPBEdit.Qnt , reqQtyTerima)
       // console.log(Number(reqQtyTerima) , Number(dataLPBEdit.QNTOUT) , Number(dataLPBEdit.Qnt))
       // console.log(Number(reqQtyTerima) , (Number(dataLPBEdit.QNTOUT) + Number(dataLPBEdit.Qnt)))
@@ -3070,8 +3076,8 @@ for (let f = 0; f < fillerCount; f++) {
         return
       }
 
-      if (Number(reqQtyTerima) < 0) {
-        alertify.warning("Qty tidak boleh negatif");
+      if (!(Number(reqQtyTerima) > 0)) {
+        alertify.warning("Qty harus lebih dari 0, untuk mengosongkan item gunakan tombol hapus");
         return
       }
       // console.log(dataLPBEdit.QNTOUT, dataLPBEdit.Qnt , reqQtyTerima)
@@ -3102,8 +3108,8 @@ for (let f = 0; f < fillerCount; f++) {
         reqQtyTerima2 = reqQtyTerima;
       }
 
-      reqQtyTerima1 = parseInt(reqQtyTerima1, 10) || 0;
-      reqQtyTerima2 = parseInt(reqQtyTerima2, 10) || 0;
+      reqQtyTerima1 = parseFloat(reqQtyTerima1) || 0;
+      reqQtyTerima2 = parseFloat(reqQtyTerima2) || 0;
 
       let reqNamaBarang = dataLPBEdit.namabrgx
       let reqNoBatch = ""
@@ -3184,8 +3190,8 @@ for (let f = 0; f < fillerCount; f++) {
         return;
       }
 
-      if (Number(reqQtyTerima) < 0) {
-        alertify.warning("Qty tidak boleh negatif");
+      if (!(Number(reqQtyTerima) > 0)) {
+        alertify.warning("Qty harus lebih dari 0");
         return;
       }
 
@@ -3453,14 +3459,14 @@ if (pcekglobal) {
 
 
 
-          dataLPB =  edit_pembelian_row_data
+          dataLPB =  edit_pembelian_row_data[0]
            // detailPembelianDate
           // document.getElementById("editPembelianDate").value = edit_pembelian_row_data.TANGGAL
           dataEditPembelianEdit = edit_pembelian_row_data
           // return
 
           // console.log(edit_pembelian_row_id, edit_pembelian_row_data , "<<<< edit pembelian")
-          let date = new Date(edit_pembelian_row_data.TANGGAL);
+          let date = new Date(edit_pembelian_row_data[0].TANGGAL);
           var day = ("0" + date.getDate()).slice(-2);
           var month = ("0" + (date.getMonth() + 1)).slice(-2);
           var date1 = date.getFullYear()+"-"+(month)+"-"+(day) ;
@@ -3906,6 +3912,12 @@ if (pcekglobal) {
 
 
 
+      // Item yang dicentang wajib qty > 0 - kalau semua 0, sp_InsertOutstandingPO tetap membuat
+      // header dbBeli tanpa detail (LPB kosong bertanggal 1970 yang tidak bisa di-edit).
+      if (tempData.some(item => !(Number(item.inputQntTerima) > 0))) {
+        alertify.warning("Qty Terima item yang dicentang harus lebih dari 0")
+        return
+      }
       console.log('else')
       let flag = false
       tempData.forEach((item, i) => {

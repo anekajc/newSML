@@ -153,6 +153,10 @@ class HomeController extends Controller
 
  public function GetMenu($headermenu)
 {
+    // Berkas > Log off (0007) & Keluar (0008) tidak dipakai di web (log out sudah ada di bar atas),
+    // jadi tidak ditampilkan di navbar. Barisnya di DBMENUWEB/DBFLMENUWEB tetap dibiarkan.
+    $menuTidakDipakai = ['0007', '0008'];
+
     $tempAngka = 0;
     if ($headermenu == 2) {
         $tempAngka += 1;
@@ -163,6 +167,7 @@ class HomeController extends Controller
         ->where('DBFLMENUWEB.USERID', \Auth::user()->username)
         ->where('DBFLMENUWEB.HASACCESS', 1)
         ->whereNotNull('DBMENUWEB.HeaderMenu')
+        ->whereNotIn('DBMENUWEB.KODEMENU', $menuTidakDipakai)
         ->orderBy('KODEMENU')
         ->get();
     $tempAngka += 1;
@@ -172,6 +177,7 @@ class HomeController extends Controller
         ->where('DBFLMENUWEB.USERID', \Auth::user()->username)
         ->where('DBFLMENUWEB.HASACCESS', 1)
         ->whereNotNull('DBMENUWEB.HeaderMenu')
+        ->whereNotIn('DBMENUWEB.KODEMENU', $menuTidakDipakai)
         ->orderBy('KODEMENU')
         ->get();
     $tempAngka += 1;

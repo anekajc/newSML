@@ -169,12 +169,24 @@ public function updateOtorisasi(Request $req) {
 
 
 public function updateBatalOtorisasi(Request $req) {
+    // Hak akses Batal dicek juga di server (bukan hanya di JS), dan alasan wajib diisi -
+    // alasan dicatat ke dbLogFile seperti PembelianPermintaanAgenController@updateBatalOtorisasi.
+    $akses = app('App\Http\Controllers\GlobalController')->getAkses('0307', 'pembelianpermintaandebetnote');
+    if (!$akses || !$akses->IsBatal) {
+      return response()->json(['message' => 'No access'], 403);
+    }
+    if (trim((string) $req->pket) === '') {
+      return response()->json(['message' => 'Keterangan harus diisi'], 422);
+    }
+
     $res = DB::connection('SML')->update(
         "UPDATE dbdebetnote SET isOtorisasi1 = 0, maxol = -1, OtoUser1 = '', TglOto1 = NULL WHERE NoBukti = :nobukti",
         [
             "nobukti" => $req->nobukti
         ]
     );
+
+    app('App\Http\Controllers\GlobalController')->LoggingData('btloto', 'DN', $req->nobukti, $req->pket, 0, 'dbdebetnote');
     return $res;
 }
 
@@ -191,24 +203,48 @@ public function updateBatalOtorisasi(Request $req) {
         }
       }
 
-      foreach ($tempData as $d)  {
-        // code...
-        DB::connection('SML')->statement('exec Sp_DebetNote ?,?,?,?,?,?,?,?,?,?,?,?', [
-          "I",
-          $req->nobukti,
-          $req->tanggal,
-          $d['Keterangan'],
-          0,
-          $d['NoFaktur'],
-          $req->kodecustsupp,
-          $d['inputNilai'],
-          $d['KodeVls'],
-          $d['inputKurs'],
-          $d['inputNilaiRp'],
-          $req->nourut
+      if (empty($tempData) || !is_array($tempData)) {
+        return response()->json(['message' => 'Tidak ada item dipilih'], 422);
+      }
 
+      // Semua invoice disimpan dalam SATU transaksi: kalau satu gagal, semuanya dibatalkan
+      // (tidak ada DN yang tersimpan setengah). Sengaja memakai BEGIN TRAN eksplisit, bukan
+      // $conn->beginTransaction(): pdo_sqlsrv memakai mode implicit transaction sehingga
+      // @@TRANCOUNT masih 0 saat SP pertama dipanggil, dan Sp_DebetNote (yang punya
+      // BEGIN/COMMIT TRAN sendiri) bisa memicu error 266. Dengan BEGIN TRAN di sini, COMMIT di
+      // dalam SP hanya menurunkan @@TRANCOUNT; ROLLBACK di dalam SP (JikaSalah) membatalkan
+      // semuanya, termasuk transaksi luar ini.
+      $conn = DB::connection('SML');
+      $conn->unprepared('BEGIN TRAN');
+      try {
+        foreach ($tempData as $d)  {
+          $conn->statement('exec Sp_DebetNote ?,?,?,?,?,?,?,?,?,?,?,?', [
+            "I",
+            $req->nobukti,
+            $req->tanggal,
+            $d['Keterangan'] ?? '',
+            0,
+            $d['NoFaktur'],
+            $req->kodecustsupp,
+            $d['inputNilai'],
+            $d['KodeVls'],
+            $d['inputKurs'],
+            $d['inputNilaiRp'],
+            $req->nourut
+          ]);
 
-        ]);
+          // SP bisa me-ROLLBACK diam-diam (goto JikaSalah) tanpa melempar error ke PHP;
+          // kalau itu terjadi transaksi luar ikut hilang, jadi dianggap gagal.
+          $tc = $conn->select('select @@TRANCOUNT as tc');
+          if (!$tc || (int) $tc[0]->tc < 1) {
+            throw new \Exception('Sp_DebetNote membatalkan transaksi (invoice ' . $d['NoFaktur'] . ')');
+          }
+        }
+        $conn->unprepared('COMMIT TRAN');
+      } catch (\Throwable $e) {
+        try { $conn->unprepared('IF @@TRANCOUNT > 0 ROLLBACK TRAN'); } catch (\Throwable $e2) {}
+        \Log::error('Debet Note spAdd gagal (' . $req->nobukti . '): ' . $e->getMessage());
+        return response()->json(['message' => 'Gagal menyimpan, tidak ada invoice yang tersimpan. Silakan ulangi.'], 500);
       }
 
       return 1;

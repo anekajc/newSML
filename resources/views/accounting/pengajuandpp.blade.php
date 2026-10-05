@@ -298,6 +298,27 @@ input[type=number] {
 #tabelDpp td:first-child .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
 #tabelDpp td:first-child .btn-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
 
+/* Tombol hapus di tabel item form (#addTable) - ukuran & warna soft seperti menu Kas/Bank. */
+#addTable td .btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: all .12s ease;
+}
+#addTable td .btn:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+#addTable td .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+#addTable td .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+
 /* Tombol di kolom Aksi baru muncul saat barisnya di-hover. */
 table.data-table.po-aksi-hover tbody td:first-child .btn {
   visibility: hidden;

@@ -8417,16 +8417,16 @@ function setPoKpiDariTabel () {
 
 function renderKpiPO () {
   let totalDPP = 0
-  let soSet = new Set()
+  let custSet = new Set()
   ;(poKpiDPP || []).forEach((rowWrap) => {
     let r = (rowWrap || [])[0]
     if (!r) { return }
     totalDPP += Number(r.TotDPP) || 0
-    if (r.NOBUKTI) { soSet.add(r.NOBUKTI) }
+    if (r.NAMACUSTSUPP) { custSet.add(r.NAMACUSTSUPP) }
   })
 
   let cards = [
-    ['Jumlah SO', soSet.size, '#dc2626', '#fee2e2', 'bi bi-file-earmark-text', false],
+    ['Jumlah Customer', custSet.size, '#dc2626', '#fee2e2', 'bi bi-file-earmark-text', false],
     ['Total DPP', totalDPP, '#4f46e5', '#ede9fe', 'bi bi-receipt', true],
     ['Penawaran', poKpiOut[1] === null ? '-' : poKpiOut[1], '#0891b2', '#cffafe', 'bi bi-clipboard-data', false]
   ]

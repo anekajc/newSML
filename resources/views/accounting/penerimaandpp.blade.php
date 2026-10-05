@@ -375,7 +375,9 @@ input[type=number] {
 #tabelPdpp td:first-child .btn-danger,  #tabel td:first-child .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
 #tabelPdpp td:first-child .btn-info,    #tabel td:first-child .btn-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
 
-#addInvoiceTable td .btn {
+#addInvoiceTable td .btn,
+#giroModalTable td .btn,
+#tabel_add_list_modalx td .btn {
   width: 30px;
   height: 30px;
   padding: 0;
@@ -388,12 +390,14 @@ input[type=number] {
   box-shadow: none;
   transition: all .12s ease;
 }
-#addInvoiceTable td .btn:hover {
+#addInvoiceTable td .btn:hover,
+#giroModalTable td .btn:hover,
+#tabel_add_list_modalx td .btn:hover {
   filter: brightness(0.97);
   transform: translateY(-1px);
 }
-#addInvoiceTable td .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
-#addInvoiceTable td .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+#addInvoiceTable td .btn-success, #giroModalTable td .btn-success, #tabel_add_list_modalx td .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+#addInvoiceTable td .btn-danger,  #giroModalTable td .btn-danger,  #tabel_add_list_modalx td .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
 
 /* Tombol di kolom Aksi baru muncul saat barisnya di-hover. */
 table.data-table.po-aksi-hover tbody td:first-child .btn {

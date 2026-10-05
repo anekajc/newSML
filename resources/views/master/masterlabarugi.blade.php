@@ -67,8 +67,22 @@
 </div>
 
 
+<style>
+  /* Tiga pasang label + input per baris (Tipe | Jumlah | Group, Tanda | Persentasi | Tampil).
+     Nomor & Perkiraan masing-masing satu baris selebar kolom input pertama (.bs-baris memaksa
+     label mulai di baris baru), Keterangan (.bs-full) membentang sampai ujung kanan input Jumlah. */
+  #formBsGrid .bs-form.bs-form-3 { grid-template-columns: 110px minmax(0, 1fr) 90px minmax(0, 1fr) 90px minmax(0, 1fr); }
+  #formBsGrid .bs-form.bs-form-3 .bs-baris { grid-column: 1; }
+  /* Keterangan berhenti sejajar ujung kanan input Jumlah. */
+  #formBsGrid .bs-form.bs-form-3 .bs-full { grid-column: 2 / 5; }
+  @media (max-width: 575.98px) {
+    #formBsGrid .bs-form.bs-form-3 { grid-template-columns: 1fr; }
+    #formBsGrid .bs-form.bs-form-3 .bs-full { grid-column: 1 / -1; }
+  }
+</style>
+
 <!-- start modal add -->
-<div class="modal fade" id="form" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="form"tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered"  role="document" style="max-width: 900px">
     <div class="modal-content">
       <div class="modal-header">
@@ -83,25 +97,19 @@
         <div class="container-fluid">
           <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
 
-            <div class="bs-form">
+            <div class="bs-form bs-form-3">
           <label for="input_add_nomor">Nomor</label>
           <input type="text" class="form-control" id="input_add_nomor" placeholder="Nomor">
-          <label for="input_add_perkiraan">Perkiraan</label>
+          <label for="input_add_perkiraan" class="bs-baris">Perkiraan</label>
           <div class="input-group">
                   <input type="text" class="form-control" id="input_add_perkiraan" placeholder="Perkiraan" disabled>
                   <div class="input-group-append">
                       <button type="button" class="btn btn-chip-biru btn-select" onclick="buttonPerkiraan()" title="Cari"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
-        </div>
-
-            <div class="bs-form bs-form-1">
-          <label for="input_add_keterangan">Keterangan</label>
-          <input type="text" class="form-control" id="input_add_keterangan" placeholder="Keterangan">
-        </div>
-
-            <div class="bs-form">
-          <label>Tipe</label>
+          <label for="input_add_keterangan" class="bs-baris">Keterangan</label>
+          <div class="bs-full"><input type="text" class="form-control" id="input_add_keterangan" placeholder="Keterangan"></div>
+          <label class="bs-baris">Tipe</label>
           <select class='form-control' id='input_add_tipe'>
                     <option value='' selected disabled></option>
                     <option value=1>1 - Mutasi Debet</option>
@@ -114,22 +122,21 @@
                     <option value='M'>M -Mutasi</option>
                     <option value='H'>H - HPP</option>
                   </select>
-          <label>Tanda</label>
+          <label>Jumlah</label>
+          <select class='form-control' id='input_add_jumlah'>
+                    <option value='' selected disabled></option>
+                    <option value='T'>T - Total</option>
+                    <option value='G'>G - Group</option>
+                    <option value='S'>S - Sub Group</option>
+                  </select>
+          <label for="input_add_group">Group</label>
+          <input type="text" class="form-control" id="input_add_group" placeholder="Group">
+          <label class="bs-baris">Tanda</label>
           <select class='form-control' id='input_add_tanda'>
                     <option value='' selected disabled></option>
                     <option value='+'>+</option>
                     <option value='-'>-</option>
                   </select>
-          <label>Jumlah</label>
-          <div class="bs-full"><select class='form-control' id='input_add_jumlah'>
-                    <option value='' selected disabled></option>
-                    <option value='T'>T - Total</option>
-                    <option value='G'>G - Group</option>
-                    <option value='S'>S - Sub Group</option>
-                  </select></div>
-
-
-            
           <label for="input_add_persentasi">Persentasi</label>
           <input type="text" class="form-control" id="input_add_persentasi" placeholder="Persentasi">
           <label>Tampil</label>
@@ -137,8 +144,6 @@
                     <option value='Y'>Y - Ya</option>
                     <option value='T'>T - Tidak</option>
                   </select>
-          <label for="input_add_group">Group</label>
-          <div class="bs-full"><input type="text" class="form-control" id="input_add_group" placeholder="Group"></div>
         </div>
 
     </div>
@@ -169,25 +174,19 @@
         <div class="container-fluid">
           <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
 
-            <div class="bs-form">
+            <div class="bs-form bs-form-3">
           <label for="input_edit_nomor">Nomor</label>
           <input type="text" class="form-control" id="input_edit_nomor" placeholder="Nomor" disabled>
-          <label for="input_edit_perkiraan">Perkiraan</label>
+          <label for="input_edit_perkiraan" class="bs-baris">Perkiraan</label>
           <div class="input-group">
                   <input type="text" class="form-control" id="input_edit_perkiraan" placeholder="Perkiraan" disabled>
                   <div class="input-group-append">
                       <button type="button" class="btn btn-chip-biru btn-select" onclick="buttonPerkiraan()" title="Cari"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
-        </div>
-
-            <div class="bs-form bs-form-1">
-          <label for="input_edit_keterangan">Keterangan</label>
-          <input type="text" class="form-control" id="input_edit_keterangan" placeholder="Keterangan">
-        </div>
-
-            <div class="bs-form">
-          <label>Tipe</label>
+          <label for="input_edit_keterangan" class="bs-baris">Keterangan</label>
+          <div class="bs-full"><input type="text" class="form-control" id="input_edit_keterangan" placeholder="Keterangan"></div>
+          <label class="bs-baris">Tipe</label>
           <select class='form-control' id='input_edit_tipe'>
                     <option value='' selected disabled></option>
                     <option value=1>1 - Mutasi Debet</option>
@@ -200,22 +199,21 @@
                     <option value='M'>M -Mutasi</option>
                     <option value='H'>H - HPP</option>
                   </select>
-          <label>Tanda</label>
+          <label>Jumlah</label>
+          <select class='form-control' id='input_edit_jumlah'>
+                    <option value='' selected disabled></option>
+                    <option value='T'>T - Total</option>
+                    <option value='G'>G - Group</option>
+                    <option value='S'>S - Sub Group</option>
+                  </select>
+          <label for="input_edit_group">Group</label>
+          <input type="text" class="form-control" id="input_edit_group" placeholder="Group">
+          <label class="bs-baris">Tanda</label>
           <select class='form-control' id='input_edit_tanda'>
                     <option value='' selected disabled></option>
                     <option value='+'>+</option>
                     <option value='-'>-</option>
                   </select>
-          <label>Jumlah</label>
-          <div class="bs-full"><select class='form-control' id='input_edit_jumlah'>
-                    <option value='' selected disabled></option>
-                    <option value='T'>T - Total</option>
-                    <option value='G'>G - Group</option>
-                    <option value='S'>S - Sub Group</option>
-                  </select></div>
-
-
-            
           <label for="input_edit_persentasi">Persentasi</label>
           <input type="text" class="form-control" id="input_edit_persentasi" placeholder="Persentasi">
           <label>Tampil</label>
@@ -223,8 +221,6 @@
                     <option value='Y'>Y - Ya</option>
                     <option value='T'>T - Tidak</option>
                   </select>
-          <label for="input_edit_group">Group</label>
-          <div class="bs-full"><input type="text" class="form-control" id="input_edit_group" placeholder="Group"></div>
         </div>
 
     </div>
@@ -315,6 +311,13 @@ function loadAll () {
 function buttonAdd () {
 
   $("#form").modal('toggle')
+
+  resetFormAdd()
+
+}
+
+// Dipakai saat membuka form Add dan setelah Simpan berhasil, supaya isian sebelumnya tidak tertinggal.
+function resetFormAdd () {
 
   document.getElementById('input_add_nomor').value = ''
   document.getElementById('input_add_perkiraan').value = ''
@@ -578,6 +581,7 @@ function submitAdd () {
       }  else {
         console.log(res ,'!')
         alertify.success("Data Laba Rugi telah ditambah");
+        resetFormAdd()
         loadAll()
       }
     }})

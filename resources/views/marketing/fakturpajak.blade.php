@@ -439,9 +439,9 @@
             @csrf
             <input type="file" id="import_file" name="import_file" hidden
                   onchange="document.getElementById('formImport').submit()">
-            <label for="import_file" class="btn btn-primary" style="margin:0; cursor:pointer;">Import Excel</label>
+            <label for="import_file" class="btn btn-chip-biru" style="margin:0; cursor:pointer;">Import Excel</label>
           </form>
-          <button type="button" class="btn btn-primary" onclick="openModalExport()">EXPORT EXCEL</button>
+          <button type="button" class="btn btn-chip-biru" onclick="openModalExport()">EXPORT EXCEL</button>
         </div>
       </div>
       @if (Session::has('success'))
@@ -512,13 +512,13 @@
       <div class="modal-body">
         <!-- <h1>Tes Modal</h1> -->
 
-        <div class="container-fluid">
+        <div id='formBsGrid' class="container-fluid">
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
 
             <div class="row">
               <div class="col-4 text-left">
                 <div class="form-group text-left">
-                  <label class="text-left">NOBUKTI</label>
+                  <label class="text-left">NO BUKTI</label>
                 </div>
               </div>
               <div class="col-8">
@@ -559,35 +559,14 @@
               </div>
 
 
-
-
-
-
-
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     </div>
   </div>
   <div class="modal-footer">
     <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
     <!-- <button id="buttonSubmitAdd" type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
-    <button type="button" class="btn btn-secondary btn-lg" data-dismiss="modal" style="
+    <button type="button" class="btn btn-danger btn-lg" data-dismiss="modal" style="
     height: 30px;
     padding: 4px 12px;
     border-radius: 20px;
@@ -598,8 +577,7 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
     >Batal</button>
 
-
-    <button type="button" id="buttonSubmitAdd" class="btn btn-primary btn-lg" style="
+    <button type="button" id="buttonSubmitAdd" class="btn btn-chip-biru btn-lg" style="
     height: 30px;
     padding: 4px 12px;
     border-radius: 20px;
@@ -608,8 +586,7 @@
     text-transform: uppercase;
     transition: background-color 0.3s, box-shadow 0.3s;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-    onclick="submitAdd()" class="btn btn-secondary">Submit</button>
-
+    onclick="submitAdd()">Submit</button>
 
     <!-- <button id="buttonSubmitBatalOto" type="button" class="btn btn-primary" onclick="submitBatalOto()">Batal Otorisasi</button> -->
   </div>
@@ -627,10 +604,10 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="container-fluid mt-4">
+        <div class="container-fluid">
           <div class="row mb-2 col-12">
             <button type="button"
-                    class="btn btn-primary"
+                    class="btn btn-chip-biru"
                     onclick="ExportDataToExcel()">
             Export
             </button>

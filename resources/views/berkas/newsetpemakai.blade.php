@@ -2,7 +2,7 @@
 @section('buttons')
 
 @endsection
-@section('page-title', 'Set Pemakai')
+@section('page-title', ($filter ?? '') === 'acc' ? 'Set Pemakai ACC' : (($filter ?? '') === 'nonacc' ? 'Set Pemakai Non ACC' : 'Set Pemakai'))
 
 @section('css')
 <style>
@@ -514,6 +514,7 @@
     $.ajax({
       url: "{!! url('newsetpemakailoadall') !!}",
       type: "get",
+      data: { filter: "{{ $filter ?? '' }}" },
       async: false,
       success: function(res) {
         if (spBukanData(res, 'array')) { return }

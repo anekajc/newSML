@@ -364,7 +364,7 @@
 </div>
 
 <div class="modal fade" id="modalAddPRJ" tabindex="-1" role="dialog" aria-labelledby="modalAddPRJLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+  <div id='formBsGrid' class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="modalAddPRJLabel">Form SPR</h5>
@@ -457,7 +457,7 @@
     </div>
   </div>
 
-  <div class="container-fluid">
+  <div id='formBsGrid' class="container-fluid">
     <input type="hidden" name="noUrut" id="input_koreksi_nourut" value="" />
     <div class="row">
       <div class="col-md-12">
@@ -485,7 +485,7 @@
                 <div class="row">
                   <div class="col-md-12" style="margin-top:-10px;">
                     <div class="form-group">
-                      <textarea  style="width: 100%; resize: none" rows=3 placeholder="" class="form-control" id="input_koreksi_alamatcustomer"  disabled></textarea>
+                      <textarea  style="width: 100%; height:75px !important; resize: none" rows=3 placeholder="" class="form-control" id="input_koreksi_alamatcustomer"  disabled></textarea>
                     </div>
                   </div>
                 </div>
@@ -645,7 +645,7 @@
                 </div>
                 <div class="col-md-8" >
                   <div class="form-group">
-                    <textarea  style="width: 100%; resize: none" rows=3 placeholder="" class="form-control" id="input_koreksi_catatan"  onblur="onChangeHeader('catatan' , 'input_koreksi_catatan')"></textarea>
+                    <textarea  style="width: 100%; height:75px !important; resize: none" rows=3 placeholder="" class="form-control" id="input_koreksi_catatan"  onblur="onChangeHeader('catatan' , 'input_koreksi_catatan')"></textarea>
                   </div>
                 </div>
 
@@ -914,7 +914,7 @@
     </div>
   </div>
 
-  <div class="container-fluid">
+  <div id='formBsGrid' class="container-fluid">
     <input type="hidden" name="noUrut" id="input_detailkoreksi_nourut" value="" />
     <div class="row">
       <div class="col-md-12">
@@ -942,7 +942,7 @@
                 <div class="row">
                   <div class="col-md-12" style="margin-top:-10px;">
                     <div class="form-group">
-                      <textarea  style="width: 100%; resize: none" rows=3 placeholder="" class="form-control" id="input_detailkoreksi_alamatcustomer"  disabled></textarea>
+                      <textarea  style="width: 100%; height:75px !important; resize: none" rows=3 placeholder="" class="form-control" id="input_detailkoreksi_alamatcustomer"  disabled></textarea>
                     </div>
                   </div>
                 </div>
@@ -1102,7 +1102,7 @@
                 </div>
                 <div class="col-md-8" >
                   <div class="form-group">
-                    <textarea  style="width: 100%; resize: none" rows=3 placeholder="" class="form-control" id="input_detailkoreksi_catatan" disabled></textarea>
+                    <textarea  style="width: 100%; height:75px !important; resize: none" rows=3 placeholder="" class="form-control" id="input_detailkoreksi_catatan" disabled></textarea>
                   </div>
                 </div>
 

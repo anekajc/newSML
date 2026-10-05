@@ -955,7 +955,7 @@
           border-radius: 20px;
           font-size: 0.75rem;
           font-weight: 600;
-          text-transform: uppercase;">Simpan Data</button>
+          text-transform: uppercase;">Simpan</button>
         </div>
       </div>
     </div>
@@ -3781,8 +3781,11 @@ function buttonBatalOtorisasi (nobukti) {
 
 function submitOtorisasi (nobukti) {
   let _token = $("#_token").val();
-  // let nobukti = $("#input_otorisasi_nobukti").val();
-  //  let nobukti = $tempOutstanding2[$i]->NoBukti ;
+  // The "Otorisasi" button on the detail page (#page1's formOtorisasi section) calls
+  // this with no argument at all -- nobukti there only lives in the hidden field that
+  // buttonOtorisasi() populated when it loaded the detail. The two other callers (table
+  // row action buttons) already pass nobukti directly, so only fall back when it's missing.
+  nobukti = nobukti || $("#input_otorisasi_nobukti").val();
    console.log(nobukti)
   let akses = $("#akses_isotorisasi1").val();
 
@@ -3891,8 +3894,7 @@ function buttonOtorisasi (nobukti) {
         document.getElementById("input_otorisasi_hari").value = res[0].HARI
         document.getElementById("input_otorisasi_sales").value = res[0].NamaSls
         document.getElementById("input_otorisasi_uangmuka").value = parseFloat(res[0].nUangMuka).toFixed(2)
-
-
+        
         document.getElementById("input_otorisasix_disc").value = formatAngkaX(res[0].DISC)
         document.getElementById("input_otorisasix_discrp").value = formatAngkaX(res[0].DiscRp)
         document.getElementById("input_otorisasix_ppn").value = formatAngkaX(res[0].TotalPPn)
@@ -3904,9 +3906,6 @@ function buttonOtorisasi (nobukti) {
         $('#page1').hide();
         $('#page3').show();
       }
-
-
-
 
     },
     error: function (err) {

@@ -5,19 +5,22 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\DBFLMENU;
 use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Models\VwPPL;
-use Illuminate\Auth;
+use Illuminate\Support\Facades\Auth;
 
-
+  
 // use App\Http\Controllers\NewMenuController;
 
 class PONonStockController extends Controller
 {
 
   public function index(Request $req) {
-    $kodemenu = '04101';
+    $kodemenu = '030022';
     $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu, $req->path());
     if(!$akses || !$akses->HASACCESS) {
        return redirect('/home');
@@ -87,12 +90,196 @@ class PONonStockController extends Controller
     ];
   }
 
+  // loadAll() versi newSML sebelum upgrade tampilan (tab Purchase Order & PO Otorisasi
+  // dimuat sekaligus). Disimpan sebagai referensi, tidak dipakai lagi.
+  //     public function loadAll () {
+  //
+  //     $periode = NewPeriode::where('user_id' , Auth::User()->username)->first();
+  //     //
+  //     $tempOutstanding = DB::connection("SML")->select("
+  //       DECLARE @Tahun int, @Bulan int
+  //       SELECT @Tahun=2018, @Bulan=78
+  //
+  //       SET NOCOUNT ON
+  //       SELECT  A.NoBukti+' '+right('00000000'+cast(A.urut as varchar(8)),8) KeyUrut,
+  //       A.*
+  //       from DBO.vwOutPPL A WITH(NOLOCK)
+  //       where A.SisaPPL>0
+  //       and isnull(A.pjasa,0)=1
+  //       order by A.Tanggal, A.NoBukti, A.Urut
+  //     ");
+  //
+  //     $collection1 = collect($tempOutstanding)->groupBy('NOBUKTI');
+  //     $tempOutstanding1 = [];
+  //     foreach ($collection1 as $p) {
+  //       array_push($tempOutstanding1, $p);
+  //     }
+  //
+  //     $tempOutstanding2 = DB::connection("SML")->select("declare @Tahun int, @Bulan int  ,@pJasa Bit
+  //
+  // select @Tahun= :tahun, @Bulan= :bulan
+  //
+  // Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
+  //         b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
+  //         TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
+  //         A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+  //        A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+  //        A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
+  //        A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+  //        A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
+  //        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit) NeedOtorisasi,A.IsOtorisasi2
+  //        ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
+  //        A.FlagTipe,NOSO,NOPOCUST ,A.tglKirim,A.MaxOL
+  // From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
+  // where year(a.Tanggal)=@Tahun and month(a.Tanggal)=@Bulan
+  // and  /*Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit)=1  */    ISNULL (A.IsOtorisasi2,0)=0  AND TotTotalRp>=200000000
+  // and B.pJasa= 1
+  //
+  // UNION ALL
+  //
+  // Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
+  //         b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
+  //         TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
+  //         A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+  //        A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+  //        A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
+  //        A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+  //        A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
+  //        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit) NeedOtorisasi,A.IsOtorisasi2
+  //        ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
+  //        A.FlagTipe,NOSO,NOPOCUST ,A.tglKirim,A.MaxOL
+  // From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
+  // where year(a.Tanggal)=@Tahun and month(a.Tanggal)=@Bulan
+  // and  Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit)=1       AND TotTotalRp < 200000000
+  // and B.pJasa= 1
+  //
+  // order by NoBukti" , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun]);
+  //
+  // $collection2 = collect($tempOutstanding2)->groupBy('NOBUKTI');
+  // $tempOutstanding3 = [];
+  // foreach ($collection2 as $p) {
+  //   // code...
+  //   array_push($tempOutstanding3, $p);
+  // }
+  //
+  //   $tempOutstanding4 = DB::connection("SML")->select("declare @Tahun int, @Bulan int,@pJasa Bit
+  //
+  // select @Tahun= :tahun, @Bulan= :bulan,@pJasa= 1
+  //
+  // Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
+  //         b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
+  //         TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
+  //         A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+  //        A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+  //        A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
+  //        A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+  //        A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
+  //        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit) NeedOtorisasi,A.IsOtorisasi2
+  //        ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
+  //        A.FlagTipe,NOSO, CASE WHEN ISNULL(NOPOCUST,'')='' THEN
+  // 			(SELECT TOP 1 NOPESANAN FROM DBSO WHERE NOBUKTI=a.NOSO )
+  //        ELSE NOPOCUST END NOPOCUST,A.TglKirim
+  // From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
+  // where year(a.Tanggal)=@Tahun and month(a.Tanggal)=@Bulan   and
+  //  /*Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit)=0*/  ISNULL (A.IsOtorisasi2,0)=1    AND TotTotalRp>=200000000
+  // and b.pjasa= 1
+  //
+  //
+  // UNION ALL
+  //
+  //
+  // Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
+  //         b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
+  //         TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
+  //         A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+  //        A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+  //        A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
+  //        A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+  //        A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
+  //        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit) NeedOtorisasi,A.IsOtorisasi2
+  //        ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
+  //        A.FlagTipe,NOSO, CASE WHEN ISNULL(NOPOCUST,'')='' THEN
+  // 			(SELECT TOP 1 NOPESANAN FROM DBSO WHERE NOBUKTI=a.NOSO )
+  //        ELSE NOPOCUST END NOPOCUST,A.TglKirim
+  // From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
+  // where year(a.Tanggal)=@Tahun and month(a.Tanggal)=@Bulan   and
+  //  Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+  //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+  //                  else 1
+  //             end As Bit)=0     AND TotTotalRp < 200000000
+  // and b.pjasa=@pJasa
+  //
+  //
+  // order by NoBukti" , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun]);
+  //
+  // $collection3 = collect($tempOutstanding4)->groupBy('NOBUKTI');
+  // $tempOutstanding5 = [];
+  // foreach ($collection3 as $p) {
+  //   // code...
+  //   array_push($tempOutstanding5, $p);
+  // }
+  //
+  //     return [
+  //       "tempOutstanding" => $tempOutstanding,
+  //       "tempOutstanding1" => $tempOutstanding1,
+  //       "tempOutstanding2" => $tempOutstanding2,
+  //       "tempOutstanding3" => $tempOutstanding3,
+  //       "tempOutstanding4" => $tempOutstanding4,
+  //       "tempOutstanding5" => $tempOutstanding5
+  //     ];
+  // }
+
   /**
    * Data tab "Purchase Order". Dipanggil lewat AJAX hanya saat tab tersebut dibuka,
    * sama persis dengan POController@loadPurchaseOrder - bedanya cuma B.pJasa = 1.
    */
   public function loadPurchaseOrder (Request $req) {
-    $periode = NewPeriode::where('user_id' , \Auth::User()->username)->first();
+    $periode = NewPeriode::where('user_id' , Auth::User()->username)->first();
     list($tglawal, $tglakhir) = $this->periodeRange($periode);
 
     $inputAwal  = $req->input('tglawal');
@@ -216,6 +403,8 @@ foreach ($collection2 as $p) {
       from DBO.vwOutPPL A WITH(NOLOCK)
       left outer join ( $sqlPO ) P on P.NoPPL = A.NoBukti and P.UrutPPL = A.Urut
       where $where
+      -- Hint ini memangkas waktu query vwOutPPL dari ~4 detik ke <1 detik (hasil identik), sama seperti Closing PR.
+      OPTION (HASH JOIN, MERGE JOIN)
     ", $bind);
     $total = count($jml) ? (int) $jml[0]->jml : 0;
 
@@ -240,6 +429,7 @@ foreach ($collection2 as $p) {
       ) X
       $batasBaris
       order by X.NoBaris
+      OPTION (HASH JOIN, MERGE JOIN)
     ", $bind);
 
     foreach ($rows as $r) {
@@ -271,7 +461,7 @@ foreach ($collection2 as $p) {
 
   public function updateOtorisasi (Request $req) {
     $tanggal = date('Y-m-d H:i:s');
-    $res = DB::connection('SML')->update("update dbpo set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti", ["username" => \Auth::user()->username , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
+    $res = DB::connection('SML')->update("update dbpo set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti", ["username" => Auth::user()->username , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
     $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'oto','PO',$req->nobukti,'',0,'DBPO');
 
     return $res;
@@ -302,7 +492,7 @@ foreach ($collection2 as $p) {
 
   public function getNoBukti (Request $req) {
 
-    $username = \Auth::user()->username;
+    $username = Auth::user()->username;
     $periode = DB::connection("SML")->select('select TOP 1 * from DBPERIODE where user_id = :username ' , ["username" => $username]);
     $inisial = DB::connection("SML")->select('select PO from DBNOMOR');
 
@@ -320,7 +510,7 @@ foreach ($collection2 as $p) {
 
   public function listPelanggan (Request $req) {
 
-    $listData = DB::connection('SML')->select("select Y.KodeCustSupp, Y.NamaCustSupp, Y.Alamat1 Alamat,  
+    $listData = DB::connection('SML')->select("select Y.KodeCustSupp, replace(Y.NamaCustSupp,'''','') NamaCustSupp, Y.Alamat1 Alamat,  
                        Z.namaKota,Y.PPN,Y.HARI,Y.PPN,Y.Kota ,Y.NPPH23  ,Y.NPPH22 NPPH21     
                        from  DBCUSTSUPP Y         
                        Left Outer Join Dbkota Z on Y.kota=Z.KodeKota   
@@ -422,19 +612,24 @@ where a.KodeCost=b.KodeCost and b.Perkiraan= :perkiraan
     $listData = DB::connection('SML')->select("select a.Kodebrg, a.NamaBrg,A.partNumber,B.NamaMerk 
                                                 from Dbbarang a 
                                                 Left Outer join dbmerk B on A.kodemerk=b.KodeMerk
-                                                where a.isaktif=1 and a.IsJasa = 1");
+                                                where a.isaktif=1 and isnull(a.IsJasa,0) = 1");
+    // dd($listData);
     return $listData;
   }
 
-  public function listBarangJasa () 
+  public function listBarangJasa (Request $req)  
   {
     $listData = DB::connection('SML')->select("Select A.KodeBrg, A.NamaBrg,B.NamaMerk,A.PartNumber 
-                                                , 0 Stock
-                                                from dbBarang A 
-                                                Left Outer Join DbMerk B on A.kodeMerk = B.KodeMerk
-                                                where a.isAktif=1 
-                                                and Isnull(A.isJasa,0)=1  and isnull(A.pagen,0)=0 
-                                                order by A.KodeBrg ");
+    , 0 Stock
+    from dbBarang A 
+    Left Outer Join DbMerk B on A.kodeMerk = B.KodeMerk
+    where a.isAktif=1 
+    and Isnull(A.isJasa,0)=1  and isnull(A.pagen,0)=0 
+
+     and ((A.KodeBrg like '%" . $req->input('search') . "%') or (a.NamaBrg like '%" . $req->input('search') . "%'))
+
+    
+    order by A.KodeBrg ");
     return $listData;
   }
 
@@ -470,7 +665,8 @@ where a.KodeCost=b.KodeCost and b.Perkiraan= :perkiraan
       left outer join ( $sqlPO ) P on P.NoPPL = a.NoBukti and P.UrutPPL = a.Urut
       where isnull(a.pjasa,0) = 1
         and ((a.Qnt - isnull(a.QntBatal,0)) - isnull(P.QntPO,0)) > 0
-      order by a.KodeBrg, a.NoSat, a.NoBukti");
+      order by a.KodeBrg, a.NoSat, a.NoBukti
+      OPTION (HASH JOIN, MERGE JOIN)");
     return $listData;
   }
 
@@ -550,7 +746,7 @@ where a.KodeCost=b.KodeCost and b.Perkiraan= :perkiraan
                     Left Outer join DbMerk J on A.KodeMerk=J.KodeMerk
                     where a.isaktif=1 and A.KodeGrp in ('BJ','JS')
                      and (A.KodeBrg like '%" . $req->input('search') . "%') or (a.NamaBrg like '%" . $req->input('search') . "%')
-                    and isnull(A.Isaktif,0)=1
+                    and isnull(A.Isaktif,0)=1 and a.IsJasa = 1
                     order by a.Kodebrg ASC");
     return $listData;
   }
@@ -686,7 +882,7 @@ if ($choice =='D'){
 
         $jmlrecord, //Jmlrecord
         $req->NOPOCUST, //NOPOCUST
-        \Auth::User()->username, //IdUser
+        Auth::User()->username, //IdUser
         1,  //pJasa
         $req->NPPH23,  //NPPH23
 

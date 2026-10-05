@@ -18,6 +18,8 @@ Route::middleware('auth')->group(function () {
 // Berkas
 Route::controller(NewSetPemakaiController::class)->group(function () {
     Route::get('/newsetpemakai', 'index');
+    Route::get('/newsetpemakaiacc', 'indexAcc');
+    Route::get('/newsetpemakainonacc', 'indexNonAcc');
     Route::get('/newsetpemakailoadall', 'loadAll');
 
     Route::post('/newsetpemakailistakses', 'listAkses');

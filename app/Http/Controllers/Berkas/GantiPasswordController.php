@@ -8,9 +8,10 @@ use App\Models\NewPeriode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-// Menu Berkas > Ganti Password (DBMENUWEB 0005, href gantipassword). Route-nya sudah ada di
-// routes/berkas.php tapi controller ini belum ada di newProgramAJC, jadi menu itu selalu
-// 500 "Target class does not exist". Diadaptasi dari programajc.
+// Menu Berkas > Ganti Password (DBMENUWEB 0005, href gantipassword).
+// Sistemnya mengikuti programajcSML: cukup password baru + ulangi password baru, tanpa
+// password lama. Dulu di sini password lama wajib dicocokkan dengan Hash::check, sehingga
+// user yang password-nya masih kosong di DBFLPASS tidak bisa mengganti password sama sekali.
 class GantiPasswordController extends Controller
 {
 
@@ -26,28 +27,16 @@ class GantiPasswordController extends Controller
   }
 
   public function gantiPassword (Request $req) {
-    $lama = (string) $req->input('passwordLama');
     $baru = (string) $req->input('password');
 
-    if ($lama === '') {
-      return 'Password lama harus diisi';
-    }
     if ($baru === '') {
-      return 'Password baru harus diisi';
+      return 'Password harus diisi';
     }
     if ($baru !== (string) $req->input('password2')) {
-      return 'Konfirmasi password baru tidak sama';
+      return 'Password harus sama';
     }
 
-    $user = \Auth::user();
-    if (!Hash::check($lama, $user->password)) {
-      return 'Password lama salah';
-    }
-    if (Hash::check($baru, $user->password)) {
-      return 'Password baru sama dengan password lama';
-    }
-
-    User::where('username', $user->username)->update(['password' => Hash::make($baru)]);
+    User::where('username', \Auth::user()->username)->update(['password' => Hash::make($baru)]);
     return 1;
   }
 

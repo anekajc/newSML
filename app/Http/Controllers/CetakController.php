@@ -31,9 +31,9 @@ class CetakController extends Controller {
 		$table .= "</table>";
 		$pdf = PDF::loadView("/templatepdf", compact('table'))->setPaper('A5')->setOrientation('landscape');
 		$pdf->setOption('replace', array('total' => number_format($getTransaksi->jumlah, 2), 'user' => \Auth::user()->name, 'head' => $head, 'no_bukti' => $getTransaksi->no_bukti, 'tanggal' => date("d/m/Y", strtotime($getTransaksi->tanggal)), 'note' => $getTransaksi->note, 'ket_perk' => $getTransaksi->ket_perk, 'no_bon' => $getTransaksi->no_bon, 'tanggal_oto' => $tanggal_oto))
-				->setOption('footer-html', URL::asset('footer_kasbank.html'));
-		if ($getTransaksi->tipe_transaksi == $nomor->kas_keluar || $getTransaksi->tipe_transaksi == $nomor->kas_masuk) { $pdf->setOption('header-html', URL::asset('header_kas.html'))->setOption('title', 'Kas'); return $pdf->inline("Kas.pdf"); }
-		else { $pdf->setOption('header-html', URL::asset('header_bank.html'))->setOption('title', 'Bank'); return $pdf->inline("Bank.pdf"); }
+				->setOption('footer-html', URL::asset('public/footer_kasbank.html'));
+		if ($getTransaksi->tipe_transaksi == $nomor->kas_keluar || $getTransaksi->tipe_transaksi == $nomor->kas_masuk) { $pdf->setOption('header-html', URL::asset('public/header_kas.html'))->setOption('title', 'Kas'); return $pdf->inline("Kas.pdf"); }
+		else { $pdf->setOption('header-html', URL::asset('public/header_bank.html'))->setOption('title', 'Bank'); return $pdf->inline("Bank.pdf"); }
 	}
 
 	public function cetakMemorialKoreksi(Request $req) {
@@ -48,8 +48,8 @@ class CetakController extends Controller {
 		$table .= "</table>";
 		$pdf = PDF::loadView("/templatepdf", compact('table'))->setPaper('A5')->setOrientation('landscape');
 		$pdf->setOption('replace', array('total' => number_format($getTransaksi->jumlah, 2), 'user' => \Auth::user()->name, 'head' => $head, 'no_bukti' => $getTransaksi->no_bukti, 'tanggal' => date("d/m/Y", strtotime($getTransaksi->tanggal)), 'note' => $getTransaksi->note, 'tanggal_oto' => $tanggal_oto))
-				->setOption('footer-html', URL::asset('footer_kasbank.html'))
-				->setOption('header-html', URL::asset('header_memorialkoreksi.html'))->setOption('title', 'Memorial / Koreksi');
+				->setOption('footer-html', URL::asset('public/footer_kasbank.html'))
+				->setOption('header-html', URL::asset('public/header_memorialkoreksi.html'))->setOption('title', 'Memorial / Koreksi');
 		return $pdf->inline("Memorial / Koreksi.pdf");
 	}
 
@@ -66,8 +66,8 @@ class CetakController extends Controller {
 		$table .= "</table>";
 		$pdf = PDF::loadView("/templatepdf", compact('table'))->setPaper('A5')->setOrientation('landscape');
 		$pdf->setOption('replace', array('total' => number_format($getTransaksi->jumlah, 2), 'user' => \Auth::user()->name, 'head' => $head, 'no_bukti' => $getTransaksi->no_bukti, 'tanggal' => date("d/m/Y", strtotime($getTransaksi->tanggal)), 'note' => $getTransaksi->note, 'ket_perk' => $getTransaksi->ket_perk, 'no_bon' => $getTransaksi->no_bon, 'tanggal_oto' => $tanggal_oto))
-				->setOption('footer-html', URL::asset('footer_kasbank.html'))
-				->setOption('header-html', URL::asset('header_bank.html'))->setOption('title', 'Giro');
+				->setOption('footer-html', URL::asset('public/footer_kasbank.html'))
+				->setOption('header-html', URL::asset('public/header_bank.html'))->setOption('title', 'Giro');
 		return $pdf->inline("Giro.pdf");
 	}
 

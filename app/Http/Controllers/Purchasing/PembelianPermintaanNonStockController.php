@@ -5,13 +5,13 @@ use App\Http\Controllers\Controller;
 
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Models\VwPPL;
-use App\Model\DBFLMENU;
+use App\Models\DBFLMENU;
 
 
 
@@ -42,8 +42,25 @@ class PembelianPermintaanNonStockController extends Controller
 }
 
 
+  // Tanggal filter dari browser hanya dipakai kalau formatnya Y-m-d, tanggalnya ada di kalender,
+  // dan tahunnya 1900-9999. Selain itu (mis. "0202-01-01" waktu user masih mengetik tahun)
+  // SQL Server datetime menolak dengan error out-of-range, jadi dipakai satu bulan periode kerja.
+  private function rentangTanggal (Request $req) {
+    $sah = function ($tgl) {
+      if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string) $tgl, $m)) { return false; }
+      return (int) $m[1] >= 1900 && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+    };
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
+    $awal  = $sah($req->tglawal)  ? $req->tglawal  : date('Y-m-01', $stamp);
+    $akhir = $sah($req->tglakhir) ? $req->tglakhir : date('Y-m-t', $stamp);
+    return [$awal, $akhir];
+  }
+
   public function loadAll(Request $req)
 {
+      list($tglawalSah, $tglakhirSah) = $this->rentangTanggal($req);
+
     $queryOtorisasi = '';
 
     if ($req->isoto != 2) {
@@ -76,8 +93,8 @@ class PembelianPermintaanNonStockController extends Controller
            $queryOtorisasi
          ORDER BY Tanggal DESC, NoBukti DESC",
         [
-            "tglawal"  => $req->tglawal,
-            "tglakhir" => $req->tglakhir
+            "tglawal"  => $tglawalSah,
+            "tglakhir" => $tglakhirSah
         ]
     );
 

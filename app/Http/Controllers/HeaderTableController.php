@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\DBFLMENU;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\DBFLMENU;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 
 
@@ -19,7 +20,7 @@ class HeaderTableController extends Controller
 
 {
   public function saveHeaderTable (Request $req) {
-    $username = \Auth::user()->username;
+    $username = Auth::user()->username;
     $res=[];
     if($req->urut){
       $res = DB::connection('SML')->select(
@@ -51,7 +52,7 @@ class HeaderTableController extends Controller
               "isnumber" => $req->isnumber ,
                "value" => $req->value ,
                 "isshown" => $req->isshown ,
-              "username" => \Auth::user()->username,
+              "username" => Auth::user()->username,
 
               "href" => $req->href,
               "urut" => $req->urut
@@ -69,7 +70,7 @@ class HeaderTableController extends Controller
               "isnumber" => $req->isnumber ,
                "value" => $req->value ,
                 "isshown" => $req->isshown ,
-              "username" => \Auth::user()->username,
+              "username" => Auth::user()->username,
 
               "href" => $req->href
           ]
@@ -89,7 +90,7 @@ class HeaderTableController extends Controller
               "isnumber" => $req->isnumber ,
                "value" => $req->value ,
                 "isshown" => $req->isshown ,
-              "username" => \Auth::user()->username,
+              "username" => Auth::user()->username,
 
               "href" => $req->href
 
@@ -105,7 +106,7 @@ class HeaderTableController extends Controller
               "isnumber" => $req->isnumber ,
                "value" => $req->value ,
                 "isshown" => $req->isshown ,
-              "username" => \Auth::user()->username,
+              "username" => Auth::user()->username,
 
               "href" => $req->href
           ]
@@ -120,7 +121,7 @@ class HeaderTableController extends Controller
   }
 
   public function saveSetHeaderTable (Request $req) {
-    // $username = \Auth::user()->username;
+    // $username = Auth::user()->username;
 
     // $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
@@ -205,7 +206,7 @@ class HeaderTableController extends Controller
     $headertablevalue = [];
     $headertableheader = [];
     $headerisshown = [];
-    $username = \Auth::user()->username;
+    $username = Auth::user()->username;
     $statusset = 0;
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     $aliasOrdered = [];
@@ -299,7 +300,7 @@ class HeaderTableController extends Controller
         $tempOtorisasi[] = $groupedData;
       }
       $isparsed = 0;
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -369,7 +370,7 @@ class HeaderTableController extends Controller
         $tempOtorisasi[] = $groupedData;
       }
       $isparsed = 0;
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -441,7 +442,7 @@ class HeaderTableController extends Controller
         $tempOtorisasi[] = $groupedData;
       }
       $isparsed = 0;
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -504,9 +505,9 @@ class HeaderTableController extends Controller
       // Konfigurasi header milik user diambil lebih dulu. Dua query berat di bawah
       // (vwOutPPL dan union dbPO) hasilnya HANYA dipakai untuk menebak nama & tipe kolom
       // ketika konfigurasi belum ada, jadi tidak perlu dijalankan kalau konfigurasi sudah tersimpan.
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable3 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 3"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable3 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 3"  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       $otorisasi = [];
       if (count($headertable) == 0) {
@@ -519,7 +520,8 @@ class HeaderTableController extends Controller
       from DBO.vwOutPPL A WITH(NOLOCK)
       where A.SisaPPL>0
       and A.pjasa=0
-      order by A.Tanggal, A.NoBukti, A.Urut"  );
+      order by A.Tanggal, A.NoBukti, A.Urut
+      OPTION (HASH JOIN, MERGE JOIN)"  );
       }
 
       $otorisasi2 = [];
@@ -566,6 +568,21 @@ class HeaderTableController extends Controller
       and B.pJasa= 0
 
       order by NoBukti"  , ["bulan" => 5 , "tahun" => 2026 ]);
+
+      // Query di atas hanya contoh untuk menurunkan nama kolom, dan bisa kosong kalau di
+      // bulan itu tidak ada PO yang perlu otorisasi (terjadi di DBSMLBARU). Tanpa baris
+      // contoh, tabel tab Purchase Order tampil tanpa kolom - jadi ambil satu PO apa saja
+      // dengan kolom yang sama persis.
+      if (!$otorisasi2) {
+        $otorisasi2 = DB::connection("SML")->select("
+          Select top 1 a.NoBukti, CONVERT(varchar(10), a.Tanggal, 23) AS Tanggal,a.KodeSupp, b.NamaCustSupp,  b.FakturSupp,
+            TotDPPRp, TotPPNRp, TotNetRp,
+            A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+            NOSO,NOPOCUST ,CONVERT(varchar(10), A.tglKirim, 23) AS tglKirim
+          From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
+          where B.pJasa= 0
+          order by a.Tanggal desc, a.NoBukti desc");
+      }
       }
 
       // Tabel urut 3 = tab "Outstanding SO". Query-nya diambil dari POController supaya
@@ -800,7 +817,7 @@ class HeaderTableController extends Controller
     else if ($req->href == 'uangmukabeli') {
       $statusset = 1;
       $isparsed = 0;
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -861,7 +878,7 @@ class HeaderTableController extends Controller
     else if ($req->href == 'pembelianpermintaandebetnote') {
       $statusset = 1;
       $isparsed = 0;
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -916,7 +933,7 @@ class HeaderTableController extends Controller
     else if ($req->href == 'invoicereturbeli') {
       $statusset = 1;
       $isparsed = 0;
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -975,7 +992,7 @@ class HeaderTableController extends Controller
     else if ($req->href == 'newpobeliacc') {
       $statusset = 1;
       $isparsed = 0;
-      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable = DB::connection("SML")->select("select *  from dbheadertable where  href= :href and username = :username "  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -1044,8 +1061,8 @@ class HeaderTableController extends Controller
       // diseret). Sekarang daftarnya ditulis eksplisit di bawah - field-nya harus sama
       // persis dengan field yang dikembalikan dataOutstandingPR() / loadPurchaseOrder()
       // (PONonStockController.php).
-      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -1143,8 +1160,8 @@ class HeaderTableController extends Controller
       $isparsed = 0;
       $isparsed2 = 0;
 
-      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -1235,8 +1252,8 @@ class HeaderTableController extends Controller
       $isparsed = 0;
       $isparsed2 = 0;
 
-      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -1328,8 +1345,8 @@ class HeaderTableController extends Controller
       $isparsed = 0;
       $isparsed2 = 0;
 
-      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -1424,8 +1441,8 @@ class HeaderTableController extends Controller
       $isparsed = 0;
       $isparsed2 = 0;
 
-      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);
@@ -1519,8 +1536,8 @@ class HeaderTableController extends Controller
       $isparsed = 0;
       $isparsed2 = 0;
 
-      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
-      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => \Auth::user()->username , "href" => $req->href ]);
+      $headertable  = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 1"  , ["username" => Auth::user()->username , "href" => $req->href ]);
+      $headertable2 = DB::connection("SML")->select("select *  from dbheadertable where  href= :href  and username = :username and urut = 2"  , ["username" => Auth::user()->username , "href" => $req->href ]);
 
       if (count($headertable) > 0) {
         $isnumberheadertable = json_decode($headertable[0]->isnumber);

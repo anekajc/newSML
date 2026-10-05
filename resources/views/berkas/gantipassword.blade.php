@@ -5,9 +5,9 @@
 @section('page-title', 'Ganti Password')
 @section('content')
 
-{{-- Menu Berkas > Ganti Password (DBMENUWEB 0005). Halaman ini belum ada di newProgramAJC
-     (dulu hanya ada di programajc), jadi menunya selalu 500. Tampilan kartu disamakan dengan
-     Setup Periode Kerja / Kunci Periode. --}}
+{{-- Menu Berkas > Ganti Password (DBMENUWEB 0005). Tampilan kartu disamakan dengan
+     Setup Periode Kerja / Kunci Periode; sistemnya mengikuti programajcSML (password baru +
+     ulangi, tanpa password lama). --}}
 
 <div id="contentContainer" class="container-fluid">
 
@@ -29,14 +29,11 @@
       <div class="kp-body" id="formBsGrid">
 
         <div class="bs-form bs-form-1">
-          <label for="input_gantipassword_lama">Password Lama</label>
-          <input type="password" class="form-control" id="input_gantipassword_lama" placeholder="Password lama" autocomplete="current-password">
-
           <label for="input_gantipassword_password">Password Baru</label>
-          <input type="password" class="form-control" id="input_gantipassword_password" placeholder="Password baru" maxlength="12" autocomplete="new-password">
+          <input type="password" class="form-control" id="input_gantipassword_password" placeholder="Password baru" autocomplete="new-password">
 
           <label for="input_gantipassword_password2" class="bs-wrap">Ulangi Password Baru</label>
-          <input type="password" class="form-control" id="input_gantipassword_password2" placeholder="Ulangi password baru" maxlength="12" autocomplete="new-password">
+          <input type="password" class="form-control" id="input_gantipassword_password2" placeholder="Ulangi password baru" autocomplete="new-password">
         </div>
 
         <div class="kp-footer">
@@ -147,22 +144,16 @@
 function submitGantiPassword () {
 
   let _token = $("#_token").val();
-  let passwordLama = $("#input_gantipassword_lama").val();
   let password = $("#input_gantipassword_password").val();
   let password2 = $("#input_gantipassword_password2").val();
 
-  if (!passwordLama) {
-    alertify.warning('Password lama harus diisi')
-    return
-  }
-
   if (!password) {
-    alertify.warning('Password baru harus diisi')
+    alertify.warning('Password harus diisi')
     return
   }
 
   if (password != password2) {
-    alertify.warning('Ulangi password baru harus sama')
+    alertify.warning('Password harus sama')
     return
   }
 
@@ -172,7 +163,6 @@ function submitGantiPassword () {
     async: false,
     data: {
       _token : _token,
-      passwordLama,
       password,
       password2,
     },
@@ -182,7 +172,6 @@ function submitGantiPassword () {
         alertify.warning(res);
       }  else {
         alertify.success("Password telah diganti");
-        document.getElementById("input_gantipassword_lama").value = ''
         document.getElementById("input_gantipassword_password").value = ''
         document.getElementById("input_gantipassword_password2").value = ''
       }

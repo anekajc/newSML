@@ -270,6 +270,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/trfbrggetdetail', [TransferBarangController::class, 'getDetail']);
     Route::post('/trfbrggetdetailedit', [TransferBarangController::class, 'getDetailEdit']);
     Route::post('/trfbrgspadd', [TransferBarangController::class, 'spAdd']);
+    Route::post('/trfbrgspaddmultiple', [TransferBarangController::class, 'spAddMultiple']);
     Route::post('/trfbrgdeletetransfer', [TransferBarangController::class, 'deleteTransfer']);
     Route::post('/trfbrgonchangeqnt', [TransferBarangController::class, 'onChangeQnt']);
     Route::post('/trfbrgupdateotorisasi', [TransferBarangController::class, 'updateOtorisasi']);

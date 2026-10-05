@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\DBFLMENUWEB;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewAksesMenu;
+use App\Models\DBFLMENUWEB;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 
@@ -507,6 +507,13 @@ public function getAkses1 ($kodemenu, $path) {
     $akses = NewMenu::join('DBFLMENUWEB', 'DBFLMENUWEB.L1' ,'=' , 'DBMENUWEB.KODEMENU')->where('DBFLMENUWEB.USERID' , \Auth::user()->username)->where('DBMENUWEB.href' , $path)->first();
 
     return $akses;
+  }
+
+// Tanggal diambil dari jam server SQL, bukan jam komputer user.
+public function getTanggalServer () {
+    $tanggal = DB::connection('SML')->select('select convert(varchar(10), getdate(), 23) as tanggal');
+
+    return $tanggal;
   }
 
 }

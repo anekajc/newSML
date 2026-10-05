@@ -542,7 +542,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
         </div>
         <div class="form-field">
           <label>Tanggal</label>
-          <input type="date" class="form-control text-left" id="input_add_tanggal" disabled>
+          <input type="date" class="form-control text-left" id="input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
         </div>
         <div class="form-field">
           <label>No PO</label>
@@ -970,7 +970,11 @@ function umbRenderNilai (col, item) {
     return umbFormatAngkaDes(nilai, col.desimal)
   }
   if (col.tipe === 2) {
-    return nilai ? formatDate(nilai) : ""
+    return nilai ? formatDate(nilai).split('-').reverse().join('/') : ""
+  }
+  // Tanggal yang datang sebagai teks 'yyyy-mm-dd...' (mis. hasil CONVERT di SQL) juga tampil dd/mm/yyyy.
+  if (typeof nilai === 'string' && /^\d{4}-\d{2}-\d{2}/.test(nilai)) {
+    return nilai.substr(0, 10).split('-').reverse().join('/')
   }
   return (nilai === null || nilai === undefined) ? "" : nilai
 }
@@ -1614,7 +1618,8 @@ function onChangeSubtotal () {
 
 function cleanForm () {
   document.getElementById("input_add_nobukti").value = ''
-  document.getElementById("input_add_tanggal").valueAsDate =  new Date()
+  // Tanggal selalu tanggal server (sama seperti PR Agen), user tidak bisa mengubah
+  document.getElementById("input_add_tanggal").value = "{!! date('Y-m-d') !!}"
   document.getElementById("input_add_nopo").value =  ''
   document.getElementById("input_add_kodesupplier").value =  ''
   document.getElementById("input_add_namasupplier").value =  ''
@@ -1638,7 +1643,7 @@ function cleanForm () {
 
 function lockForm (value = true) {
 
-  document.getElementById("input_add_tanggal").disabled = value
+  document.getElementById("input_add_tanggal").disabled = true
   // document.getElementById("input_add_tipeppn").disabled = value
   document.getElementById("buttonAddListPO").disabled = value
   // Valas kini dropdown (diisi muatDropdownValas), tidak ada lagi tombol browse
@@ -1930,7 +1935,7 @@ function renderTabelUMB () {
           '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>'
       }
       <td>${item.OtoUser1 || ''}</td>
-      <td>${item.TglOto1 ? formatDate(item.TglOto1) : ''}</td>
+      <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
     </tr>`
   });
 
@@ -2965,7 +2970,7 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 35%;">${itemSub.NamaBrg}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: center;">${itemSub.KodeBrg}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.Satuan}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.Qnt ? formatAngka(itemSub.Qnt) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.Qnt ? parseFloat(itemSub.Qnt).toFixed(2) : ''}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 10%; text-align: right;">${formatAngka(parseFloat(itemSub.Harga).toFixed(2))}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: right;">${formatAngka(parseFloat(itemSub.DISC).toFixed(2))}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: right;">${formatAngka(parseFloat(itemSub.Subtotal).toFixed(2))}</td>
@@ -3636,7 +3641,7 @@ tempPrintStr += `
     <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 35%;">${itemSub.NamaBrg}</td>
     <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: center;">${itemSub.KodeBrg}</td>
     <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.Satuan}</td>
-    <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.Qnt ? formatAngka(itemSub.Qnt) : ''}</td>
+    <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.Qnt ? parseFloat(itemSub.Qnt).toFixed(2) : ''}</td>
     <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 10%; text-align: right;">${formatAngka(parseFloat(itemSub.Harga).toFixed(2))}</td>
     <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: right;">${formatAngka(parseFloat(itemSub.DISC).toFixed(2))}</td>
     <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: right;">${formatAngka(parseFloat(itemSub.Subtotal).toFixed(2))}</td>

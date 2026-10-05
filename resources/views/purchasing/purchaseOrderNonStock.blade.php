@@ -132,6 +132,10 @@
 <link rel="stylesheet" href="{!! URL::asset('css/scrollbar-autohide.css') !!}?v={{ @filemtime(base_path('public/css/scrollbar-autohide.css')) ?: '1' }}">
 {{-- Modal pemilih (Perkiraan/Barang/Supplier/Customer/dst.) disamakan persis dengan modal pemilih menu Kas - lihat public/css/picker-kas.css. --}}
 <link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /pononstock itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
   <style>
   .btn .bi-plus {
     font-size: 1.5rem;
@@ -460,6 +464,46 @@
     background-color: #f2fbf5;
   }
 
+  /* Tabel Stock Proyeksi: merah, mengikuti tombol Stock Proyeksi. Sama seperti purchaseOrder.blade.php. */
+  #tabel_add_stock_proyeksi thead th {
+    background: #fdeaea !important;
+    color: #dc2626 !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    border-bottom: 1px solid #f7cfcf;
+    border-top: none;
+  }
+
+  #tabel_add_stock_proyeksi tbody tr:nth-of-type(odd) {
+    background-color: #fbfbfc;
+  }
+
+  #tabel_add_stock_proyeksi tbody tr:hover {
+    background-color: #fef6f6;
+  }
+
+  /* Tabel item (#tabel_add): header bersih uppercase abu-abu, sama seperti purchaseOrder.blade.php. */
+  #tabel_data_header th {
+    background: #f8f9fb !important;
+    color: #6b7280 !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    border-bottom: 1px solid #e7e9ee;
+    border-top: none;
+  }
+
+  #tabel_add tbody tr:nth-of-type(odd) {
+    background-color: #fbfbfc;
+  }
+
+  #tabel_add tbody tr:hover {
+    background-color: #f5f3ff;
+  }
+
   /* ---------- Chip biru: Show/Hide Header (ikon truk), + Tambah Item, Simpan Data ----------
      Satu kelas dipakai bertiga supaya warnanya tidak jalan sendiri-sendiri. Sama seperti
      purchaseOrder.blade.php. */
@@ -503,6 +547,25 @@
     background-color: #c8e9d5 !important;
     border-color: #a5d8b8 !important;
     color: #15803d !important;
+  }
+
+  .btn-stock-proyeksi {
+    background-color: #fdeaea;
+    border-color: #f7cfcf;
+    color: #dc2626;
+  }
+
+  .btn-stock-proyeksi:hover,
+  .btn-stock-proyeksi:focus {
+    background-color: #fbdcdc;
+    border-color: #f2bcbc;
+    color: #b91c1c;
+  }
+
+  .btn-stock-proyeksi:active {
+    background-color: #f8cfcf !important;
+    border-color: #eda9a9 !important;
+    color: #b91c1c !important;
   }
 
   /* Batal = aksi sekunder, jadi abu-abu muda dengan teks gelap (bukan solid gelap). */
@@ -1048,7 +1111,9 @@
               </div>
 
               <div class="col-md-6">
-                <input type="number" class="form-control text-right" id="input_add_hari" onblur="onChangeHari()" value=0 min=0 >
+                <div class="form-group">
+                  <input type="number" class="form-control text-right" id="input_add_hari" onblur="onChangeHari()" value=0 min=0 >
+                </div>
               </div>
             </div>
           </div>
@@ -1288,8 +1353,9 @@
         <div class="container-fluid" style="overflow:auto; margin-top:-35px;">
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
           <div class="row">
-            <table id="tabel_add" class="table table-bordered table-hover table-striped table-responsive-lg">
-              <thead class="text-center bg-primary text-white">
+            {{-- Pakai .data-table supaya tampilannya sama dengan tabel item purchaseOrder.blade.php. --}}
+            <table id="tabel_add" class="data-table">
+              <thead id='tabel_data_header' class="text-center">
                 <tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
@@ -1472,6 +1538,19 @@
                     </div>
                   </div>
 
+                  {{-- No. PNW PO: field newSML, sementara disembunyikan (belum dipakai), jangan dihapus. --}}
+                  <div class="form-row align-items-center mb-2" hidden>
+                    <label class="col-md-3 mb-0">No. PNW PO</label>
+                    <div class="col-md-9">
+                      <div class="input-group">
+                        <input type="text" class="form-control" value="-" id="input_add_add_nopnwpo" readonly>
+                        <button onclick="buttonAddAddListPWO()" id="buttonAddListPWO" class="btn btn-chip-biru btn-sm" style="height:32px; border-radius:0;" type="button">
+                          <i class="bi bi-search"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -1534,6 +1613,47 @@
               </div>
             </div>
 
+
+            <div class="col-md-12">
+              <div id="divStockProyeksi" style="display:none;">
+                <div class="row">
+
+                  <div class="col-12">
+                    <div class="form-group">
+                      <label>Stock Proyeksi</label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-12 mb-4" style="overflow:auto;">
+                    <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
+                      <table id="tabel_add_stock_proyeksi" class="data-table">
+                        <thead class="text-center">
+                          <tr>
+                            <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
+                            <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
+                            <th style="padding: 4px 12px;" scope="col">Stock</th>
+                            <th style="padding: 4px 12px;" scope="col">Out PO</th>
+                            <th style="padding: 4px 12px;" scope="col">Out SO</th>
+                            <th style="padding: 4px 12px;" scope="col">S Marketing</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tabel_data_add_stock_proyeksi" class="text-left" >
+                          <tr>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="row mt-2">
@@ -1560,6 +1680,17 @@
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="showTableHargaTerakhir()">Histori Harga</button>
+
+              <button type="button" class="btn btn-lg btn-stock-proyeksi" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              onclick="showTableStockProyeksi()">Stock Proyeksi</button>
 
               <button type="button" id="submitAddAdd" class="btn btn-lg btn-chip-biru" style="
               height: 30px;
@@ -3182,9 +3313,7 @@ function submitAddAdd () {
   let SUBCOST = $("#input_add_add_subcosting").val()
   let TglKirim = $("#input_add_tanggalkirim").val()
   let PPH21 = $("#input_add_pph21").val()
-  // No. PNW PO dibuang dari form (bergantung pada No SO yang juga sudah dibuang) -
-  // dikirim konstanta apa adanya supaya tanda tangan parameter sp_PO tidak berubah.
-  let NOPNw = '-'
+  let NOPNw = $("#input_add_add_nopnwpo").val()
   let UrutPNW = 0
 
   // console.log(kodesupplier,'*')
@@ -3527,9 +3656,7 @@ function submitAddEdit () {
   let SUBCOST = $("#input_add_add_subcosting").val()
   let TglKirim = $("#input_add_tanggalkirim").val()
   let PPH21 = $("#input_add_pph21").val()
-  // No. PNW PO dibuang dari form (bergantung pada No SO yang juga sudah dibuang) -
-  // dikirim konstanta apa adanya supaya tanda tangan parameter sp_PO tidak berubah.
-  let NOPNw = '-'
+  let NOPNw = $("#input_add_add_nopnwpo").val()
   let UrutPNW = 0
 
   // console.log(kodesupplier,'*')
@@ -3868,6 +3995,10 @@ function buttonAddAddItem () {
 }
 
 function showTableHargaTerakhir () {
+  if ($("#divStockProyeksi").is(':visible')) {
+    $('#divStockProyeksi').hide();
+  }
+
   if (!$("#divhargaterakhir").is(':visible'))
   {
     $('#divhargaterakhir').show();
@@ -3876,6 +4007,307 @@ function showTableHargaTerakhir () {
     $('#divhargaterakhir').hide();
   }
 }
+
+// Fungsi newSML yang dipertahankan (FOC, No SO, PWO, Stock Proyeksi, dll). Field No SO / FOC / Jasa
+// tidak ditampilkan lagi (form disamakan dengan AJC), fungsinya tetap disimpan.
+function LockFreeOfCharge(){
+  let focState = document.getElementById('input_add_add_foc').value
+
+  if (focState == 1){
+    document.getElementById('input_add_add_harga').disabled = true;
+    document.getElementById('input_add_add_discrp').disabled = true;
+    document.getElementById('input_add_add_discpersen1').disabled = true;
+    document.getElementById('input_add_add_discpersen2').disabled = true;
+    document.getElementById('input_add_add_discpersen3').disabled = true;
+    
+    document.getElementById('input_add_add_harga').value = 0,00 ;
+    document.getElementById('input_add_add_discrp').value = 0,00 ;
+    document.getElementById('input_add_add_discpersen1').value = 0 ;
+    document.getElementById('input_add_add_discpersen2').value = 0 ;
+    document.getElementById('input_add_add_discpersen3').value = 0 ;
+  } else {
+    document.getElementById('input_add_add_harga').disabled = false;
+    document.getElementById('input_add_add_discrp').disabled = false;
+    document.getElementById('input_add_add_discpersen1').disabled = false;
+    document.getElementById('input_add_add_discpersen2').disabled = false;
+    document.getElementById('input_add_add_discpersen3').disabled = false;
+  }
+
+
+}
+
+function buttonAddAddListPWO () {
+
+  let _token = $("#_token").val();
+  let noSo = $("#input_add_noso").val();
+
+  if (!noSo) {
+    alertify.warning("Isi Nomor SO terlebih dahulu")
+    return
+  }
+
+  $.ajax({
+    url: "{!! url('polistpwo') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token,
+      noSo
+    },
+    success: function(res) {
+      let rowTable = `
+        <tr>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickPWO('-' , '-')" type="button" ><i class="bi bi-plus"></i></button></td>
+        </tr>`
+      res.forEach((item, i) => {
+        rowTable += `
+        <tr>
+          <td>${item.no_bukti}</td>
+          <td>${item.tanggal ? formatDate(item.tanggal).split('-').reverse().join('/') : ''}</td>
+          <td>${item.supplier}</td>
+          <td>${item.kode}</td>
+          <td>${item.NAMABRG}</td>
+          <td>${item.qty}</td>
+          <td>${item.satuan}</td>
+          <td>${item.harga}</td>
+          <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickPWO('${item.no_bukti}' , '${item.tanggal}')" type="button" ><i class="bi bi-plus"></i></button></td>
+        </tr>`
+      });
+
+      if(!res.length) {
+        rowTable= `<tr><td class="text-center" colspan=9>Tidak ada data</td></tr>`
+      }
+      document.getElementById("tabel_data_add_list_pwo").innerHTML = rowTable
+
+      document.getElementById("namaHeaderTable").textContent = 'Nomor Penawaran PO'
+
+      $('.showhidemodalbodyadd').hide();
+      $('#modalBodyAddListPWO').show();
+
+      $("#form").modal('toggle')
+
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+  })
+}
+
+function buttonAddAddPickBarangFOCPlus (index , pEdit = 0) {
+  let _token  = $("#_token").val()
+
+  console.log(dataAddAddListItem[index])
+  tempAddAdd = dataAddAddListItem[index]
+
+  cekSatuanBarang(tempAddAdd.Kodebrg)
+
+  document.getElementById("input_add_add_kodebarang").value = tempAddAdd.Kodebrg
+  document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
+  document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
+  document.getElementById("input_add_add_noPPL").value = ''
+  document.getElementById("input_add_add_urutPPL").value = 0
+  // document.getElementById("input_add_add_disc").value = '0.00'
+  // document.getElementById("input_add_add_discrp").value = '0.00'
+
+  let selectOption = ''
+  if (tempSatuanBarang[0].SAT1) {
+    selectOption += `<option value=1 selected>1-${tempSatuanBarang[0].SAT1}</option>`
+  }
+  if (tempSatuanBarang[0].SAT2) {
+    selectOption += `<option value=2>2-${tempSatuanBarang[0].SAT2}</option>`
+  }
+  if (tempSatuanBarang[0].SAT3) {
+    selectOption += `<option value=3>3-${tempSatuanBarang[0].SAT3}</option>`
+  }
+  document.getElementById("input_add_add_nosat").innerHTML = selectOption
+
+  $.ajax({
+    url: "{!! url('pocekharga') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token,
+      kodebarang : tempAddAdd.Kodebrg,
+      nosat : 1
+    },
+    success: function(res) {
+      console.log(res)
+      let rowTable = ``
+      res.forEach((item, i) => {
+        let date1 = ""
+        if (item.TANGGAL) {
+            let date = new Date(item.TANGGAL);
+            let day = ("0" + date.getDate()).slice(-2);
+            let month = ("0" + (date.getMonth() + 1)).slice(-2);
+            date1 = date.getFullYear()+"/"+(month)+"/"+(day) ;
+          }
+        rowTable += `
+        <tr>
+          <td>${date1}</td>
+          <td>-</td>
+          <td>${item.SATUAN}</td>
+          <td>-</td>
+          <td>-</td>
+          <td class="text-right">${Number(item.Xharga) ? parseFloat(item.Xharga).toFixed(2) : '0.00'}</td>
+          <td>-</td>
+          <td>-</td>
+
+        </tr>`
+      });
+
+      if(!res.length) {
+        rowTable= `<tr><td class="text-center" colspan=8>Tidak ada data</td></tr>`
+      }
+      document.getElementById("tabel_data_add_harga_terakhir").innerHTML = rowTable
+
+      if (res.length && Number(res[0].Xharga)) {
+        document.getElementById("input_add_add_harga").value = parseFloat(res[0].Xharga).toFixed(2)
+      } else {
+        if (Number(tempAddAdd.Hrg1_1)) {
+          document.getElementById("input_add_add_harga").value = parseFloat(tempAddAdd.Hrg1_1).toFixed(2)
+        } else {
+          document.getElementById("input_add_add_harga").value = '0.00'
+        }
+      }
+
+      buttonAddListBatal()
+      document.getElementById("input_add_add_kodebarang").scrollIntoView();
+
+    },
+    error: function (err) {
+      console.log(err)
+      console.log(err.status)
+      console.log(err.statusText)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+  })
+
+}
+
+function buttonAddListNoSO () {
+
+  let _token = $("#_token").val();
+
+  $('#tabel_add_list_noSo').DataTable().destroy();
+  $.ajax({
+    url: "{!! url('polistnoso') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token
+    },
+    success: function(res) {
+      let rowTable = `
+        <tr>
+          <td class="text-center"><button class="btn btn-primary btn-sm" style="margin-top:5px; margin-bottom:5px;" onclick="buttonAddPickNoSO('-' , '-')" type="button" ><i class="bi bi-plus"></i></button></td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          </tr>`
+
+      listNoSo = res
+
+      listNoSo.forEach((item, i) => {
+        rowTable += `
+        <tr>
+          <td class="text-center"><button class="btn btn-primary btn-sm" style="margin-top:5px; margin-bottom:5px;" onclick="buttonAddPickNoSO('${item.NOBUKTI}' , '${item.NoPesanan}')" type="button" ><i class="bi bi-plus"></i></button></td>
+          <td>${item.NOBUKTI}</td>
+          <td>${item.Tanggal ? formatDate(item.Tanggal).split('-').reverse().join('/') : ''}</td>
+          <td>${item.NoPesanan}</td>
+          </tr>`
+      });
+
+      document.getElementById("tabel_data_add_list_noSo").innerHTML = rowTable
+      $("#tabel_add_list_noSo").DataTable({
+        "lengthChange": false,
+        "paging": true,
+      });
+      document.getElementById("namaHeaderTable").textContent = 'Nomor SO'
+      $('.showhidemodalbodyadd').hide();
+      $('#modalBodyAddListNoSo').show();
+
+      $("#form").modal('toggle')
+
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+
+  })
+
+}
+
+function buttonAddPickNoSO (kode, nama) {
+  console.log('buttonAddPickLokasiPenerima')
+  console.log(kode,nama)
+  if (tipeform == 'edit') {
+    onChangeHeader('KODEKEBUN' , kode)
+
+  }
+  document.getElementById("input_add_noso").value = kode
+  document.getElementById("input_add_nopocust").value = nama
+
+  buttonAddListBatal()
+}
+
+function buttonAddPickPWO (kode, nama) {
+  console.log('buttonAddPickPWO')
+  console.log(kode,nama)
+  if (tipeform == 'edit') {
+    onChangeHeader('KodePF' , kode)
+  }
+  document.getElementById("input_add_kodepic").value = kode
+  document.getElementById("input_add_namapic").value = nama
+  buttonAddListBatal()
+}
+
+function onChangeDP () {
+  console.log('onChangeDP')
+  if (tipeform == 'edit') {
+    let value = $("#input_add_nopocust").val()
+    console.log(value)
+    onChangeHeader('DP' , value)
+    refreshUpdateHeader()
+    let nobukti = $("#input_add_nobukti").val()
+    refreshDataTableAdd(nobukti)
+  }
+
+
+}
+
+function onChangeNoPO () {
+  if (tipeform == 'edit') {
+    let value  = $("#input_add_noso").val()
+    onChangeHeader('NoPesanan' , value)
+  }
+}
+
+function showTableStockProyeksi () {
+  if ($("#divhargaterakhir").is(':visible')) 
+  {
+    $('#divhargaterakhir').hide();
+  }
+  
+  if (!$("#divStockProyeksi").is(':visible'))
+  {
+    $('#divStockProyeksi').show();
+  } else 
+  {
+    $('#divStockProyeksi').hide();
+  }
+}
+
+
 
 function buttonAddEditItem (i) {
 
@@ -3906,6 +4338,14 @@ function buttonAddEditItem (i) {
   // di tengah edit item yang sudah tersimpan.
   document.getElementById("input_add_add_outstanding").value = tempAddEdit.NoPPL ? 'PR' : 'NONPR'
   poKunciIdentitasBarang(true)
+  if (tempAddEdit.NoPNW == '' || tempAddEdit.NoPNW == null) {
+    tempAddEdit.NoPNW = '-'
+  }
+  document.getElementById("input_add_add_nopnwpo").value = tempAddEdit.NoPNW
+  document.getElementById("input_add_add_costing").value = tempAddEdit.Cost ? tempAddEdit.Cost : ''
+  document.getElementById("input_add_add_subcosting").value = tempAddEdit.subcost ? tempAddEdit.subcost : ''
+  document.getElementById("input_add_add_satuanAlias").value = tempAddEdit.SatX ? tempAddEdit.SatX : ''
+  $('#divStockProyeksi').hide();
 
   document.getElementById("input_add_add_foc").value = tempAddEdit.PFOC
   document.getElementById("input_add_add_kodebarang").value = tempAddEdit.KodeBrg
@@ -4810,7 +5250,7 @@ function onChangeInputAddAddNosat () {
       res.forEach((item, i) => {
         rowTable += `
         <tr>
-        <td>${item.TANGGAL}</td>
+        <td>${item.TANGGAL ? formatDate(item.TANGGAL).split('-').reverse().join('/') : ''}</td>
         <td>-</td>
         <td>${item.SATUAN}</td>
         <td>-</td>
@@ -5246,7 +5686,11 @@ function ponsRenderNilai (col, item) {
     return ponsFormatAngkaDes(nilai, col.desimal)
   }
   if (col.tipe === 2) {
-    return nilai ? formatDate(nilai) : ""
+    return nilai ? formatDate(nilai).split('-').reverse().join('/') : ""
+  }
+  // Tanggal yang datang sebagai teks 'yyyy-mm-dd...' (mis. hasil CONVERT di SQL) juga tampil dd/mm/yyyy.
+  if (typeof nilai === 'string' && /^\d{4}-\d{2}-\d{2}/.test(nilai)) {
+    return nilai.substr(0, 10).split('-').reverse().join('/')
   }
   return (nilai === null || nilai === undefined) ? "" : nilai
 }
@@ -5568,7 +6012,7 @@ function renderTabelPO () {
         :
         '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
       }
-      <td>${item.TglOto1 || ''}</td>
+      <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
       <td>${item.OtoUser1 || ''}</td>
       `
 
@@ -5580,7 +6024,7 @@ function renderTabelPO () {
           '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
         }
         <td>${item.OtoUser2 || ''}</td>
-        <td>${item.TglOto2 || ''}</td>
+        <td>${item.TglOto2 ? formatDate(item.TglOto2).split('-').reverse().join('/') : ''}</td>
         `
         if (level > 2) {
           rowTable2 += `
@@ -5589,7 +6033,7 @@ function renderTabelPO () {
             :
             '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
           }
-          <td>${item.TglOto3 || ''}</td>
+          <td>${item.TglOto3 ? formatDate(item.TglOto3).split('-').reverse().join('/') : ''}</td>
           <td>${item.OtoUser3 || ''}</td>
           `
           if (level > 3) {
@@ -5599,7 +6043,7 @@ function renderTabelPO () {
               :
               '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
             }
-            <td>${item.TglOto4 || ''}</td>
+            <td>${item.TglOto4 ? formatDate(item.TglOto4).split('-').reverse().join('/') : ''}</td>
             <td>${item.OtoUser4 || ''}</td>
             `
             if (level > 4) {
@@ -5609,7 +6053,7 @@ function renderTabelPO () {
                 :
                 '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
               }
-              <td>${item.TglOto5 || ''}</td>
+              <td>${item.TglOto5 ? formatDate(item.TglOto5).split('-').reverse().join('/') : ''}</td>
               <td>${item.OtoUser5 || ''}</td>
               `
             }
@@ -5622,7 +6066,7 @@ function renderTabelPO () {
         let dTb = new Date(item.TglBatal)
         let dd = ("0" + dTb.getDate()).slice(-2)
         let mm = ("0" + (dTb.getMonth() + 1)).slice(-2)
-        tglBatalTampil = dTb.getFullYear() + '/' + mm + '/' + dd
+        tglBatalTampil = dd + '/' + mm + '/' + dTb.getFullYear()
       }
 
       rowTable2 += `  ${item.Isbatal == 1 ?
@@ -6360,6 +6804,8 @@ function buttonAddListBatal () {
 }
 
 function cleanFormAddAdd () {
+  document.getElementById("input_add_add_nopnwpo").value = '-'
+
   document.getElementById("input_add_add_kodebarang").value = ''
   document.getElementById("input_add_add_namabarang").value = ''
   document.getElementById("input_add_add_namabarangasli").value = ''
@@ -7711,7 +8157,7 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 35%;">${itemSub.NAMABRG}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: center;">${itemSub.PartNumber}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 10%;">${itemSub.NAMAMERK ?? ''}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? formatAngka(itemSub.QNT) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? parseFloat(itemSub.QNT).toFixed(2) : ''}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.SATX}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 10%; text-align: right;">${formatAngka(parseFloat(itemSub.harga).toFixed(2))}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: right;">${formatAngka(parseFloat(itemSub.SUBTOTALRp).toFixed(2))}</td>
@@ -7938,7 +8384,7 @@ function submitPrint (nobukti) {
   // document.getElementById('btnLanjutTtd').onclick = () => {
   //   namaTtdCetak = document.getElementById('selectNamaTtd').value
   //   document.body.removeChild(overlay)
-
+  
 
     $.ajax({
       url: "{!! url('purchaseorderprint') !!}",
@@ -7953,12 +8399,12 @@ function submitPrint (nobukti) {
         dataPrint = res
 
         console.log(dataPrint)
-
+        
       }
     })
-
+  
     let arrayDataPrint = []
-    for (let i = 0; i < dataPrint.length; i+=7)
+    for (let i = 0; i < dataPrint.length; i+=7) 
     {
       let tempArray = dataPrint.slice(i,i+7)
       arrayDataPrint.push(tempArray)
@@ -8451,7 +8897,7 @@ function submitPrint (nobukti) {
     let subTotal = 0
     let ppnTotal = 0
     let totalTotal = 0
-
+    
     let tempPrintStr = ``
     tempPrintStr += `<html>
     <head>
@@ -8480,7 +8926,7 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 30%;">${itemSub.NAMABRG}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 5%;">${itemSub.PartNumber}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 5%;">${itemSub.NAMAMERK}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: right;">${itemSub.QNT ? formatAngka(itemSub.QNT) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: right;">${itemSub.QNT ? parseFloat(itemSub.QNT).toFixed(2) : ''}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.SATUAN}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: right;">${formatAngka(parseFloat(itemSub.harga).toFixed(2))}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: right;">${formatAngka(parseFloat(itemSub.SUBTOTALRp).toFixed(2))}</td>
@@ -8488,7 +8934,7 @@ item.forEach((itemSub, j) => {
   z++;
 });
 
-// Fill remaining empty rows ï¿½ table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows — table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {

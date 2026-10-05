@@ -402,6 +402,7 @@ td input[type="checkbox"] {
 <div id="imagecontainer" class="d-none" style="">
   <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
 </div>
+<div id="printContainer" style="display:none"></div>
 
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
@@ -1464,7 +1465,11 @@ function prRenderNilai (col, item) {
     return prFormatAngkaDes(nilai, col.desimal)
   }
   if (col.tipe === 2) {
-    return nilai ? formatDate(nilai) : ""
+    return nilai ? formatDate(nilai).split('-').reverse().join('/') : ""
+  }
+  // Tanggal yang datang sebagai teks 'yyyy-mm-dd...' (mis. hasil CONVERT di SQL) juga tampil dd/mm/yyyy.
+  if (typeof nilai === 'string' && /^\d{4}-\d{2}-\d{2}/.test(nilai)) {
+    return nilai.substr(0, 10).split('-').reverse().join('/')
   }
   return (nilai === null || nilai === undefined) ? "" : nilai
 }
@@ -1580,6 +1585,9 @@ function prIkatPeriode () {
 
   let onUbah = function () {
     if (!awal.value || !akhir.value) { return }
+    // Tahun belum lengkap (mis. "0202" waktu mengetik 2025) - tunggu sampai tahunnya wajar,
+    // jangan reload dulu (SQL Server datetime hanya menerima tahun >= 1753).
+    if (awal.value.slice(0, 4) < '1900' || akhir.value.slice(0, 4) < '1900') { return }
     if (awal.value > akhir.value) {
       alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
       return
@@ -1850,7 +1858,7 @@ function renderTabelPR () {
           '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>'
       }
       <td>${item.OtoUser1 || ''}</td>
-      <td>${item.TglOto1 ? formatDate(item.TglOto1) : ''}</td>
+      <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
       <td class="text-center">${prBadgeStatus(grup)}</td>
     </tr>`
   });
@@ -2195,7 +2203,8 @@ function submitAddEdit () {
   // Isi input lain
   document.getElementById("input_add_add_kodebarang").value = tempEdit.KodeBrg || '';
   document.getElementById("input_add_add_keterangannama").value = tempEdit.NamaBrg || '';
-  document.getElementById("input_add_add_qnt").value = parseFloat(tempEdit.Qnt || 0).toFixed(2);
+  // Lewat autoNumeric('set') supaya separator ribuan tampil - set langsung ke .value tidak memicu format autoNumeric.
+  $('#input_add_add_qnt').autoNumeric('set', parseFloat(tempEdit.Qnt || 0).toFixed(2));
   document.getElementById("input_add_add_keterangan").value = tempEdit.Keterangan || '';
 
   let defaultNoSat = tempEdit.IsJasa === "1" ? "1" : String(tempEdit.NoSat || "0");
@@ -2978,7 +2987,14 @@ function cleanFormAddAdd (){
 }
 
 function cleanFormAdd (){
-  document.getElementById("input_add_tanggal").valueAsDate = new Date()
+  // Tanggal diambil dari server (getdate) supaya tidak bisa diakali lewat jam komputer user
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    async: false,
+    success: function(res) {
+      document.getElementById("input_add_tanggal").value = res[0].tanggal
+    }})
   document.getElementById("input_add_kodedepartemen").value = ''
 }
 
@@ -3546,13 +3562,13 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 5%;">${itemSub.kodebrg}</td>
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 30%;">${itemSub.NamaBrg}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: center;">${itemSub.Sat}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.Qnt ? formatAngka(itemSub.Qnt) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.Qnt ? parseFloat(itemSub.Qnt).toFixed(2) : ''}</td>
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 5%;">${itemSub.keterangan}</td>
     </tr>`;
   z++;
 });
 
-// Fill remaining empty rows   table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows � table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {

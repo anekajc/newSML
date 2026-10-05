@@ -36,6 +36,7 @@ class TransferBarangController extends Controller
 
     $listTransfer = $this->fetchHeaderList($date1, $date2);
     $listPermintaan = $this->fetchPermintaanList();
+    $listOutstanding = $this->fetchOutstandingList();
 
     return view('gudang.transferbarang' , [
       "menul0" => $menul0,
@@ -44,6 +45,7 @@ class TransferBarangController extends Controller
       "date2" => $date2,
       "listTransfer" => $listTransfer,
       "listPermintaan" => $listPermintaan,
+      "listOutstanding" => $listOutstanding,
       "listBarangAll" => [] ,
       "akses" => $akses
     ]);
@@ -134,6 +136,40 @@ class TransferBarangController extends Controller
     return DB::connection("SML")->select($query, ["date1" => $date1, "date2" => $date2]);
   }
 
+  // Tab "OutStanding Transfer (Transaksi Belum Terima)": item-level (satu baris per
+  // barang), port 1:1 dari tempOutstanding3 versi lama (lihat git history sebelum
+  // konsolidasi ke fetchHeaderList()) -- kolom dan datanya sengaja dikembalikan persis
+  // seperti versi lama (No Bukti/Tanggal/No. Permintaan/Keterangan/Kode Barang/
+  // Nama Barang/Qnt), bukan ringkasan header seperti tab Transaksi. Sengaja TIDAK
+  // di-scope ke Periode seperti fetchHeaderList() -- Outstanding adalah antrian
+  // "belum diterima" yang bisa menumpuk dari periode-periode lama; versi lama ini pun
+  // tidak pernah difilter tanggal sama sekali.
+  private function fetchOutstandingList() {
+    $query = "
+      SELECT
+          A.NOBUKTI,
+          A1.TANGGAL,
+          A.NOPRTRANSFER AS NoPermintaan,
+          A1.NOTE AS Keterangan,
+          A.KODEBRG,
+          C.NAMABRG,
+          A.QNT
+      FROM DBTRANSFERDET A
+      LEFT OUTER JOIN (
+          SELECT KODEBRG, NoTransfer, UrutTransfer, SUM(QNT) QNT1, SUM(QNT2) QNT2
+          FROM DBTRANSFERDET
+          GROUP BY KODEBRG, NoTransfer, UrutTransfer
+      ) B ON A.NOBUKTI = B.NoTransfer AND A.URUT = B.UrutTransfer
+      LEFT OUTER JOIN DBBARANG C ON A.KODEBRG = C.KODEBRG
+      LEFT OUTER JOIN DBTRANSFER A1 ON A.NOBUKTI = A1.NOBUKTI
+      WHERE ISNULL(A.NOPRTRANSFER, '') <> ''
+        AND A.QNT - ISNULL(B.QNT1, 0) <> 0
+      ORDER BY A1.TANGGAL DESC, A.NOBUKTI DESC
+    ";
+
+    return DB::connection("SML")->select($query);
+  }
+
   public function loadAll (Request $request) {
     $date1 = $request->date1;
     $date2 = $request->date2;
@@ -146,7 +182,8 @@ class TransferBarangController extends Controller
 
     return response()->json([
       "listTransfer" => $this->fetchHeaderList($date1, $date2),
-      "listPermintaan" => $this->fetchPermintaanList()
+      "listPermintaan" => $this->fetchPermintaanList(),
+      "listOutstanding" => $this->fetchOutstandingList()
     ]);
   }
 
@@ -442,14 +479,77 @@ class TransferBarangController extends Controller
         $req->Nobukti,
         $req->Nourut,
         $req->Nob,
+        $req->urut,
         \Auth::User()->username,
         -1,
         '',
         '',
         $req->tgl
       ];
-      DB::connection('SML')->statement('exec sp_InsertPRTRANSFER ?,?,?,?,?,?,?,?', $values);
+      DB::connection('SML')->statement('exec sp_InsertPRTRANSFER ?,?,?,?,?,?,?,?,?', $values);
       return 1;
+  }
+
+  // Varian spAdd() untuk menambah beberapa item (checkbox) sekaligus. sp_InsertPRTRANSFER
+  // hanya menerima satu @urut dan selalu insert header DBTRANSFER di awal -- karena NOBUKTI
+  // adalah primary key di DBTRANSFER, SP itu tidak bisa dipanggil berulang kali dengan
+  // Nobukti yang sama (akan bentrok PK pada panggilan kedua). Jadi di sini header di-insert
+  // sekali saja, lalu detail di-insert satu per satu untuk tiap urut yang dicentang. Rumus
+  // QNT/QNT2 mengikuti persis versi terbaru sp_InsertPRTRANSFER (yang menerima @qty):
+  // QNT = qty * ISI, QNT2 = qty / ISI jika NOSAT=1, selain itu QNT2 = qty.
+  public function spAddMultiple (Request $req) {
+      $uruts = $req->uruts;
+      $qtys = $req->qtys;
+
+      if (!is_array($uruts) || count($uruts) === 0 || !is_array($qtys) || count($qtys) !== count($uruts)) {
+          return 0;
+      }
+
+      DB::connection('SML')->beginTransaction();
+
+      try {
+          DB::connection('SML')->insert(
+              "insert into DBTRANSFER (NoBukti,NoUrut,Tanggal,IDUser,MaxOL,NOTE)
+               select :nobukti, :nourut, :tgl, :iduser, :maxol, NOTE
+               from DBPRTRANSFER where NoBukti = :nob",
+              [
+                  "nobukti" => $req->Nobukti,
+                  "nourut" => $req->Nourut,
+                  "tgl" => $req->tgl,
+                  "iduser" => \Auth::user()->username,
+                  "maxol" => -1,
+                  "nob" => $req->Nob,
+              ]
+          );
+
+          foreach ($uruts as $i => $urut) {
+              $qty = $qtys[$i];
+
+              DB::connection('SML')->insert(
+                  "insert into DBTRANSFERDET (NoBukti,Urut,NoPrTRANSFER,URUTPRTRANSFER,KodeBrg,QNT,QNT2,SAT_1,SAT_2,NOSAT,ISI,GdgAsal,GdgTujuan,QtyMinta)
+                   select :nobukti, Urut, NoBukti, Urut, KodeBrg,
+                          :qty1 * ISI,
+                          CASE WHEN NOSAT = 1 THEN :qty2 / ISI ELSE :qty3 END,
+                          SAT_1, SAT_2, NOSAT, ISI, GDGASAL, GDGTUJUAN, QNT2
+                   from DBPRTRANSFERDET where NoBukti = :nob and URUT = :urut",
+                  [
+                      "nobukti" => $req->Nobukti,
+                      "qty1" => $qty,
+                      "qty2" => $qty,
+                      "qty3" => $qty,
+                      "nob" => $req->Nob,
+                      "urut" => $urut,
+                  ]
+              );
+          }
+
+          DB::connection('SML')->commit();
+
+          return 1;
+      } catch (\Throwable $e) {
+          DB::connection('SML')->rollBack();
+          throw $e;
+      }
   }
 
   public function cekQntStock (Request $req) {
@@ -729,7 +829,7 @@ class TransferBarangController extends Controller
 
     $nobukti = $req->nobukti;
 
-    $list = DB::connection('SML')->select("select 	B.NOBUKTI, B.URUT,  B.KODEBRG, B.NOSAT, B.QtyMinta, C.NAMABRG, '' Jns_Kertas, '' Ukr_Kertas,
+    $list = DB::connection('SML')->select("select B.NOBUKTI, B.URUT,  B.KODEBRG, B.NOSAT, B.QtyMinta, C.NAMABRG, '' Jns_Kertas, '' Ukr_Kertas,
         B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.ISI, B.GdgAsal, B.GdgTujuan, D.Nama+' ('+B.gdgAsal+')' NamagdgAsal,
         E.Nama+' ('+B.GdgTujuan+')' NamagdgTujuan, 0.00 GSM, F.sisa + case when B.NOSAT = 1 then B.QNT else B.QNT2 end sisa, B.NOSAT, B.NOPRTRANSFER, B.URUTPRTRANSFER
         from	dbTransferDet B

@@ -402,6 +402,7 @@ td input[type="checkbox"] {
 <div id="imagecontainer" class="d-none" style="">
   <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
 </div>
+<div id="printContainer" style="display:none"></div>
 
 <input type="hidden" id="periode_tahun" value="{{ $periode->tahun }}">
 <input type="hidden" id="periode_bulan" value="{{ $periode->bulan }}">
@@ -1524,7 +1525,11 @@ function prRenderNilai (col, item) {
     return prFormatAngkaDes(nilai, col.desimal)
   }
   if (col.tipe === 2) {
-    return nilai ? formatDate(nilai) : ""
+    return nilai ? formatDate(nilai).split('-').reverse().join('/') : ""
+  }
+  // Tanggal yang datang sebagai teks 'yyyy-mm-dd...' (mis. hasil CONVERT di SQL) juga tampil dd/mm/yyyy.
+  if (typeof nilai === 'string' && /^\d{4}-\d{2}-\d{2}/.test(nilai)) {
+    return nilai.substr(0, 10).split('-').reverse().join('/')
   }
   return (nilai === null || nilai === undefined) ? "" : nilai
 }
@@ -1640,6 +1645,9 @@ function prIkatPeriode () {
 
   let onUbah = function () {
     if (!awal.value || !akhir.value) { return }
+    // Tahun belum lengkap (mis. "0202" waktu mengetik 2025) - tunggu sampai tahunnya wajar,
+    // jangan reload dulu (SQL Server datetime hanya menerima tahun >= 1753).
+    if (awal.value.slice(0, 4) < '1900' || akhir.value.slice(0, 4) < '1900') { return }
     if (awal.value > akhir.value) {
       alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
       return
@@ -1909,7 +1917,7 @@ function renderTabelPR () {
           '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>'
       }
       <td>${item.OtoUser1 || ''}</td>
-      <td>${item.TglOto1 ? formatDate(item.TglOto1) : ''}</td>
+      <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
       <td class="text-center">${prBadgeStatus(grup)}</td>
     </tr>`
   });
@@ -2096,15 +2104,18 @@ function submitAddEdit () {
     if (nosat === 1) {
     qnt1 = qnt * tempEdit.ISI1;
     satuan = tempEdit.SAT1;
-    isi = parseFloat(String(tempEdit.ISI1).replace(/\./g,''));
+    // isi = parseFloat(String(tempEdit.ISI1).replace(/\./g,''));
+       isi = (Number((tempEdit.ISI1).replace(/,/g, '')))
     } else if (nosat === 2) {
         qnt1 = qnt * tempEdit.ISI2;
         satuan = tempEdit.SAT2;
-        isi = parseFloat(String(tempEdit.ISI2).replace(/\./g,''));
+        // isi = parseFloat(String(tempEdit.ISI2).replace(/\./g,''));
+         isi = (Number((tempEdit.ISI2).replace(/,/g, '')))
     } else if (nosat === 3) {
         qnt1 = qnt * tempEdit.ISI3;
         satuan = tempEdit.SAT3;
-        isi = parseFloat(String(tempEdit.ISI3).replace(/\./g,''));
+        // isi = parseFloat(String(tempEdit.ISI3).replace(/\./g,''));
+         isi = (Number((tempEdit.ISI3).replace(/,/g, '')))
     } else {
         alertify.warning("Satuan tidak valid");
         return;
@@ -2192,7 +2203,8 @@ function buttonAddEditItem (index) {
   // Isi input
   document.getElementById("input_add_add_kodebarang").value = tempEdit.KodeBrg || '';
   document.getElementById("input_add_add_keterangannama").value = tempEdit.NamaBrg || '';
-  document.getElementById("input_add_add_qnt").value = parseFloat(tempEdit.Qnt || 0).toFixed(2);
+  // Lewat autoNumeric('set') supaya separator ribuan tampil - set langsung ke .value tidak memicu format autoNumeric.
+  $('#input_add_add_qnt').autoNumeric('set', parseFloat(tempEdit.Qnt || 0).toFixed(2));
   document.getElementById("input_add_add_keterangan").value = tempEdit.Keterangan || '';
   document.getElementById("input_add_add_satuan").value = String(tempEdit.NoSat || 0);
 
@@ -2698,13 +2710,16 @@ function buttonAddAddInsertItem (i) {
     let isi = 0;
     let nosat = 0;
     if (satuan === barang.SAT1) {
-        isi = parseFloat(String(barang.ISI1).replace(/\./g,''));
+        // isi = parseFloat(String(barang.ISI1).replace(/\./g,''));
+         isi = (Number((barang.ISI1).replace(/,/g, '')))
         nosat = 1;
     } else if (satuan === barang.SAT2) {
-        isi = parseFloat(String(barang.ISI2).replace(/\./g,''));
+        // isi = parseFloat(String(barang.ISI2).replace(/\./g,''));
+         isi = (Number((barang.ISI2).replace(/,/g, '')))
         nosat = 2;
     } else if (satuan === barang.SAT3) {
-        isi = parseFloat(String(barang.ISI3).replace(/\./g,''));
+        // isi = parseFloat(String(barang.ISI3).replace(/\./g,''));
+        isi = (Number((barang.ISI3).replace(/,/g, '')))
         nosat = 3;
     } else {
         alertify.warning("Satuan tidak valid");
@@ -2960,7 +2975,14 @@ function cleanFormAddAdd (){
 }
 
 function cleanFormAdd (){
-  document.getElementById("input_add_tanggal").valueAsDate = new Date()
+  // Tanggal diambil dari server (getdate) supaya tidak bisa diakali lewat jam komputer user
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    async: false,
+    success: function(res) {
+      document.getElementById("input_add_tanggal").value = res[0].tanggal
+    }})
   document.getElementById("input_add_kodedepartemen").value = ''
 }
 
@@ -3032,12 +3054,12 @@ function submitPrint (nobukti) {
         dataPrint = res
 
         console.log(dataPrint)
-
+        
       }
     })
-
+  
     let arrayDataPrint = []
-    for (let i = 0; i < dataPrint.length; i+=7)
+    for (let i = 0; i < dataPrint.length; i+=7) 
     {
       let tempArray = dataPrint.slice(i,i+7)
       arrayDataPrint.push(tempArray)
@@ -3054,7 +3076,7 @@ function submitPrint (nobukti) {
 
     const now = new Date()
     const jamCetak = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
+    
     css = `<style type="text/css">
       body {
         font-family: sans-serif;
@@ -3526,7 +3548,7 @@ function submitPrint (nobukti) {
     let subTotal = 0
     let ppnTotal = 0
     let totalTotal = 0
-
+    
     let tempPrintStr = ``
     tempPrintStr += `<html>
     <head>
@@ -3555,7 +3577,7 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 5%;">${itemSub.kodebrg}</td>
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 30%;">${itemSub.NamaBrg}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: center;">${itemSub.Sat}</td>
-      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.Qnt ? formatAngka(itemSub.Qnt) : ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; width: 5%; text-align: right;">${itemSub.Qnt ? parseFloat(itemSub.Qnt).toFixed(2) : ''}</td>
       <td style='border-left:1px solid black; border-right:1px solid black; border-bottom:1px solid black; ' class="no-border" style="width: 5%;">${itemSub.keterangan}</td>
     </tr>`;
   z++;
