@@ -351,7 +351,7 @@ let tempClose = {}
 jQuery(function($) {
   $('.input-partial-number').autoNumeric('init',
     {
-      minimumValue : '0',
+      vMin : '0',   // autoNumeric 1.9: opsi minimum bernama vMin (minimumValue diabaikan -> bisa negatif)
     }
   );
 });
