@@ -45,7 +45,7 @@ class VerifikasiPenawaranController extends Controller
                 B.NOBUKTI,
                 A.TANGGAL,
                 A.KODECUST,
-                C.NAMACUSTSUPP,
+                A.namacustomer    NAMACUSTSUPP,
                 A.NAMAPIC,
                 B.KODEBRG,
                 B.NAMABRG,
@@ -99,9 +99,9 @@ class VerifikasiPenawaranController extends Controller
     
             -- AND 
             (? = '' OR B.NOBUKTI LIKE ?)
-            AND (? = '' OR C.NAMACUSTSUPP LIKE ?)
+            AND (? = '' OR a.namacustomer LIKE ?)
             AND (? = '' OR B.NAMABRG LIKE ?)
-    
+            and a.isotorisasi1=1
             ORDER BY B.NOBUKTI, B.Urut
             ", [
                 // $periode->tahun,
@@ -257,7 +257,7 @@ public function loadAll(Request $req)
             A.TANGGAL,
             B.KODEBRG,
             A.KODECUST,
-            C.NAMACUSTSUPP,
+            A.namacustomer NAMACUSTSUPP,
             B.NAMABRG,
 
             (CASE 
@@ -323,10 +323,12 @@ public function loadAll(Request $req)
 
         --AND 
         (? = '' OR B.NOBUKTI LIKE ?)
-        AND (? = '' OR C.NAMACUSTSUPP LIKE ?)
+        AND (? = '' OR a.namacustomer LIKE ?)
         AND (? = '' OR B.NAMABRG LIKE ?)
-
-        ORDER BY B.NOBUKTI + CAST(B.Urut AS VARCHAR(4))
+        and a.isotorisasi1=1
+        -- Urut angka (sama dengan index()), bukan teks NOBUKTI+Urut yang menaruh urut 10
+        -- di antara 1 dan 2 - supaya baris tidak pindah posisi setelah Verifikasi/Batal.
+        ORDER BY B.NOBUKTI, B.Urut
     ", [
         $nobukti,  "%$nobukti%",
         $customer, "%$customer%",
@@ -351,6 +353,18 @@ public function loadAll(Request $req)
 
     public function spBatalOtorisasi ( Request $req) {
       // $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+
+      // Item yang sudah dibuatkan SO tidak boleh dibatalkan verifikasinya.
+      // Qnt SO dihitung sama seperti kolom QntSO di index()/loadAll().
+      $so = DB::connection('SML')->select("
+      select isnull(sum(case when NOSAT=1 then isnull(Qnt,0) when NOSAT in (2,3) then isnull(Qnt2,0) end),0) QntSO
+      from DBSODET where NOtawar = :nobukti and Uruttawar = :urut
+",
+      [ "nobukti" => $req->nobukti , "urut" => $req->urut ]);
+
+      if ($so && (float) $so[0]->QntSO > 0) {
+        return 2;
+      }
 
       $res = DB::connection('SML')->update("
       Update DbPenawaranSodet set IsVerf= NULL ,TglVerf= NULL ,UserVerf= '' where NObukti= :nobukti and Urut= :urut

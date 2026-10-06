@@ -8,7 +8,7 @@ Semua perubahan database newSML (DBSMLBARU) dicatat di folder ini, dipisah per m
 |---|---|
 | `umum/` | Script yang berlaku untuk semua modul: `02_menu_web.sql` (menu web dan hak aksesnya), `06_menu_pemakai_acc_nonacc.sql` (href menu Berkas > Pemakai ACC / Non ACC). |
 | `purchasing/` | Script dan catatan modul purchasing. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-PURCHASING.md`. |
-| `marketing/` | Belum ada. Nanti dibuat untuk script dan catatan modul marketing (`CATATAN-UPDATE-DB-MARKETING.md`). |
+| `marketing/` | Script dan catatan modul marketing. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-MARKETING.md`. |
 
 Nomor file tetap urut lintas folder (01, 02, 03, ...), jadi urutan menjalankannya tidak berubah walaupun filenya ada di folder berbeda.
 
