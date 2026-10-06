@@ -75,27 +75,30 @@ Route::get('/penawaransocheckhargaddd', [PenawaranSOController::class, 'CheckHar
   Route::post('/get-barang', [VerifikasiPenawaranController::class, 'getBarang']);
   Route::post('/get-customer', [VerifikasiPenawaranController::class, 'getCustomer']);
 
-//   // VERIF BARANG
-//   Route::get('/verifikasibarang', [VerifikasiBarangController::class, 'index']);
-//   Route::post('/verifikasibarangotorisasi', [VerifikasiBarangController::class, 'spOtorisasi']);
-//   Route::post('/verifikasibarangbatalotorisasi', [VerifikasiBarangController::class, 'spBatalOtorisasi']);
-//   Route::get('/verifikasibarangloadall', [VerifikasiBarangController::class, 'loadAll']);
-//   Route::get('/verifikasibarangloadallinfo', [VerifikasiBarangController::class, 'loadAllInfo']);
-//   Route::post('/verifikasibarangdetailbarang', [VerifikasiBarangController::class, 'detailBarang']);
-//   Route::post('/verifikasibarangdetailbarangx', [VerifikasiBarangController::class, 'detailBarangx']);
-//   Route::get('/verifikasibaranglistbarang', [VerifikasiBarangController::class, 'listBarang']);
-//   Route::post('/verifikasibarangspadd', [VerifikasiBarangController::class, 'spOtorisasi']);
+  // VERIF BARANG (diaktifkan dari programajcSML)
+  Route::get('/verifikasibarang', [VerifikasiBarangController::class, 'index']);
+  Route::post('/verifikasibarangotorisasi', [VerifikasiBarangController::class, 'spOtorisasi']);
+  Route::post('/verifikasibarangbatalotorisasi', [VerifikasiBarangController::class, 'spBatalOtorisasi']);
+  Route::get('/verifikasibarangloadall', [VerifikasiBarangController::class, 'loadAll']);
+  Route::get('/verifikasibarangloadallinfo', [VerifikasiBarangController::class, 'loadAllInfo']);
+  // Route::post('/verifikasibarangdetailbarang', [VerifikasiBarangController::class, 'detailBarang']); // method detailBarang tidak ada, juga di programajcSML
+  Route::post('/verifikasibarangdetailbarangx', [VerifikasiBarangController::class, 'detailBarangx']);
+  Route::get('/verifikasibaranglistbarang', [VerifikasiBarangController::class, 'listBarang']);
+  Route::post('/verifikasibarangspadd', [VerifikasiBarangController::class, 'spOtorisasi']);
 
-//   // Terima PO Cust
-//   Route::get('/terimapocustomer', [TerimaPoCustomerController::class, 'index']);
-//   Route::post('/terimapocustomerspadd', [TerimaPoCustomerController::class, 'spAdd']);
-//   Route::get('/terimapocustomerloadall', [TerimaPoCustomerController::class, 'loadAll']);
-//   Route::get('/terimapocustomerpelanggan', [TerimaPoCustomerController::class, 'getCustomer']);
-//   Route::post('/terimapocustomerspclose', [TerimaPoCustomerController::class, 'spClose']);
+  // Terima PO Cust (diaktifkan dari programajcSML)
+  Route::get('/terimapocustomer', [TerimaPoCustomerController::class, 'index']);
+  Route::post('/terimapocustomerspadd', [TerimaPoCustomerController::class, 'spAdd']);
+  Route::get('/terimapocustomerloadall', [TerimaPoCustomerController::class, 'loadAll']);
+  Route::get('/terimapocustomerpelanggan', [TerimaPoCustomerController::class, 'getCustomer']);
+  Route::post('/terimapocustomerspclose', [TerimaPoCustomerController::class, 'spClose']);
 
-//   // Ubah PO Cust
-//   Route::get('/ubahpocust', [UbahPOCustomerController::class, 'index']);
-//   Route::get('/ubahPoCustomerListData', [UbahPOCustomerController::class, 'listData']);
+  // Ubah PO Cust (diaktifkan dari programajcSML)
+  Route::get('/ubahpocust', [UbahPOCustomerController::class, 'index']);
+  Route::get('/ubahPoCustomerListData', [UbahPOCustomerController::class, 'listData']);
+  Route::get('/ubahpocustloadall', [UbahPOCustomerController::class, 'loadAll']);
+  Route::get('/ubahpocustlistpo', [UbahPOCustomerController::class, 'listPO']);
+  Route::post('/ubahpocustsimpan', [UbahPOCustomerController::class, 'simpan']);
 
   // SO
   Route::get('/so', [SOController::class, 'index']);

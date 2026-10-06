@@ -365,6 +365,8 @@
   {{-- Tab, toolbar, dan tabel disamakan dengan tab Purchase Order di purchaseOrder.blade.php
        (custom-tabs + po-toolbar + data-table di dalam .po-table-wrap). Form pencarian tetap
        GET dengan id/name/value yang sama seperti sebelumnya. --}}
+  {{-- Pill tab dinonaktifkan: halaman ini hanya punya 1 tab, jadi tidak perlu pill di atas
+       card (sama seperti menu purchasing yang satu tab, mis. uangmukabeli).
   <div class="card mb-3 tab-card">
     <div class="card-body">
       <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
@@ -372,6 +374,7 @@
       </div>
     </div>
   </div>
+  --}}
 
   <div class="card">
     <div class="card-body" style="padding:0;">
@@ -1964,7 +1967,10 @@ function tabelValueCell(row, col) {
     return '<td>' + (raw ? formatDate(raw, '/').split('/').reverse().join('/') : '') + '</td>';
   }
   if (type === 'float') {
-    return '<td class="text-right">' + (raw !== undefined && raw !== null && raw !== '' ? formatAngka(raw) : '') + '</td>';
+    if (raw === undefined || raw === null || raw === '') { return '<td class="text-right"></td>'; }
+    var dp = Number(col[5]) || 0;
+    var angka = Number(raw) || 0;
+    return '<td class="text-right">' + angka.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   if (type === 'bool') {
     return Number(raw)
@@ -2047,11 +2053,26 @@ function renderTable(data) {
   reinitTabel();
 }
 
+// Filter terakhir yang benar-benar dicari (form GET di atas). Muat ulang setelah
+// Verifikasi/Batal memakai ini, bukan isi kotak yang mungkin sudah diubah tapi belum
+// dicari - kalau kotaknya dikosongkan, semua penawaran (ribuan baris) ikut termuat.
+const verifFilterTerakhir = {
+  nobukti: @json(trim(request('search_nobukti') ?? '')),
+  customer: @json(trim(request('search_customer') ?? '')),
+  barang: @json(trim(request('search_barang') ?? ''))
+}
+
 function searchData() {
 
-  let nobukti  = $('#search_nobukti').val();
-  let customer = $('#search_customer').val();
-  let barang   = $('#search_barang').val();
+  let nobukti  = verifFilterTerakhir.nobukti;
+  let customer = verifFilterTerakhir.customer;
+  let barang   = verifFilterTerakhir.barang;
+
+  // Tanpa filter, halaman awal memang kosong (lihat index()) - jangan muat semua data.
+  if (!nobukti && !customer && !barang) {
+    renderTable([])
+    return
+  }
 
   $.ajax({
     url: "{!! url('verifikasipenawaranloadall') !!}",
@@ -2139,28 +2160,37 @@ error: function (err) {
 
 function buttonBatalOtorisasi(nobukti, urut) {
 
-  let _token = $("#_token").val();
+  alertify.confirm('Batal Verifikasi', 'Batalkan verifikasi ' + nobukti + ' item ke-' + urut + ' ?', function () {
 
-  $.ajax({
-    url: "{!! url('verifikasipenawaranbatalotorisasi') !!}",
-    type: "POST",
-    data: {
-      _token,
-      nobukti,
-      urut
-    },
-    success: function(res) {
+    let _token = $("#_token").val();
 
-      alertify.success('Berhasil Batal Verifikasi')
+    $.ajax({
+      url: "{!! url('verifikasipenawaranbatalotorisasi') !!}",
+      type: "POST",
+      data: {
+        _token,
+        nobukti,
+        urut
+      },
+      success: function(res) {
 
-      searchData()
+        if (res == 2) {
+          alertify.warning('Item ini sudah dibuatkan SO, verifikasi tidak bisa dibatalkan')
+          return
+        }
 
-    },
-    error: function(err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan')
-    }
-  });
+        alertify.success('Berhasil Batal Verifikasi')
+
+        searchData()
+
+      },
+      error: function(err) {
+        console.log(err)
+        alertify.warning('Terjadi kesalahan')
+      }
+    });
+
+  }, function () {});
 
 }
 
@@ -2283,9 +2313,12 @@ function formatAngka (angkaString) {
   }
 
   // Default warna tab
-  document.getElementById('nav-home-tab').addEventListener('click', function () {
-    setActiveTab("nav-home-tab");
-  });
+  // Pill tab sudah dinonaktifkan, jadi elemennya bisa tidak ada.
+  if (document.getElementById('nav-home-tab')) {
+    document.getElementById('nav-home-tab').addEventListener('click', function () {
+      setActiveTab("nav-home-tab");
+    });
+  }
 
   // buat ganti tab
 
