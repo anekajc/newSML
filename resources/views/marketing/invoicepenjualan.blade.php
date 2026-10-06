@@ -584,10 +584,11 @@
   }
 </style>
 {{-- end tampilan search modal barang all --}}
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 @section('content')
-<div id="page1" class="container-fluid mainpage">
+<div id="page1" class="mainpage">
 
   
   
@@ -598,7 +599,7 @@
   </div>
 
 
-  <div id="contentContainer" class="container-fluid" >
+  <div id="contentContainer" class="">
     <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
     <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -705,7 +706,7 @@
                   <div class="modal-header">
                     <h5 class="modal-title">
                       <i class="bi bi-funnel"></i>
-                      Filter Data
+                      Filter Invoice Penjualan
                       <span class="rt-active-badge" id="ipFilterBadge">0 aktif</span>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterIP').modal('hide')">
@@ -715,14 +716,16 @@
 
                   <div class="modal-body">
                     <div class="rt-section">
-                      <div class="rt-group-label">Status</div>
-                      <div>
-                        <label class="rt-field-label" for="input_filterip">Status Otorisasi</label>
-                        <select class="rt-native" id="input_filterip">
-                          <option value=0 selected>Semua</option>
-                          <option value=1>Belum Otorisasi</option>
-                          <option value=2>Sudah Otorisasi</option>
-                        </select>
+                      <div class="rt-group-label">Penyaringan Data</div>
+                      <div class="rt-grid-2">
+                        <div>
+                          <label class="rt-field-label" for="input_filterip">Otorisasi</label>
+                          <select class="rt-native" id="input_filterip">
+                            <option value=0 selected>Semua</option>
+                            <option value=2>Sudah</option>
+                            <option value=1>Belum</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -789,6 +792,7 @@
 
 
 <div id="page2" class="container-fluid mainpage" style="display: none">
+<div id="formBsGrid">
   <!-- <div id="" class="modal-content "> -->
     <div id= "modalAdd" class="showhideform">
 
@@ -801,15 +805,17 @@
           </div>
           <div class="col-6 text-right">
             <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="buttonCloseForm()">Close</button>
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="buttonCloseForm()">
+        Close
+      </button>
           </div>
         </div>
 
@@ -950,12 +956,16 @@
       <div id="" class="row">
         <div class="col-12 text-right">
 
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-          <button id="" type="button" onclick="submitAdd()" class="btn btn-chip-biru" style="height: 30px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;">Simpan</button>
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+          <button id="" type="button" onclick="submitAdd()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
         </div>
       </div>
     </div>
@@ -973,15 +983,17 @@
           </div>
           <div class="col-6 text-right">
             <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="buttonCloseForm()">Close</button>
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="buttonCloseForm()">
+        Close
+      </button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
@@ -1282,7 +1294,7 @@
 
     <div class="container-fluid mt-4" style="overflow-x: auto;padding:0; margin:0; width:100%;" >
 
-          <table id="koreksiTable" class="table table-bordered table-striped"  >
+          <table id="koreksiTable" class="data-table"  >
             <thead class="text-center">
               <tr>
                 <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
@@ -1378,9 +1390,9 @@
     <div class="container-fluid mt-4">
       <div id="" class="row">
         <div class="col-12 text-right">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
 
-          <!-- <button id="" type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
+          <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
         </div>
       </div>
     </div>
@@ -1406,10 +1418,12 @@
 
 
 
+</div>{{-- /#formBsGrid --}}
 </div>
 
 <!-- end page 4 -->
 <div id= "page4" class="container-fluid mainpage" style="display: none">
+<div id="formBsGrid">
       <div class="container-fluid">
 
         <!-- <div id="qrcode"></div> -->
@@ -1419,15 +1433,17 @@
           </div>
           <div class="col-6 text-right">
             <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="buttonCloseFormDetail()">Close</button>
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="buttonCloseFormDetail()">
+        Close
+      </button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
@@ -1781,19 +1797,21 @@
     <div class="container-fluid mt-4">
       <div id="" class="row">
         <div class="col-12 text-right">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
 
-          <!-- <button id="" type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
+          <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
         </div>
       </div>
     </div>
 
-    </div>
+    </div>{{-- /#formBsGrid --}}
+</div>
 <!-- end page 4 -->
 
 
 <!-- page 5 -->
 <div id= "page5" class="container-fluid mainpage" style="display: none">
+<div id="formBsGrid">
       <div class="container-fluid">
 
         <!-- <div id="qrcode"></div> -->
@@ -1803,15 +1821,17 @@
           </div>
           <div class="col-6 text-right">
             <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="buttonCloseFormAddDetail()">Close</button>
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="buttonCloseFormAddDetail()">
+        Close
+      </button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
@@ -1972,19 +1992,21 @@
     <div class="container-fluid mt-4">
       <div id="" class="row">
         <div class="col-12 text-right">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
 
-          <!-- <button id="" type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
+          <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
         </div>
       </div>
     </div>
 
-    </div>
+    </div>{{-- /#formBsGrid --}}
+</div>
 <!-- end page 5 -->
 
 
 
 <div id="page3" class="container-fluid mainpage" style="display: none">
+<div id="formBsGrid">
 
   <!-- <div id="" class="modal-content "> -->
     <div id= "" class="">
@@ -1997,15 +2019,17 @@
           </div>
           <div class="col-6 text-right">
             <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="buttonCloseForm()">Close</button>
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="buttonCloseForm()">
+        Close
+      </button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
@@ -2338,8 +2362,8 @@
 
     <div class="container-fluid" style="overflow-x: auto;padding:0; margin:0; width:100%;" >
 
-          <table id="otorisasiTable" class="table table-bordered table-striped"  >
-            <thead class="text-center bg-primary text-white">
+          <table id="otorisasiTable" class="data-table"  >
+            <thead class="text-center">
               <tr>
                 <th style="padding: 4px 12px;" scope="col">Kode brg</th>
                 <th style="padding: 4px 12px;" scope="col">Nama Brg</th>
@@ -2443,14 +2467,18 @@
       <div id="" class="row mt-4">
         <div class="col-12 text-right">
 
-          <!-- <button id="" type="button" class="btn btn-primary" onclick="submitOtorisasi()">Otorisasi</button> -->
-          <button id="" type="button" onclick="submitOtorisasi()" class="btn btn-primary" style="height: 30px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;">Otorisasi</button>
+          <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitOtorisasi()">Otorisasi</button> -->
+          <button id="" type="button" onclick="submitOtorisasi()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Otorisasi</button>
         </div>
-        <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+        <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
       </div>
     </div>
 
@@ -2474,6 +2502,7 @@
     <!-- </div> -->
 
 
+</div>{{-- /#formBsGrid --}}
 </div>
 
 
@@ -2514,7 +2543,7 @@
 
 <!-- End modal oto-->
 <div class="modal fade" id="modalListChecklistInvoice" tabindex="-1">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
 
       <div class="modal-header">
@@ -2528,7 +2557,7 @@
         <div id="" class="row">
           <div class="col-12 text-right">
 
-            <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+            <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
             <button id="" type="button" onclick="openPrintModalAll()" class="btn btn-chip-biru" style="height: 30px;
             border-radius: 20px;
             font-size: 0.75rem;
@@ -2661,7 +2690,7 @@
 
 <!-- start modal print-->
   <div class="modal fade" id="modalPilihSPB" tabindex="-1">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
       <div class="modal-content">
 
         <div class="modal-header">
@@ -2693,6 +2722,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body">
         <div class="container-fluid">
           <div class="row">
@@ -2799,7 +2829,7 @@
                 </table>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" onclick="submitPrintSPBFinal()"  >Print</button>
+            <button type="button" class="btn btn-chip-biru" onclick="submitPrintSPBFinal()"  >Print</button>
 
           </div>
 
@@ -2807,6 +2837,7 @@
 
 
       </div>
+      </div>{{-- /#formBsGrid --}}
 
 
 
@@ -2822,6 +2853,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 {{-- window.ReportTable (drag/gear header engine) -- loaded here same as
      marketing/so.blade.php, since purchasing.newmasterx doesn't include it by
      default. Without this tag, tulisTheadHeaderIP() below no-ops on every call
@@ -3102,12 +3134,12 @@ function ipValueCell (row, col) {
 
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
-    return '<td>' + formatDate(raw, '/') + '</td>';
+    return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>';
   }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   if (type === 'bool') {
     return Number(raw)
@@ -3120,8 +3152,8 @@ function ipValueCell (row, col) {
 function tabelActionsCell (row) {
   let nobukti = ipPickCI(row, 'NoBukti');
   let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetailSPB(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-primary btn-sm" type="button" onclick="buttonAdd(\'' + ipPickCI(row, 'Noso') + '\' , \'' + ipPickCI(row, 'NamaCustSupp') + '\' , \'' + ipPickCI(row, 'KodeCustSupp') + '\' , \'' + ipPickCI(row, 'TglSO') + '\' , \'' + ipPickCI(row, 'PPNCUST') + '\')"><i class="bi bi-plus"></i></button>';
+  html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetailSPB(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button class="btn btn-success btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd(\'' + ipPickCI(row, 'Noso') + '\' , \'' + ipPickCI(row, 'NamaCustSupp') + '\' , \'' + ipPickCI(row, 'KodeCustSupp') + '\' , \'' + ipPickCI(row, 'TglSO') + '\' , \'' + ipPickCI(row, 'PPNCUST') + '\')"><i class="bi bi-plus-lg"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -3133,12 +3165,12 @@ function tabel2ActionsCell (row) {
   let nobukti = ipPickCI(row, 'NoBukti');
   let isOto = Number(ipPickCI(row, 'IsOtorisasi1'));
   let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   } else {
-    html += '<button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + ipPickCI(row, 'IsOtorisasi1') + '\')"><i class="bi bi-pen"></i></button>';
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="submitOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + ipPickCI(row, 'IsOtorisasi1') + '\')"><i class="bi bi-pen"></i></button>';
+    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="submitOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   }
   html += '<button class="btn btn-primary btn-sm" title="Print" onclick="openPrintModal(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
   html += '</div></td>';
@@ -3964,7 +3996,7 @@ function refreshDataTableKoreksi (nobukti , tipeRefresh = '') {
                 <td class="text-right">${item.SubTotal ? formatAngka(parseFloat(item.SubTotal).toFixed(2))  : '0.00'}</td>
                 <td>${item.KetDetail ? item.KetDetail : ''}</td>
                 <td class="text-center">
-                  <button class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDelete(${i} ,'${item.NoBukti}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
+                  <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDelete(${i} ,'${item.NoBukti}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
                 </td>
               </tr>
 
@@ -4408,7 +4440,7 @@ function refreshDataTableKoreksifirstadd (nobukti , tipeRefresh = '') {
                 <td class="text-right">${item.SubTotal ? formatAngka(parseFloat(item.SubTotal).toFixed(2))  : '0.00'}</td>
                 <td>${item.KetDetail ? item.KetDetail : ''}</td>
                 <td class="text-center">
-                  <button class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDeletefirstadd(${i} ,'${item.NoBukti}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
+                  <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDeletefirstadd(${i} ,'${item.NoBukti}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
                 </td>
               </tr>
 
@@ -4726,11 +4758,11 @@ function loadAll () {
                   <div class="action-buttons-wrap">
                    <button class="btn btn-warning btn-sm"
                     type="button"
-                    title="Details"
+                    title="Detail"
                     onclick="buttonDetailSPB('${item.NoBukti}')">
                     <i class="bi bi-info"></i>
                    </button>
-                   <button class="btn btn-primary btn-sm" type="button" onclick="buttonAdd('${item.Noso }' , '${item.NamaCustSupp }' , '${item.KodeCustSupp }' , '${item.TglSO }' , ${item.PPNCUST })"><i class="bi bi-plus"></i></button>
+                   <button class="btn btn-success btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd('${item.Noso }' , '${item.NamaCustSupp }' , '${item.KodeCustSupp }' , '${item.TglSO }' , ${item.PPNCUST })"><i class="bi bi-plus-lg"></i></button>
                   </div>
                 </td>
                   <td>${item.NoBukti}</td>
@@ -4774,12 +4806,12 @@ function loadAll () {
                   <td class='text-center' style="vertical-align:middle"><div class="action-buttons-wrap">`
 
                     if (Number(item.IsOtorisasi1)) {
-                      rowTable2 += `<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi('${ item.NoBukti }')"><i class="bi bi-key"></i></button>`
+                      rowTable2 += `<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi('${ item.NoBukti }')"><i class="bi bi-key"></i></button>`
 
                     } else {
                       rowTable2 += `
-                      <button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi('${item.NoBukti }' , '${item.IsOtorisasi1}')"><i class="bi bi-pen"></i></button>
-                      <button class="btn btn-primary btn-sm" type="button" onclick="submitOtorisasi('${ item.NoBukti }')"><i class="bi bi-key"></i></button>`
+                      <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi('${item.NoBukti }' , '${item.IsOtorisasi1}')"><i class="bi bi-pen"></i></button>
+                      <button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="submitOtorisasi('${ item.NoBukti }')"><i class="bi bi-key"></i></button>`
 
                     }
 
@@ -4788,7 +4820,7 @@ function loadAll () {
                       </button>
                       <button class="btn btn-warning btn-sm"
                         type="button"
-                        title="Details"
+                        title="Detail"
                         onclick="buttonDetail('${item.NoBukti}')">
                         <i class="bi bi-info"></i>
                       </button>

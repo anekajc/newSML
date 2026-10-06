@@ -19,9 +19,14 @@ class NewPOBeliAccController extends Controller
 {
  
 
+  // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase Order).
+  private function periodeRange ($periode) {
+    $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
+    return [ date('Y-m-01', $stamp), date('Y-m-t', $stamp) ];
+  }
+
   public function index (Request $req) {
-    $kodemenu = '030402';
-    // $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu, $req->path);
+    $kodemenu = '0304';
     $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu , $req->path());
     if(!$akses || !$akses->HASACCESS) {
        return redirect('/home');
@@ -31,79 +36,105 @@ class NewPOBeliAccController extends Controller
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(3);
 
-
-    $pembelian = DB::connection("SML")->select("select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa) where TipeBayar = 1 and IsOtorisasi1 = 1" , ["bulan" => $periode->bulan, "tahun" => $periode->tahun , "pjasa" => 0]);
-    
-    $tempPembelian1 = [];
-    foreach ($pembelian as $p) {
-      array_push($tempPembelian1, $p);
-    }
-       // $po = vwOUtPOWMS::all();
-     
-      $poGroup = DB::connection("SML")->select("select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa) where TipeBayar = 1 and IsOtorisasi1 = 0 and NeedOtorisasi = 1" , ["bulan" => $periode->bulan, "tahun" => $periode->tahun , "pjasa" => 0]);
-  
-
-    $tempPo = [];
-    foreach ($poGroup as $pG) {
-      // code...
-      array_push($tempPo, $pG);
-    }
-
-
-
     $gudang = DB::connection("SML")->select('select * from DBGUDANG where KODEGDG <> :id', ['id' => 'GTC']);
 
+    list($pbaTglAwal, $pbaTglAkhir) = $this->periodeRange($periode);
+
+    // Baris tabel digambar JS lewat loadAll() (lihat newpobeliacc.blade.php), jadi
+    // index() tidak lagi perlu menyiapkan poGroup/tempPembelian1 - sama seperti
+    // UangMukaBeliController@index.
     return view('purchasing.newpobeliacc' , [
-      // "title" => "Home",
-      // "menu" => $menu,
       "periode" => $periode,
       "menul0" => $menul0,
-      "poGroup" => $poGroup,
-      "tempPo" => $poGroup,
-      // "tempPembelian" => $tempPembelian,
-      // "tesMax" => $tesMax
       "gudang" => $gudang,
-      // "pembelian" => $pembelian,
-      "tempPembelian1" => $pembelian,
+      "pbaTglAwal" => $pbaTglAwal,
+      "pbaTglAkhir" => $pbaTglAkhir,
       "akses" => $akses
     ]);
 
 
   }
 
-  public function getAkses () {
-    $kodemenu = '030061';
-    $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu);
+  public function getAkses (Request $req) {
+    $kodemenu = '0304';
+    $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu, 'newpobeliacc');
     return $akses;
   }
 
-  public function getAllPO () {
-    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-
-    $poGroup = DB::connection("SML")->select("select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa) where TipeBayar = 1 and NeedOtorisasi = 1 " , ["bulan" => $periode->bulan, "tahun" => $periode->tahun , "pjasa" => 0]);
-
-   $tempPo = [];
-   foreach ($poGroup as $pG) {
-     // code...
-     array_push($tempPo, $pG);
-   }
-    return $tempPo;
-  }
-
-  public function getAllPembelian () {
+  public function loadAll (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    list($tglawal, $tglakhir) = $this->periodeRange($periode);
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
 
-    $pembelian = DB::connection("SML")->select("select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa) where TipeBayar = 1 and NeedOtorisasi = 0 " , ["bulan" => $periode->bulan, "tahun" => $periode->tahun , "pjasa" => 0]);
+    // Konfigurasi kolom (susunan/lebar/desimal tersimpan per user) - sama seperti
+    // UangMukaBeliController@loadAll.
+    $reqHeader = new Request(['href' => 'newpobeliacc']);
+    $header = app('App\Http\Controllers\HeaderTableController')->getHeaderTable($reqHeader);
 
-    $tempPembelian1 = [];
-    foreach ($pembelian as $p) {
-      array_push($tempPembelian1, $p);
+    // Gabungan 4 menu lama - dibedakan lewat TipeBayar (0 Tunai/1 Kredit) dan pJasa
+    // (0 Barang/1 Jasa). Satu tabel utuh (belum maupun sudah diotorisasi); penyaringan
+    // Jenis & Otorisasi dikerjakan di browser lewat modal Filter, sama seperti Uang Muka Beli.
+    //
+    // fnc_masterbeli hanya menerima bulan/tahun, jadi rentang tanggal bebas (boleh lintas
+    // bulan/tahun) dilayani dengan memanggilnya per bulan yang tersentuh rentang, lalu
+    // menyaring baris persis ke rentang tanggal lewat TglBeli di SQL.
+    $aliasRow = function ($r, $pjasa) {
+      $r->pJasa = $pjasa;
+      $r->{'Jenis'} = ($r->TipeBayar == 1)
+        ? ($pjasa == 1 ? 'Jasa Kredit' : 'Kredit')
+        : ($pjasa == 1 ? 'Jasa Tunai'  : 'Tunai');
+      $r->{'No Bukti'}      = $r->NoBukti;
+      $r->{'Tanggal'}       = $r->TglBeli ? date('Y-m-d', strtotime($r->TglBeli)) : null;
+      $r->{'Nama Supplier'} = $r->NAMACUSTSUPP;
+      $r->{'Keterangan'}    = $r->KETERANGAN;
+      $r->{'No PO'}         = $r->NoPO;
+      $r->{'Gudang'}        = $r->NAMAGUDANG ?? null;
+      $r->{'Faktur Supp'}   = $r->FAKTURSUPP ?? null;
+      $r->{'DPP'}           = $r->TotDPP;
+      $r->{'PPN'}           = $r->TotPPN;
+      $r->{'Total'}         = $r->TotNet;
+      return $r;
+    };
+
+    $tempData = [];
+    $cursor = date('Y-m-01', strtotime($tglawal));
+    $batas  = date('Y-m-01', strtotime($tglakhir));
+    while ($cursor <= $batas) {
+      $bulan = (int) date('n', strtotime($cursor));
+      $tahun = (int) date('Y', strtotime($cursor));
+      foreach ([0, 1] as $pjasa) {
+        $rows = DB::connection("SML")->select(
+          "select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa)
+           where TglBeli between :tglawal and :tglakhir",
+          ["bulan" => $bulan, "tahun" => $tahun, "pjasa" => $pjasa, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
+        foreach ($rows as $r) {
+          array_push($tempData, $aliasRow($r, $pjasa));
+        }
+      }
+      $cursor = date('Y-m-01', strtotime($cursor . ' +1 month'));
     }
 
-    return $tempPembelian1;
+    // Terbaru di atas - digabung dari beberapa pemanggilan fungsi jadi diurutkan di PHP.
+    usort($tempData, function ($a, $b) {
+      $cmp = strcmp((string) $b->TglBeli, (string) $a->TglBeli);
+      return $cmp !== 0 ? $cmp : strcmp((string) $b->NoBukti, (string) $a->NoBukti);
+    });
+
+    return [
+      "listData1"         => $tempData,
+      "aliasordered"      => $header['aliasordered'],
+      "headertableheader" => $header['headertableheader'],
+      "isnumeric"         => $header['isnumeric'],
+      "headertablevalue"  => $header['headertablevalue'],
+      "isparsed"          => $header['isparsed'],
+      "isshown"           => $header['isshown'],
+      "desimal"           => $header['desimal'],
+    ];
   }
- 
+
 public function onChangeHeader (Request $req) {
     $query = 'update dbbeli set ' . $req->field . ' = :value where nobukti = :nobukti';
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
@@ -186,11 +217,30 @@ public function spUpdateSO (Request $req) {
       }
 
 public function getDetailPembelian (Request $req) {
-  $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+  $nobukti = $req->NoBukti;
 
-    
-  $pembelian = DB::connection("SML")->select("select * from dbo.fnc_Tampilbeli ( :bulan , :tahun, :pjasa) where NoBukti = :NoBukti" , ["bulan" => $periode->bulan, "tahun" => $periode->tahun , "pjasa" => 0, "NoBukti" => $req->NoBukti]);
-   
+  // Bulan/tahun HARUS diambil dari tanggal dokumennya sendiri, bukan periode kerja user
+  // yang sedang aktif - kalau tidak, dokumen dari bulan lain (filter tanggal di luar
+  // periode berjalan, seperti di grid newpobeliacc yang boleh lintas bulan) selalu
+  // kembali kosong. Sama seperti NewPOController::getDetailPembelian.
+  $header = DB::connection('SML')->select('select TANGGAL from dbBeli where NOBUKTI = :nobukti', ['nobukti' => $nobukti]);
+  if ($header) {
+    $bulan = (int) date('n', strtotime($header[0]->TANGGAL));
+    $tahun = (int) date('Y', strtotime($header[0]->TANGGAL));
+  } else {
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $bulan = $periode->bulan;
+    $tahun = $periode->tahun;
+  }
+
+  // Halaman gabungan melayani baris jasa maupun non-jasa dalam satu tabel, jadi
+  // pjasa dikirim dari baris yang dipilih di JS (lihat renderTabelPBA() di
+  // newpobeliacc.blade.php), bukan lagi dipatok 0/1 per controller.
+  $pembelian = DB::connection("SML")->select("select * from dbo.fnc_Tampilbeli ( :bulan , :tahun, :pjasa) where NoBukti = :NoBukti" , ["bulan" => $bulan, "tahun" => $tahun , "pjasa" => (int) ($req->pjasa ?? 0), "NoBukti" => $nobukti]);
+
+  // Sama seperti getAllPembelian - TANGGAL bisa NULL kalau barang belum di-QC, fallback ke tanggal dbBeli.
+  if ($header) { foreach ($pembelian as $p) { if (empty($p->TANGGAL)) { $p->TANGGAL = $header[0]->TANGGAL; } } }
+
   $tempPembelian1 = [];
   foreach ($pembelian as $p) {
     array_push($tempPembelian1, $p);

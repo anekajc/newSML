@@ -125,16 +125,17 @@
   white-space: nowrap;
 }
 </style>
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 @section('content')
-<div id="page1" class="container-fluid mainpage">
+<div id="page1" class="mainpage">
 
 <div id="printContainer" style="display:none">
 
 
 </div>
-<div id="contentContainer" class="container-fluid">
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -229,6 +230,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body">
         <div class="container-fluid">
           <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
@@ -271,9 +273,10 @@
 
     </div>
   </div>
+      </div>{{-- /#formBsGrid --}}
   <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-    <button type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button>
+    <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button>
+    <button type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button>
   </div>
 </div>
 </div>
@@ -290,6 +293,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body">
         <div class="container-fluid">
 
@@ -320,9 +324,10 @@
 
     </div>
   </div>
+      </div>{{-- /#formBsGrid --}}
   <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-    <button type="button" class="btn btn-primary" onclick="submitAddAll(1)">Submit</button>
+    <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button>
+    <button type="button" class="btn btn-chip-biru" onclick="submitAddAll(1)">Simpan</button>
   </div>
 </div>
 </div>
@@ -339,6 +344,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body">
         <div class="container-fluid">
 
@@ -380,9 +386,10 @@
 
     </div>
   </div>
+      </div>{{-- /#formBsGrid --}}
   <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-    <button type="button" class="btn btn-primary" onclick="submitOpenSO()">Submit</button>
+    <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button>
+    <button type="button" class="btn btn-chip-biru" onclick="submitOpenSO()">Simpan</button>
   </div>
 </div>
 </div>
@@ -399,6 +406,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body">
         <div class="container-fluid">
 
@@ -429,9 +437,10 @@
 
     </div>
   </div>
+      </div>{{-- /#formBsGrid --}}
   <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-    <button type="button" class="btn btn-primary" onclick="submitOpenAllSO(1)">Submit</button>
+    <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button>
+    <button type="button" class="btn btn-chip-biru" onclick="submitOpenAllSO(1)">Simpan</button>
   </div>
 </div>
 </div>
@@ -441,6 +450,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 
@@ -628,11 +638,11 @@ function tulisTheadHeaderCSO (tableSel, cols, withActions) {
 function csoValueCell (row, col) {
   let raw = csoPickCI(row, col[0]);
   let type = col[3];
-  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw) + '</td>'; }
+  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>'; }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
 }

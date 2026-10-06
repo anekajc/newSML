@@ -7116,6 +7116,21 @@ if (pcekglobal) {
   document.getElementById("input_add_kurs").value = '1.00'
   document.getElementById('input_add_add_noPPL').value = noBuktiUntukAdd;
 
+  // Tanggal diambil dari server (getdate) supaya tidak bisa diakali lewat jam komputer user
+  // (sama seperti pembelianpermintaanagen). Input tanggal tetap disabled.
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    async: false,
+    success: function(res) {
+      document.getElementById("input_add_tanggal").value = res[0].tanggal
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil tanggal server, silahkan refresh browser')
+    }
+  })
+
   $('#page1').hide();
   $('#page2').show();
 
@@ -8934,7 +8949,7 @@ item.forEach((itemSub, j) => {
   z++;
 });
 
-// Fill remaining empty rows — table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows ï¿½ table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {

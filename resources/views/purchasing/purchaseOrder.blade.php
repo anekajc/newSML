@@ -9907,7 +9907,20 @@ if (pcekglobal) {
   document.getElementById("input_add_valas").value = 'IDR'
   document.getElementById("input_add_kurs").value = '1.00'
 
-  document.getElementById("input_add_tanggal").value = formatDate(now)
+  // Tanggal diambil dari server (getdate) supaya tidak bisa diakali lewat jam komputer user
+  // (sama seperti pembelianpermintaanagen). Input tanggal tetap disabled.
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    async: false,
+    success: function(res) {
+      document.getElementById("input_add_tanggal").value = res[0].tanggal
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil tanggal server, silahkan refresh browser')
+    }
+  })
 
   $('#page1').hide();
   $('#page2').show();

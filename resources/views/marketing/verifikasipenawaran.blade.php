@@ -1,7 +1,10 @@
-@extends('newmaster')
+@extends('newmasterTest')
 @section('buttons')
 
 @endsection
+
+@section('page-title', 'Verifikasi Penawaran')
+@section('title', 'SML - Verifikasi Penawaran')
 
 
 @section('css')
@@ -317,13 +320,14 @@
     white-space: nowrap;
   }
 </style>
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 @section('content')
 
 
 
-<div id="page1" class="mainpage container-fluid">
+<div id="page1" class="mainpage">
 
 
 
@@ -346,7 +350,7 @@
 
 
 </div>
-<div id="contentContainer" class="container-fluid" >
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -358,85 +362,70 @@
   <input type="hidden" id="akses_isbatal" value="{!! $akses->IsBatal !!}" />
 
   <input type="hidden" name="_token" id="_token" value="{!! csrf_token() !!}" />
-  {{-- Tab pill in its own row above the toolbar, matching purchaseOrder.blade.php's
-       screenshot (tabs sit above the filter row, not inline inside it) and
-       so.blade.php's own placement of .radioChoiceMaster. Only one real tab
-       exists here ("Verifikasi"); nav-profile-tab elsewhere in this file's JS
-       is dead/never wired to a second pane, so it isn't given one either. --}}
-  <div style="margin-bottom:12px;">
-    <div class="radioChoiceMaster" id="nav-tab" role="tablist">
-      <a class="radioChoiceMaster-btn active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true" disabled>
-        Verifikasi
-      </a>
-    </div>
-  </div>
-
-  {{-- No outer Bootstrap .card wrapping the table -- .tb-report/.table-wrap below
-       already render as their own card-like panel (report-table.css), the same way
-       so.blade.php/penawaranso.blade.php's tables sit directly in their tab-content
-       with no surrounding .card. --}}
-  <div class="tab-content" id="myTabContent">
-  <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-    <div class="tb-report main">
-      {{-- Toolbar matching purchaseOrder.blade.php's .po-toolbar layout: search
-           fields + the submit/filter button grouped together on the left. PO
-           also has a right-hand +Add/+Tambah PR group pushed over by
-           .action-group's margin-left:auto, but this page has no equivalent
-           "add" action, so there's nothing on the right here. Still a plain
-           GET form -- same field ids/names/values and submit behavior as
-           before, only restyled. --}}
-      <form method="GET" class="toolbar" style="margin-bottom:10px;">
-        <input type="text"
-            id="search_customer"
-            name="search_customer"
-            value="{{ request('search_customer') }}"
-            class="search-inp"
-            placeholder="Search Customer">
-        <input type="text"
-            id="search_nobukti"
-            name="search_nobukti"
-            value="{{ request('search_nobukti') }}"
-            class="search-inp"
-            placeholder="Search No. Bukti">
-        <input type="text"
-            id="search_barang"
-            name="search_barang"
-            value="{{ request('search_barang') }}"
-            class="search-inp"
-            placeholder="Search Barang">
-        <button type="submit" name="search" value="1" class="btn-load">
-          <i class="bi bi-search"></i> Cari
-        </button>
-      </form>
-
-      <div class="rt-bar-row">
-        <button class="rt-reset-btn" type="button" title="Reset kolom" onclick="buttonHeaderTable()">
-          <i class="bi bi-arrow-clockwise"></i> Reset kolom
-        </button>
-        <div id="rtBarTabel"></div>
-      </div>
-
-      <div class="table-outer">
-      <div class="table-wrap">
-          <table id="tabel" class="tb">
-            {{-- Header content is fully JS-owned -- verifPenawaranReplaceThead()
-                 (called from renderTabelRows(), run on page load and after every
-                 search/otorisasi refresh) replaces this <thead>'s contents based
-                 on gcart_header. --}}
-            <thead style="white-space:nowrap;"></thead>
-            <tbody id="tabel_data" class="text-left"></tbody>
-          </table>
-      </div>
-      <div class="rt-hint">
-        <i class="bi bi-info-circle"></i>
-        Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
-        untuk menyembunyikan kolom atau mengatur jumlah desimal.
-      </div>
+  {{-- Tab, toolbar, dan tabel disamakan dengan tab Purchase Order di purchaseOrder.blade.php
+       (custom-tabs + po-toolbar + data-table di dalam .po-table-wrap). Form pencarian tetap
+       GET dengan id/name/value yang sama seperti sebelumnya. --}}
+  <div class="card mb-3 tab-card">
+    <div class="card-body">
+      <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
+        <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true">Verifikasi</a>
       </div>
     </div>
   </div>
 
-</div>
+  <div class="card">
+    <div class="card-body" style="padding:0;">
+      <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
+                <form method="GET" class="po-toolbar">
+                  <input type="text"
+                      id="search_customer"
+                      name="search_customer"
+                      value="{{ request('search_customer') }}"
+                      class="po-search-inp"
+                      placeholder="Cari Customer">
+                  <input type="text"
+                      id="search_nobukti"
+                      name="search_nobukti"
+                      value="{{ request('search_nobukti') }}"
+                      class="po-search-inp"
+                      placeholder="Cari No. Bukti">
+                  <input type="text"
+                      id="search_barang"
+                      name="search_barang"
+                      value="{{ request('search_barang') }}"
+                      class="po-search-inp"
+                      placeholder="Cari Barang">
+                  <button type="submit" name="search" value="1" class="po-btn-filter">
+                    <i class="bi bi-search"></i> Cari
+                  </button>
+                </form>
+                <div class="rt-bar-row">
+                  <button class="rt-reset-btn" type="button" title="Reset kolom" onclick="buttonHeaderTable()">
+                    <i class="bi bi-arrow-clockwise"></i> Reset kolom
+                  </button>
+                  <div id="rtBarTabel"></div>
+                </div>
+                <table id="tabel" class="data-table">
+                  {{-- Isi <thead> sepenuhnya dibuat JS - verifPenawaranReplaceThead(). --}}
+                  <thead class="text-center " style="white-space:nowrap;"></thead>
+                  <tbody id="tabel_data" class="text-left"></tbody>
+                </table>
+                <div class="po-rt-hint">
+                  <i class="bi bi-info-circle"></i>
+                  Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
+                  untuk menyembunyikan kolom atau mengatur jumlah desimal.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
 {{-- closes #page1 --}}
@@ -446,6 +435,7 @@
 
 
 <div class="container-fluid mainpage" id="page2" style="display: none">
+<div id="formBsGrid">
 
   <div id="" class="">
   <!-- <div class="modal-header">
@@ -466,8 +456,28 @@
         <h1>Form Invoice</h1>
       </div>
       <div class="col-6 text-right">
-        <!-- <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button> -->
-        <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+        <!-- <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button> -->
+        <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
 
       </div>
     </div>
@@ -501,7 +511,7 @@
           <div class="col-md-8">
             <div class="form-group input-group">
               <input type="text" class="form-control" id="input_add_kodecustomer" placeholder="" disabled>
-              <button class="btn btn-primary btn-sm text-right" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-plus"></i></button>
+              <button class="btn btn-chip-biru btn-sm" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
             </div>
           </div>
           </div>
@@ -612,7 +622,7 @@
                   <div class="form-group input-group">
                     <input type="text" class="form-control" id="input_add_sales" value="" disabled >
                     <input type="hidden" class="form-control text-center" id="input_add_kodesales" value="" disabled >
-                    <button class="btn btn-primary btn-sm text-right" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-plus"></i></button>
+                    <button class="btn btn-chip-biru btn-sm" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
 
@@ -647,7 +657,7 @@
                       <div class="form-group input-group">
                         <input type="hidden" class="form-control text-center" id="input_add_kodelokasipenerima" value="" disabled >
                         <input type="text" class="form-control" id="input_add_lokasipenerima" value="" disabled >
-                        <button class="btn btn-primary btn-sm text-right" id="buttonAddListLokasiPenerima" onclick="buttonAddListLokasiPenerima()"><i class="bi bi-plus"></i></button>
+                        <button class="btn btn-chip-biru btn-sm" id="buttonAddListLokasiPenerima" onclick="buttonAddListLokasiPenerima()"><i class="bi bi-search"></i></button>
                       </div>
                     </div>
                   <!-- </div>
@@ -867,8 +877,8 @@
 
   <div class="container-fluid mt-4" style="overflow-x: auto;padding:0; margin:0; width:100%;" >
 
-        <table id="addTable" class="table table-bordered table-striped"  >
-          <thead class="text-center bg-primary text-white">
+        <table id="addTable" class="data-table"  >
+          <thead class="text-center">
             <tr>
               <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
               <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
@@ -904,21 +914,25 @@
   <div id="" class="container-fluid">
     <div class="row">
       <div class="col-md-12 mt-2 text-right">
-      <!-- <button type="button" class="btn btn-primary" onclick="buttonAddAddItem()" class="btn btn-secondary"  >+ Tambah Item</button> -->
-      <button type="button" class="btn btn-primary btn-lg" style="
-        height: 30px;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        transition: background-color 0.3s, box-shadow 0.3s;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-        onclick="buttonAddAddItem()" class="btn btn-secondary"><b>+ Tambah Item</b></button>
+      <!-- <button type="button" class="btn btn-lg btn-chip-biru" onclick="buttonAddAddItem()" class="btn btn-secondary"   style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              transition: background-color 0.3s, box-shadow 0.3s;">Tambah Item</button> -->
+      <button type="button" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              transition: background-color 0.3s, box-shadow 0.3s;"
+        onclick="buttonAddAddItem()" class="btn btn-secondary">Tambah Item</button>
   </div>
 
     </div>
-    <!-- <button id="" type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
+    <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
   </div>
 
   <div id="formAddAdd" class="container-fluid showhideitem">
@@ -948,7 +962,7 @@
         <div class="input-group form-group">
 
           <input id="AddAddKodeBrg" type="text" class="form-control" onkeypress="onKeyPressBarang(event)">
-          <button type="button" onclick="buttonAddListBarang()" class="btn btn-primary" >+</button>
+          <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button>
         </div>
       </div>
 
@@ -1029,18 +1043,26 @@
 
     <div class="row mt-2">
       <div class="col-md-12 text-right mt-4">
-        <!-- <button type="button" class="btn btn-secondary" onclick="closeShowHideItem()" >Batal</button> -->
-        <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-secondary" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Batal</button>
+        <!-- <button type="button" class="btn btn-batal-add" onclick="closeShowHideItem()" >Batal</button> -->
+        <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-lg btn-batal-add" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
         <!-- <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-primary" >Add</button> -->
-        <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-primary" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Submit Add</button>
+        <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
 
         <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
       </div>
@@ -1074,7 +1096,7 @@
       </div>
       <!-- <div class="col-md-4 text-right"> -->
 
-          <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-primary" >+</button> -->
+          <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button> -->
         <!-- </div> -->
       <div class="col-md-8">
         <input id="AddEditKodeBrg" type="text" class="form-control" disabled>
@@ -1184,21 +1206,29 @@
 
     <div class="row mt-2">
       <div class="col-md-12 text-right mt-4">
-        <!-- <button type="button" class="btn btn-secondary" onclick="closeShowHideItem()" >Batal</button>
+        <!-- <button type="button" class="btn btn-batal-add" onclick="closeShowHideItem()" >Batal</button>
 
         <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
 
-        <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-secondary" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Batal</button>
+        <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-lg btn-batal-add" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
         <!-- <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-primary" >Add</button> -->
-        <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Submit Edit</button>
+        <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
 
         <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
       </div>
@@ -1214,10 +1244,12 @@
 
 
 
+</div>{{-- /#formBsGrid --}}
 </div>
 
 
 <div class="container-fluid mainpage" id="page3" style="display: none">
+<div id="formBsGrid">
 
   <div id="" class="container-fluid ">
 
@@ -1231,8 +1263,28 @@
             <h1>Otorisasi</h1>
           </div>
           <div class="col-6 text-right">
-            <!-- <button type="button" class="btn btn-primary btn-lg " style="height: 60px; " onclick="buttonCloseForm()"  >Close</button> -->
-            <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+            <!-- <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button> -->
+            <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
 
           </div>
         </div>
@@ -1259,7 +1311,7 @@
             </div>
             <!-- <div class="col-md-3 text-right">
               <div class="form-group">
-            <button class="btn btn-primary btn-sm text-right" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-plus"></i></button>
+            <button class="btn btn-chip-biru btn-sm" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
             </div>
           </div> -->
             <div class="col-md-8">
@@ -1377,7 +1429,7 @@
                     <div class="row">
 
                     <div class="form-group">
-                  <button class="btn btn-primary btn-sm text-right" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-plus"></i></button>
+                  <button class="btn btn-chip-biru btn-sm" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
 
@@ -1648,8 +1700,8 @@
     <div class="container-fluid mt-4" style="overflow:auto; margin-top:-35px;">
       <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
       <div class="row">
-        <table id="otorisasiTable" class="table table-bordered table-hover table-striped table-responsive-lg">
-          <thead class="text-center bg-primary text-white">
+        <table id="otorisasiTable" class="data-table">
+          <thead class="text-center">
               <tr>
                 <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                 <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
@@ -1682,27 +1734,28 @@
     <div id="" class="container-fluid mt-2">
       <div class="row">
         <div class="text-right col-12">
-          <button type="button" class="btn btn-primary btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="submitOtorisasi()" class="btn btn-secondary"><b>Otorisasi</b></button>
+          <button type="button" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="submitOtorisasi()" class="btn btn-secondary">Otorisasi</button>
         </div>
 
       </div>
-      <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+      <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
     </div>
     </div>
 
     </div>
 
 
-</div></div>
+</div></div>{{-- /#formBsGrid --}}
+</div>
 <!-- </div> -->
 
 
@@ -1735,9 +1788,9 @@
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
           <div class="row">
             <div class="col-12" style="padding:0; margin:0; width:100%; overflow:auto; margin-top:-60px;">
-              <table id="tabel_add_list_lokasi" class="table table-bordered table-hover table-striped table-responsive-lg">
-                <thead class="text-center bg-primary text-white">
-                <!-- <tr><th style="padding: 4px 12px;" scope="col">Actions</th> -->
+              <table id="tabel_add_list_lokasi" class="data-table">
+                <thead class="text-center">
+                <tr>
 
                   <th style="padding: 4px 12px;" scope="col">Kode Brg</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Brg</th>
@@ -1755,12 +1808,7 @@
                   <td>-</td>
                   <td>-</td>
                   <td>-</td>
-
-
-                    <td class="text-center">
-                      <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                      <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                    </td>
+                  <td>-</td>
               </tr>
               </tbody>
 
@@ -1785,7 +1833,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="closeShowHideAdd()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="closeShowHideAdd()" >Batal</button>
       </div>
       </div>
 
@@ -1841,6 +1889,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{{ asset('js/report-table.js') }}"></script>
 <script src="{{ asset('js/headerEngine.js') }}?v={{ filemtime(public_path('js/headerEngine.js')) }}"></script>
 <script type="text/javascript">
@@ -1901,9 +1950,9 @@ function tabelActionsCell(row) {
   var nobukti = HeaderEngine.pickCI(row, 'NOBUKTI');
   var urut = HeaderEngine.pickCI(row, 'Urut');
   if (Number(HeaderEngine.pickCI(row, 'IsVerf')) === 1) {
-    return '<td class="text-center"><div class="action-buttons-wrap"><button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\',\'' + urut + '\')"><i class="bi bi-dash"></i></button></div></td>';
+    return '<td class="text-center"><div class="action-buttons-wrap"><button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\',\'' + urut + '\')"><i class="bi bi-key"></i></button></div></td>';
   }
-  return '<td class="text-center"><div class="action-buttons-wrap"><button class="btn btn-primary btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\',\'' + urut + '\')"><i class="bi bi-plus"></i></button></div></td>';
+  return '<td class="text-center"><div class="action-buttons-wrap"><button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\',\'' + urut + '\')"><i class="bi bi-key"></i></button></div></td>';
 }
 
 // col[5] (decimals) is user-editable via the gear menu's stepper, so float
@@ -1912,7 +1961,7 @@ function tabelValueCell(row, col) {
   var raw = HeaderEngine.pickCI(row, col[0]);
   var type = col[3];
   if (type === 'date') {
-    return '<td>' + (raw ? formatDate(raw, '/') : '') + '</td>';
+    return '<td>' + (raw ? formatDate(raw, '/').split('/').reverse().join('/') : '') + '</td>';
   }
   if (type === 'float') {
     return '<td class="text-right">' + (raw !== undefined && raw !== null && raw !== '' ? formatAngka(raw) : '') + '</td>';
@@ -1953,7 +2002,7 @@ function reinitTabel() {
   try {
     if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().destroy(); }
     renderTabelRows(lastTabelRows);
-    $('#tabel').DataTable({ dom: 't', lengthChange: false, paging: false, ordering: false });
+    $('#tabel').DataTable({ dom: "<'po-table-wrap't>", lengthChange: false, paging: false, ordering: false, language: { emptyTable: 'Tidak ada data', zeroRecords: 'Tidak ada data yang cocok dengan pencarian' } });
     HeaderEngine.bindEngineDom('tabel');
   } catch (e) {
     console.error('reinitTabel failed:', e);
@@ -2071,6 +2120,7 @@ function buttonDetail (kodebrg) {
       });
 
       document.getElementById("tabel_data_add_list_lokasi").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_lokasi')
 
       $("#form").modal("toggle");
 

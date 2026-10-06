@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\DB;
 class InvoiceReturBeliController extends Controller
 {
 
+  // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Uang Muka Beli).
+  private function periodeRange ($periode) {
+    $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
+    return [ date('Y-m-01', $stamp), date('Y-m-t', $stamp) ];
+  }
+
   public function index(Request $req) {
     $kodemenu = '030503';
     $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu, $req->path());
@@ -22,148 +28,85 @@ class InvoiceReturBeliController extends Controller
        return redirect('/home');
     }
 
-
-    // $tulisan = $req->get('tulisan');
-    // $menumenus = $req->get('menul0');
-
-
-    // $users = DB::connection("SML")->select('select * from new_users');
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    // $listData = DB::connection('SML')->select('SELECT * FROM DBMERK');
-
-
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(3);
 
+    list($irbTglAwal, $irbTglAkhir) = $this->periodeRange($periode);
 
-$tempOutstanding = DB::connection("SML")->select("
-declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun, @Bulan=:bulan
-
-Select  A.NoBukti, a.Tanggal, A.KodeSupp, A.NamaCustSupp, A.NoBeli, A.Handling, A.FakturSupp,
-        A.TotSubTotal, A.TotDiskon, A.TotTotal, A.TotDPP, A.TotPPN, A.TotNet,
-        A.TotSubTotalRp, A.TotDiskonRp, A.TotTotalRp, A.TotDPPRp, A.TotPPNRp, A.TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.MAXOL,
-        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                  else 1
-             end As Bit) NeedOtorisasi
-From vwMasterRBeli A
-where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan   and isnull(A.isbatal,0)=0 and IsOtorisasi1 = 0
-order by A.NoBukti
-
-",["bulan" => $periode->bulan , "tahun" =>$periode->tahun]);
-
-$tempOutstanding2 = DB::connection("SML")->select("
-declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun, @Bulan=:bulan
-
-Select  A.NoBukti, a.Tanggal, A.KodeSupp, A.NamaCustSupp, A.NoBeli, A.Handling, A.FakturSupp,
-        A.TotSubTotal, A.TotDiskon, A.TotTotal, A.TotDPP, A.TotPPN, A.TotNet,
-        A.TotSubTotalRp, A.TotDiskonRp, A.TotTotalRp, A.TotDPPRp, A.TotPPNRp, A.TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.MAXOL,
-        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                  else 1
-             end As Bit) NeedOtorisasi
-From vwMasterRBeli A
-where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan and isnull(A.isbatal,0)=0 and IsOtorisasi1 = 1
-order by A.NoBukti
-
-",["bulan" => $periode->bulan , "tahun" =>$periode->tahun]);
-
-
+    // Baris tabel digambar JS lewat loadAll() (lihat invoicereturbeli.blade.php), jadi
+    // index() tidak lagi perlu menyiapkan tempOutstanding/tempOutstanding2.
     return view('purchasing.invoicereturbeli' , [
       "menul0" => $menul0,
       "periode" => $periode,
-      "tempOutstanding" => $tempOutstanding,
-      "tempOutstanding2" => $tempOutstanding2,
+      "irbTglAwal" => $irbTglAwal,
+      "irbTglAkhir" => $irbTglAkhir,
       "akses" => $akses
     ]);
 
   }
 
-  public function loadAll () {
-
+  public function loadAll (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    list($tglawal, $tglakhir) = $this->periodeRange($periode);
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
 
-  $tempOutstanding = DB::connection("SML")->select("
-declare @Tahun int, @Bulan int
+    // Konfigurasi kolom (susunan/lebar/desimal tersimpan per user) - sama seperti
+    // UangMukaBeliController@loadAll.
+    $reqHeader = new Request(['href' => 'invoicereturbeli']);
+    $header = app('App\Http\Controllers\HeaderTableController')->getHeaderTable($reqHeader);
 
-select @Tahun=:tahun, @Bulan=:bulan
+    // Satu tabel gabungan (belum maupun sudah diotorisasi) - penyaringan otorisasi
+    // dikerjakan di browser lewat modal Filter, sama seperti Uang Muka Beli. Kolom
+    // dialiaskan supaya sama persis dengan alias di
+    // HeaderTableController@getHeaderTable cabang 'invoicereturbeli'.
+    $tempData = DB::connection("SML")->select("declare @tglawal date, @tglakhir date
 
-Select  A.NoBukti, a.Tanggal, A.KodeSupp, A.NamaCustSupp, A.NoBeli, A.Handling, A.FakturSupp,
-        A.TotSubTotal, A.TotDiskon, A.TotTotal, A.TotDPP, A.TotPPN, A.TotNet,
-        A.TotSubTotalRp, A.TotDiskonRp, A.TotTotalRp, A.TotDPPRp, A.TotPPNRp, A.TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.MAXOL,
-        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                  else 1
-             end As Bit) NeedOtorisasi
+select @tglawal= :tglawal, @tglakhir= :tglakhir
+
+Select  A.NoBukti as [NoBukti],
+        Convert(varchar(10), A.Tanggal, 23) as [Tanggal],
+        A.KodeSupp as [KodeSupp],
+        A.NamaCustSupp as [NamaCustSupp],
+        A.NoBeli as [NoBeli],
+        A.TotDPPRp as [TotDPPRp],
+        A.TotPPNRp as [TotPPNRp],
+        A.TotNetRp as [TotNetRp],
+        A.IsOtorisasi1, A.OtoUser1, A.TglOto1
 From vwMasterRBeli A
-where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan   and isnull(A.isbatal,0)=0 and IsOtorisasi1 = 0
-order by A.NoBukti
+where A.Tanggal between @tglawal and @tglakhir
+and Isnull(A.isbatal,0)=0
+order by A.Tanggal desc, A.NoBukti desc
 
+",["tglawal" => $tglawal , "tglakhir" => $tglakhir]);
 
-
-",["bulan" => $periode->bulan , "tahun" =>$periode->tahun]);
-
-$tempOutstanding2 = DB::connection("SML")->select("
-declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun, @Bulan=:bulan
-
-Select  A.NoBukti, a.Tanggal, A.KodeSupp, A.NamaCustSupp, A.NoBeli, A.Handling, A.FakturSupp,
-        A.TotSubTotal, A.TotDiskon, A.TotTotal, A.TotDPP, A.TotPPN, A.TotNet,
-        A.TotSubTotalRp, A.TotDiskonRp, A.TotTotalRp, A.TotDPPRp, A.TotPPNRp, A.TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.MAXOL,
-        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                  else 1
-             end As Bit) NeedOtorisasi
-From vwMasterRBeli A
-where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan   and isnull(A.isbatal,0)=0 and IsOtorisasi1 = 1
-order by A.NoBukti
-
-
-
-",["bulan" => $periode->bulan , "tahun" =>$periode->tahun]);
-
-
-
-
-    return ["tempOutstanding" => $tempOutstanding,"tempOutstanding2" => $tempOutstanding2];
+    return [
+      "listData1"         => $tempData,
+      "aliasordered"      => $header['aliasordered'],
+      "headertableheader" => $header['headertableheader'],
+      "isnumeric"         => $header['isnumeric'],
+      "headertablevalue"  => $header['headertablevalue'],
+      "isparsed"          => $header['isparsed'],
+      "isshown"           => $header['isshown'],
+      "desimal"           => $header['desimal'],
+    ];
   }
 
 public function onChangeHeader (Request $req) {
+  // Whitelist kolom - $req->field sebelumnya disisipkan mentah ke SQL (celah SQL injection).
+  $allowedFields = ['DISC'];
+  if (!in_array($req->field, $allowedFields, true)) {
+    return response()->json(['res' => 0, 'res2' => 0]);
+  }
+
   $query = 'update dbrbeli set ' . $req->field . ' = :value where nobukti = :nobukti';
   $query2 = 'update dbrbelidet set ' . $req->field . ' = :value where nobukti = :nobukti';
-  
+
   $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
   $res2 = DB::connection('SML')->update($query2, ["value" => $req->value , "nobukti" => $req->nobukti]);
-  
+
   return response()->json([
     'res' => $res,
     'res2' => $res2
@@ -191,6 +134,7 @@ public function onChangeHeader (Request $req) {
   	B.DiscP, B.DiscTot,b.NDPP,b.NPPN,b.NNET,
   	B.UrutPBL,
   	B.BYANGKUT Beban, b.NoPBL,
+  	B.NoPRB, B.UrutPRB,
           H.TotDiskon, H.TotDPP, H.TotPPN, H.TotNet,
           Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
           Case when A.Kodevls='IDR' then H.TotDiskonRp  else H.TotDiskon end Diskon,
@@ -198,6 +142,7 @@ public function onChangeHeader (Request $req) {
           Case when A.Kodevls='IDR' then H.TotPPnRp  else H.TotPPn end TotalPPn,
           Case when A.Kodevls='IDR' then H.TotNetRp  else H.TotNet end TotalNetto ,
           B.Discp2,B.Discp3,B.Discp4,B.Discp5,ISnull(A.FlagTipe,0) FlagTipe,Isnull(B.IsJasa,0) ISJasa,B.nilaiPPN,
+          Isnull(A.IsOtorisasi1,0) IsOtorisasi1,
           case when a.ppn=0 then 'NONE' when a.ppn=1 then 'EXCLUDE' WHEN A.PPN=2 THEN 'INCLUDE' END MyPPN
           ,CASE WHEN A.TipeBayar=0 THEN 'TUNAI' WHEN A.TIPEBAYAR=1 THEN 'KREDIT' END MYBAYAR
   From dbRBeli A
@@ -286,44 +231,56 @@ public function onChangeHeader (Request $req) {
   public function spOtorisasi (Request $req) {
     $tanggal = date('Y-m-d H:i:s');
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $username = \Auth::user()->username;
+    $nobukti = $req->nobukti;
 
-    $res = DB::connection('SML')->update("update dbrbeli set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti", ["username" => \Auth::user()->username , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
-    
-      $values = [
-      '',
-      'dbrbeli',
-      $periode->bulan,
-      $periode->tahun,
-      $req->nobukti,
-      1
-    ];
+    return DB::connection('SML')->transaction(function () use ($tanggal, $periode, $username, $nobukti) {
+      // hanya baris yang belum diotorisasi yang boleh diproses - mencegah posting dobel
+      // saat tombol Otorisasi diklik lebih dari sekali.
+      $res = DB::connection('SML')->update(
+        "update dbrbeli set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti and isnull(isOtorisasi1,0) = 0",
+        ["username" => $username , "tanggal" => $tanggal , "nobukti" => $nobukti]
+      );
 
-    DB::connection('SML')->statement('exec sp_ProsesPostingHutPiut ?,?,?,?,?,?', $values);
-    DB::connection('SML')->statement('exec sp_ProsesPostingJurnalOto ?,?,?,?,?,?', $values);
-	 $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'oto','RPB',$req->nobukti,'',0,'DBRBELI');
+      if (!$res) {
+        return 0;
+      }
 
-    return $res;
+      $values = ['', 'dbrbeli', $periode->bulan, $periode->tahun, $nobukti, 1];
+
+      DB::connection('SML')->statement('exec sp_ProsesPostingHutPiut ?,?,?,?,?,?', $values);
+      DB::connection('SML')->statement('exec sp_ProsesPostingJurnalOto ?,?,?,?,?,?', $values);
+      app('App\Http\Controllers\GlobalController')->LoggingData('oto','RPB',$nobukti,'',0,'DBRBELI');
+
+      return $res;
+    });
   }
 
   public function spBatalOtorisasi (Request $req) {
     $tanggal = date('Y-m-d H:i:s');
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $nobukti = $req->nobukti;
+    $pket = $req->pket;
 
-    $res = DB::connection('SML')->update("update dbrbeli set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti", [ "nobukti" => $req->nobukti]);
-	$tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','RPB',$req->nobukti,$req->pket,0,'DBRBELI');
-    $values = [
-      '',
-      'dbrbeli',
-      $periode->bulan,
-      $periode->tahun,
-      $req->nobukti,
-      0
-    ];
-    
-    DB::connection('SML')->statement('exec sp_ProsesPostingHutPiut ?,?,?,?,?,?', $values);
-    DB::connection('SML')->statement('exec sp_ProsesPostingJurnalOto ?,?,?,?,?,?', $values);
+    return DB::connection('SML')->transaction(function () use ($periode, $nobukti, $pket) {
+      // hanya baris yang sedang terotorisasi yang boleh dibatalkan.
+      $res = DB::connection('SML')->update(
+        "update dbrbeli set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti and isOtorisasi1 = 1",
+        ["nobukti" => $nobukti]
+      );
 
-    return $res;
+      if (!$res) {
+        return 0;
+      }
+
+      app('App\Http\Controllers\GlobalController')->LoggingData('btloto','RPB',$nobukti,$pket,0,'DBRBELI');
+      $values = ['', 'dbrbeli', $periode->bulan, $periode->tahun, $nobukti, 0];
+
+      DB::connection('SML')->statement('exec sp_ProsesPostingHutPiut ?,?,?,?,?,?', $values);
+      DB::connection('SML')->statement('exec sp_ProsesPostingJurnalOto ?,?,?,?,?,?', $values);
+
+      return $res;
+    });
   }
 
   public function spAdd (Request $req) {
@@ -346,14 +303,14 @@ public function onChangeHeader (Request $req) {
         $purut = DB::connection('SML')->select('select max(urut)+1 xurut from DBRBELIDET where Nobukti = :nobukti', ['nobukti' => $nobukti]);
             // return 'uuu';
         $xurut= $purut[0]->xurut;
-        }else { 
+        }else {
             // return 'mmm';
             $xurut = $req->urut;
         }
-        
+
     }else{
         // return 'ttt';
-        $xurut=1; 
+        $xurut=1;
     }
     // return ["asd" => $xurut] ;
 
@@ -423,7 +380,49 @@ public function onChangeHeader (Request $req) {
 
   }
 
+  // Hapus satu baris detail dbRBeliDet. Sebelumnya blade menembak endpoint modul Retur
+  // Jual (perintahreturjualspadd) yang tidak menyentuh tabel ini sama sekali, sehingga
+  // pesan "Berhasil menghapus item" muncul padahal tidak ada yang terhapus.
+  public function spDelete (Request $req) {
+    $nobukti = $req->nobukti;
+    $urut = $req->urut;
 
+    $header = DB::connection('SML')->select('select isOtorisasi1 from dbrbeli where Nobukti = :nobukti', ['nobukti' => $nobukti]);
+    if (!$header || (int) $header[0]->isOtorisasi1 === 1) {
+      return 0;
+    }
+
+    return DB::connection('SML')->transaction(function () use ($req, $nobukti, $urut) {
+      $values = [
+        'D',
+        $nobukti,
+        $req->nourut,
+        $req->tanggal,
+        $req->kodesupp,
+        $req->kodegdg,
+        $req->noout,
+        $req->keterangan,
+        $req->faktursupp,
+        $urut,
+        $req->kodebrg,
+        $req->urutout,
+        0,
+        $req->nosat,
+        $req->satuan,
+        $req->isi,
+        0,
+        0,
+        $req->flagtipe,
+        $req->nobatch,
+        $req->nolpb,
+      ];
+
+      $ok = DB::connection('SML')->statement('exec sp_RBeliGudangweb ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?' ,$values);
+      app('App\Http\Controllers\GlobalController')->LoggingData('D','RPB',$nobukti,'',$urut,'DBRBELIDET');
+
+      return $ok ? 1 : 0;
+    });
+  }
 
     public function spCetak (Request $req)
       {

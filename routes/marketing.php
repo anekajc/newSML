@@ -60,7 +60,7 @@ Route::post('/penawaransoonchangeheader', [PenawaranSOController::class, 'onChan
 Route::post('/penawaransolistbarangnosominusallso', [PenawaranSOController::class, 'listBarangNonFOC1AllSO']);
 Route::get('/penawaransolistvalas', [PenawaranSOController::class, 'listValas']);
 Route::get('/penawaransocheckhargaddd', [PenawaranSOController::class, 'CheckHargaAdd']);
-Route::get('/penawaransoprint', [PenawaranSOController::class, 'CheckHargaAdd']);
+// Route::get('/penawaransoprint', [PenawaranSOController::class, 'CheckHargaAdd']); // dinonaktifkan: menimpa route cetak di atas (spCetak), sama seperti programajcSML
 
 
   // VERIF PENAWARAN

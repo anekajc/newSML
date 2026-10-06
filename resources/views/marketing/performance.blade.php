@@ -93,13 +93,14 @@
   white-space: nowrap;
 }
 </style>
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 @section('content')
-<div id="page1" class="container-fluid">
+<div id="page1">
 
 <div id="printContainer" style="display:none"></div>
-<div id="contentContainer" class="container-fluid" >
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -119,7 +120,7 @@
         <div class="modal-header">
           <h5 class="modal-title">
             <i class="bi bi-funnel"></i>
-            Filter Data
+            Filter Perintah Uang Muka
             <span class="rt-active-badge" id="perfFilterBadge">0 aktif</span>
           </h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterPerf').modal('hide')">
@@ -129,14 +130,16 @@
 
         <div class="modal-body">
           <div class="rt-section">
-            <div class="rt-group-label">Status</div>
-            <div>
-              <label class="rt-field-label" for="input_filterperf">Status Otorisasi</label>
-              <select class="rt-native" id="input_filterperf">
-                <option value=0 selected>Semua</option>
-                <option value=1>Belum Otorisasi</option>
-                <option value=2>Sudah Otorisasi</option>
-              </select>
+            <div class="rt-group-label">Penyaringan Data</div>
+            <div class="rt-grid-2">
+              <div>
+                <label class="rt-field-label" for="input_filterperf">Otorisasi</label>
+                <select class="rt-native" id="input_filterperf">
+                  <option value=0 selected>Semua</option>
+                  <option value=2>Sudah</option>
+                  <option value=1>Belum</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -370,9 +373,9 @@
     </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-danger" data-dismiss="modal" >Batal</button>
+    <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button>
     <button id="buttonSubmitAdd" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Otorisasi</button>
-    <button id="buttonSubmitBatalOto" type="button" class="btn btn-danger" onclick="submitBatalOto()">Batal Otorisasi</button>
+    <button id="buttonSubmitBatalOto" type="button" class="btn btn-chip-merah" onclick="submitBatalOto()">Batal Otorisasi</button>
   </div>
 </div>
 </div>
@@ -386,6 +389,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 
@@ -506,7 +510,7 @@ function tulisTheadHeaderPerf (tableSel, cols) {
 function perfValueCell (row, col) {
   let raw = perfPickCI(row, col[0]);
   let type = col[3];
-  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/') + '</td>'; }
+  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>'; }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? parseFloat(raw) : 0;
@@ -528,12 +532,12 @@ function tabelActionsCell (row) {
   let nobukti = perfPickCI(row, 'NoBukti');
   let otoPerf = Number(perfPickCI(row, 'OtoPerf'));
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
+  html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonAdd(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
   if (otoPerf === 1) {
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
+    html += '<button class="btn btn-danger btn-sm" type="button" title="Batal Otorisasi" onclick="buttonAdd(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
     html += '<button class="btn btn-primary btn-sm" type="button" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
   } else {
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="submitAdd(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
+    html += '<button class="btn btn-info btn-sm" type="button" title="Otorisasi" onclick="submitAdd(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
   }
   html += '</div></td>';
   return html;

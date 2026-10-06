@@ -122,31 +122,71 @@
   white-space: nowrap;
 }
 </style>
+<style>
+/* ---------- Form Add/Detail (#page2 / #page3) - kartu ber-section, menggantikan
+   grid col-md-4/col-md-8 lama yang dirapatkan pakai margin-top negatif. ---------- */
+.form-card {
+  background: var(--rt-card, #fff);
+  border: 1px solid var(--rt-border, #e7e9ee);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.form-card-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #6b7280;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 16px;
+}
+
+.form-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+.form-field .input-group {
+  flex-wrap: nowrap;
+}
+</style>
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 @section('content')
 <div id="imagecontainer" class="d-none" style="">
   <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
 </div>
+{{-- Judul lama dinonaktifkan - judul halaman sudah tampil dari page-title layout, sama seperti purchaseOrder.
 <div class="container-fluid">
-
-  <!-- <div id="qrcode"></div> -->
   <div class="row" style="margin-top:-85px;">
     <div class="col-6 text-left">
       <h2>Uang Muka Jual</h2>
     </div>
     <div class="col-6 text-right">
-      <!-- <button type="button" class="btn btn-primary btn-lg " style="height: 60px; " onclick="buttonAdd()"  >Add SO</button> -->
     </div>
   </div>
-<!-- <button onclick="loadAll()">tes</button> -->
 </div>
+--}}
 
 <div id="printContainer" style="display:none">
 
 
 </div>
-<div id="contentContainer" class="container-fluid" >
+<div id="page1" class="mainpage">
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -207,7 +247,7 @@
                 <div class="modal-header">
                   <h5 class="modal-title">
                     <i class="bi bi-funnel"></i>
-                    Filter Data
+                    Filter Uang Muka Jual
                     <span class="rt-active-badge" id="umjFilterBadge">0 aktif</span>
                   </h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterUMJ').modal('hide')">
@@ -217,14 +257,16 @@
 
                 <div class="modal-body">
                   <div class="rt-section">
-                    <div class="rt-group-label">Status</div>
-                    <div>
-                      <label class="rt-field-label" for="input_filterumj">Status Otorisasi</label>
-                      <select class="rt-native" id="input_filterumj">
-                        <option value=0 selected>Semua</option>
-                        <option value=1>Belum Otorisasi</option>
-                        <option value=2>Sudah Otorisasi</option>
-                      </select>
+                    <div class="rt-group-label">Penyaringan Data</div>
+                    <div class="rt-grid-2">
+                      <div>
+                        <label class="rt-field-label" for="input_filterumj">Otorisasi</label>
+                        <select class="rt-native" id="input_filterumj">
+                          <option value=0 selected>Semua</option>
+                          <option value=2>Sudah</option>
+                          <option value=1>Belum</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -272,438 +314,255 @@
 
 
 </div>
+</div>{{-- /#page1 --}}
 
 
-<!-- start modal add -->
-<div class="modal fade" id="form" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered"  role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalLabelAdd">Add</h5>
-        <h5 class="modal-title" id="modalLabelEdit">Edit</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <!-- <h1>Tes Modal</h1> -->
+<!-- start page add/edit -->
+{{-- Form Add/Edit dan Detail Uang Muka Jual sekarang berupa halaman (#page2 / #page3), bukan modal,
+     disamakan dengan purchasing/uangmukabeli.blade.php: kartu ber-section (.form-card) + grid field.
+     Semua id input sama seperti modal #form / #formDetail sebelumnya, jadi fungsi pengisian dan
+     penyimpanan tidak berubah. --}}
+<div id="page2" style="display: none" class="mainpage container-fluid" >
+<div id="formBsGrid">
 
-        <div class="container-fluid">
-          <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
-
-            <div class="row">
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">NOBUKTI</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control " id="input_add_nobukti" placeholder="" disabled>
-                </div>
-              </div>
-              <!-- <div class="col-2 ">
-                <div class="form-group text-center">
-                  <label class="text-left">NO SO</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <select id="input_add_isppn" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example">
-                    <option value=0>False</option>
-                    <option value=1>True</option>
-                  </select>
-                </div>
-              </div> -->
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">NO SO</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control" id="input_add_noso" placeholder="" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Customer</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <textarea type="text" style="width: 100%; resize: none" rows=4  class="form-control" id="input_add_customer"  disabled></textarea>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Tanggal</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="date" class="form-control text-center" id="input_add_tanggal"  value="{!! date('Y-m-d') !!}">
-                </div>
-              </div>
-
-
-
-            </div>
-
-            <div class="row mt-4">
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Tipe PPN</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <select disabled onchange="" id="input_add_tipeppn" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example">
-                    <option value=0 selected>None</option>
-                    <option value=1 >Exclude</option>
-                    <option value=2 >Include</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">DPP</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_add_dpp" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Valas</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input disabled type="text" class="form-control " id="input_add_valas" placeholder="">
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">PPN</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_add_ppn" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Kurs</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input disabled type="text" class="form-control text-right" id="input_add_kurs" value="0.00">
-                </div>
-              </div>
-
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Total</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_add_total" value="0.00" disabled>
-                </div>
-              </div>
-            </div>
-
-            <div class="row mt-4">
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Presentase</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_add_presentase" onblur="onChangePresentase()" value="0.00">
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">PPN</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_add_ppnx" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">DPP</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_add_dppx" onblur="onChangeDPP()" value="0.00">
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Subtotal</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_add_subtotal" value="0.00" disabled>
-                </div>
-              </div>
-            </div>
-
-
-
+  <div class="row" style="margin-bottom: 14px;">
+    <div class="col-8 text-left">
+      {{-- Penanda mode Add/Edit lama tetap ada (di-show/hide oleh buttonAdd/buttonEdit), tidak ditampilkan. --}}
+      <span class="d-none" id="modalLabelAdd">Add</span>
+      <span class="d-none" id="modalLabelEdit">Edit</span>
+    </div>
+    <div class="col-4 text-right">
+      <button type="button" class="btn btn-danger btn-lg" style="
+          height: 30px;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          transition: background-color 0.3s, box-shadow 0.3s;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+          onclick="buttonCloseForm()">
+        Close
+      </button>
     </div>
   </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-danger" data-dismiss="modal" >Batal</button>
-    <button id="buttonSubmitAdd" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button>
-    <button id="buttonSubmitEdit" type="button" class="btn btn-chip-biru" onclick="submitEdit()">Simpan Edit</button>
-  </div>
-</div>
-</div>
-</div>
-<!-- End modal add-->
 
+  <div id="formAdd">
 
+    <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
 
-<!-- start modal detail -->
-<div class="modal fade" id="formDetail" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered"  role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalLabelDetail">Detail</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+    <div class="form-card">
+      <div class="form-card-title">Informasi UMJ</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>No Bukti</label>
+          <input type="text" class="form-control" id="input_add_nobukti" placeholder="No Bukti" disabled>
+        </div>
+        <div class="form-field">
+          <label>Tanggal</label>
+          <input type="date" class="form-control text-left" id="input_add_tanggal" value="{!! date('Y-m-d') !!}">
+        </div>
+        <div class="form-field">
+          <label>No SO</label>
+          <input type="text" class="form-control" id="input_add_noso" placeholder="" disabled>
+        </div>
+        <div class="form-field">
+          <label>Customer</label>
+          <textarea type="text" style="width: 100%; resize: none" rows=2 class="form-control" id="input_add_customer" disabled></textarea>
+        </div>
       </div>
-      <div class="modal-body">
-        <!-- <h1>Tes Modal</h1> -->
+    </div>
 
-        <div class="container-fluid">
-          <input type="hidden" name="noUrut" id="input_detail_nourut" value="" />
+    <div class="form-card">
+      <div class="form-card-title">Nilai SO</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Tipe PPN</label>
+          <select disabled onchange="" id="input_add_tipeppn" class="form-control">
+            <option value=0 selected>None</option>
+            <option value=1 >Exclude</option>
+            <option value=2 >Include</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Valas</label>
+          <input disabled type="text" class="form-control" id="input_add_valas" placeholder="">
+        </div>
+        <div class="form-field">
+          <label>Kurs</label>
+          <input disabled type="text" class="form-control text-right" id="input_add_kurs" value="0.00">
+        </div>
+        <div class="form-field">
+          <label>DPP</label>
+          <input type="text" class="form-control text-right" id="input_add_dpp" value="0.00" disabled>
+        </div>
+        <div class="form-field">
+          <label>PPN</label>
+          <input type="text" class="form-control text-right" id="input_add_ppn" value="0.00" disabled>
+        </div>
+        <div class="form-field">
+          <label>Total</label>
+          <input type="text" class="form-control text-right" id="input_add_total" value="0.00" disabled>
+        </div>
+      </div>
+    </div>
 
-            <div class="row">
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">NOBUKTI</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control " id="input_detail_nobukti" placeholder="" disabled>
-                </div>
-              </div>
-              <!-- <div class="col-2 ">
-                <div class="form-group text-center">
-                  <label class="text-left">NO SO</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <select id="input_detail_isppn" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example">
-                    <option value=0>False</option>
-                    <option value=1>True</option>
-                  </select>
-                </div>
-              </div> -->
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">NO SO</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control" id="input_detail_noso" placeholder="" disabled>
-                </div>
-              </div>
+    <div class="form-card">
+      <div class="form-card-title">Uang Muka</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Presentase</label>
+          <input type="text" class="form-control text-right" id="input_add_presentase" onblur="onChangePresentase()" value="0.00">
+        </div>
+        <div class="form-field">
+          <label>DPP</label>
+          <input type="text" class="form-control text-right" id="input_add_dppx" onblur="onChangeDPP()" value="0.00">
+        </div>
+        <div class="form-field">
+          <label>PPN</label>
+          <input type="text" class="form-control text-right" id="input_add_ppnx" value="0.00" disabled>
+        </div>
+        <div class="form-field">
+          <label>Subtotal</label>
+          <input type="text" class="form-control text-right" id="input_add_subtotal" value="0.00" disabled>
+        </div>
+      </div>
+    </div>
 
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Customer</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <textarea type="text" style="width: 100%; resize: none" rows=4  class="form-control" id="input_detail_customer"  disabled></textarea>
-                </div>
-              </div>
+    <div class="col-md-12 mt-2 text-right">
+      <button id="buttonSubmitAdd" type="button" class="btn btn-lg btn-chip-biru" onclick="submitAdd()" style="
+        height: 30px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
+      <button id="buttonSubmitEdit" type="button" class="btn btn-lg btn-chip-biru" onclick="submitEdit()" style="
+        height: 30px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
+    </div>
 
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Tanggal</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="date" class="form-control text-center" id="input_detail_tanggal"  value="{!! date('Y-m-d') !!}" disabled>
-                </div>
-              </div>
+  </div>
 
+</div>{{-- /#formBsGrid --}}
+</div>
+<!-- end page add/edit -->
 
+<!-- start page detail -->
+<div id="page3" style="display: none" class="mainpage container-fluid" >
+<div id="formBsGrid">
 
-            </div>
-
-            <div class="row mt-4">
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Tipe PPN</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <select disabled onchange="" id="input_detail_tipeppn" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example">
-                    <option value=0 selected>None</option>
-                    <option value=1 >Exclude</option>
-                    <option value=2 >Include</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">DPP</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_detail_dpp" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Valas</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input disabled type="text" class="form-control " id="input_detail_valas" placeholder="">
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">PPN</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_detail_ppn" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Kurs</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input disabled type="text" class="form-control text-right" id="input_detail_kurs" value="0.00">
-                </div>
-              </div>
-
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Total</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_detail_total" value="0.00" disabled>
-                </div>
-              </div>
-            </div>
-
-            <div class="row mt-4">
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Presentase</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_detail_presentase" onblur="onChangePresentase()" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">PPN</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_detail_ppnx" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">DPP</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_detail_dppx" onblur="onChangeDPP()" value="0.00" disabled>
-                </div>
-              </div>
-
-              <div class="col-2 text-left">
-                <div class="form-group text-left">
-                  <label class="text-left">Subtotal</label>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <input type="text" class="form-control text-right" id="input_detail_subtotal" value="0.00" disabled>
-                </div>
-              </div>
-            </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
+  <div class="row" style="margin-bottom: 14px;">
+    <div class="col-8 text-left">
+      <span class="d-none" id="modalLabelDetail">Detail</span>
+    </div>
+    <div class="col-4 text-right">
+      <button type="button" class="btn btn-danger btn-lg" style="
+          height: 30px;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          transition: background-color 0.3s, box-shadow 0.3s;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+          onclick="buttonCloseForm()">
+        Close
+      </button>
     </div>
   </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-danger" data-dismiss="modal" >Batal</button>
+
+  <input type="hidden" name="noUrut" id="input_detail_nourut" value="" />
+
+  <div class="form-card">
+    <div class="form-card-title">Informasi UMJ</div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>No Bukti</label>
+        <input type="text" class="form-control" id="input_detail_nobukti" placeholder="No Bukti" disabled>
+      </div>
+      <div class="form-field">
+        <label>Tanggal</label>
+        <input type="date" class="form-control text-center" id="input_detail_tanggal" value="{!! date('Y-m-d') !!}" disabled>
+      </div>
+      <div class="form-field">
+        <label>No SO</label>
+        <input type="text" class="form-control" id="input_detail_noso" placeholder="" disabled>
+      </div>
+      <div class="form-field">
+        <label>Customer</label>
+        <textarea type="text" style="width: 100%; resize: none" rows=2 class="form-control" id="input_detail_customer" disabled></textarea>
+      </div>
+    </div>
   </div>
+
+  <div class="form-card">
+    <div class="form-card-title">Nilai SO</div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Tipe PPN</label>
+        <select disabled onchange="" id="input_detail_tipeppn" class="form-control">
+          <option value=0 selected>None</option>
+          <option value=1 >Exclude</option>
+          <option value=2 >Include</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Valas</label>
+        <input disabled type="text" class="form-control" id="input_detail_valas" placeholder="">
+      </div>
+      <div class="form-field">
+        <label>Kurs</label>
+        <input disabled type="text" class="form-control text-right" id="input_detail_kurs" value="0.00">
+      </div>
+      <div class="form-field">
+        <label>DPP</label>
+        <input type="text" class="form-control text-right" id="input_detail_dpp" value="0.00" disabled>
+      </div>
+      <div class="form-field">
+        <label>PPN</label>
+        <input type="text" class="form-control text-right" id="input_detail_ppn" value="0.00" disabled>
+      </div>
+      <div class="form-field">
+        <label>Total</label>
+        <input type="text" class="form-control text-right" id="input_detail_total" value="0.00" disabled>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-title">Uang Muka</div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Presentase</label>
+        <input type="text" class="form-control text-right" id="input_detail_presentase" onblur="onChangePresentase()" value="0.00" disabled>
+      </div>
+      <div class="form-field">
+        <label>DPP</label>
+        <input type="text" class="form-control text-right" id="input_detail_dppx" onblur="onChangeDPP()" value="0.00" disabled>
+      </div>
+      <div class="form-field">
+        <label>PPN</label>
+        <input type="text" class="form-control text-right" id="input_detail_ppnx" value="0.00" disabled>
+      </div>
+      <div class="form-field">
+        <label>Subtotal</label>
+        <input type="text" class="form-control text-right" id="input_detail_subtotal" value="0.00" disabled>
+      </div>
+    </div>
+  </div>
+
+</div>{{-- /#formBsGrid --}}
 </div>
-</div>
-</div>
-<!-- End modal detail-->
+<!-- end page detail -->
 
 
 
@@ -712,6 +571,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 
@@ -895,11 +755,11 @@ function tulisTheadHeaderUMJ (tableSel, cols) {
 function umjValueCell (row, col) {
   let raw = umjPickCI(row, col[0]);
   let type = col[3];
-  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/') + '</td>'; }
+  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>'; }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   if (type === 'bool') {
     return Number(raw)
@@ -912,7 +772,7 @@ function umjValueCell (row, col) {
 function tabelActionsCell (row) {
   let nobukti = umjPickCI(row, 'NoBukti');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-primary btn-sm" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus"></i></button>';
+  html += '<button class="btn btn-success btn-sm" title="Buat Uang Muka" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -925,15 +785,15 @@ function umjTabel2Or3ActionsCell (row) {
   let noso = umjPickCI(row, 'NOSO');
   let isOto = Number(umjPickCI(row, 'IsOtorisasi1'));
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" onclick="buttonDetailKoreksi(\'' + nobukti + '\', \'' + noso + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetailKoreksi(\'' + nobukti + '\', \'' + noso + '\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOto(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-key"></i></button>';
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="submitPrintTT(\'' + nobukti + '\')"><i class="bi bi-printer-fill"></i></button>';
+    html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOto(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Print" class="btn btn-primary btn-sm" type="button" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+    html += '<button title="Print" class="btn btn-primary btn-sm" type="button" onclick="submitPrintTT(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
   } else {
-    html += '<button class="btn btn-success btn-sm" type="button" onclick="buttonEdit(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-pen"></i></button>';
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="buttonOto(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-key"></i></button>';
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonDelete(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-trash"></i></button>';
+    html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonEdit(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-pen"></i></button>';
+    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOto(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonDelete(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-trash"></i></button>';
   }
   html += '</div></td>';
   return html;
@@ -1142,6 +1002,12 @@ function setNewNoBukti () {
   })
 }
 
+// Kembali dari halaman form/detail ke daftar - sama dengan buttonCloseForm() di uangmukabeli.
+function buttonCloseForm () {
+  $('.mainpage').hide();
+  $('#page1').show();
+}
+
 function buttonAdd (NOBUKTI) {
 
 let pcekglobal = 0
@@ -1221,7 +1087,9 @@ if (pcekglobal) {
       document.getElementById("input_add_tipeppn").value = Number(tempAdd.TipePPN)
 
 
-      $("#form").modal('toggle')
+      // Dulu modal #form; sekarang halaman form seperti Uang Muka Beli.
+      $(".mainpage").hide()
+      $("#page2").show()
 
     },
     error: function (err) {
@@ -1306,7 +1174,9 @@ function buttonDetail (NOBUKTI) {
       document.getElementById("input_detail_tipeppn").value = Number(tempAdd.TipePPN)
 
 
-      $("#formDetail").modal('toggle')
+      // Dulu modal #formDetail; sekarang halaman detail seperti Uang Muka Beli.
+      $(".mainpage").hide()
+      $("#page3").show()
 
     },
     error: function (err) {
@@ -1513,7 +1383,8 @@ function buttonEdit (NOBUKTI, NOSO) {
       document.getElementById("input_add_subtotal").value = formatAngka(parseFloat(tempDetail.SUBTOTAL).toFixed(2))
 
 
-      $("#form").modal('toggle')
+      $(".mainpage").hide()
+      $("#page2").show()
 
     },
     error: function (err) {
@@ -1599,7 +1470,8 @@ if (pcekglobal) {
       document.getElementById("input_detail_subtotal").value = formatAngka(parseFloat(tempDetail.SUBTOTAL).toFixed(2))
 
 
-      $("#formDetail").modal('toggle')
+      $(".mainpage").hide()
+      $("#page3").show()
 
     },
     error: function (err) {
@@ -1696,7 +1568,7 @@ function submitAdd () {
         console.log(res)
         alertify.success('Berhasil add UMJ')
         loadAll()
-        $("#form").modal('toggle')
+        buttonCloseForm()
 
       }
 
@@ -1915,7 +1787,7 @@ function submitEdit () {
         console.log(res)
         alertify.success('Berhasil edit UMJ')
         loadAll()
-        $("#form").modal('toggle')
+        buttonCloseForm()
 
       }
 

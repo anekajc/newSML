@@ -904,7 +904,7 @@ and ((KodeBrg like '%" . $req->input('search') . "%') or (NamaBrg like '%" . $re
 Select 	A.NoBukti, A.Tanggal,  A.KODECUST KodeSupp, A.namacustomer NamaCustSupp, C.Alamat1, C.Alamat2, C.Kota,
         C.Alamat1+Char(13)+C.Alamat2+Char(13)+C.kota Alamat,
 	 A.Keterangan,
-	A.KodeVls, D.NamaVls, A.Kurs, A.PPN, A.TipeBayar, A.Hari, A.Disc, B.KETDET KeteranganBarang, 
+	A.KodeVls, D.NamaVls, A.Kurs, A.PPN, A.TipeBayar, A.Hari, A.Disc, A.DISCRP DiscRpHeader, B.KETDET KeteranganBarang, 
 	B.Urut, B.KodeBrg, case when B.NAMABRG='' then E.NAMABRG else B.NamaBrg End NamaBrg, B.nmsat Satuan, B.Qnt, B.Nosat, B.Isi,
         B.Harga, B.DISCP1 DISCP, B.DISCTOT,
         case when A.Kurs=1 then 0.0 else B.SubTotal end TotalUSD,a.KodeExp,C.NAMACUSTSUPP NamaExp,
@@ -918,7 +918,7 @@ Select 	A.NoBukti, A.Tanggal,  A.KODECUST KodeSupp, A.namacustomer NamaCustSupp,
         A.PPN PPNTrans,
         B.DISCP1 DiscP1,'' NosoCust,a.ttd NOSO,f.Nama Nopesanan
         ,z.TotSubTotalRp ,'' NoPNW,0 UrutPNW
-      ,a.catatan,a.pembayaran,a.franco,a.delivery,a.validitas,a.namapic,a.namapic2,freight,a.kodekebunh,g.nama namakebun,a.ketrevisi,b.tipeso,b.namamerkso,b.nmsat
+      ,a.catatan,a.pembayaran,a.franco,a.delivery,a.validitas,a.namapic,a.namapic2,freight,a.kodekebunh,g.nama namakebun,a.ketrevisi,a.tglrevisi,a.tglprcust,b.tipeso,b.namamerkso,b.nmsat
 From DBPENAWARANSO A
 Left Outer join DBPENAWARANSOdet B on B.NoBukti=a.NoBukti
 Left Outer Join dbCustSupp C on c.KodeCustSupp=a.KODECUST

@@ -6,21 +6,406 @@
 @section('page-title', 'Penawaran SO')
 @section('title', 'SML - Penawaran SO')
 
-{{-- Rerouted to match Purchase Order's UI 1:1 via so.blade.php's own pattern,
-     same as invoicejasa/fakturpajak/cetaktandaterima/perintahreturjual/
-     returpenjualangudang/kreditnote/notareturpenjualan/closingso before it.
-     Only page1's two list tabs (Penawaran SO / Otorisasi) are touched in this
-     pass -- page2 (Add/Edit) and page3 (Detail) are left as-is. Business logic
-     (buttonAdd/buttonEdit/buttonDetail/buttonOtorisasi/buttonBatalOtorisasi/
-     submitPrint, loadAll's ajax endpoint and data shape) is untouched. --}}
-{{-- tampilan search bar 1 --}}
+{{-- Tampilan visual disamakan 1:1 dengan purchasing/purchaseOrder.blade.php: seluruh blok
+     CSS di bawah disalin apa adanya dari sana (tabel bersih tanpa garis kolom, tombol aksi
+     muncul saat baris di-hover, scrollbar auto-hide, modal pemilih gaya Kas, kotak centang
+     diperbesar, tombol soft). Logika bisnis penawaran SO tidak diubah. --}}
+{{-- tab bar baru--}}
   @section('css')
-
-  <style>
-  .rodokNdukurTitik{
-    margin-top:-12px;
+<style>
+  /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
+     #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
+     disabled). Dua pengecualian tinggi:
+     - textarea tetap setinggi aslinya (atribut rows), supaya isi beberapa baris tetap terbaca;
+     - input di dalam tabel item ikut gaya baru tapi tingginya kembali ke ukuran aslinya
+       (termasuk form-control-sm), supaya baris tabel tidak ikut lebih tinggi. */
+  #formBsGrid textarea.form-control,
+  #formBsGrid table .form-control {
+    height: auto;
   }
 
+  /* Tombol browse (kaca pembesar) di dalam #formBsGrid disamakan tingginya dengan input.
+     Banyak tombol masih membawa inline style="height:32px" dari tata letak lama, sedangkan
+     input di sini 38px - karena itu !important. Tombol yang berada di .input-group dilepas
+     tingginya supaya meregang (align-items: stretch) mengikuti input di sebelahnya: 38px di
+     form, dan tetap setinggi input di dalam sel tabel. Tombol yang berdiri sendiri (bukan di
+     .input-group) dipaku 38px. */
+  #formBsGrid .btn:has(> .bi-search) {
+    height: 38px !important;
+  }
+
+  /* Padding atas-bawah dinolkan: dengan padding 8px tombol setinggi 35,5px, lebih tinggi dari
+     input (34,25px) - stretch hanya bisa memanjangkan, jadi tombol menonjol ke bawah. Tanpa
+     padding vertikal tinggi tombol sepenuhnya mengikuti input di sebelahnya. */
+  #formBsGrid .input-group .btn:has(> .bi-search) {
+    height: auto !important;
+    align-self: stretch;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+</style>
+    {{-- Header tabel interaktif (drag kolom + roda gigi + bar kolom tersembunyi).
+       File khusus halaman ini: aturannya disalin dari public/css/report-table.css
+       dengan scope diganti ke #tabel/#tabel2/#rtBar (satu bar dipakai bersama,
+       dipindah lewat JS - lihat poPindahBar()), supaya reset ganas
+       `.tb-report * { margin:0; padding:0 }` di file aslinya tidak ikut terbawa. --}}
+  <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
+<style>
+  /* Isi tabel di semua tab dibuat sebaris (tidak turun ke bawah). Kolom yang panjang
+     cukup digeser lewat scroll horizontal .po-table-wrap (overflow:auto). */
+  .po-table-wrap table.dataTable thead th,
+  .po-table-wrap table.dataTable tbody td {
+    white-space: nowrap;
+  }
+</style>
+<style>
+  /* Tombol browse (kaca pembesar) tetap menempel ke input, tapi sudutnya membulat
+     (bukan kotak). !important untuk menimpa inline
+     style="border-radius:0" dan aturan .input-group bawaan Bootstrap. */
+  .btn-chip-biru:has(> .bi-search),
+  .btn-browsing:has(> .bi-search) {
+    border-radius: 6px !important;
+  }
+  /* Input di kiri tombol browse ikut membulat di sisi kanannya (lewati input hidden). */
+  .form-control:has(+ .btn > .bi-search),
+  .form-control:has(+ :is([type=hidden], [hidden]) + .btn > .bi-search),
+  .form-control:has(+ .input-group-append > .btn > .bi-search) {
+    border-top-right-radius: 6px !important;
+    border-bottom-right-radius: 6px !important;
+  }
+</style>
+<style>
+  /* Dropdown "Tampilkan" (jumlah data) di modal browsing - kontrol length bawaan DataTables
+     (lengthChange + lengthMenu 10/25/50/100/Semua), digaya seperti .po-len-wrap di newpo.
+     Letaknya kiri atas, sejajar tepi kiri tabel; kotak pencarian tetap di kanan pada baris
+     yang sama. Hanya baris toolbar yang memang berisi dropdown ini yang diatur (:has), jadi
+     browsing barang yang lengthChange-nya false tidak ikut berubah. !important di flex/max-width
+     untuk menimpa aturan "#form .dataTables_wrapper > .row:first-child > div { flex: 0 0 100% }"
+     yang memaksa tiap kolom toolbar selebar tabel. */
+  .modal .dataTables_wrapper > .row:first-child:has(.dataTables_length) {
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .modal .dataTables_wrapper > .row:first-child:has(.dataTables_length) > div {
+    flex: 1 1 auto !important;
+    max-width: none !important;
+    width: auto;
+  }
+
+  .modal .dataTables_wrapper > .row:first-child:has(.dataTables_length) .dataTables_filter {
+    margin-bottom: 0 !important;
+  }
+
+  .modal .dataTables_wrapper .dataTables_length label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    background: var(--rt-card, #FFFFFF);
+    border: 1.5px solid var(--rt-border, #E7E8F0);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--rt-ink-soft, #6B7180);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+
+  .modal .dataTables_wrapper .dataTables_length select {
+    width: auto;
+    height: auto;
+    margin: 0;
+    border: none !important;
+    border-radius: 0;
+    box-shadow: none !important;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--rt-ink, #1D2130);
+    text-transform: none;
+    letter-spacing: normal;
+    outline: none;
+    cursor: pointer;
+    padding: 2px 20px 2px 0 !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right center !important;
+  }
+</style>
+{{-- Scrollbar auto-hide: tidak terlihat sampai kursor ada di area yang bisa di-scroll --}}
+<link rel="stylesheet" href="{!! URL::asset('css/scrollbar-autohide.css') !!}?v={{ @filemtime(base_path('public/css/scrollbar-autohide.css')) ?: '1' }}">
+{{-- Modal pemilih (Perkiraan/Barang/Supplier/Customer/dst.) disamakan persis dengan modal pemilih menu Kas - lihat public/css/picker-kas.css. --}}
+<link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /purchaseorder itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
+  <style>
+  .btn .bi-plus {
+    font-size: 1.5rem;
+    line-height: 0;
+    vertical-align: middle;
+  }
+  
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .page-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #1f2430;
+  }
+
+  .custom-tabs {
+    display: inline-flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2px;
+    background-color: #f1f3f5;
+    border-radius: 20px;
+    padding: 3px;
+  }
+
+  .custom-tabs .nav-link {
+    display: inline-block !important;
+    padding: 5px 16px !important;
+    font-size: 0.75rem !important;
+    border: none;
+    border-radius: 17px;
+    color: #495057;
+    background: transparent;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .custom-tabs .nav-link:hover {
+    background: transparent;
+    color: #007bff;
+  }
+
+  .custom-tabs .nav-link.active {
+    background: #007bff;
+    border-color: #007bff;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
+    }
+
+  /* Halaman ini dirancang mengisi tinggi layar (lihat poAturTinggiTabel()), jadi padding
+     atas #content layout dikecilkan supaya tab tidak menggantung jauh dari header. Aman
+     ditimpa dari sini karena blok <style> ini hanya ikut ter-render di halaman ini. */
+  #content { padding-top: 12px; }
+
+  /* layout newmasterx punya rule .card global (align-items:center) yang override ini */
+  .tab-card {
+    display: block !important;
+    align-items: flex-start !important;
+    padding: 0 !important;
+    border: none !important;
+    margin-bottom: 6px !important;
+  }
+
+  .tab-card .card-body {
+    padding: 5px 10px !important;
+  }
+
+  /* ---------- Kolom Aksi tabel (#tabel2/#tabel3) - tombol bulat kecil,
+     warna pastel, sama seperti .btn-action-* di gudang/permintaanpemakaian ----------
+     #tabel (Outstanding PR) SENGAJA tidak ikut lagi di grup ini: kolom Actions-nya
+     sudah dimatikan (lihat PO_OUT[1].aksi), jadi sel pertamanya sekarang kolom data
+     biasa - kalau masih dipaksa display:flex + justify-content:center, isinya jadi
+     rata tengah dan perataan barisnya rusak.
+     JANGAN pakai display:flex pada <td>: sel yang di-flex berhenti jadi sel tabel, tingginya
+     cuma setinggi tombol dan tidak ikut vertical-align:middle baris - tombolnya jadi kelihatan
+     naik dibanding teks kolom lain. Cukup text-align + vertical-align; font-size:0 membuang
+     spasi antar tombol (tombolnya sendiri punya font-size 13px) supaya jaraknya pas 4px.
+     :not(.dataTables_empty) - baris "No data available" jangan ikut font-size:0. */
+  #tabel2 tbody td:first-child:not(.dataTables_empty),
+  #tabel3 tbody td:first-child:not(.dataTables_empty) {
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-size: 0;
+  }
+
+  #tabel2 td:first-child .btn + .btn,
+  #tabel3 td:first-child .btn + .btn {
+    margin-left: 4px;
+  }
+
+  /* Di #tabel_add kolom Actions ada di paling kanan, bukan paling kiri. */
+  #tabel td:first-child .btn,
+  #tabel2 td:first-child .btn,
+  #tabel3 td:first-child .btn,
+  #tabel_add td:last-child .btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    vertical-align: middle;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    font-size: 13px;
+    border: 1px solid transparent;
+    box-shadow: none;
+    transition: all .12s ease;
+  }
+
+  #tabel td:first-child .btn:hover,
+  #tabel2 td:first-child .btn:hover,
+  #tabel3 td:first-child .btn:hover,
+  #tabel_add td:last-child .btn:hover {
+    filter: brightness(0.97);
+    transform: translateY(-1px);
+  }
+
+  #tabel td:first-child .btn-success,
+  #tabel2 td:first-child .btn-success,
+  #tabel3 td:first-child .btn-success,
+  #tabel_add td:last-child .btn-success {
+    color: #16a34a; border-color: #cdebd7; background: #e7f7ed;
+  }
+
+  #tabel td:first-child .btn-warning,
+  #tabel2 td:first-child .btn-warning,
+  #tabel3 td:first-child .btn-warning,
+  #tabel_add td:last-child .btn-warning {
+    color: #b45309; border-color: #fbe3bd; background: #fef3e0;
+  }
+
+  #tabel td:first-child .btn-primary,
+  #tabel2 td:first-child .btn-primary,
+  #tabel3 td:first-child .btn-primary,
+  #tabel_add td:last-child .btn-primary {
+    color: #2563eb; border-color: #cfdcff; background: #e8edff;
+  }
+
+  #tabel td:first-child .btn-danger,
+  #tabel2 td:first-child .btn-danger,
+  #tabel3 td:first-child .btn-danger,
+  #tabel_add td:last-child .btn-danger {
+    color: #dc2626; border-color: #f7cfcf; background: #fdeaea;
+  }
+
+  #tabel td:first-child .btn-info,
+  #tabel2 td:first-child .btn-info,
+  #tabel3 td:first-child .btn-info,
+  #tabel_add td:last-child .btn-info {
+    color: #0891b2; border-color: #a5f3fc; background: #ecfeff;
+  }
+
+  /* ---------- Header & baris tabel - bersih, uppercase abu-abu ---------- */
+  #tabel thead th,
+  #tabel2 thead th,
+  #tabel3 thead th,
+  #tabelso thead th,
+  #tabel_refpr thead th,
+  #tabel_data_header th {
+    background: #f8f9fb !important;
+    color: #6b7280 !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    border-bottom: 1px solid #e7e9ee;
+    border-top: none;
+  }
+
+  /* Tabel Harga Terakhir & Stock Proyeksi: struktur header sama persis dengan
+     #tabel_data_header di atas (uppercase, 12px, garis bawah tipis), hanya warnanya
+     yang mengikuti tombol pemicunya - hijau untuk Histori Harga, merah untuk Stock
+     Proyeksi. Ditulis terpisah karena warnanya beda, bukan digabung ke selektor di atas. */
+  #tabel_add_harga_terakhir thead th {
+    background: #e7f7ed !important;
+    color: #16a34a !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    border-bottom: 1px solid #cdebd7;
+    border-top: none;
+  }
+
+  #tabel_add_stock_proyeksi thead th {
+    background: #fdeaea !important;
+    color: #dc2626 !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    border-bottom: 1px solid #f7cfcf;
+    border-top: none;
+  }
+
+  #tabel tbody tr:nth-of-type(odd),
+  #tabel2 tbody tr:nth-of-type(odd),
+  #tabel3 tbody tr:nth-of-type(odd),
+  #tabelso tbody tr:nth-of-type(odd),
+  #tabel_add tbody tr:nth-of-type(odd),
+  #tabel_refpr tbody tr:nth-of-type(odd),
+  #tabel_add_harga_terakhir tbody tr:nth-of-type(odd),
+  #tabel_add_stock_proyeksi tbody tr:nth-of-type(odd) {
+    background-color: #fbfbfc;
+  }
+
+  #tabel tbody tr:hover,
+  #tabel2 tbody tr:hover,
+  #tabel3 tbody tr:hover,
+  #tabelso tbody tr:hover,
+  #tabel_add tbody tr:hover,
+  #tabel_refpr tbody tr:hover {
+    background-color: #f5f3ff;
+  }
+
+  /* Tabel Referensi PR (form Tambah PR): isi satu baris, tidak dipatah - tabelnya digeser mendatar. */
+  #tabel_refpr th,
+  #tabel_refpr td {
+    white-space: nowrap;
+  }
+
+  /* Hover baris disesuaikan warna tabelnya masing-masing, bukan ungu seperti tabel lain. */
+  #tabel_add_harga_terakhir tbody tr:hover { background-color: #f2fbf5; }
+  #tabel_add_stock_proyeksi tbody tr:hover { background-color: #fef6f6; }
+
+  #tabel3.table-bordered th,
+  #tabel3.table-bordered td {
+    border-color: #e7e9ee !important;
+  }
+
+  /* ---------- Chip biru: Show/Hide Header (ikon truk), + Tambah Item, Simpan Data ----------
+     Satu kelas dipakai bertiga supaya warnanya tidak lagi jalan sendiri-sendiri. Tint-nya
+     sederet dengan chip hijau/merah/abu di bawah, memakai palet biru yang sudah ada di file
+     ini (dipakai juga oleh tombol aksi di dalam tabel). */
+  .btn-chip-biru {
+    background-color: #e8edff;
+    border-color: #cfdcff;
+    color: #2563eb;
+  }
+
+  .btn-chip-biru:hover,
+  .btn-chip-biru:focus {
+    background-color: #dce6ff;
+    border-color: #b9c9ff;
+    color: #1d4ed8;
+  }
+
+  .btn-chip-biru:active {
+    background-color: #cfdcff !important;
+    border-color: #a8bdff !important;
+    color: #1d4ed8 !important;
+  }
+
+  /* ---------- Tombol Histori Harga / Stock Proyeksi / Batal ----------
+     Gaya chip: latar tint muda + teks berwarna, bukan latar solid menyala. Warna tint-nya
+     sengaja sama persis dengan header tabel yang dibuka tombol tersebut
+     (#tabel_add_harga_terakhir hijau, #tabel_add_stock_proyeksi merah), sehingga tombol dan
+     tabelnya terbaca sebagai satu pasangan. Sederet dengan Batal yang juga chip abu-abu. */
   .btn-histori-harga {
     background-color: #e7f7ed;
     border-color: #cdebd7;
@@ -40,10 +425,294 @@
     color: #15803d !important;
   }
 
-    .dataTables_wrapper {
-    overflow-x: auto;
+  .btn-stock-proyeksi {
+    background-color: #fdeaea;
+    border-color: #f7cfcf;
+    color: #dc2626;
   }
 
+  .btn-stock-proyeksi:hover,
+  .btn-stock-proyeksi:focus {
+    background-color: #fbdcdc;
+    border-color: #f2bcbc;
+    color: #b91c1c;
+  }
+
+  .btn-stock-proyeksi:active {
+    background-color: #f8cfcf !important;
+    border-color: #eda9a9 !important;
+    color: #b91c1c !important;
+  }
+
+  /* Batal = aksi sekunder, jadi abu-abu muda dengan teks gelap (bukan solid gelap). */
+  .btn-batal-add {
+    background-color: #f1f3f5;
+    border-color: #dee2e6;
+    color: #495057;
+  }
+
+  .btn-batal-add:hover,
+  .btn-batal-add:focus {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+    color: #343a40;
+  }
+
+  .btn-batal-add:active {
+    background-color: #dee2e6 !important;
+    border-color: #ced4da !important;
+    color: #343a40 !important;
+  }
+
+  /* Rule .card global di layout newmasterx sebenarnya untuk kartu menu dashboard
+     (flex + align-items:center + efek melayang saat hover). Kalau dipakai untuk card berisi
+     tabel, card-body tidak melar mengikuti halaman melainkan mengikuti lebar tabel,
+     sehingga card ikut tertarik melebihi batas halaman. */
+  #page1 .card {
+    display: block !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+    text-align: left !important;
+    cursor: default !important;
+  }
+
+  #page1 .card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Tabel di dalam tab bisa punya kolom sangat banyak. Kolom Bootstrap adalah flex item
+     yang min-width bawaannya "auto", jadi tabel lebar malah memaksa card dan halaman ikut
+     melebar. min-width:0 membuat tabel discroll di dalam card, tidak melewati batas card. */
+  #page1 .tab-content .col-md-12 {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Tombol di kolom Action baru muncul saat barisnya di-hover. Opt-in lewat kelas
+     po-aksi-hover supaya tabel lain (mis. modalPOAdd) tidak ikut terpengaruh.
+     visibility (bukan display) supaya lebar kolomnya tetap dipesan - tabel tidak
+     melompat saat tombol muncul/hilang. Sengaja TIDAK memakai :focus-within: klik mouse membuat tombol tetap fokus sehingga tidak ikut hilang saat kursor sudah pindah. */
+  table.data-table.po-aksi-hover tbody td:first-child .btn {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+  table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Dropdown "Tampilkan" (jumlah baris per halaman) di toolbar tab Outstanding PR.
+     Bentuknya sengaja meniru .po-filter-wrap / .po-filter-inp milik
+     public/css/po-table-header.css supaya seragam dengan kotak periode di tab
+     Purchase Order, tapi ditulis di sini - dengan begitu perubahan ini cukup
+     mengunggah file blade-nya saja, file CSS bersama tidak perlu ikut diganti. */
+  .po-len-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--rt-card);
+    border: 1.5px solid var(--rt-border);
+    border-radius: 8px;
+    padding: 5px 12px;
+  }
+
+  .po-len-wrap label {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--rt-ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+
+  .po-len-inp {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--rt-ink);
+    outline: none;
+    cursor: pointer;
+    /* Panah bawaan <select> disembunyikan lalu digambar ulang lewat background-image,
+       supaya warnanya bisa disamakan dengan kotak filter yang lain. padding-right
+       menyediakan ruang untuk panah itu. */
+    padding: 2px 20px 2px 0;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right center;
+  }
+
+  /* ---- Lapisan "sedang memuat" tabel Outstanding PR & Outstanding SO ----
+     Elemennya adalah .dataTables_processing bawaan DataTables (dihidupkan lewat opsi
+     processing + token "r" pada dom - lihat initTabelOutstanding()), tapi seluruh
+     tampilannya ditulis ulang di sini: dari teks polos menjadi lapisan yang menutup
+     #tabel_wrapper dengan chip + spinner di tengahnya.
+
+     Aturan bawaan `.dataTables_wrapper .dataTables_processing` dari jquery.dataTables.css
+     kalah dua kali: selector di bawah memakai id (specificity lebih tinggi) dan blok ini
+     dimuat belakangan - di newmasterx, tempat section css disisipkan ada di bawah <link>
+     DataTables. (Nama directive-nya sengaja tidak ditulis lengkap di sini: Blade tetap
+     mengompilasi directive walau berada di dalam komentar CSS.) */
+  #tabel_wrapper,
+  #tabelso_wrapper {
+    /* Acuan position:absolute lapisan di bawah. DataTables sendiri sudah menetapkannya,
+       ditulis ulang di sini supaya tidak bergantung pada file CSS-nya ikut termuat. */
+    position: relative;
+  }
+
+  #tabel_wrapper > .dataTables_processing,
+  #tabelso_wrapper > .dataTables_processing {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Bawaannya width:200px + margin negatif supaya memusatkan diri di top/left 50%.
+       Semuanya harus dinolkan, kalau tidak lapisan ini tidak menutup penuh. */
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(255, 255, 255, .62);
+    z-index: 40;
+    /* 45% pertama masih transparan, jadi respons yang cepat (mis. pindah halaman saat
+       datanya sedikit) selesai sebelum lapisan ini sempat terlihat - tidak berkedip. */
+    animation: poMunculLoading .34s ease-out both;
+  }
+
+  @keyframes poMunculLoading {
+    0%, 45% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  /* Chip dipusatkan memakai posisi absolut, BUKAN flexbox pada lapisan di atas.
+     Alasannya: DataTables menampilkan/menyembunyikan lapisan itu dengan menulis
+     `display:block` / `display:none` sebagai INLINE style. Jadi `display:flex` di
+     stylesheet akan selalu kalah, dan kalau dipaksa dengan !important justru perintah
+     `display:none` untuk MENYEMBUNYIKANNYA ikut terblokir - lapisannya tidak pernah
+     mau hilang. Menghindari properti display sama sekali membuat keduanya tidak
+     pernah berebut. */
+  .po-loading-chip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    white-space: nowrap;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: rgba(31, 36, 48, .92);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+  }
+
+  .po-loading-spin {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, .35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: poPutarLoading .6s linear infinite;
+  }
+
+  @keyframes poPutarLoading {
+    to { transform: rotate(360deg); }
+  }
+
+  #tabel td.dataTables_empty,
+  #tabel2 td.dataTables_empty,
+  #tabelso td.dataTables_empty { text-align: center !important; }
+
+  .po-empty-msg {
+    text-align: center;
+    padding: 26px 12px;
+    color: #6b7280;
+    font-size: 13px;
+  }
+
+  .po-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 900px) {
+    .po-kpi-strip { grid-template-columns: 1fr; }
+  }
+  .po-kpi-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .po-kpi-ic {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .po-kpi-label { font-size: 13px; color: #64748b; margin-bottom: 4px; }
+  .po-kpi-val { font-size: 22px; font-weight: 700; color: #1e293b; }
+  
+/* ---------- Perataan kotak centang untuk semua tabel di halaman ini ----------
+   Dikumpulkan di satu tempat supaya tabel utama maupun tabel di dalam modal
+   berperilaku sama. Dua hal yang dibereskan:
+   1. .form-check bawaan Bootstrap memberi padding-left pada wadahnya dan
+      float:left pada inputnya, jadi text-center saja tidak membuat kotaknya
+      benar-benar di tengah kolom.
+   2. vertical-align:middle mengacu ke titik tengah x-height teks, sedangkan isi
+      kolom sebelahnya huruf kapital/angka. Tanpa koreksi -2px kotak centangnya
+      terlihat turun sedikit dibanding teks di sebelahnya. */
+td .form-check {
+  padding-left: 0;
+  margin: 0;
+  min-height: 0;
+}
+td input[type="checkbox"] {
+  float: none;
+  margin: 0;
+  vertical-align: middle;
+  position: relative;
+  top: -2px;
+  /* Ukuran diseragamkan lewat scale, bukan width/height, supaya bentuk kotaknya
+     tetap bawaan browser. width/height dikembalikan ke auto supaya ukuran khusus
+     dari class lain (mis. .pba-chk-lg di invoicepembelian) tidak membuat sebagian
+     kotak jadi lebih besar dari yang lain. */
+  width: auto;
+  height: auto;
+  transform: scale(1.5);
+}
+</style>
+{{-- tab bar baru--}}
+
+{{-- tampilan search bar 1 --}}
+
+  <style>
+  .rodokNdukurTitik{
+    margin-top:-12px;
+  }
+  </style>
+
+  <style>
   .dataTables_scrollBody {
       border: none !important;
   }
@@ -53,76 +722,50 @@
       border: none !important;
   }
 
-  #tabel td, #tabel th {
+  /* Dinonaktifkan: garis vertikal/atas per sel di tab Outstanding PR (#tabel) & Outstanding SO
+     (#tabelso). Tabelnya kini bersih tanpa garis kolom, sama seperti tab Purchase Order (#tabel2)
+     yang hanya memakai garis bawah tipis per baris dari .data-table.
+  #tabel td, #tabel th,
+  #tabelso td, #tabelso th {
       border-left: 1px solid #dee2e6;
       border-top: 1px solid #dee2e6;
   }
 
-  #tabel td:first-child, #tabel th:first-child {
+  #tabel td:first-child, #tabel th:first-child,
+  #tabelso td:first-child, #tabelso th:first-child {
       border-left: none;
   }
 
-  #tabel thead tr:first-child th {
+  #tabel thead tr:first-child th,
+  #tabelso thead tr:first-child th {
       border-top: none;
   }
-    </style>
+  */
 
-  <style>
-  #tabel_filter {
-      display: flex;
-      align-items: flex-end;
-      margin-top: 8px;
-      margin-right: 10px;
-      margin-bottom: -10px;
-    }
+  /* DataTables (autoWidth bawaan = true) selalu menulis hasil pengukurannya sebagai inline
+     style pada <table>, mis. style="width: 1640px" - lihat `b.style.width = v(e)` di
+     datatables.min.js. Inline style itu mengalahkan `.data-table { width: 100% }`, dan kalau
+     hasil ukurnya lebih kecil dari kotaknya, `table.dataTable { margin: 0 auto }` milik
+     jquery.dataTables.css memusatkan tabel sehingga muncul ruang kosong di kiri dan kanan.
+     Terjadi saat kolomnya sedikit - entah karena kolom Actions dimatikan, atau karena user
+     menyembunyikan kolom lewat roda gigi.
 
-  #tabel_filter label input {
-      width: 150px;
-      padding: 5px 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      box-shadow: none;
-      font-size: 0.65rem;
-    }
+     Dipakai min-width, BUKAN width, supaya inline style DataTables tidak perlu ditimpa:
+     tabel yang lebih sempit dari kotak ikut melar penuh, sedangkan tabel yang memang lebih
+     lebar tetap memakai lebar hasil ukurannya dan tetap bisa digeser mendatar.
 
-  #tabel_filter label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #333;
-    }
+     Sengaja di-scope lewat ID, bukan class. Saat mengukur kolom, DataTables meng-clone
+     tabelnya dengan `.clone().css("visibility","hidden").removeAttr("id")` - class ikut
+     terbawa tapi id dibuang. Aturan ber-ID otomatis tidak menyentuh klon pengukuran itu,
+     sedangkan aturan ber-class (.data-table / table.dataTable) akan ikut terpasang di klon
+     dan bisa merusak hasil ukur lebar kolomnya. */
+  #tabel, #tabel2, #tabelso {
+    min-width: 100%;
+  }
   </style>
+
 {{-- end tampilan search bar 1 --}}
 
-{{-- tampilan search bar 2 --}}
-  <style>
-  #tabel2_filter {
-      display: flex;
-      align-items: flex-end;
-      margin-top: 8px;
-      margin-right: 10px;
-      margin-bottom: -10px;
-    }
-
-  #tabel2_filter label input {
-      width: 150px;
-      padding: 5px 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      box-shadow: none;
-      font-size: 0.65rem;
-    }
-
-  #tabel2_filter label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #333;
-    }
-
-  #tabel2_filter input:focus {
-      border-color: #007bff;
-      outline: none;
-    }
-  </style>
 {{-- end tampilan search bar 2 --}}
 
 {{-- tampilan search bar 3 --}}
@@ -154,6 +797,34 @@
       border-color: #007bff;
       outline: none;
     }
+
+    #tabel_add_list_noSo_filter {
+        display: flex;
+        align-items: flex-end;
+        margin-top: 8px;
+        margin-right: 10px;
+        margin-bottom: -10px;
+      }
+
+    #tabel_add_list_noSo_filter label input {
+        width: 150px;
+        padding: 5px 10px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        box-shadow: none;
+        font-size: 0.65rem;
+      }
+
+    #tabel_add_list_noSo_filter label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #333;
+      }
+
+    #tabel_add_list_noSo_filter input:focus {
+        border-color: #007bff;
+        outline: none;
+      }
   </style>
 {{-- end tampilan search bar 3 --}}
 
@@ -194,6 +865,10 @@
 
 {{-- tampilan search modal barang all --}}
   <style>
+
+  .card-header {
+    text-align: left !important;
+  }
     #input_search_barang_all {
       width: 150px;
       border-radius: 10px;
@@ -213,158 +888,33 @@
     display: inline-block;
     vertical-align: middle;
     }
+
+    /* .data-table thead th default-nya text-align:left dengan spesifisitas lebih
+       tinggi dari .text-right Bootstrap - kolom angka di modal Otorisasi perlu
+       aturan lokal supaya rata kanan. */
+    #modalOtorisasi .data-table thead th.num { text-align: right; }
+    #modalOtorisasi .data-table tbody tr.total-row td {
+      font-weight: 600;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Tombol Otorisasi di footer modal: warna soft (latar biru muda, teks biru),
+       mengikuti pola .modal-footer .btn-primary di bonsementara.blade.php. */
+    #modalOtorisasi .modal-footer .btn-primary {
+      background-color: #e8edff;
+      border-color: #cfdcff;
+      color: #2563eb;
+      border-radius: 8px !important;
+      text-transform: none !important;
+      box-shadow: none;
+    }
+    #modalOtorisasi .modal-footer .btn-primary:hover {
+      background-color: #dce6ff;
+      border-color: #b9c9ff;
+      color: #1d4ed8;
+    }
   </style>
 {{-- end tampilan search modal barang all --}}
-
-<link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
-<style>
-.custom-tabs {
-  display: inline-flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 2px;
-  background-color: #f1f3f5;
-  border-radius: 20px;
-  padding: 3px;
-}
-.custom-tabs .nav-link {
-  display: inline-block !important;
-  padding: 5px 16px !important;
-  font-size: 0.75rem !important;
-  border: none;
-  border-radius: 17px;
-  color: #495057;
-  background: transparent;
-  font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-.custom-tabs .nav-link:hover { background: transparent; color: #007bff; }
-.custom-tabs .nav-link.active {
-  background: #007bff; border-color: #007bff; color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
-}
-.tab-card {
-  display: block !important;
-  align-items: flex-start !important;
-  padding: 0 !important;
-  border: none !important;
-  margin-bottom: 6px !important;
-}
-.tab-card .card-body { padding: 5px 10px !important; }
-#page1 .card {
-  display: block !important;
-  align-items: stretch !important;
-  padding: 0 !important;
-  text-align: left !important;
-  cursor: default !important;
-}
-#page1 .card:hover { transform: none !important; box-shadow: none !important; border-color: var(--border) !important; }
-.po-len-wrap {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--rt-card); border: 1.5px solid var(--rt-border);
-  border-radius: 8px; padding: 5px 12px;
-}
-.po-len-wrap label {
-  margin: 0; font-size: 11.5px; font-weight: 700; color: var(--rt-ink-soft);
-  text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
-}
-.po-len-inp {
-  border: none; background: transparent; font-size: 13px; font-weight: 700;
-  color: var(--rt-ink); outline: none; cursor: pointer; padding: 2px 20px 2px 0;
-  appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right center;
-}
-
-/* {{-- Kolom Aksi tabel2/tabel3 -- pastel round-button treatment, copied
-     verbatim from so.blade.php's own CSS block. Actions ada di kolom
-     pertama di kedua tabel, sesuai markup lama. --}} */
-#tabel2 td:first-child, #tabel3 td:first-child {
-  display: flex; gap: 4px; justify-content: center; align-items: center;
-}
-#tabel2 td:first-child .btn, #tabel3 td:first-child .btn {
-  width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center;
-  justify-content: center; border-radius: 7px; font-size: 13px; border: 1px solid transparent;
-  box-shadow: none; transition: all .12s ease;
-}
-#tabel2 td:first-child .btn:hover, #tabel3 td:first-child .btn:hover { filter: brightness(0.97); transform: translateY(-1px); }
-#tabel2 td:first-child .btn-success, #tabel3 td:first-child .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
-#tabel2 td:first-child .btn-warning, #tabel3 td:first-child .btn-warning { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
-#tabel2 td:first-child .btn-primary, #tabel3 td:first-child .btn-primary { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
-#tabel2 td:first-child .btn-danger, #tabel3 td:first-child .btn-danger { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
-
-#tabel2 thead th, #tabel3 thead th, #tabel_data_header th,
-#tabel_add_harga_terakhir thead th, #tabel_add_stock_proyeksi thead th, #tabel_modal_otorisasi thead th {
-  background: #f8f9fb !important; color: #6b7280 !important; font-size: 12px; text-transform: uppercase;
-  letter-spacing: .04em; font-weight: 600; border-bottom: 1px solid #e7e9ee; border-top: none;
-}
-#tabel2 tbody tr:nth-of-type(odd), #tabel3 tbody tr:nth-of-type(odd) { background-color: #fbfbfc; }
-#tabel2 tbody tr:hover, #tabel3 tbody tr:hover { background-color: #f5f3ff; }
-
-/* Hide action buttons until the row is hovered/focused, port 1:1 dari pola
-   .action-buttons-wrap milik master (public/css/tableMaster2.css). */
-#tabel2 tbody .action-buttons-wrap, #tabel3 tbody .action-buttons-wrap {
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-6px);
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
-}
-#tabel2 tbody tr:hover .action-buttons-wrap, #tabel3 tbody tr:hover .action-buttons-wrap,
-#tabel2 tbody tr:focus-within .action-buttons-wrap, #tabel3 tbody tr:focus-within .action-buttons-wrap {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-}
-
-/* Click-anywhere-on-row picker feedback, same convention as so.blade.php's own picker modals. */
-.pick-row { cursor: pointer; }
-.pick-row:hover { background-color: #f5f3ff !important; }
-
-/* Chip buttons, copied verbatim from so.blade.php's own CSS block. */
-.btn-chip-biru {
-  background-color: #e8edff;
-  border-color: #cfdcff;
-  color: #2563eb;
-}
-
-.btn-chip-biru:hover,
-.btn-chip-biru:focus {
-  background-color: #dce6ff;
-  border-color: #b9c9ff;
-  color: #1d4ed8;
-}
-
-.btn-chip-biru:active {
-  background-color: #cfdcff !important;
-  border-color: #a8bdff !important;
-  color: #1d4ed8 !important;
-}
-
-/* Pastel "Batal" (cancel) button, copied verbatim from so.blade.php's own CSS block. */
-.btn-batal-add {
-  background-color: #f1f3f5;
-  border-color: #dee2e6;
-  color: #495057;
-}
-
-.btn-batal-add:hover,
-.btn-batal-add:focus {
-  background-color: #e9ecef;
-  border-color: #ced4da;
-  color: #343a40;
-}
-
-.btn-batal-add:active {
-  background-color: #dee2e6 !important;
-  border-color: #ced4da !important;
-  color: #343a40 !important;
-}
-
-.data-table th,
-.data-table td {
-  white-space: nowrap;
-}
-</style>
 @endsection
 @section('content')
 
@@ -372,7 +922,11 @@
   <img src="img/sml1.png" style="height: 50px; width: 280px" alt="">
 </div>
 
-<div id="page1" class="container-fluid">
+<div id="imagecontainerTtd" class="d-none">
+  <img src="" style="height: 95px; width: 200px" alt="">
+</div>
+
+<div id="page1">
 
   <div id="contentContainer" class="">
     <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
@@ -452,7 +1006,7 @@
 
           <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
             <div class="row">
-              <div class="col-12">
+              <div class="col-md-12">
                 <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
                   <div class="po-toolbar">
                     <div class="po-filter-wrap">
@@ -470,8 +1024,8 @@
                     </div>
                   </div>
                   <div id="rtBarTabel2"></div>
-                  <table id="tabel2" class="data-table">
-                    <thead style="white-space:nowrap;"></thead>
+                  <table id="tabel2" class="data-table po-aksi-hover">
+                    <thead class="text-center " style="white-space:nowrap;"></thead>
                     <tbody id="tabel2_data" class="text-left"></tbody>
                   </table>
                   <div class="po-rt-hint"><i class="bi bi-info-circle"></i> Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom untuk menyembunyikan kolom atau mengatur jumlah desimal.</div>
@@ -482,7 +1036,7 @@
 
           <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             <div class="row">
-              <div class="col-12">
+              <div class="col-md-12">
                 <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
                   <div class="po-toolbar">
                     <div class="po-filter-wrap">
@@ -509,7 +1063,7 @@
                         <div class="modal-header">
                           <h5 class="modal-title">
                             <i class="bi bi-funnel"></i>
-                            Filter Data
+                            Filter Penawaran SO
                             <span class="rt-active-badge" id="psoFilterBadge">0 aktif</span>
                           </h5>
                           <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterPSO').modal('hide')">
@@ -519,14 +1073,16 @@
 
                         <div class="modal-body">
                           <div class="rt-section">
-                            <div class="rt-group-label">Status</div>
-                            <div>
-                              <label class="rt-field-label" for="psoStatusOtorisasi">Status Otorisasi</label>
-                              <select class="rt-native" id="psoStatusOtorisasi">
-                                <option value="2" selected>Sudah Otorisasi</option>
-                                <option value="1">Belum Otorisasi</option>
-                                <option value="0">Semua</option>
-                              </select>
+                            <div class="rt-group-label">Penyaringan Data</div>
+                            <div class="rt-grid-2">
+                              <div>
+                                <label class="rt-field-label" for="psoStatusOtorisasi">Otorisasi</label>
+                                <select class="rt-native" id="psoStatusOtorisasi">
+                                  <option value="0">Semua</option>
+                                  <option value="2" selected>Sudah</option>
+                                  <option value="1">Belum</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -545,8 +1101,8 @@
                   </div>
 
                   <div id="rtBarTabel3"></div>
-                  <table id="tabel3" class="data-table">
-                    <thead style="white-space:nowrap;"></thead>
+                  <table id="tabel3" class="data-table po-aksi-hover">
+                    <thead class="text-center " style="white-space:nowrap;"></thead>
                     <tbody id="tabel3_data" class="text-left"></tbody>
                   </table>
                   <div class="po-rt-hint"><i class="bi bi-info-circle"></i> Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom untuk menyembunyikan kolom atau mengatur jumlah desimal.</div>
@@ -613,6 +1169,7 @@
 </div>
 
 <div id="page2" class="container-fluid" style="display: none" >
+<div id="formBsGrid">
   <div class="row">
     <div class="col-6 text-left">
       {{-- <h2>Add</h2> --}}
@@ -634,7 +1191,7 @@
   </div>
 
   <div id="modalBodyAddMain" class="">
-    <div id="formBsGrid" class="modal-body" style="">
+    <div class="modal-body" style="">
       <div class="row">
         <input type="hidden" class="form-control" id="input_add_nourut">
         <div class="col-md-3">
@@ -733,8 +1290,9 @@
               <div class="row">
                 <div class="col-md-12">
                   <div class="input-group form-group">
-                    <input type="text" class="form-control" id="input_add_valas"  disabled>
-                    <button onclick="buttonAddListValas()" id="buttonAddListValas" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
+                    <select class="form-control" id="input_add_valas" onchange="onChangeValasDropdown()"></select>
+                    {{-- Tombol browse lama disembunyikan; status disabled/hidden-nya tetap dipakai kode lama untuk mengunci dropdown valas (lihat mktSinkronKunciValas). --}}
+                    <button onclick="buttonAddListValas()" id="buttonAddListValas" class="btn btn-chip-biru btn-sm d-none" type="button"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
               </div>
@@ -855,17 +1413,19 @@
           <hr/>
           <div class="row" style='margin-top:5px'>
             <div class="col-md-12 mt-2 text-left">
-              <button type="button" class="btn btn-chip-biru btn-lg" style="
-                height: 30px;
+              <button type="button" class="btn btn-lg btn-show-hide-header btn-chip-biru" style="
+                height: 38px;
+                width: 38px;
                 margin-top: -35px;
-                padding: 4px 12px;
-                border-radius: 20px;
-                font-size: 0.75rem;
-                font-weight: 600;
-                text-transform: uppercase;
+                padding: 0;
+                border-radius: 8px;
+                font-size: 1.15rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
                 transition: background-color 0.3s, box-shadow 0.3s;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-                onclick="buttonShowHideHeader()"><b>Show/Hide Header</b></button>
+                onclick="buttonShowHideHeader()" title="Show/Hide Header"><i class="bi bi-truck"></i></button>
             </div>
           </div>
             <div class="showhidemodalbodyaddmain mt-4" id="modalBodyAddMainHeader" style="display: none;">
@@ -1294,22 +1854,20 @@
 
         <div class="row">
           <div class="col-md-12 mt-2 text-right">
-            <button type="button" id='buttonTambahItem' class="btn btn-chip-biru btn-lg" style="
+            <button type="button" id='buttonTambahItem' class="btn btn-lg btn-chip-biru" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
               font-size: 0.75rem;
               font-weight: 600;
-              text-transform: uppercase;
-              transition: background-color 0.3s, box-shadow 0.3s;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-              onclick="buttonAddAddItem()"><b>Tambah</b></button>
+              transition: background-color 0.3s, box-shadow 0.3s;"
+              onclick="buttonAddAddItem()">Tambah Item</button>
           </div>
         </div>
 
         <!-- ADD add -->
         <div id="addAddItem" class="container-fluid showhide">
-          <div id='formBsGrid'>
+          <div>
           <hr/>
 
             <div class="row">
@@ -1757,9 +2315,9 @@
           </div>
 
           <div class="row mt-2">
-            <div class="col-md-12 text-right" style="margin-top:-10px;">
+            <div class="col-md-12 text-right">
 
-              <button type="button" class="btn btn-histori-harga" style="
+              <button type="button" class="btn btn-lg btn-histori-harga" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -1770,7 +2328,7 @@
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="showTableHargaTerakhir()">Harga Beli Terakhir</button>
 
-              <button type="button" class="btn btn-histori-harga" style="
+              <button type="button" class="btn btn-lg btn-stock-proyeksi" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -1781,7 +2339,7 @@
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="showTableStockProyeksi()">Harga Jual Terakhir</button>
 
-              <button type="button" class="btn btn-batal-add btn-lg" style="
+              <button type="button" class="btn btn-lg btn-batal-add" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -1792,7 +2350,7 @@
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="closeShowHideAdd()">Batal</button>
 
-              <button type="button" id="submitAddAdd" class="btn btn-chip-biru btn-lg" style="
+              <button type="button" id="submitAddAdd" class="btn btn-lg btn-chip-biru" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -1801,9 +2359,9 @@
               text-transform: uppercase;
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-              onclick="submitAddAdd('I')">Simpan Data</button>
+              onclick="submitAddAdd('I')">Simpan</button>
 
-              <button type="button" id="submitAddEdit" class="btn btn-chip-biru btn-lg" style="
+              <button type="button" id="submitAddEdit" class="btn btn-lg btn-chip-biru" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -1812,7 +2370,7 @@
               text-transform: uppercase;
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-              onclick="submitAddAdd('U')">Submit Edit</button>
+              onclick="submitAddAdd('U')">Simpan</button>
             </div>
 
           </div>
@@ -2168,6 +2726,14 @@
   <div class="container-fluid" style="margin-top: -10px;">
   <div class="row">
 
+    <!-- Total = jumlah Subtotal seluruh item -->
+    <div class="col">
+      <div class="form-group">
+        <label>Total</label>
+        <input type="text" class="form-control text-right" id="input_add_total" value="0.00" disabled>
+      </div>
+    </div>
+
     <!-- Disc % -->
     <div class="col">
       <div class="form-group">
@@ -2211,11 +2777,13 @@
   </div>
 </div>
 
+</div>{{-- /#formBsGrid --}}
 </div>
 
 <!-- page3 -->
 
 <div id="page3" class="container-fluid" style="display: none" >
+<div id="formBsGrid">
       <div class="row">
         <div class="col-6 text-left">
           <h2>Detail SO</h2>
@@ -2477,17 +3045,19 @@
 <hr/>
 <div class="row ">
 <div class="col-md-12 mt-2 text-left">
-  <button type="button" class="btn btn-chip-biru btn-lg" style="
-  height: 30px;
+  <button type="button" class="btn btn-lg btn-show-hide-header btn-chip-biru" style="
+  height: 38px;
+  width: 38px;
   margin-top: -40px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: background-color 0.3s, box-shadow 0.3s;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-  onclick="buttonShowHideHeaderDetail()"><b>Show Hide Header</b></button>
+  onclick="buttonShowHideHeaderDetail()" title="Show/Hide Header"><i class="bi bi-truck"></i></button>
 </div>
 </div>
   <div class="mt-4" id="modalBodyDetailMainHeader">
@@ -2957,37 +3527,42 @@
 
   </div>
 </div>
+</div>{{-- /#formBsGrid --}}
 </div>
 
 <!-- Add this modal HTML once in your Blade template (outside the function) -->
 <div class="modal fade" id="modalOtorisasi" tabindex="-1" role="dialog" aria-labelledby="modalOtorisasiLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl" role="document">
     <div class="modal-content">
-      <div class="modal-header text-white">
+      <div class="modal-header">
         <h5 class="modal-title" id="modalOtorisasiLabel">Detail Otorisasi PO</h5>
-        <button type="button" class="close text-black" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body" style="overflow-x: auto;">
-        <table class="data-table" id="tabel_modal_otorisasi">
-          <thead>
-            <tr>
-              <th>Kode Barang</th>
-              <th>Nama Barang</th>
-              <th>Qnt</th>
-              <th>Harga</th>
-              <th>Diskon</th>
-              <th>Sub Total</th>
-              <th>Stock</th>
-              <th>Nilai Stock RP</th>
-            </tr>
-          </thead>
-          <tbody id="otorisasi-table-body">
-            <tr><td colspan="8" class="text-center">Loading...</td></tr>
-          </tbody>
-        </table>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Kode Barang</th>
+                <th>Nama Barang</th>
+                <th class="num">Qty</th>
+                <th class="num">Harga</th>
+                <th class="num">Diskon</th>
+                <th class="num">Sub Total</th>
+                <th class="num">Stock</th>
+                <th class="num">Nilai Stock RP</th>
+              </tr>
+            </thead>
+            <tbody id="otorisasi-table-body">
+              <tr><td colspan="8" class="text-center">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+      </div>{{-- /#formBsGrid --}}
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="btn-confirm-otorisasi">
           <i class="fa fa-check"></i> Otorisasi
@@ -3032,6 +3607,17 @@
 
 @section('js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
+<script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+{{-- Modal pemilih bersama (purchasing/modals/modalPOAdd, #form) disamakan persis dengan modal
+     pemilih menu Kas, sama seperti di purchaseOrder. --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  jQuery('#form').addClass('picker-kas')
+  jQuery('#form .modal-footer .btn').filter(function () {
+    return jQuery.trim(jQuery(this).text()) === 'Batal'
+  }).addClass('picker-kas-batal')
+})
+</script>
 <script type="text/javascript">
 $purut=0
 let dataTableAdd = []
@@ -3534,13 +4120,67 @@ function onChangeHari () {
   }
 }
 
+// ---- Diskon header (DBPENAWARANSO.DISC = persen, DISCRP = rupiah) ----
+// Hanya disimpan & ditampilkan; rumus NDPP/NPPN/NNET di DBPENAWARANSODET memakai 0 untuk
+// diskon header, jadi DPP/PPN/Grand Total tidak ikut berubah. Disc % adalah acuannya:
+// DiscRp = Total (jumlah Sub Total item) x Disc % / 100.
+function totalItemPenawaran () {
+  if (!dataTableAdd || !dataTableAdd.length) { return 0 }
+  return dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0)
+}
+
+function hitungDiscRpHeader (disc) {
+  return Math.round(totalItemPenawaran() * disc) / 100
+}
+
+function simpanDiscHeader (disc, discrp) {
+  let _token  = $("#_token").val()
+  let nobukti = $("#input_add_nobukti").val()
+  let berhasil = true
+  let daftar = [['DISC', disc], ['DISCRP', discrp]]
+  daftar.forEach((f) => {
+    $.ajax({
+      url: "{!! url('penawaransoonchangeheader') !!}",
+      type: "post",
+      async: false,
+      data: { _token, field: f[0], value: f[1], nobukti },
+      error: function (err) {
+        console.log(err)
+        berhasil = false
+      }
+    })
+  });
+  if (!berhasil) { alertify.warning('Gagal menyimpan diskon, silahkan refresh browser') }
+  return berhasil
+}
+
+// Dipanggil refreshDataTableAdd/Edit/Detail: tampilkan diskon header dari DB, dan kalau
+// DiscRp tersimpan sudah tidak cocok dengan Total sekarang (item ditambah/diubah/dihapus),
+// samakan lagi di DB - hanya di mode edit.
+function tampilDiscHeader () {
+  let disc = parseFloat(dataHeaderAdd.Disc) || 0
+  let discrp = hitungDiscRpHeader(disc)
+  document.getElementById("input_add_disc").value = disc.toFixed(2)
+  document.getElementById("input_add_discrp").value = discrp.toFixed(2)
+  if (tipeform == 'edit' && Math.abs((parseFloat(dataHeaderAdd.DiscRpHeader) || 0) - discrp) >= 0.005) {
+    simpanDiscHeader(disc, discrp)
+  }
+}
+
 function onChangeInputAddDisc () {
-    // document.getElementById("input_add_discrp").value = '0.00'
     console.log('onChangeDisc')
+    let disc = parseFloat($("#input_add_disc").val()) || 0
+    if (disc < 0 || disc > 100) {
+      alertify.warning('Disc % harus antara 0 - 100')
+      disc = 0
+    }
+    document.getElementById("input_add_disc").value = disc.toFixed(2)
+    document.getElementById("input_add_discrp").value = hitungDiscRpHeader(disc).toFixed(2)
+
+    // Mode add sebelum item pertama tersimpan: header belum ada di DB, nilai disimpan
+    // sesudah item pertama berhasil disimpan (lihat submitAddAdd).
     if (tipeform == 'edit') {
-      let value = $("#input_add_disc").val()
-      console.log(value)
-      onChangeHeader('DISC' , value)
+      if (simpanDiscHeader(disc, hitungDiscRpHeader(disc))) { alertify.success('update Disc berhasil') }
       refreshUpdateHeader()
       let nobukti = $("#input_add_nobukti").val()
       refreshDataTableAdd(nobukti)
@@ -3548,19 +4188,28 @@ function onChangeInputAddDisc () {
 }
 
 function onChangeInputAddDiscRp () {
-    // document.getElementById("input_add_disc").value = '0.00'
     console.log('onChangeDiscRp')
-      if (tipeform == 'edit') {
-        let value = $("#input_add_discrp").val()
-        console.log(dataHeaderAdd)
-        let x = Number(value) / Number(dataHeaderAdd.TOtSubtotalRP) * 100
-        console.log(x)
-        console.log(value)
-        onChangeHeader('DISC' , x)
-        refreshUpdateHeader()
-        let nobukti = $("#input_add_nobukti").val()
-        refreshDataTableAdd(nobukti)
-      }
+    let discrp = parseFloat($("#input_add_discrp").val()) || 0
+    let total = totalItemPenawaran()
+    let disc = 0
+    if (discrp && !total) {
+      alertify.warning('Tambahkan item terlebih dahulu sebelum mengisi DiscRp')
+      discrp = 0
+    } else if (discrp < 0 || discrp > total) {
+      alertify.warning('DiscRp harus antara 0 dan Total')
+      discrp = 0
+    } else if (total) {
+      disc = discrp / total * 100
+    }
+    document.getElementById("input_add_disc").value = disc.toFixed(2)
+    document.getElementById("input_add_discrp").value = discrp.toFixed(2)
+
+    if (tipeform == 'edit') {
+      if (simpanDiscHeader(disc, discrp)) { alertify.success('update DiscRp berhasil') }
+      refreshUpdateHeader()
+      let nobukti = $("#input_add_nobukti").val()
+      refreshDataTableAdd(nobukti)
+    }
 }
 
 function refreshUpdateHeader ()
@@ -3853,13 +4502,20 @@ freight , ketrevisi , tglrevisi , tglprcust , kodekebunh , urut
     console.log(res)
     if (res == 1) {
 
+      // Disc % header yang diisi sebelum item pertama tersimpan (header baru masuk DB
+      // bersama item pertama) disimpan sekarang; DiscRp-nya disamakan oleh tampilDiscHeader().
+      let discHeaderBaru = tipeform == 'add' ? (parseFloat($("#input_add_disc").val()) || 0) : 0
+
       loadAll()
       tipeform = 'edit'
+      document.getElementById("input_add_kodesupplier").disabled = true
       document.getElementById("buttonAddListPelanggan").disabled = true
+      document.getElementById("buttonAddListValas").disabled = true
       $('#divhargaterakhir').hide();
       $('#divStockProyeksi').hide();
       cleanFormAddAdd()
 
+      if (discHeaderBaru) { simpanDiscHeader(discHeaderBaru, 0) }
       refreshDataTableAdd(nobukti)
       if (choice == 'U'){
       $('.showhide').hide();
@@ -4432,6 +5088,7 @@ function buttonAddAddItem () {
   $('.showhide').hide();
 
   $('#divhargaterakhir').hide();
+  $('#divStockProyeksi').hide();
 
   cleanFormAddAdd()
   document.getElementById("buttonAddAddListBarang").disabled = false
@@ -4694,6 +5351,7 @@ function buttonAddListPIC () {
       });
 
       document.getElementById("tabel_data_add_list_pic").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_pic')
 
       $('.showhidemodalbodyadd').hide();
       $('#modalBodyAddListPIC').show();
@@ -4800,7 +5458,7 @@ function buttonAddAddListBarang () {
                 console.log(noSo)
                 console.log('=======')
                 console.log(noBuktiUntukAdd)
-                $('#tabel_add_list_barang_foc').DataTable().destroy();
+                if ($.fn.DataTable.isDataTable('#tabel_add_list_barang_foc')) { $('#tabel_add_list_barang_foc').DataTable().destroy() }
 
                   $.ajax({
                     url: "{!! url('penawaransolistbarangfoc') !!}",
@@ -4824,10 +5482,7 @@ function buttonAddAddListBarang () {
 
                       document.getElementById("tabel_data_add_list_barang_foc").innerHTML = rowTable
 
-                      $("#tabel_add_list_barang_foc").DataTable({
-                        "lengthChange": false,
-                          "paging": true ,
-                      });
+                      pickerKasInit('tabel_add_list_barang_foc')
                       document.getElementById("namaHeaderTable").textContent = 'Barang (FOC)'
                       $('.showhidemodalbodyadd').hide();
                       $('#modalBodyAddAddListBarangFOC').show();
@@ -4860,7 +5515,7 @@ function buttonAddListNoSO () {
   let _token = $("#_token").val();
   console.log('list ttd===========')
 
-  $('#tabel_add_list_Ttd').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_Ttd')) { $('#tabel_add_list_Ttd').DataTable().destroy() }
   $.ajax({
     url: "{!! url('penawaransolistttd') !!}",
     type: "get",
@@ -4887,10 +5542,7 @@ function buttonAddListNoSO () {
       });
 
       document.getElementById("tabel_data_add_list_Ttd").innerHTML = rowTable
-      $("#tabel_add_list_Ttd").DataTable({
-        "lengthChange": false,
-        "paging": true,
-      });
+      pickerKasInit('tabel_add_list_Ttd')
       document.getElementById("namaHeaderTable").textContent = 'Ttd'
       $('.showhidemodalbodyadd').hide();
       console.log('hhhhhhhhhhhhhhhhhhhhhhhhh')
@@ -4969,7 +5621,7 @@ function buttonAddListLokasiPenerima () {
 
   let _token = $("#_token").val();
   let kodecustsupp = $("#input_add_kodesupplier").val();
-  $('#tabel_add_list_lokasipenerima').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_lokasipenerima')) { $('#tabel_add_list_lokasipenerima').DataTable().destroy() }
 
   $.ajax({
     url: "{!! url('penawaransolistlokasipenerima') !!}",
@@ -4992,10 +5644,7 @@ function buttonAddListLokasiPenerima () {
       });
 
       document.getElementById("tabel_data_add_list_Kebun").innerHTML = rowTable
-      $("#tabel_add_list_Kebun").DataTable({
-        "lengthChange": false,
-        "paging": true,
-      });
+      pickerKasInit('tabel_add_list_Kebun')
 
       document.getElementById("namaHeaderTable").textContent = 'Lokasi Penerima'
 
@@ -5017,7 +5666,7 @@ function buttonAddListLokasiPenerima () {
 
 function buttonAddListValas () {
 
-  $('#tabel_add_list_valas').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_valas')) { $('#tabel_add_list_valas').DataTable().destroy() }
   $.ajax({
     url: "{!! url('polistvalas') !!}",
     type: "get",
@@ -5037,10 +5686,7 @@ function buttonAddListValas () {
       });
 
       document.getElementById("tabel_data_add_list_valas").innerHTML = rowTable
-      $("#tabel_add_list_valas").DataTable({
-        "lengthChange": false,
-        "paging": true,
-      });
+      pickerKasInit('tabel_add_list_valas')
 
       document.getElementById("namaHeaderTable").textContent = 'Valas'
 
@@ -5062,7 +5708,7 @@ function buttonAddListValas () {
 
 function buttonAddListPelanggan ()
 {
-  $('#tabel_add_list_pelanggan').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_pelanggan')) { $('#tabel_add_list_pelanggan').DataTable().destroy() }
 
   $.ajax({
     url: "{!! url('penawaransolistpelanggan') !!}",
@@ -5083,10 +5729,7 @@ function buttonAddListPelanggan ()
 
 
       document.getElementById("tabel_data_add_list_pelanggan").innerHTML = rowTable
-      $("#tabel_add_list_pelanggan").DataTable({
-        "lengthChange": false,
-          "paging": true ,
-      });
+      pickerKasInit('tabel_add_list_pelanggan')
 
       document.getElementById("namaHeaderTable").textContent = 'Supplier'
 
@@ -5124,6 +5767,7 @@ function buttonAddListBackOffice () {
 
 
       document.getElementById("tabel_data_add_list_backoffice").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_backoffice')
 
       $('.showhidemodalbodyadd').hide();
       $('#modalBodyAddListBackOffice').show();
@@ -5142,7 +5786,7 @@ function buttonAddListBackOffice () {
 }
 
 function buttonAddListSales () {
-  $('#tabel_add_list_sales').DataTable().destroy();
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_sales')) { $('#tabel_add_list_sales').DataTable().destroy() }
   $.ajax({
     url: "{!! url('solistsales') !!}",
     type: "get",
@@ -5164,10 +5808,7 @@ function buttonAddListSales () {
 
 
       document.getElementById("tabel_data_add_list_sales").innerHTML = rowTable
-      $("#tabel_add_list_sales").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-    });
+      pickerKasInit('tabel_add_list_sales')
       $('.showhidemodalbodyadd').hide();
       $('#modalBodyAddListSales').show();
       $("#form").modal('toggle')
@@ -5509,7 +6150,7 @@ function tulisTheadHeaderPSO (tableSel, cols, withActions) {
 function psoValueCell (row, col) {
   let raw = psoPickCI(row, col[0]);
   let type = col[3];
-  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw) + '</td>'; }
+  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw).split('-').reverse().join('/') + '</td>'; }
   if (type === 'bool') {
     return Number(raw)
       ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
@@ -5523,26 +6164,27 @@ function psoValueCell (row, col) {
   return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
 }
 
-// Port 1:1 dari tombol Details/Edit/Otorisasi milik markup lama.
+// Tombol yang tampil tetap sama seperti markup lama (Details/Edit/Otorisasi/Print);
+// warna, ikon, dan tooltip disamakan dengan tombol aksi tab Purchase Order. Tombolnya baru
+// muncul saat baris di-hover lewat kelas po-aksi-hover pada <table>.
 function tabel2ActionsCell (row) {
   let nobukti = psoPickCI(row, 'NoBukti');
-  let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-primary btn-sm" type="button" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
-  html += '<button class="btn btn-success btn-sm" type="button" title="Edit" onclick="buttonEdit(\'' + nobukti + '\')"><i class="bi bi-pencil-fill"></i></button>';
-  html += '<button class="btn btn-primary btn-sm" type="button" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
-  html += '</div></td>';
+  let html = '<td class="text-center">';
+  html += '<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+  html += '<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+  html += '</td>';
   return html;
 }
 
-// Port 1:1 dari tombol Details/Batal Otorisasi/Print milik markup lama.
 function tabel3ActionsCell (row) {
   let nobukti = psoPickCI(row, 'NoBukti');
-  let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-danger btn-sm" type="button" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
-  html += '<button class="btn btn-primary btn-sm" type="button" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
-  html += '</div></td>';
+  let html = '<td class="text-center">';
+  html += '<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+  html += '</td>';
   return html;
 }
 
@@ -5613,11 +6255,69 @@ function psoIkatPanjangHalaman (urut) {
 
 const PSO_DOM_STRING = "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
 
+// Kotak scroll tabel dibuat setinggi sisa ruang di #content supaya halaman TIDAK perlu
+// scrollbar sendiri - yang discroll hanya isi tabel (scrollbar-nya auto-hide). Disalin
+// dari poAturTinggiTabel() di purchaseOrder.
+function psoAturTinggiTabel () {
+  let area = document.getElementById('content')
+  let pane = document.querySelector('#myTabContent .tab-pane.active')
+  if (!area || !pane) { return }
+  let wrap = pane.querySelector('.po-table-wrap')
+  if (!wrap) { return }
+
+  wrap.style.maxHeight = 'none'
+
+  let padBawah = parseFloat(getComputedStyle(area).paddingBottom) || 0
+  let batasBawah = area.getBoundingClientRect().bottom - padBawah
+  let kotak = wrap.getBoundingClientRect()
+  let bawah = pane.getBoundingClientRect().bottom - kotak.bottom
+
+  let sisa = batasBawah - kotak.top - bawah - 4
+  wrap.style.maxHeight = Math.max(200, Math.floor(sisa)) + 'px'
+}
+
+// Pesan "Tidak ada data" ditampilkan sebagai blok biasa di dalam .po-table-wrap (bukan
+// <td colspan>), sama seperti poRapikanBarisKosong() di purchaseOrder.
+function psoRapikanBarisKosong (api) {
+  let wrap = $(api.table().container()).find('.po-table-wrap')[0]
+  if (!wrap) { return }
+
+  let pesan = wrap.querySelector('.po-empty-msg')
+  if (!pesan) {
+    pesan = document.createElement('div')
+    pesan.className = 'po-empty-msg'
+    wrap.appendChild(pesan)
+  }
+
+  let sel = api.table().body() ? api.table().body().querySelector('td.dataTables_empty') : null
+  if (sel) {
+    pesan.textContent = sel.textContent
+    pesan.hidden = false
+    sel.parentNode.style.display = 'none'
+  } else {
+    pesan.hidden = true
+  }
+}
+
+function psoOpsiTabel (urut, selTabel) {
+  return {
+    dom: PSO_DOM_STRING, lengthChange: false, pageLength: psoPanjangHalaman[urut], paging: true, order: [[1, 'asc']], ordering: false,
+    language: { emptyTable: 'Tidak ada data', zeroRecords: 'Tidak ada data yang cocok dengan pencarian' },
+    drawCallback: function () {
+      psoRapikanBarisKosong(this.api())
+      setTimeout(psoAturTinggiTabel, 0)
+      $(selTabel).find('[data-toggle="tooltip"]').tooltip('dispose')
+      $(selTabel).find('[data-toggle="tooltip"]').tooltip({ container: 'body', boundary: 'window' })
+    }
+  }
+}
+
 function reinitTabel2 () {
   try {
     if ($.fn.DataTable.isDataTable('#tabel2')) { $('#tabel2').DataTable().destroy(); }
+    $('#tabel2_data').find('[data-toggle="tooltip"]').tooltip('dispose')
     renderTabel2Rows(lastTabel2Rows);
-    $('#tabel2').DataTable({ dom: PSO_DOM_STRING, lengthChange: false, pageLength: psoPanjangHalaman[1], paging: true, order: [[1, 'asc']], ordering: false });
+    $('#tabel2').DataTable(psoOpsiTabel(1, '#tabel2'));
     psoIkatSearch(1); psoIkatPanjangHalaman(1); psoPerluGambar[1] = false;
   } catch (e) { console.error('reinitTabel2 failed:', e); alertify.error('Gagal memperbarui tabel: ' + e.message); }
 }
@@ -5625,11 +6325,18 @@ function reinitTabel2 () {
 function reinitTabel3 () {
   try {
     if ($.fn.DataTable.isDataTable('#tabel3')) { $('#tabel3').DataTable().destroy(); }
+    $('#tabel3_data').find('[data-toggle="tooltip"]').tooltip('dispose')
     renderTabel3Rows(lastTabel3Rows);
-    $('#tabel3').DataTable({ dom: PSO_DOM_STRING, lengthChange: false, pageLength: psoPanjangHalaman[2], paging: true, order: [[1, 'asc']], ordering: false });
+    $('#tabel3').DataTable(psoOpsiTabel(2, '#tabel3'));
     psoIkatSearch(2); psoIkatPanjangHalaman(2); psoPerluGambar[2] = false;
   } catch (e) { console.error('reinitTabel3 failed:', e); alertify.error('Gagal memperbarui tabel: ' + e.message); }
 }
+
+let psoTimerResize = null
+$(window).on('resize', function () {
+  if (psoTimerResize) { clearTimeout(psoTimerResize) }
+  psoTimerResize = setTimeout(psoAturTinggiTabel, 150)
+})
 
 // Halaman ini punya banyak $(document).ready() lain yang sudah ada sebelum port
 // ini (form Add/Edit, dsb) yang kadang butuh >1 detik untuk selesai jalan secara
@@ -5651,8 +6358,8 @@ function psoSetupSekali () {
 
   psoInitReportTableSekali();
 
-  $('#nav-home-tab').on('shown.bs.tab', function () { psoAktifkanTabel(1); if (typeof ReportTable !== 'undefined') { ReportTable.refresh(); } if (psoPerluGambar[1]) { reinitTabel2(); } });
-  $('#nav-profile-tab').on('shown.bs.tab', function () { psoAktifkanTabel(2); if (typeof ReportTable !== 'undefined') { ReportTable.refresh(); } if (psoPerluGambar[2]) { reinitTabel3(); } });
+  $('#nav-home-tab').on('shown.bs.tab', function () { psoAktifkanTabel(1); if (typeof ReportTable !== 'undefined') { ReportTable.refresh(); } if (psoPerluGambar[1]) { reinitTabel2(); } else { psoAturTinggiTabel(); } });
+  $('#nav-profile-tab').on('shown.bs.tab', function () { psoAktifkanTabel(2); if (typeof ReportTable !== 'undefined') { ReportTable.refresh(); } if (psoPerluGambar[2]) { reinitTabel3(); } else { psoAturTinggiTabel(); } });
 }
 
 $(document).ready(function(){
@@ -6268,6 +6975,69 @@ function buttonAddPickValas (kode, kurs) {
   buttonAddListBatal()
 }
 
+// ---- Valas sebagai dropdown (sama seperti muatDropdownValas/onChangeValas di purchaseOrder) ----
+// Daftar diambil dari endpoint yang sama dengan browse valas lama.
+let listValasDropdown = []
+
+function muatDropdownValas () {
+  $.ajax({
+    url: "{!! url('polistvalas') !!}",
+    type: "get",
+    async: false,
+    data: {},
+    success: function(res) {
+      listValasDropdown = res || []
+      let selectEl = document.getElementById("input_add_valas")
+      if (!selectEl) { return }
+      let kodeTerpilih = selectEl.value
+      selectEl.innerHTML = ''
+      listValasDropdown.forEach((item) => {
+        let opt = document.createElement('option')
+        opt.value = item.kodevls
+        opt.textContent = `${item.kodevls} - ${item.namavls}`
+        selectEl.appendChild(opt)
+      });
+      if (listValasDropdown.some(item => item.kodevls === kodeTerpilih)) {
+        selectEl.value = kodeTerpilih
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+  })
+}
+
+// Isi kurs dari valas terpilih - sama dengan buttonAddPickValas(), tanpa menutup modal pemilih.
+function onChangeValasDropdown () {
+  let kode = document.getElementById("input_add_valas").value
+  let itemX = listValasDropdown.find(item => item.kodevls === kode)
+  let kurs = itemX && itemX.kurs ? parseFloat(itemX.kurs).toFixed(2) : '0.00'
+  if (tipeform == 'edit') {
+    onChangeHeader('KODEVLS' , kode)
+    onChangeHeader('KURS' , kurs)
+  }
+  document.getElementById("input_add_kurs").value = kurs
+}
+
+// Kode lama mengunci valas dengan men-disable / menyembunyikan tombol #buttonAddListValas.
+// Dropdown mengikuti status tombol itu supaya aturan kuncinya tetap sama.
+function mktSinkronKunciValas () {
+  let btn = document.getElementById("buttonAddListValas")
+  let sel = document.getElementById("input_add_valas")
+  if (!btn || !sel) { return }
+  sel.disabled = btn.disabled || btn.hidden
+}
+
+$(function () {
+  muatDropdownValas()
+  mktSinkronKunciValas()
+  let btn = document.getElementById("buttonAddListValas")
+  if (btn && window.MutationObserver) {
+    new MutationObserver(mktSinkronKunciValas).observe(btn, { attributes: true, attributeFilter: ['disabled', 'hidden'] })
+  }
+})
+
 function buttonAddPickSales (kode, nama ) {
   console.log('buttonAddPickSales')
   console.log(kode,nama)
@@ -6558,6 +7328,7 @@ function cleanFormAdd () {
 
   document.getElementById("input_add_disc").value = '0.00'
   document.getElementById("input_add_discrp").value = '0.00'
+  document.getElementById("input_add_total").value = '0.00'
   document.getElementById("input_add_ppn").value = '0.00'
   document.getElementById("input_add_dpp").value = '0.00'
   document.getElementById("input_add_grandtotal").value = '0.00'
@@ -6596,6 +7367,11 @@ if (pcekglobal) {
   // $('.showhidemodalbodyaddmain').hide();
   $('#buttonSubmitSaveHeader').show();
   unlockFormAdd()
+  // Mode edit: customer dan valas tidak boleh diubah (dropdown valas ikut status
+  // #buttonAddListValas lewat mktSinkronKunciValas).
+  document.getElementById("input_add_kodesupplier").disabled = true
+  document.getElementById("buttonAddListPelanggan").disabled = true
+  document.getElementById("buttonAddListValas").disabled = true
 
   let akses = $("#akses_iskoreksi").val();
 
@@ -6696,7 +7472,24 @@ if (pcekglobal) {
   document.getElementById("input_add_valas").value = 'IDR'
   document.getElementById("input_add_kurs").value = '1.00'
 
-  document.getElementById("input_add_tanggal").value = formatDate(now)
+  // Tanggal diambil dari server (getdate) supaya tidak bisa diakali lewat jam komputer user
+  // (sama seperti pembelianpermintaanagen). Input tanggal tetap disabled di semua mode.
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    async: false,
+    success: function(res) {
+      document.getElementById("input_add_tanggal").value = res[0].tanggal
+      // Mode add: Tgl Revisi & Tgl PR.Cust default hari ini (masih bisa diubah user);
+      // di mode edit/detail nilainya diambil dari database.
+      document.getElementById("input_add_tglrevisi").value = res[0].tanggal
+      document.getElementById("input_add_tglprcust").value = res[0].tanggal
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil tanggal server, silahkan refresh browser')
+    }
+  })
 
   $('#page1').hide();
   $('#page2').show();
@@ -6889,10 +7682,10 @@ function refreshDataTableAdd (NOBUKTI) {
 
           document.getElementById("input_add_tipeppn").value = dataHeaderAdd.PPN
           document.getElementById("input_add_tanggal").value = formatDate(dataHeaderAdd.Tanggal)
-          document.getElementById("input_add_tglprcust").value = formatDate(dataHeaderAdd.tglprcust)
-          document.getElementById("input_add_tglrevisi").value = formatDate(dataHeaderAdd.tglrevisi)
-          document.getElementById("input_add_disc").value = parseFloat(dataHeaderAdd.DiscP1).toFixed(2)
-          document.getElementById("input_add_discrp").value = parseFloat(dataHeaderAdd.TotDiskon).toFixed(2)
+          document.getElementById("input_add_tglprcust").value = dataHeaderAdd.tglprcust ? formatDate(dataHeaderAdd.tglprcust) : ""
+          document.getElementById("input_add_tglrevisi").value = dataHeaderAdd.tglrevisi ? formatDate(dataHeaderAdd.tglrevisi) : ""
+          document.getElementById("input_add_total").value = formatAngka(dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
+          tampilDiscHeader()
           document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP).toFixed(2))
           document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN).toFixed(2))
           document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet).toFixed(2))
@@ -7023,10 +7816,10 @@ function refreshDataTableEdit (NOBUKTI) {
 
           document.getElementById("input_add_tipeppn").value = dataHeaderAdd.PPN
           document.getElementById("input_add_tanggal").value = formatDate(dataHeaderAdd.Tanggal)
-          document.getElementById("input_add_tglprcust").value = formatDate(dataHeaderAdd.tglprcust)
-          document.getElementById("input_add_tglrevisi").value = formatDate(dataHeaderAdd.tglrevisi)
-          document.getElementById("input_add_disc").value = parseFloat(dataHeaderAdd.DiscP1).toFixed(2)
-          document.getElementById("input_add_discrp").value = parseFloat(dataHeaderAdd.TotDiskon).toFixed(2)
+          document.getElementById("input_add_tglprcust").value = dataHeaderAdd.tglprcust ? formatDate(dataHeaderAdd.tglprcust) : ""
+          document.getElementById("input_add_tglrevisi").value = dataHeaderAdd.tglrevisi ? formatDate(dataHeaderAdd.tglrevisi) : ""
+          document.getElementById("input_add_total").value = formatAngka(dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
+          tampilDiscHeader()
           document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP).toFixed(2))
           document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN).toFixed(2))
           document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet).toFixed(2))
@@ -7154,10 +7947,10 @@ function refreshDataTableDetail (NOBUKTI) {
 
           document.getElementById("input_add_tipeppn").value = dataHeaderAdd.PPN
           document.getElementById("input_add_tanggal").value = formatDate(dataHeaderAdd.Tanggal)
-          document.getElementById("input_add_tglprcust").value = formatDate(dataHeaderAdd.tglprcust)
-          document.getElementById("input_add_tglrevisi").value = formatDate(dataHeaderAdd.tglrevisi)
-          document.getElementById("input_add_disc").value = parseFloat(dataHeaderAdd.DiscP1).toFixed(2)
-          document.getElementById("input_add_discrp").value = parseFloat(dataHeaderAdd.TotDiskon).toFixed(2)
+          document.getElementById("input_add_tglprcust").value = dataHeaderAdd.tglprcust ? formatDate(dataHeaderAdd.tglprcust) : ""
+          document.getElementById("input_add_tglrevisi").value = dataHeaderAdd.tglrevisi ? formatDate(dataHeaderAdd.tglrevisi) : ""
+          document.getElementById("input_add_total").value = formatAngka(dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
+          tampilDiscHeader()
           document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP).toFixed(2))
           document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN).toFixed(2))
           document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet).toFixed(2))

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\NewMenu;
 use App\Models\NewAksesMenu;
-use App\Models\DBFLMENU;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
@@ -16,140 +15,34 @@ use App\Models\vwBrowsOutBeli;
 use App\Models\vwMasterBeli;
 use App\Models\NEWDBBELI;
 
-class InvoicePembelianController extends Controller 
+class InvoicePembelianController extends Controller
 {
 
+  // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti NewPOController).
+  private function periodeRange ($periode) {
+    $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
+    return [ date('Y-m-01', $stamp), date('Y-m-t', $stamp) ];
+  }
 
   public function index (Request $req) {
     $kodemenu = '030401';
-    $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu, $req->path);
+    $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu, $req->path());
     if(!$akses || !$akses->HASACCESS) {
        return redirect('/home');
     }
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(3);
+    list($ipbTglAwal, $ipbTglAkhir) = $this->periodeRange($periode);
 
-   $tempoutstanding = DB::connection("SML")->select("
-   declare @Tahun int, @Bulan int, @Periode Varchar(30)
-   select @Tahun=:tahun, @Bulan=:bulan
-   select top 20 A.NoBukti, A.NoUrut, A.TANGGAL, A.KODECUSTSUPP, A.NAMACUSTSUPP,
-   	A.NoPO, A.KodeGdg,A.PPN
-   	,CASE WHEN  A.PPN=0 THEN 'NONE'
-   	      WHEN A.PPN=1 THEN 'EXCLUDE'
-   	      WHEN A.PPN=2 THEN 'INCLUDE' END KETPPN,isNULL(C.NuangMuka,0)-ISNULL(b.DPP,0) sISANUM ,
-                 A.TNDPP,A.TNNET,A.TNPPN,A.TSUBTOTAL
-   from vwBrowsOutBeli A
-   left outer join DBUMJUAL b on a.NOPO=b.NOSO
-   left outer join DBBELI C ON A.NOBUKTI=C.NOBUKTI
-   where ( (YEAR(A.TANGGAL)<=@Tahun and MONTH(A.TANGGAL)<=@Bulan))
-           and A.FlagTipe<>9
-        and a.TNDPP is not null  and year(C.tanggal)>2017
-
-    and Isnull(pCLoseInv,0)=0
-
-
-   group by A.NOBUKTI, A.NoUrut, A.TANGGAL, A.KODECUSTSUPP, A.NAMACUSTSUPP,
-   	A.NoPO, A.KodeGdg,A.PPN,b.DPP,C.NuangMuka,b.DPP  ,A.TNDPP,A.TNNET,A.TNPPN,A.TSUBTOTAL
-   order by A.NOBUKTI
-
-
-   " , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-
-
-    $tampilinvoicebeli = DB::connection("SML")->select("
-    declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun , @Bulan=:bulan
-
-Select 	A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp, A.NamaKota,
-	A.NoPO,
-	Sum(A.NDPPRp) TotDPPRp, Sum(A.NPPNRp) TotPPNRp, Sum(A.NNETRp) TotNetRp,
-	A.IDUser,
-	A.IsOtorisasi1, A.OtoUser1,A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-    A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-    A.NoInvoice
-    , case when YEAR(A.TglInvoice)=1899 then '' else CAST(DATEPART(DD,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglInvoice) AS VARCHAR(4)) End TglInvoice
-    , A.NoFakturPajak
-    ,case when YEAR(A.TglFakturPajak)=1899 then '' else CAST(DATEPART(DD,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglFakturPajak) AS VARCHAR(4)) End TglFakturPajak
-    , A.NoBuktiPotong
-    ,case when YEAR(A.TglBuktiPotong)=1899 then '' else CAST(DATEPART(DD,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglBuktiPotong) AS VARCHAR(4)) End TglBuktiPotong,
-    A.BlnMasaPajak, A.ThnMasaPajak
-From vwTransInvoice A
-where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan
-and A.FlagTipe<>9 and A.IsOtorisasi1 = 0
-
-
-group by A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp,
-	A.NoPO, A.NamaKota,
-	A.IDUser,
-	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-    A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-    A.NoInvoice, A.TglInvoice, A.NoFakturPajak, A.TglFakturPajak, A.NoBuktiPotong, A.TglBuktiPotong,
-    A.BlnMasaPajak, A.ThnMasaPajak
-order by A.NOBUKTI
-" , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-
-    $tampilinvoicebeliOto = DB::connection("SML")->select("
-    declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun , @Bulan=:bulan
-
-Select 	A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp, A.NamaKota,
-	A.NoPO,
-	Sum(A.NDPPRp) TotDPPRp, Sum(A.NPPNRp) TotPPNRp, Sum(A.NNETRp) TotNetRp,
-	A.IDUser,
-	A.IsOtorisasi1, A.OtoUser1,A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-    A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-    A.NoInvoice
-    , case when YEAR(A.TglInvoice)=1899 then '' else CAST(DATEPART(DD,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglInvoice) AS VARCHAR(4)) End TglInvoice
-    , A.NoFakturPajak
-    ,case when YEAR(A.TglFakturPajak)=1899 then '' else CAST(DATEPART(DD,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglFakturPajak) AS VARCHAR(4)) End TglFakturPajak
-    , A.NoBuktiPotong
-    ,case when YEAR(A.TglBuktiPotong)=1899 then '' else CAST(DATEPART(DD,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglBuktiPotong) AS VARCHAR(4)) End TglBuktiPotong,
-    A.BlnMasaPajak, A.ThnMasaPajak
-From vwTransInvoice A
-where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan
-and A.FlagTipe<>9 and A.IsOtorisasi1 = 1
-
-
-group by A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp,
-	A.NoPO, A.NamaKota,
-	A.IDUser,
-	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-    A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-    A.NoInvoice, A.TglInvoice, A.NoFakturPajak, A.TglFakturPajak, A.NoBuktiPotong, A.TglBuktiPotong,
-    A.BlnMasaPajak, A.ThnMasaPajak
-order by A.NOBUKTI
-" , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-
-    // $gudang = DB::connection("SML")->select('select * from DBGUDANG where KODEGDG <> :id', ['id' => 'GTC']);
-
+    // Data tabel dimuat lewat AJAX (getAlloutbeliinv/getAllInvoiceBeli) - sama pola dengan
+    // newpo.blade.php - supaya rentang tanggal bisa diubah tanpa reload halaman.
     return view('purchasing.invoicepembelian' , [
-      // "title" => "Home",
-      // "menu" => $menu,
-      "tempoutstanding" =>$tempoutstanding,
-      // "ptempoutstanding" =>$ptempoutstanding,
-      "tampilinvoicebeli" =>$tampilinvoicebeli,
-      "tampilinvoicebeliOto" =>$tampilinvoicebeliOto,
       "periode" => $periode,
       "menul0" => $menul0,
-      // "po" => $po,
-      // "poGroup" => $poGroup,
-      // "tempPo" => $tempPo,
-      // "tempPembelian" => $tempPembelian,
-      // "tesMax" => $tesMax
       "gudang" => [],
-      // "pembelian" => $pembelian,
-      // "tempPembelian1" => $tempPembelian1,
+      "ipbTglAwal" => $ipbTglAwal,
+      "ipbTglAkhir" => $ipbTglAkhir,
       "akses" => $akses
     ]);
 
@@ -159,127 +52,120 @@ order by A.NOBUKTI
 
 
   public function getBeliDet (Request $req) {
-    // $periode = NewPeriode::where('user_id' , \Auth::id())->first();
-    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $pembelian = VWtampilbeli::all()->where('NoBukti', $req->input('NoBukti'))->sortBy('NoBukti')->groupBy('NoBukti');
-    $tempoutstanding = [];
-    foreach ($pembelian as $p) {
-      array_push($tempoutstanding, $p);
-    }
-    return $tempoutstanding;
+    // VWtampilbeli::where()->get() menyaring di SQL, bukan menarik seluruh view ke memori
+    // PHP dulu (::all()->where()) baru menyaring - jauh lebih ringan untuk view besar.
+    // Hasilnya kini array baris DATAR (bukan array-berisi-satu-grup seperti sebelumnya),
+    // jadi pemanggil (buttonDetail/buttonDetailout) membaca langsung dari res, bukan res[0].
+    // Query di bawah adalah isi view VWtampilbeli TANPA klausa "a.pJasa = 0" - view itu
+    // menyaring habis dokumen jasa (SML/PBJ/...), sehingga tombol Detail pada baris PBJ di
+    // tab Outstanding dulu selalu menerima array kosong. View-nya sendiri TIDAK diubah
+    // (dipakai modul lain); alias kolom dijaga sama persis supaya blade tidak perlu diubah.
+    return DB::connection('SML')->select("
+Select
+A.pQC, MONTH(A.TANGGAL) Bulan, YEAR(A.TANGGAL) Tahun, a.TANGGAL, A.KODESUPP, J.NAMACUSTSUPP NamaSupplier, A.KETERANGAN,
+A.NoBukti, A.NoUrut, B.NoPO, B.UrutPO, B.KODEGDG, K.NAMA NAMAGUDANG, A.FAKTURSUPP,
+-- Kolom header dokumen (dbBeli) + alamat supplier: tidak ada di view VWtampilbeli, padahal
+-- form Detail memakainya (Alamat, Valas, Kurs, PPN, Pembayaran, TOP, Jth Tempo, Uang Muka,
+-- dan blok total). Tanpa ini semuanya undefined di JS lalu dikosongkan oleh operator nullish.
+-- Catatan: JANGAN tulis tanda tanya di komentar SQL ini - PDO membacanya sebagai placeholder
+-- posisional dan bentrok dengan parameter bernama :nobukti (hasilnya error 500).
+J.ALAMAT1, A.KODEVLS, A.KURS, A.PPN, A.TIPEBAYAR, A.HARI, A.TglJatuhTempo,
+A.NOUMK, A.NuangMuka, A.DISC disc, A.DISCRP,
+A.NILAIDPP TotDPP, A.NILAIPPN TotPPN, A.NILAINET TotNet,
+    B.Urut, B.KodeBrg, B.NamaBrg, B.Qnt, B.NoSat, B.Isi, case when isNull (B.Satuan, '') = '' then 'PCS' else B.Satuan end Satuan,
+        0.00 Qnt2, '' SatuanRoll, B.Harga, B.HrgNetto,
+        B.DiscP DiscP1, B.DiscTot DiscRp1, B.DiscTot,
+        B.SubTotal TotalUSD, B.SubTotal TotalIDR, B.NDPP NDPP,
+        B.NPPN NPPN, B.BYAngkut Beban, B.SubTotal + B.BYAngkut Total,
+        H.PARTNUMBER, I.QNT QNTPO, I.QNTOUT, H.ISI1, H.ISI2, b.QntTerima, h.NAMABRG namabrgx, l.NAMAMERK, a.IsOtorisasi1
+From dbBeliDet B
+Left Outer Join dbBeli A On A.NoBukti=b.NoBukti
+Left Outer Join dbBarang H on H.KodeBrg=B.KodeBrg
+LEFT OUTER JOIN (SELECT y.NoPO NOBUKTI, y.UrutPO Urut, x.QNT - sum(y.QntTerima - ISNULL(QntReject,0)) QNTOUT, x.QNT QNT
+                FROM DBBELIDET y
+                left outer join DBPODET x on x.NOBUKTI=y.nopo and y.UrutPO=x.urut
+                group by y.NoPO, y.UrutPO, x.QNT
+                ) I ON B.NoPO=I.NOBUKTI AND B.UrutPO=I.Urut
+left outer join DBCUSTSUPP J on A.KODESUPP=J.KODECUSTSUPP
+Left Outer join DBGUDANG K ON B.KodeGdg=K.KODEGDG
+left outer join DBMERK L on h.KodeMerk = L.KODEMERK
+where B.NoBukti = :nobukti
+order by B.Urut
+    ", ['nobukti' => $req->input('NoBukti')]);
   }
 
+  // Hak akses dibaca dari DBMENUWEB/DBFLMENUWEB (menu web 0305, href invoicepembelian) lewat
+  // GlobalController@getAkses - sama dengan index(). Dulu memakai model DBFLMENU (namespace
+  // App\Model, file di app/Models) sehingga class tidak ditemukan dan route ini error 500.
   public function getAkses () {
-    $kodemenu = '03007';
-    // $akses = NewAksesMenu::where('USERID', \Auth::id())-> where('L1', $kodemenu)->first();
-      $akses = DBFLMENU::where('USERID', \Auth::user()->username)-> where('L1', $kodemenu)->first();
-    return $akses;
+    return app('App\Http\Controllers\GlobalController')->getAkses('0305', 'invoicepembelian');
   }
 
-  public function getAllPO () {
+  public function getAllPO (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    list($tglawal, $tglakhir) = $this->periodeRange($periode);
+    if (preg_match('/^(19|20)\d{2}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if (preg_match('/^(19|20)\d{2}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
+    $tglakhirPlus = date('Y-m-d', strtotime($tglakhir . ' +1 day'));
 
-       $tampilinvoicebeli = DB::connection("SML")->select("
-       declare @Tahun int, @Bulan int
+    // Satu query saja mengembalikan seluruh baris (IsOtorisasi1 = 0 maupun 1) - status
+    // otorisasi disaring di klien lewat dropdown #ipbOtoStatus, bukan dua query terpisah.
+    $tampilinvoicebeli = DB::connection("SML")->select("
+    declare @TglAwal date, @TglAkhirPlus date
 
-   select @Tahun=:tahun , @Bulan=:bulan
+select @TglAwal=:tglawal , @TglAkhirPlus=:tglakhirplus
 
-   Select 	A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp, A.NamaKota,
-   	A.NoPO,
-   	Sum(A.NDPPRp) TotDPPRp, Sum(A.NPPNRp) TotPPNRp, Sum(A.NNETRp) TotNetRp,
-   	A.IDUser,
-   	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-   	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-   	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-       A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-       A.NoInvoice
-       , case when YEAR(A.TglInvoice)=1899 then '' else CAST(DATEPART(DD,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglInvoice) AS VARCHAR(4)) End TglInvoice
-       , A.NoFakturPajak
-       ,case when YEAR(A.TglFakturPajak)=1899 then '' else CAST(DATEPART(DD,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglFakturPajak) AS VARCHAR(4)) End TglFakturPajak
-       , A.NoBuktiPotong
-       ,case when YEAR(A.TglBuktiPotong)=1899 then '' else CAST(DATEPART(DD,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglBuktiPotong) AS VARCHAR(4)) End TglBuktiPotong,
-       A.BlnMasaPajak, A.ThnMasaPajak
-   From vwTransInvoice A
-   where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan
-   and A.FlagTipe<>9 and A.IsOtorisasi1 = 0
-
-
-   group by A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp,
-   	A.NoPO, A.NamaKota, 
-   	A.IDUser,
-   	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-   	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-   	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-       A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-       A.NoInvoice, A.TglInvoice, A.NoFakturPajak, A.TglFakturPajak, A.NoBuktiPotong, A.TglBuktiPotong,
-       A.BlnMasaPajak, A.ThnMasaPajak
-   order by A.NOBUKTI
+Select 	A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp, A.NamaKota,
+	A.NoPO,
+	Sum(A.NDPPRp) TotDPPRp, Sum(A.NPPNRp) TotPPNRp, Sum(A.NNETRp) TotNetRp,
+	A.IDUser,
+	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
+    A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
+    A.NoInvoice
+    , case when YEAR(A.TglInvoice)=1899 then '' else CAST(DATEPART(DD,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglInvoice) AS VARCHAR(4)) End TglInvoice
+    , A.NoFakturPajak
+    ,case when YEAR(A.TglFakturPajak)=1899 then '' else CAST(DATEPART(DD,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglFakturPajak) AS VARCHAR(4)) End TglFakturPajak
+    , A.NoBuktiPotong
+    ,case when YEAR(A.TglBuktiPotong)=1899 then '' else CAST(DATEPART(DD,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglBuktiPotong) AS VARCHAR(4)) End TglBuktiPotong,
+    A.BlnMasaPajak, A.ThnMasaPajak
+From vwTransInvoice A
+where A.Tanggal >= @TglAwal and A.Tanggal < @TglAkhirPlus
+and A.FlagTipe<>9
 
 
-       " , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-
-  $tampilinvoicebeliOto = DB::connection("SML")->select("
-       declare @Tahun int, @Bulan int
-
-   select @Tahun=:tahun , @Bulan=:bulan
-
-   Select 	A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp, A.NamaKota,
-   	A.NoPO,
-   	Sum(A.NDPPRp) TotDPPRp, Sum(A.NPPNRp) TotPPNRp, Sum(A.NNETRp) TotNetRp,
-   	A.IDUser,
-   	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-   	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-   	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-       A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-       A.NoInvoice
-       , case when YEAR(A.TglInvoice)=1899 then '' else CAST(DATEPART(DD,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglInvoice) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglInvoice) AS VARCHAR(4)) End TglInvoice
-       , A.NoFakturPajak
-       ,case when YEAR(A.TglFakturPajak)=1899 then '' else CAST(DATEPART(DD,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglFakturPajak) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglFakturPajak) AS VARCHAR(4)) End TglFakturPajak
-       , A.NoBuktiPotong
-       ,case when YEAR(A.TglBuktiPotong)=1899 then '' else CAST(DATEPART(DD,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(MM,A.TglBuktiPotong) AS VARCHAR(2))+'/'+CAST(DATEPART(YYYY,A.TglBuktiPotong) AS VARCHAR(4)) End TglBuktiPotong,
-       A.BlnMasaPajak, A.ThnMasaPajak
-   From vwTransInvoice A
-   where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan
-   and A.FlagTipe<>9 and A.IsOtorisasi1 = 1
+group by A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp,
+	A.NoPO, A.NamaKota, 
+	A.IDUser,
+	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
+    A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
+    A.NoInvoice, A.TglInvoice, A.NoFakturPajak, A.TglFakturPajak, A.NoBuktiPotong, A.TglBuktiPotong,
+    A.BlnMasaPajak, A.ThnMasaPajak
+order by A.NOBUKTI
 
 
-   group by A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp,
-   	A.NoPO, A.NamaKota, 
-   	A.IDUser,
-   	A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-   	A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-   	A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
-       A.ISBATAL, A.USERBATAL, A.TglBatal, A.TipePPn,
-       A.NoInvoice, A.TglInvoice, A.NoFakturPajak, A.TglFakturPajak, A.NoBuktiPotong, A.TglBuktiPotong,
-       A.BlnMasaPajak, A.ThnMasaPajak
-   order by A.NOBUKTI
+       " , [ "tglawal" => $tglawal , "tglakhirplus" => $tglakhirPlus]);
 
-
-       " , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-
-    return [
-      "tampilinvoicebeli" => $tampilinvoicebeli,
-      "tampilinvoicebeliOto" => $tampilinvoicebeliOto
-    ];
+    return $tampilinvoicebeli;
   }
 
-  public function getAllPembelian () {
+  public function getAllPembelian (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-
-    // $pembelian = vwMasterBeli::all()->where('pJasa',0)->where('IsOtorisasi1', 1)->where('BULAN',$periode->bulan )->where('TAHUN', $periode->tahun)->sortBy('NoBukti')->groupBy('NoBukti');
-    // $tempPembelian1 = [];
-    // foreach ($pembelian as $p) {
-    //   array_push($tempPembelian1, $p);
-    // }
-    //
-    // return $tempPembelian1;
-
+    list($tglawal, $tglakhir) = $this->periodeRange($periode);
+    if (preg_match('/^(19|20)\d{2}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+    if (preg_match('/^(19|20)\d{2}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+    if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
+    $tglakhirPlus = date('Y-m-d', strtotime($tglakhir . ' +1 day'));
 
        $tempoutstanding = DB::connection("SML")->select("
-       declare @Tahun int, @Bulan int, @Periode Varchar(30)
-       select @Tahun=:tahun, @Bulan=:bulan
-       select top 20 A.NoBukti, A.NoUrut, A.TANGGAL, A.KODECUSTSUPP, A.NAMACUSTSUPP,
+       declare @TglAwal date, @TglAkhirPlus date
+       select @TglAwal=:tglawal, @TglAkhirPlus=:tglakhirplus
+       select A.NoBukti, A.NoUrut, A.TANGGAL, A.KODECUSTSUPP, A.NAMACUSTSUPP,
        	A.NoPO, A.KodeGdg,A.PPN
        	,CASE WHEN  A.PPN=0 THEN 'NONE'
        	      WHEN A.PPN=1 THEN 'EXCLUDE'
@@ -288,7 +174,7 @@ order by A.NOBUKTI
        from vwBrowsOutBeli A
        left outer join DBUMJUAL b on a.NOPO=b.NOSO
        left outer join DBBELI C ON A.NOBUKTI=C.NOBUKTI
-       where ( (YEAR(A.TANGGAL)<=@Tahun and MONTH(A.TANGGAL)<=@Bulan))
+       where A.TANGGAL >= @TglAwal and A.TANGGAL < @TglAkhirPlus
                and A.FlagTipe<>9
             and a.TNDPP is not null  and year(C.tanggal)>2017
 
@@ -300,7 +186,7 @@ order by A.NOBUKTI
        order by A.NOBUKTI
 
 
-       " , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
+       " , [ "tglawal" => $tglawal , "tglakhirplus" => $tglakhirPlus]);
 
 
     return $tempoutstanding;
@@ -327,17 +213,14 @@ order by A.NOBUKTI
 
 
     public function spUnOtorisasi1 (Request $req) {
-        $username = \Auth::user()->username;
         $nobukti =  $req->nobukti;
-        $otorisasi = $req->otorisasi;
-
-        if ($otorisasi == 0 ) {
-          $username = '';
-          $tanggal = null;
-        }
-
 
         $update = DB::connection('SML')->update("update dbinvoice set IsOtorisasi1 = 0 , OtoUser1 = '' , TglOto1 = NULL, MaxOL = -1 where nobukti = :nobukti", [  'nobukti' => $nobukti ] );
+
+        if ($update > 0) {
+          app('App\Http\Controllers\GlobalController')->LoggingData('btloto', 'INV', $req->nobukti, $req->pket, 0, 'dbinvoice');
+        }
+
         return $update;
 
       }
@@ -368,38 +251,34 @@ order by A.NOBUKTI
 
 
       public function spedit (Request $req) {
-        $username = \Auth::user()->username;
-
-          $nobukti =  $req->input('nobukti');//1
-          $tanggal=  $req->input('tanggal');  //1
-          $tglfpajak =  $req->input('tglfpajak');
-          $tglbpotong =  $req->input('tglbpotong');
-          $tglinvoice = $req->input('tglinvoice');
+          $nobukti =  $req->input('nobukti');
+          $tglfpajak =  $req->input('tglfpajak') ?: null;
+          $tglbpotong =  $req->input('tglbpotong') ?: null;
+          $tglinvoice = $req->input('tglinvoice') ?: null;
           $nopajak = $req->input('nopajak');
           $nobuktipotong=  $req->input('nobuktipotong');
           $noinvoice = $req->input('noinvoice');
 
-
-
-
-
-          $update = DB::connection('SML')->update("update dbinvoice set tanggal =:tanggal ,
+          // Tanggal transaksi (kolom Tanggal) tidak boleh diubah dari modal kelengkapan
+          // dokumen, dan hanya dokumen yang belum diotorisasi yang boleh diedit.
+          $update = DB::connection('SML')->update("update dbinvoice set
           Tglfakturpajak =:tglfpajak, nofakturpajak =:nopajak,nobuktipotong=:nobuktipotong,
-          tglbuktipotong=:tglbuktipotong,noinvoice=:noinvoice,tglinvoice=:tglinvoice where nobukti = :nobukti",
-        ['tanggal'=> $tanggal,'tglfpajak'=>$tglfpajak,'nopajak'=>$nopajak,'nobuktipotong'=>$nobuktipotong,
+          tglbuktipotong=:tglbuktipotong,noinvoice=:noinvoice,tglinvoice=:tglinvoice
+          where nobukti = :nobukti and isnull(IsOtorisasi1,0) = 0",
+        ['tglfpajak'=>$tglfpajak,'nopajak'=>$nopajak,'nobuktipotong'=>$nobuktipotong,
           'tglbuktipotong'=>$tglbpotong,'noinvoice'=>$noinvoice,'tglinvoice'=>$tglinvoice, 'nobukti' => $nobukti ] );
           return $update;
 
         }
 
 
+// Detail satu dokumen invoice cukup dicari lewat NoBukti. Dulu ikut disaring bulan/tahun
+// periode kerja user, padahal tabel Kelengkapan Dokumen memakai rentang tanggal bebas -
+// dokumen di luar bulan periode menghasilkan array kosong dan tombol Detail/Edit error
+// (Cannot read properties of undefined reading Tanggal).
 public function getDetailPembelian (Request $req) {
-  $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
   $tampilinvoicebeli = DB::connection("SML")->select("
-  declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun , @Bulan=:bulan
 
 Select 	A.NoBukti, A.NoUrut, A.Tanggal, A.KODECUSTSUPP, A.NamaCustSupp, A.NamaKota,
 A.NoPO,
@@ -418,8 +297,7 @@ A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
   A.BlnMasaPajak, A.ThnMasaPajak,a.myppn, A.NoBeli,A.tglbeli,A.TglPO,
   A.KodeGdg,A.kodebrg KODEBARANG,A.namabrg NAMABARANG,A.QNT,A.SATUAN,A.HARGA,A.NNET
 From vwTransInvoice A
-where year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan
-and A.FlagTipe<>9
+where A.FlagTipe<>9
 and a.noBukti =:nobukti
 
 /*
@@ -435,7 +313,7 @@ A.IsOtorisasi5, A.OtoUser5, A.TglOto5, A.NeedOtorisasi,
 order by A.NOBUKTI
 
 
-  " , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan, "nobukti" => $req->NoBukti]);
+  " , [ "nobukti" => $req->NoBukti]);
 
   return $tampilinvoicebeli;
 }
