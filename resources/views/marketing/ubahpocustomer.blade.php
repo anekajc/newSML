@@ -721,7 +721,7 @@ function buttonBrowsePO () {
     success: function (res) {
       upcListPO = res || []
       if (!upcListPO.length) {
-        alertify.warning('Belum ada PO Customer lain untuk customer ini. Input dulu di menu Terima PO Customer.')
+        alertify.warning('Belum ada PO Customer untuk customer ini. Input dulu di menu Terima PO Customer.')
         return
       }
       if ($.fn.DataTable.isDataTable('#tabel_list_pocust')) { $('#tabel_list_pocust').DataTable().destroy() }
@@ -730,7 +730,7 @@ function buttonBrowsePO () {
         html += '<tr class="pick-row" onclick="pilihPO(' + i + ')">'
           + '<td>' + upcTanggalISO(po.TglInput).split('-').reverse().join('/') + '</td>'
           + '<td>' + upcTanggalISO(po.TglTerima).split('-').reverse().join('/') + '</td>'
-          + '<td>' + upcEsc(po.POCustomer) + '</td>'
+          + '<td>' + upcEsc(po.POCustomer) + (Number(po.PoSaatIni) === 1 ? ' <span class="badge badge-info">No PO saat ini</span>' : '') + '</td>'
           + '<td class="text-right">' + upcAngka(po.RpPO, 2) + '</td>'
           + '</tr>'
       });
@@ -760,14 +760,18 @@ function submitUbahPO () {
   if (!upcSOAktif) { return }
   let idpocust = $("#input_ubah_idpocust").val()
   let nopobaru = $("#input_harga_nopoUbahPO").val()
+  // No PO sama dengan No PO SO saat ini = pengesahan (nomor tidak berubah), seperti desktop.
+  let sahkan = String(nopobaru).trim() === String(upcSOAktif.NoPesanan || '').trim()
   if (!idpocust) {
     alertify.warning('Pilih No PO baru lewat tombol cari di samping No. PO')
     return
   }
 
   let dlg = alertify.confirm(
-    'Ubah No PO',
-    'Ubah No PO SO ' + upcEsc(upcSOAktif.NoBukti) + ' dari "' + upcEsc(upcSOAktif.NoPesanan || '') + '" menjadi "' + upcEsc(nopobaru) + '"?',
+    sahkan ? 'Sahkan No PO' : 'Ubah No PO',
+    sahkan
+      ? 'Sahkan No PO "' + upcEsc(nopobaru) + '" untuk SO ' + upcEsc(upcSOAktif.NoBukti) + '? Nomor tidak berubah, SO pindah ke tab Revisi PO Cust.'
+      : 'Ubah No PO SO ' + upcEsc(upcSOAktif.NoBukti) + ' dari "' + upcEsc(upcSOAktif.NoPesanan || '') + '" menjadi "' + upcEsc(nopobaru) + '"?',
     function () {
       $.ajax({
         url: "{!! url('ubahpocustsimpan') !!}",
@@ -784,7 +788,7 @@ function submitUbahPO () {
             return
           }
           $("#formUbahPO").modal('hide')
-          alertify.success('No PO berhasil diubah')
+          alertify.success(sahkan ? 'No PO berhasil disahkan' : 'No PO berhasil diubah')
           loadAll()
         },
         error: function (err) {

@@ -125,8 +125,9 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
 
   // Daftar PO Customer pengganti untuk modal Ubah PO: milik customer SO yang sama, belum
   // diganti (pGanti), belum di-close, dan belum dipakai SO lain (lewat NoPesanan maupun
-  // IDPOCust). PO yang sedang terpasang di SO ini -- lewat IDPOCust atau nomor yang sama
-  // dengan NoPesanan-nya (ada SO draft lama yang IDPOCust-nya 0) -- tidak ikut ditampilkan.
+  // IDPOCust). PO yang nomornya sama dengan No PO SO saat ini ikut ditampilkan (kolom
+  // PoSaatIni = 1): memilihnya berarti mengesahkan No PO tanpa mengubah nomornya -- di
+  // desktop 39 dari 89 riwayat berupa "PO Asal X --> X".
   public function listPO (Request $req) {
     $so = DB::connection('SML')->select("select NOBUKTI, KODECUST, isnull(NoPesanan,'') NoPesanan, isnull(IDPOCust,0) IDPOCust from DBSO where NOBUKTI = :nobukti", ["nobukti" => $req->nobukti]);
     if (!$so) {
@@ -134,14 +135,14 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
     }
 
     return DB::connection('SML')->select("
-      select A.ID, A.TglInput, A.TglTerima, A.POCustomer, A.KodeCustSupp, A.RpPO
+      select A.ID, A.TglInput, A.TglTerima, A.POCustomer, A.KodeCustSupp, A.RpPO,
+        case when A.ID = :idpocust or A.POCustomer = :nopesanan then 1 else 0 end PoSaatIni
       from DBPOCUSTSUPP A
       where A.KodeCustSupp = :kodecust
         and isnull(A.pGanti,0) = 0 and isnull(A.IsCLose,0) = 0
-        and A.ID <> :idpocust and A.POCustomer <> :nopesanan
         and not exists (select 1 from DBSO S where S.NOBUKTI <> :nobukti
                           and ((S.KODECUST = A.KodeCustSupp and S.NoPesanan = A.POCustomer) or S.IDPOCust = A.ID))
-      order by A.TglInput desc, A.ID desc
+      order by PoSaatIni desc, A.TglInput desc, A.ID desc
     ", ["kodecust" => $so[0]->KODECUST, "idpocust" => $so[0]->IDPOCust, "nopesanan" => $so[0]->NoPesanan, "nobukti" => $so[0]->NOBUKTI]);
   }
 
@@ -183,9 +184,7 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
     if ($po->pGanti || $po->IsCLose) {
       return 'PO Customer ' . $po->POCustomer . ' sudah diganti / di-close';
     }
-    if ((int) $po->ID === (int) $so->IDPOCust || trim($po->POCustomer) === trim($so->NoPesanan)) {
-      return 'No PO yang dipilih sama dengan No PO SO saat ini';
-    }
+    // No PO sama dengan No PO SO saat ini diperbolehkan (pengesahan, seperti desktop).
     $dipakai = DB::connection('SML')->select("
       select top 1 NOBUKTI from DBSO where NOBUKTI <> :nobukti
         and ((KODECUST = :kodecust and NoPesanan = :nopo) or IDPOCust = :id)",
@@ -204,12 +203,13 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
 
         // PO lama = baris IDPOCust SO, atau (untuk SO draft lama yang IDPOCust-nya 0) baris
         // dengan nomor = NoPesanan lama milik customer yang sama. Tanpa ini PO draft lama
-        // muncul lagi di Outstanding Terima PO Customer.
+        // muncul lagi di Outstanding Terima PO Customer. Kalau No PO tidak berubah
+        // (pengesahan), PO terpilih itu sendiri yang ditandai -- sama seperti data desktop
+        // (mis. 720955056 --> 720955056, ID 27886 pGanti = 1).
         DB::connection('SML')->update("
           update DBPOCUSTSUPP set pGanti = 1
-          where ID <> :idbaru
-            and (ID = :idlama or (KodeCustSupp = :kodecust and POCustomer = :nolama))",
-          ["idbaru" => $po->ID, "idlama" => $so->IDPOCust, "kodecust" => $so->KODECUST, "nolama" => $poAsal]);
+          where ID = :idlama or (KodeCustSupp = :kodecust and POCustomer = :nolama)",
+          ["idlama" => $so->IDPOCust, "kodecust" => $so->KODECUST, "nolama" => $poAsal]);
 
         $items = DB::connection('SML')->select("select Urut, KodeBrg, Harga from DBSODET where NOBUKTI = :nobukti order by Urut", ["nobukti" => $so->NOBUKTI]);
         foreach ($items as $item) {
