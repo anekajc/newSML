@@ -138,12 +138,13 @@
   white-space: nowrap;
 }
 </style>
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 
 
 @section('content')
-<div id="page1" class="container-fluid mainpage">
+<div id="page1" class="mainpage">
 
   <div class="container-fluid">
 
@@ -167,7 +168,7 @@
 
 
 
-  <div id="contentContainer" class="container-fluid" >
+  <div id="contentContainer" class="">
     <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
     <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -226,7 +227,7 @@
                   <div class="modal-header">
                     <h5 class="modal-title">
                       <i class="bi bi-funnel"></i>
-                      Filter Data
+                      Filter Nota Retur Penjualan
                       <span class="rt-active-badge" id="nrpFilterBadge">0 aktif</span>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterNRP').modal('hide')">
@@ -236,14 +237,16 @@
 
                   <div class="modal-body">
                     <div class="rt-section">
-                      <div class="rt-group-label">Status</div>
-                      <div>
-                        <label class="rt-field-label" for="input_filternrp">Status Otorisasi</label>
-                        <select class="rt-native" id="input_filternrp">
-                          <option value=0 selected>Semua</option>
-                          <option value=1>Belum Otorisasi</option>
-                          <option value=2>Sudah Otorisasi</option>
-                        </select>
+                      <div class="rt-group-label">Penyaringan Data</div>
+                      <div class="rt-grid-2">
+                        <div>
+                          <label class="rt-field-label" for="input_filternrp">Otorisasi</label>
+                          <select class="rt-native" id="input_filternrp">
+                            <option value=0 selected>Semua</option>
+                            <option value=2>Sudah</option>
+                            <option value=1>Belum</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -296,6 +299,7 @@
 </div>
 
 <div id="page2" class="container-fluid mainpage" style="display: none">
+<div id="formBsGrid">
   <!-- <div id="" class="modal-content "> -->
     <div id= "modalAdd" class="showhideform">
       <div id='formBsGrid'>
@@ -308,7 +312,17 @@
             {{-- <h1>Nota Retur Penjualan</h1> --}}
           </div>
           <div class="col-6 text-right">
-            <button type="button" class="btn btn-danger btn-lg " style="height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
+            <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()">
+        Close
+      </button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
@@ -476,8 +490,9 @@
                 </div> -->
                   <div class="col-8">
                     <div class="form-group input-group">
-                      <input type="text" class="form-control" id="input_add_valas" placeholder="" disabled>
-                      <button onclick="buttonAddListValas()" id="buttonAddListValas" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
+                      <select class="form-control" id="input_add_valas" onchange="onChangeValasDropdown()"></select>
+                      {{-- Tombol browse lama disembunyikan; status disabled/hidden-nya tetap dipakai kode lama untuk mengunci dropdown valas (lihat mktSinkronKunciValas). --}}
+                      <button onclick="buttonAddListValas()" id="buttonAddListValas" class="btn btn-chip-biru btn-sm d-none" type="button"><i class="bi bi-search"></i></button>
                     </div>
                   </div>
                 </div>
@@ -739,16 +754,14 @@
     <!-- <div class="container-fluid">
       <div class="row ">
       <div class="col-md-12 mt-2 text-right">
-      <button type="button" class="btn btn-primary btn-lg" style="
-        height: 30px;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        transition: background-color 0.3s, box-shadow 0.3s;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-        onclick="buttonAddAddItem()" class="btn btn-secondary"><b>+ Tambah Item</b></button>
+      <button type="button" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              transition: background-color 0.3s, box-shadow 0.3s;"
+        onclick="buttonAddAddItem()" class="btn btn-secondary">Tambah Item</button>
       </div>
       </div>
 
@@ -796,7 +809,7 @@
         <div class="col-md-8">
           <div class="input-group form-group">
             <input id="AddAddKodeBrg" type="text" class="form-control" disabled>
-            <button type="button" id="buttonAddListBarang" onclick="buttonAddListBarang()" class="btn btn-primary" >+</button>
+            <button type="button" id="buttonAddListBarang" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button>
 
           </div>
         </div>
@@ -946,17 +959,25 @@
 
     <div class="row mt-2" style="margin-top: 0">
       <div class="col-md-12 text-right mt-4">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddBatal()" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Batal</button>
+        <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
 
-        <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-primary" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Submit Add</button>
+        <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
         <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
       </div>
 
@@ -1157,17 +1178,25 @@
 
   <div class="row mt-2" style="margin-top: 0">
     <div class="col-md-12 text-right mt-4">
-      <button type="button" class="btn btn-danger" onclick="buttonAddBatal()" style="height: 30px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;">Batal</button>
+      <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
 
-      <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-chip-biru" style="height: 30px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;">Simpan</button>
+      <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
       <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
     </div>
 
@@ -1189,7 +1218,17 @@
             <h1>Form Koreksi</h1>
           </div>
           <div class="col-6 text-right">
-            <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+            <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
@@ -1531,9 +1570,9 @@
     <div class="container-fluid mt-4">
       <div id="" class="row">
         <div class="col-12 text-right">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
 
-          <!-- <button id="" type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
+          <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
         </div>
       </div>
     </div>
@@ -1559,10 +1598,12 @@
 
 
   </div>
+</div>{{-- /#formBsGrid --}}
 </div>
 
 
 <div id="page3" class="container-fluid mainpage" style="display: none">
+<div id="formBsGrid">
 
   <!-- <div id="" class="modal-content "> -->
 
@@ -1578,7 +1619,17 @@
             <h1>Form Otorisasi</h1>
           </div>
           <div class="col-6 text-right">
-            <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+            <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
           </div>
         </div>
       <!-- <button onclick="loadAll()">tes</button> -->
@@ -1978,20 +2029,25 @@
         <div class="col-12 text-right">
 
 
-          <button id="" type="button" onclick="submitOtorisasi()" class="btn btn-primary" style="height: 30px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;">Submit</button>
+          <button id="" type="button" onclick="submitOtorisasi()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Otorisasi</button>
           <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
         </div>
         </div>
-        <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+        <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
       </div>
     </div>
 
 
-    </div>
+    </div>{{-- /#formBsGrid --}}
+</div>
 
 
 
@@ -2139,32 +2195,30 @@
                 </div>
           </div>
           <div class="modal-footer">
-            <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-            <!-- <button type="button" class="btn btn-danger btn-lg"
+            <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+            <!-- <button type="button" class="btn btn-lg btn-batal-add"
             style="
-            margin-top:-10px;
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
             onclick="buttonAddListBatal()">Batal</button> -->
 
-            <button type="button" class="btn btn-primary btn-lg"
+            <button type="button" class="btn btn-lg btn-chip-biru"
             style="
-            margin-top:-10px;
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="submitAddNew()">Submit</button>
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="submitAddNew()">Simpan</button>
           </div>
         </div>
 
@@ -2227,7 +2281,6 @@
                         <th style="padding: 4px 12px;" scope="col">Kode</th>
                         <th style="padding: 4px 12px;" scope="col">Nama</th>
                         <th style="padding: 4px 12px;" scope="col">Alamat</th>
-                        <th style="padding: 4px 12px;" scope="col">Actions</th>
                       </tr>
                     </thead>
                     <tbody id="tabel_data_add_list_pelanggan" class="text-left" >
@@ -2235,10 +2288,6 @@
                         <td>-</td>
                         <td>-</td>
                         <td>-</td>
-                          <td class="text-center">
-                            <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                            <button class="btn btn-primary btn-sm" style="padding-top:10px;" type="button" ><i class="bi bi-plus"></i></button>
-                          </td>
                     </tr>
                     </tbody>
                   </table>
@@ -2249,10 +2298,9 @@
                   </div>
             </div>
             <div class="modal-footer">
-              <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-              <button type="button" class="btn btn-danger btn-lg"
+              <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+              <button type="button" class="btn btn-lg btn-batal-add"
               style="
-              margin-top:-10px;
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -2305,18 +2353,17 @@
                 </div>
           </div>
           <div class="modal-footer">
-            <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-            <button type="button" class="btn btn-danger btn-lg"
+            <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+            <button type="button" class="btn btn-lg btn-batal-add"
             style="
-            margin-top:-10px;
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
             onclick="buttonAddListBatal()">Batal</button>
           </div>
         </div>
@@ -2342,17 +2389,12 @@
                     <tr>
                       <th style="padding: 4px 12px;" scope="col">Kode</th>
                       <th style="padding: 4px 12px;" scope="col">Nama</th>
-                      <th style="padding: 4px 12px;" scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="tabel_data_add_list_pic" class="text-left" >
                     <tr >
                       <td>-</td>
                       <td>-</td>
-                        <td class="text-center">
-                          <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                          <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                        </td>
                   </tr>
                   </tbody>
                 </table>
@@ -2363,18 +2405,17 @@
                 </div>
           </div>
           <div class="modal-footer">
-            <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-            <button type="button" class="btn btn-danger btn-lg"
+            <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+            <button type="button" class="btn btn-lg btn-batal-add"
             style="
-            margin-top:-10px;
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
             onclick="buttonAddListBatal()">Batal</button>
           </div>
         </div>
@@ -2397,17 +2438,12 @@
                   <tr>
                     <th style="padding: 4px 12px;" scope="col">Kode</th>
                     <th style="padding: 4px 12px;" scope="col">Nama</th>
-                    <th style="padding: 4px 12px;" scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="tabel_data_add_list_lokasipenerima" class="text-left" >
                   <tr >
                     <td>-</td>
                     <td>-</td>
-                      <td class="text-center">
-                        <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                        <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                      </td>
                 </tr>
                 </tbody>
               </table>
@@ -2418,18 +2454,17 @@
               </div>
         </div>
         <div class="modal-footer">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-          <button type="button" class="btn btn-danger btn-lg"
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+          <button type="button" class="btn btn-lg btn-batal-add"
           style="
-          margin-top:-10px;
-          height: 30px;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          transition: background-color 0.3s, box-shadow 0.3s;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
           onclick="buttonAddListBatal()">Batal</button>
         </div>
       </div>
@@ -2453,7 +2488,6 @@
                       <th style="padding: 4px 12px;" scope="col">Nomor</th>
                       <th style="padding: 4px 12px;" scope="col">Nama</th>
                       <th style="padding: 4px 12px;" scope="col">Alamat</th>
-                      <th style="padding: 4px 12px;" scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="tabel_data_add_list_alamatkirim" class="text-left" >
@@ -2461,10 +2495,6 @@
                       <td>-</td>
                       <td>-</td>
                       <td>-</td>
-                        <td class="text-center">
-                          <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                          <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                        </td>
                   </tr>
                   </tbody>
                 </table>
@@ -2475,18 +2505,17 @@
                 </div>
           </div>
           <div class="modal-footer">
-            <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-            <button type="button" class="btn btn-danger btn-lg"
+            <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+            <button type="button" class="btn btn-lg btn-batal-add"
             style="
-            margin-top:-10px;
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
             onclick="buttonAddListBatal()">Batal</button>
           </div>
         </div>
@@ -2509,17 +2538,12 @@
                   <tr>
                     <th style="padding: 4px 12px;" scope="col">Kode</th>
                     <th style="padding: 4px 12px;" scope="col">Nama</th>
-                    <th style="padding: 4px 12px;" scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="tabel_data_add_list_backoffice" class="text-left" >
                   <tr >
                     <td>-</td>
                     <td>-</td>
-                      <td class="text-center">
-                        <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                        <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                      </td>
                 </tr>
                 </tbody>
               </table>
@@ -2530,18 +2554,17 @@
               </div>
         </div>
         <div class="modal-footer">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-          <button type="button" class="btn btn-danger btn-lg"
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+          <button type="button" class="btn btn-lg btn-batal-add"
           style="
-          margin-top:-10px;
-          height: 30px;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          transition: background-color 0.3s, box-shadow 0.3s;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
           onclick="buttonAddListBatal()">Batal</button>
         </div>
       </div>
@@ -2564,17 +2587,12 @@
                     <tr>
                       <th style="padding: 4px 12px;" scope="col">Kode</th>
                       <th style="padding: 4px 12px;" scope="col">Nama</th>
-                      <th style="padding: 4px 12px;" scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="tabel_data_add_list_sales" class="text-left" >
                     <tr >
                       <td>-</td>
                       <td>-</td>
-                        <td class="text-center">
-                          <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                          <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                        </td>
                   </tr>
                   </tbody>
                 </table>
@@ -2585,18 +2603,17 @@
                 </div>
           </div>
           <div class="modal-footer">
-            <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-            <button type="button" class="btn btn-danger btn-lg"
+            <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+            <button type="button" class="btn btn-lg btn-batal-add"
             style="
-            margin-top:-10px;
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
             onclick="buttonAddListBatal()">Batal</button>
           </div>
         </div>
@@ -2638,18 +2655,17 @@
               </div>
         </div>
         <div class="modal-footer">
-          <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-          <button type="button" class="btn btn-danger btn-lg"
+          <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+          <button type="button" class="btn btn-lg btn-batal-add"
           style="
-          margin-top:-10px;
-          height: 30px;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          transition: background-color 0.3s, box-shadow 0.3s;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
           onclick="buttonAddListBatal()">Batal</button>
         </div>
       </div>
@@ -2720,6 +2736,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 
@@ -2902,11 +2919,11 @@ function tulisTheadHeaderNRP (tableSel, cols) {
 function nrpValueCell (row, col) {
   let raw = nrpPickCI(row, col[0]);
   let type = col[3];
-  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/') + '</td>'; }
+  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>'; }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
 }
@@ -2914,7 +2931,7 @@ function nrpValueCell (row, col) {
 function tabelActionsCell (row) {
   let nobukti = nrpPickCI(row, 'NOBUKTI');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-primary btn-sm" type="button" onclick="submitAddAllNew(\'' + nobukti + '\')"><i class="bi bi-plus"></i></button>';
+  html += '<button class="btn btn-success btn-sm" title="Buat Nota Retur" type="button" onclick="submitAddAllNew(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -2934,7 +2951,7 @@ function nrpTabel2Or3ActionsCell (row) {
     html += '<button class="btn btn-danger btn-sm" title="Batal Otorisasi" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\' , \'' + norpj + '\')"><i class="bi bi-key"></i></button>';
   } else {
     html += '<button class="btn btn-success btn-sm" title="Edit" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + norpj + '\')"><i class="bi bi-pen"></i></button>';
-    html += '<button class="btn btn-primary btn-sm" title="Otorisasi" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\' , \'' + norpj + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button class="btn btn-info btn-sm" title="Otorisasi" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\' , \'' + norpj + '\')"><i class="bi bi-key"></i></button>';
     html += '<button class="btn btn-danger btn-sm" title="Hapus" type="button" onclick="submitDeleteAll(\'' + nobukti + '\')"><i class="bi bi-trash"></i></button>';
   }
   html += '</div></td>';
@@ -3389,6 +3406,67 @@ function buttonAddPickValas (kode, kurs) {
 
   buttonAddListBatal()
 }
+
+// ---- Valas sebagai dropdown (sama seperti muatDropdownValas/onChangeValas di purchaseOrder) ----
+// Daftar diambil dari endpoint yang sama dengan browse valas lama.
+let listValasDropdown = []
+
+function muatDropdownValas () {
+  $.ajax({
+    url: "{!! url('notareturpenjualanlistvalas') !!}",
+    type: "get",
+    async: false,
+    data: {},
+    success: function(res) {
+      listValasDropdown = res || []
+      let selectEl = document.getElementById("input_add_valas")
+      if (!selectEl) { return }
+      let kodeTerpilih = selectEl.value
+      selectEl.innerHTML = ''
+      listValasDropdown.forEach((item) => {
+        let opt = document.createElement('option')
+        opt.value = item.kodevls
+        opt.textContent = `${item.kodevls} - ${item.namavls}`
+        selectEl.appendChild(opt)
+      });
+      if (listValasDropdown.some(item => item.kodevls === kodeTerpilih)) {
+        selectEl.value = kodeTerpilih
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+  })
+}
+
+// Isi kurs dari valas terpilih - sama dengan buttonAddPickValas(), tanpa menutup modal pemilih.
+function onChangeValasDropdown () {
+  let kode = document.getElementById("input_add_valas").value
+  let itemX = listValasDropdown.find(item => item.kodevls === kode)
+  let kurs = itemX && itemX.kurs ? parseFloat(itemX.kurs).toFixed(2) : '0.00'
+  onChangeHeader('KODEVLS' , kode)
+  onChangeHeader('KURS' , kurs)
+  document.getElementById("input_add_kurs").value = kurs
+}
+
+// Kode lama mengunci valas dengan men-disable / menyembunyikan tombol #buttonAddListValas.
+// Dropdown mengikuti status tombol itu supaya aturan kuncinya tetap sama.
+function mktSinkronKunciValas () {
+  let btn = document.getElementById("buttonAddListValas")
+  let sel = document.getElementById("input_add_valas")
+  if (!btn || !sel) { return }
+  sel.disabled = btn.disabled || btn.hidden
+}
+
+$(function () {
+  muatDropdownValas()
+  mktSinkronKunciValas()
+  let btn = document.getElementById("buttonAddListValas")
+  if (btn && window.MutationObserver) {
+    new MutationObserver(mktSinkronKunciValas).observe(btn, { attributes: true, attributeFilter: ['disabled', 'hidden'] })
+  }
+})
 
 function cleanFormAddAdd () {
   document.getElementById("AddAddKodeBrg").value = ''
@@ -3874,7 +3952,7 @@ function refreshDataTableKoreksi (nobukti , noretur) {
         xSubtotal += Number(item.SUBTOTALRp)
         let actionsCol = isDetailView ? '' : `
             <td class="text-center">
-              <button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksiEdit(${i})"><i class="bi bi-pen"></i></button>
+              <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksiEdit(${i})"><i class="bi bi-pen"></i></button>
             </td>`
         rowTable+= `
           <tr>
@@ -3893,7 +3971,7 @@ function refreshDataTableKoreksi (nobukti , noretur) {
           </tr>
         `
       });
-      // <button class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDelete(${i})"><i class="bi bi-trash"></i></button>
+      // <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDelete(${i})"><i class="bi bi-trash"></i></button>
 
       rowTable += `<tr style="background-color: ivory; font-weight: bold" >
         <td colspan=8 class="text-right">Total</td>
@@ -5094,7 +5172,7 @@ function buttonKoreksiEdit (index ) {
 //                 <td class="text-right">${item.SubTotal ? formatAngka(parseFloat(item.SubTotal).toFixed(2))  : '0.00'}</td>
 //                 <td>${item.KetDetail}</td>
 //                 <td class="text-center">
-//                   <button class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDelete(${i} ,'${item.NoBukti}' , '${item.NAMABRG}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
+//                   <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDelete(${i} ,'${item.NoBukti}' , '${item.NAMABRG}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
 //                 </td>
 //               </tr>
 //

@@ -450,17 +450,18 @@
 
 </style>
 {{-- end tampilan search modal barang all --}}
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 @section('content')
 
-<div id="page1" class="mainpage container-fluid">
+<div id="page1" class="mainpage">
 
 <div id="printContainer" style="display:none">
 
 
 </div>
-<div id="contentContainer" class="container-fluid" >
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -482,7 +483,7 @@
         <div class="modal-header">
           <h5 class="modal-title">
             <i class="bi bi-funnel"></i>
-            Filter Data
+            Filter Invoice Jasa
             <span class="rt-active-badge" id="ijFilterBadge">0 aktif</span>
           </h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterIJ').modal('hide')">
@@ -492,14 +493,16 @@
 
         <div class="modal-body">
           <div class="rt-section">
-            <div class="rt-group-label">Status</div>
-            <div>
-              <label class="rt-field-label" for="input_filterij">Status Otorisasi</label>
-              <select class="rt-native" id="input_filterij">
-                <option value=0 selected>Semua</option>
-                <option value=1>Belum Otorisasi</option>
-                <option value=2>Sudah Otorisasi</option>
-              </select>
+            <div class="rt-group-label">Penyaringan Data</div>
+            <div class="rt-grid-2">
+              <div>
+                <label class="rt-field-label" for="input_filterij">Otorisasi</label>
+                <select class="rt-native" id="input_filterij">
+                  <option value=0 selected>Semua</option>
+                  <option value=2>Sudah</option>
+                  <option value=1>Belum</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -509,7 +512,7 @@
           <div class="rt-footer-buttons">
             <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
               onclick="$('#modalFilterIJ').modal('hide')">Batal</button>
-            <button type="button" class="rt-btn rt-btn-chip-biru" onclick="buttonFilterIJ(); $('#modalFilterIJ').modal('hide');">Terapkan</button>
+            <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterIJ(); $('#modalFilterIJ').modal('hide');">Terapkan</button>
           </div>
         </div>
 
@@ -541,7 +544,7 @@
           <i class="bi bi-funnel"></i> Filter
         </button>
         <div class="po-toolbar-act">
-          <button type="button" class="btn btn-primary" onclick="buttonAdd()">Tambah</button>
+          <button type="button" class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
         </div>
       </div>
       <div id="rtBarTabel"></div>
@@ -566,6 +569,7 @@
 
 
 <div class="container-fluid mainpage" id="page2" style="display: none">
+<div id="formBsGrid">
 
   <div id="" class="">
     <!-- <div class="modal-header">
@@ -584,8 +588,28 @@
           {{-- <h1>Form Invoice</h1> --}}
         </div>
         <div class="col-6 text-right">
-          <!-- <button type="button" class="btn btn-chip-biru btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button> -->
-          <button type="button" class="btn btn-danger btn-lg " style="height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+          <!-- <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button> -->
+          <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
 
         </div>
       </div>
@@ -957,16 +981,25 @@
     <div id="" class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2 text-right">
-          <!-- <button type="button" class="btn btn-chip-biru" onclick="buttonAddAddItem()" class="btn btn-secondary"  >+ Tambah Item</button> -->
+          <!-- <button type="button" class="btn btn-lg btn-chip-biru" onclick="buttonAddAddItem()" class="btn btn-secondary"   style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              transition: background-color 0.3s, box-shadow 0.3s;">Tambah Item</button> -->
           <button type="button" id='buttonTambahItem' class="btn btn-lg btn-chip-biru" style="
-        height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-        text-transform: uppercase; transition: background-color 0.3s, box-shadow 0.3s;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-        onclick="buttonAddAddItem()"><b>Tambah Item</b></button>
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              transition: background-color 0.3s, box-shadow 0.3s;"
+        onclick="buttonAddAddItem()">Tambah Item</button>
         </div>
 
       </div>
-      <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Submit</button> -->
+      <!-- <button id="" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
     </div>
 
     <div id="formAddAdd" class="container-fluid showhideitem">
@@ -1067,18 +1100,26 @@
 
       <div class="row mt-2">
         <div class="col-md-12 text-right mt-4">
-          <!-- <button type="button" class="btn btn-secondary" onclick="closeShowHideItem()" >Batal</button> -->
-          <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-danger" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Batal</button>
+          <!-- <button type="button" class="btn btn-batal-add" onclick="closeShowHideItem()" >Batal</button> -->
+          <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-lg btn-batal-add" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
           <!-- <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-chip-biru" >Add</button> -->
-          <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-chip-biru" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Simpan</button>
+          <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
 
           <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-chip-biru" >Edit</button> -->
         </div>
@@ -1108,7 +1149,7 @@
             </div>
             <!-- <div class="col-md-4 text-right"> -->
 
-            <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru" >+</button> -->
+            <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button> -->
             <!-- </div> -->
             <div class="col-md-8">
               <input id="AddEditKodeBrg" type="text" class="form-control" disabled>
@@ -1210,21 +1251,29 @@
 
       <div class="row mt-2">
         <div class="col-md-12 text-right mt-4">
-          <!-- <button type="button" class="btn btn-secondary" onclick="closeShowHideItem()" >Batal</button>
+          <!-- <button type="button" class="btn btn-batal-add" onclick="closeShowHideItem()" >Batal</button>
 
           <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-chip-biru" >Edit</button> -->
 
-          <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-danger" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Batal</button>
+          <button id="" type="button" onclick="closeShowHideItem()" class="btn btn-lg btn-batal-add" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
           <!-- <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-chip-biru" >Add</button> -->
-          <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-chip-biru" style="height: 30px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;">Simpan</button>
+          <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
 
           <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-chip-biru" >Edit</button> -->
         </div>
@@ -1236,10 +1285,12 @@
 
   </div>
 
+</div>{{-- /#formBsGrid --}}
 </div>
 
 
 <div class="container-fluid mainpage" id="page3" style="display: none">
+<div id="formBsGrid">
 
   <div id="" class="container-fluid ">
 
@@ -1253,8 +1304,28 @@
             <h1></h1>
           </div>
           <div class="col-6 text-right">
-            <!-- <button type="button" class="btn btn-chip-biru btn-lg " style="height: 60px; " onclick="buttonCloseForm()"  >Close</button> -->
-            <button type="button" class="btn btn-danger" style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+            <!-- <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button> -->
+            <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
 
           </div>
         </div>
@@ -1281,7 +1352,7 @@
             </div>
             <!-- <div class="col-md-3 text-right">
               <div class="form-group">
-            <button class="btn btn-chip-biru btn-sm text-right" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-plus"></i></button>
+            <button class="btn btn-chip-biru btn-sm" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
             </div>
           </div> -->
             <div class="col-md-8">
@@ -1399,7 +1470,7 @@
                     <div class="row">
 
                     <div class="form-group">
-                  <button class="btn btn-chip-biru btn-sm text-right" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-plus"></i></button>
+                  <button class="btn btn-chip-biru btn-sm" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
 
@@ -1704,27 +1775,28 @@
     <div id="" class="container-fluid mt-2 showhidepage3 page3otorisasi">
       <div class="row">
         <div class="text-right col-12">
-          <button type="button" class="btn btn-chip-biru btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="submitOtorisasi()" class="btn btn-secondary"><b>Otorisasi</b></button>
+          <button type="button" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="submitOtorisasi()" class="btn btn-secondary">Otorisasi</button>
         </div>
 
       </div>
-      <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+      <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
     </div>
     </div>
 
     </div>
 
 
-</div></div>
+</div></div>{{-- /#formBsGrid --}}
+</div>
 <!-- </div> -->
 
 
@@ -1795,7 +1867,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="closeShowHideAdd()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="closeShowHideAdd()" >Batal</button>
       </div>
       </div>
 
@@ -1858,7 +1930,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="closeShowHideAdd()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="closeShowHideAdd()" >Batal</button>
       </div>
       </div>
 
@@ -1927,7 +1999,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="closeShowHideAdd()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="closeShowHideAdd()" >Batal</button>
       </div>
       </div>
 
@@ -1994,7 +2066,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="closeShowHideAdd()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="closeShowHideAdd()" >Batal</button>
       </div>
       </div>
 
@@ -2039,6 +2111,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 let xppncust = 0
@@ -2232,12 +2305,12 @@ function ijValueCell (row, col) {
 
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
-    return '<td>' + formatDate(raw, '/') + '</td>';
+    return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>';
   }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   if (type === 'bool') {
     return Number(raw)
@@ -2254,12 +2327,12 @@ function tabelActionsCell (row) {
   let nobukti = ijPickCI(row, 'NoBukti');
   let isOto = Number(ijPickCI(row, 'IsOtorisasi1'));
   let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   } else {
-    html += '<button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + ijPickCI(row, 'IsOtorisasi1') + '\')"><i class="bi bi-pen"></i></button>';
-    html += '<button class="btn btn-chip-biru btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + ijPickCI(row, 'IsOtorisasi1') + '\')"><i class="bi bi-pen"></i></button>';
+    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   }
   html += '</div></td>';
   return html;
@@ -3637,8 +3710,8 @@ function refreshDataTableAdd (nobukti) {
                     <td>${item.KetDetail ? item.KetDetail : ''}</td>
 
                     <td class="text-center">
-                      <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
-                      <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDelete(${i}  )"><i class="bi bi-trash"></i></button>
+                      <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
+                      <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonAddDelete(${i}  )"><i class="bi bi-trash"></i></button>
                     </td>
                   </tr>
 
@@ -3773,8 +3846,8 @@ if (pcekglobal) {
                   <td>${item.KetDetail ? item.KetDetail : ''}</td>
 
                   <td class="text-center">
-                    <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
-                    <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDelete(${i} ,'${item.NoBukti}' , '${item.NAMABRG}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
+                    <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
+                    <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonAddDelete(${i} ,'${item.NoBukti}' , '${item.NAMABRG}' , '${item.Urut}'  )"><i class="bi bi-trash"></i></button>
                   </td>
                 </tr>
 

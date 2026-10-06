@@ -11,6 +11,10 @@ Catatan ini mendaftar semua perubahan database DBSMLBARU dari upgrade menu **pur
 6. Purchase Order (3 Oktober 2026)
 7. Purchase Order Non-Stock (3 Oktober 2026, tanpa perubahan database)
 8. Penerimaan Stock (`newpo`) dan Penerimaan Non Stock (`newpojasa`) (5 Oktober 2026, tanpa perubahan database)
+9. Invoice Pembelian (`invoicepembelian`) (5 Oktober 2026, tanpa perubahan database)
+10. Perintah Retur Beli (`perintahreturbeli`) (5 Oktober 2026)
+11. Retur Pembelian Gudang (`returbeli`) dan Invoice Retur Beli (`invoicereturbeli`) (5 Oktober 2026, tanpa perubahan database)
+12. Penerimaan ACC gabungan (`newpobeliacc`), gabungan dari `newpobeliacc`, `newpobeliacctunai`, `newpobeliaccbiayatunai`, dan `newpobeliaccbiayakredit` (5 Oktober 2026, tanpa perubahan database). Kolom `fnc_masterbeli`/`fnc_Tampilbeli` di DBSMLBARU sudah sama dengan DBSMLNEW, dan menu web `0304 newpobeliacc` sudah ada di `02_menu_web.sql`.
 
 **Script umum (bukan hanya purchasing):** `../umum/02_menu_web.sql` membuat menu web dan hak aksesnya untuk **semua** menu. Cukup dijalankan sekali. Kalau sudah dijalankan untuk modul lain, tidak perlu diulang.
 
@@ -29,6 +33,7 @@ Buka di SSMS, lalu jalankan berurutan:
 | 3 | `03_cek_hasil.sql` | Cek hasil. Isinya hanya SELECT | Disarankan |
 | 4 | `04_vwoutporp_uang_muka_beli.sql` | Perbaiki rumus view VWOUTPORP (menu Uang Muka Beli) | Ya, kalau menu Uang Muka Beli dipakai |
 | 5 | `05_purchase_order.sql` | Tambah 2 kolom di vwMasterPO, alias kolom tabel Outstanding PR | Ya. Tanpa ini tab Purchase Order error |
+| 6 | `06_perintah_retur_beli.sql` | Buat view vwBrowsPrRBeli (kolom Status PRB) | Ya. Tanpa ini tabel Perintah Retur Beli error |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -103,6 +108,13 @@ Buka di SSMS, lalu jalankan berurutan:
   - ⚠️ `ALTER VIEW` mengganti seluruh definisi view. Jalankan dulu `EXEC sp_helptext 'dbo.vwMasterPO'` di server. Kalau isinya beda dengan versi dev, cukup tambahkan 2 kolom dan join D di atas ke definisi milik server (`qntbeli` juga ikut ke `GROUP BY`).
 - **Tabel `DBHEADERTABLEALIAS`: tambah 1 baris** untuk `href = 'purchaseorder'`, `urut = 1`, berisi alias kolom tabel Outstanding PR (`SisaPPL` tampil sebagai "SisaPR"). Baris hanya ditambahkan kalau belum ada.
 
+### 6. Menu Perintah Retur Beli (file `06_perintah_retur_beli.sql`, 5 Oktober 2026)
+- **View baru `vwBrowsPrRBeli`**, disalin dari DBSMLNEW. Dibuat hanya kalau belum ada.
+  - `status` = `Belum` / `Sebagian` / `Sudah` per PRB, dari qty `DBPRRBELIDET` dibanding qty yang sudah diretur di `DBRBELIDET` (lewat `NOPRB`).
+  - **Dipakai oleh:** kolom Status di tabel Perintah Retur Beli (`PerintahReturBeliController@loadAll`). Tanpa view ini tabel PRB error.
+  - Hanya membaca `DBPRRBELI`, `DBPRRBELIDET`, dan `DBRBELIDET`. Tidak mengubah data.
+- Menu **Retur Pembelian Gudang** (`returbeli`) dan **Invoice Retur Beli** (`invoicereturbeli`) yang di-upgrade bersamaan tidak butuh perubahan DB. Pengaturan kolom tabelnya memakai `DBHEADERTABLE` dari file 01.
+
 ---
 
 ## Yang TIDAK mengubah database
@@ -118,6 +130,9 @@ Bagian ini tidak perlu dijalankan apa pun di server:
 - **Penerimaan Stock dan Penerimaan Non Stock** (`newpo`, `newpojasa`): hanya kode program. Butuh `../umum/02_menu_web.sql` (hak akses lewat `DBMENUWEB`/`DBFLMENUWEB`) dan `DBHEADERTABLE` dari file 01 (pengaturan kolom tabel). Tidak ada tabel, view, atau SP baru.
   - SP `sp_BeliGudang` **tidak diubah**. SP itu hanya punya cabang I/U/D, sehingga simpan Faktur & Keterangan dari modal Edit (`choice = 'F'`) sebelumnya tidak pernah tersimpan. Sekarang controller menjalankan `UPDATE dbBeli SET FAKTURSUPP, KETERANGAN` langsung untuk NoBukti itu.
   - Data lama tidak disentuh. Di dev ada 111 header `dbBeli` tanpa detail (LPB kosong yang tampil bertanggal 1970/01/01). Form Add sekarang menolak item yang dicentang dengan qty 0, supaya header kosong baru tidak terbentuk. Header yang sudah ada dibiarkan.
+- **Invoice Pembelian** (`invoicepembelian`): hanya kode program. Butuh `../umum/02_menu_web.sql` (hak akses lewat `DBMENUWEB`/`DBFLMENUWEB`, menu web kode `0305`) dan `DBHEADERTABLE` dari file 01 (pengaturan kolom tabel). Tidak ada tabel, view, atau SP baru.
+  - Route `getAksesInvoiceBeli` dulu memakai model `DBFLMENU` dengan kode `03007` dan selalu error 500 (class tidak ditemukan). Sekarang hak aksesnya dibaca dari menu web. Di dev, daftar user yang punya akses di `DBFLMENU` 03007 dan `DBFLMENUWEB` 0305 sama persis (26 user).
+  - Batal otorisasi sekarang wajib diisi keterangan dan dicatat lewat `LoggingData` (`btloto`), memakai tabel log yang sudah ada.
 
 ---
 

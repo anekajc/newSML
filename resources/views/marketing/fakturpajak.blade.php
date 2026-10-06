@@ -386,17 +386,18 @@
   }
 </style>
 {{-- end tampilan search modal barang all --}}
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 
 @section('content')
-<div id="page1" class="container-fluid">
+<div id="page1">
 
 <div id="printContainer" style="display:none">
 
 
 </div>
-<div id="contentContainer" class="container-fluid" >
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -441,7 +442,7 @@
                   onchange="document.getElementById('formImport').submit()">
             <label for="import_file" class="btn btn-chip-biru" style="margin:0; cursor:pointer;">Import Excel</label>
           </form>
-          <button type="button" class="btn btn-chip-biru" onclick="openModalExport()">EXPORT EXCEL</button>
+          <button type="button" class="btn btn-chip-biru" onclick="openModalExport()">Export Excel</button>
         </div>
       </div>
       @if (Session::has('success'))
@@ -509,6 +510,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body">
         <!-- <h1>Tes Modal</h1> -->
 
@@ -563,32 +565,33 @@
 
     </div>
   </div>
+      </div>{{-- /#formBsGrid --}}
   <div class="modal-footer">
-    <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-    <!-- <button id="buttonSubmitAdd" type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
-    <button type="button" class="btn btn-danger btn-lg" data-dismiss="modal" style="
-    height: 30px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    transition: background-color 0.3s, box-shadow 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+    <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+    <!-- <button id="buttonSubmitAdd" type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
+    <button type="button" class="btn btn-lg btn-batal-add" data-dismiss="modal" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
     >Batal</button>
 
-    <button type="button" id="buttonSubmitAdd" class="btn btn-chip-biru btn-lg" style="
-    height: 30px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    transition: background-color 0.3s, box-shadow 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-    onclick="submitAdd()">Submit</button>
+    <button type="button" id="buttonSubmitAdd" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+    onclick="submitAdd()">Simpan</button>
 
-    <!-- <button id="buttonSubmitBatalOto" type="button" class="btn btn-primary" onclick="submitBatalOto()">Batal Otorisasi</button> -->
+    <!-- <button id="buttonSubmitBatalOto" type="button" class="btn btn-chip-merah" onclick="submitBatalOto()">Batal Otorisasi</button> -->
   </div>
 </div>
 </div>
@@ -603,6 +606,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div id="formBsGrid">
       <div class="modal-body">
         <div class="container-fluid">
           <div class="row mb-2 col-12">
@@ -642,6 +646,7 @@
           </div>
         </div>
       </div>
+      </div>{{-- /#formBsGrid --}}
     </div>
   </div>
 </div>
@@ -652,6 +657,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
@@ -807,12 +813,12 @@ function fpValueCell (row, col) {
 
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
-    return '<td>' + formatDate(raw, '/') + '</td>';
+    return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>';
   }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
 }
@@ -820,8 +826,8 @@ function fpValueCell (row, col) {
 function tabelActionsCell (row) {
   let nobukti = fpPickCI(row, 'NoBukti');
   let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-primary btn-sm" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + fpPickCI(row, 'NoPajak') + '\' , \'' + fpPickCI(row, 'TglFPJ') + '\')"><i class="bi bi-plus"></i></button>';
-  html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonDelete(\'' + nobukti + '\')"><i class="bi bi-trash"></i></button>';
+  html += '<button class="btn btn-success btn-sm" title="Buat Faktur Pajak" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + fpPickCI(row, 'NoPajak') + '\' , \'' + fpPickCI(row, 'TglFPJ') + '\')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonDelete(\'' + nobukti + '\')"><i class="bi bi-trash"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -944,9 +950,9 @@ function loadAll () {
       res.tempOutstanding.forEach((item, i) => {
         rowTable += `<tr>
         <td class='text-center'>
-            <button class="btn btn-primary btn-sm" type="button" onclick="buttonAdd('${item.NoBukti }' , '${item.NoPajak }' , '${item.TglFPJ }')"><i class="bi bi-plus"></i></button>
+            <button class="btn btn-success btn-sm" title="Buat Faktur Pajak" type="button" onclick="buttonAdd('${item.NoBukti }' , '${item.NoPajak }' , '${item.TglFPJ }')"><i class="bi bi-plus-lg"></i></button>
 
-            <button class="btn btn-danger btn-sm" type="button" onclick="buttonDelete('${item.NoBukti }' )"><i class="bi bi-trash"></i></button>
+            <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonDelete('${item.NoBukti }' )"><i class="bi bi-trash"></i></button>
 
 
 

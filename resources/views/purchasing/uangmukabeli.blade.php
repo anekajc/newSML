@@ -1619,7 +1619,20 @@ function onChangeSubtotal () {
 function cleanForm () {
   document.getElementById("input_add_nobukti").value = ''
   // Tanggal selalu tanggal server (sama seperti PR Agen), user tidak bisa mengubah
+  // (diambil saat form dibuka, bukan saat halaman dimuat - halaman bisa terbuka lewat tengah malam)
   document.getElementById("input_add_tanggal").value = "{!! date('Y-m-d') !!}"
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    async: false,
+    success: function(res) {
+      document.getElementById("input_add_tanggal").value = res[0].tanggal
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil tanggal server, silahkan refresh browser')
+    }
+  })
   document.getElementById("input_add_nopo").value =  ''
   document.getElementById("input_add_kodesupplier").value =  ''
   document.getElementById("input_add_namasupplier").value =  ''

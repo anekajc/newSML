@@ -154,12 +154,13 @@
   white-space: nowrap;
 }
 </style>
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 @section('content')
 
 
 
-<div id="page1" class="container-fluid mainpage">
+<div id="page1" class="mainpage">
 <div class="">
 
   <!-- <div id="qrcode"></div> -->
@@ -259,7 +260,7 @@
                 <div class="modal-header">
                   <h5 class="modal-title">
                     <i class="bi bi-funnel"></i>
-                    Filter Data
+                    Filter Retur Penjualan Gudang
                     <span class="rt-active-badge" id="sprFilterBadge">0 aktif</span>
                   </h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterSPR').modal('hide')">
@@ -269,27 +270,25 @@
 
                 <div class="modal-body">
                   <div class="rt-section">
-                    <div class="rt-group-label">Status</div>
-                    <div>
-                      <label class="rt-field-label" for="input_filterstatus">Status SPR</label>
-                      <select class="rt-native" id="input_filterstatus">
-                        <option value=0 selected>Semua Status</option>
-                        <option value=1>Belum</option>
-                        <option value=2>Sebagian</option>
-                        <option value=3>Selesai</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="rt-section">
-                    <div class="rt-group-label">Otorisasi</div>
-                    <div>
-                      <label class="rt-field-label" for="input_filteroto">Status Otorisasi</label>
-                      <select class="rt-native" id="input_filteroto">
-                        <option value=0 selected>Semua</option>
-                        <option value=1>Belum Otorisasi</option>
-                        <option value=2>Sudah Otorisasi</option>
-                      </select>
+                    <div class="rt-group-label">Penyaringan Data</div>
+                    <div class="rt-grid-2">
+                      <div>
+                        <label class="rt-field-label" for="input_filterstatus">Status</label>
+                        <select class="rt-native" id="input_filterstatus">
+                          <option value=0 selected>Semua</option>
+                          <option value=1>Belum</option>
+                          <option value=2>Sebagian</option>
+                          <option value=3>Selesai</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="rt-field-label" for="input_filteroto">Otorisasi</label>
+                        <select class="rt-native" id="input_filteroto">
+                          <option value=0 selected>Semua</option>
+                          <option value=2>Sudah</option>
+                          <option value=1>Belum</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -373,6 +372,7 @@
         </button>
       </div>
 
+      <div id="formBsGrid">
       <div class="modal-body">
         <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
         <div class="container-fluid">
@@ -411,10 +411,11 @@
           </div>
         </div>
       </div>
+      </div>{{-- /#formBsGrid --}}
 
         <div class="container-fluid" style="overflow-x: auto;">
 
-              <table id="addTable" class="table table-bordered">
+              <table id="addTable" class="data-table">
                 <thead class="text-center">
                   <tr>
                     <th scope="col" class="spr-col-terima">Terima</th>
@@ -438,8 +439,24 @@
         </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-lg btn-batal-add" data-dismiss="modal" onclick="buttonCloseModalAddPRJ()">Batal</button>
-        <button id="buttonSubmitAdd" type="button" onclick="submitAdd()" class="btn btn-lg btn-chip-biru">Simpan</button>
+        <button type="button" class="btn btn-lg btn-batal-add" data-dismiss="modal" onclick="buttonCloseModalAddPRJ()" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
+        <button id="buttonSubmitAdd" type="button" onclick="submitAdd()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
       </div>
     </div>
   </div>
@@ -447,13 +464,24 @@
 
 
 <div id="page3" style="display: none" class="mainpage container-fluid" >
+<div id="formBsGrid">
 
   <div class="row">
     <div class="col-8 text-left">
       {{-- <h2>Koreksi SPR</h2> --}}
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-danger btn-lg " style="margin-bottom:20px; height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+      <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
     </div>
   </div>
 
@@ -737,7 +765,7 @@
         <div class="col-md-8">
           <div class="input-group form-group">
             <input id="KoreksiEditKodeBrg" type="text" class="form-control" disabled>
-            <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-primary" >+</button> -->
+            <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button> -->
 
           </div>
         </div>
@@ -879,17 +907,25 @@
 
       <div class="row mt-2">
         <div class="col-md-12 text-right mt-4">
-          <button type="button" class="btn btn-secondary" onclick="buttonKoreksiItemBatal()" style="height: 30px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;">Batal</button>
+          <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonKoreksiItemBatal()" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
 
-          <button id="buttonSubmitKoreksiEdit" type="button" onclick="submitKoreksiEdit()" class="btn btn-chip-biru" style="height: 30px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;">Simpan Edit</button>
+          <button id="buttonSubmitKoreksiEdit" type="button" onclick="submitKoreksiEdit()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
           <!-- <button id="buttonSubmitKoreksiEdit" type="button" onclick="submitKoreksiEdit()" class="btn btn-primary" >Edit</button> -->
         </div>
 
@@ -899,18 +935,30 @@
     </div>
     </div>
   </div>
+</div>{{-- /#formBsGrid --}}
 </div>
 
 
 
 <div id="page4" style="display: none" class="mainpage container-fluid" >
+<div id="formBsGrid">
 
   <div class="row mb-4">
     <div class="col-8 text-left">
       <h2></h2>
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-danger btn-lg" style="height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >Close</button>
+      <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
     </div>
   </div>
 
@@ -1158,6 +1206,7 @@
 
 
   </div>
+</div>{{-- /#formBsGrid --}}
 </div>
 
 
@@ -1168,6 +1217,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 
@@ -1357,11 +1407,11 @@ function rpgValueCell (row, col) {
     return '<td><span class="sp-badge ' + kelas + '">' + (raw || '') + '</span></td>';
   }
 
-  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/') + '</td>'; }
+  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>'; }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
 }
@@ -1377,7 +1427,7 @@ function tabelActionsCell (row) {
   let ppn = rpgPickCI(row, 'PPN');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" title="Detail" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'' + (namacustsupp || '').replace(/'/g, "\\'") + '\' , ' + Number(ppn || 0) + ')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-primary btn-sm" title="Tambah" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + (namacustsupp || '').replace(/'/g, "\\'") + '\' , ' + Number(ppn || 0) + ')"><i class="bi bi-plus"></i></button>';
+  html += '<button class="btn btn-success btn-sm" title="Buat Retur" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + (namacustsupp || '').replace(/'/g, "\\'") + '\' , ' + Number(ppn || 0) + ')"><i class="bi bi-plus-lg"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -1395,7 +1445,7 @@ function tabel2ActionsCell (row) {
     // (buttonKoreksiDeleteItem, choice 'D' ke sp_TransSPBRJUAL) utk mengembalikan
     // qty barang itu jadi outstanding lagi di tabel "Outstanding PRJ".
     html += '<button class="btn btn-success btn-sm" title="Edit" type="button" onclick="buttonKoreksi(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button>';
-    html += '<button class="btn btn-primary btn-sm" title="Otorisasi" type="button" onclick="buttonOtorisasiPenerimaan(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
+    html += '<button class="btn btn-info btn-sm" title="Otorisasi" type="button" onclick="buttonOtorisasiPenerimaan(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
   }
   html += '</div></td>';
   return html;
@@ -1645,8 +1695,8 @@ function refreshDataTableKoreksi (nobukti) {
           <td>${item.NOSAT == 1 ? item.SAT_1 : item.SAT_2}</td>
 
           <td class="text-center">
-          <button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksiEditItem(${i})"><i class="bi bi-pen"></i></button>
-           <button class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
+          <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksiEditItem(${i})"><i class="bi bi-pen"></i></button>
+           <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
 
           </tr>`
         });
@@ -2074,8 +2124,8 @@ if (pcekglobal) {
           <td>${item.NOSAT == 1 ? item.SAT_1 : item.SAT_2}</td>
 
           <td class="text-center">
-          <button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksiEditItem(${i})"><i class="bi bi-pen"></i></button>
-           <button class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
+          <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksiEditItem(${i})"><i class="bi bi-pen"></i></button>
+           <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
 
           </tr>`
         });

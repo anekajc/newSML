@@ -149,19 +149,20 @@
   white-space: nowrap;
 }
 </style>
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 
 @section('content')
 
-<div id="page1" class="container-fluid mainpage">
+<div id="page1" class="mainpage">
 
 <div id="printContainer" style="display:none">
 
 
 
 </div>
-<div id="contentContainer" class="container-fluid">
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -213,7 +214,7 @@
                     </div>
                   </div>
                   <div class="po-toolbar-act">
-                    <button type="button" class="btn btn-primary" onclick="buttonAdd()">+ PRJ</button>
+                    <button type="button" class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
                   </div>
                 </div>
                 <div id="rtBarTabel"></div>
@@ -278,13 +279,24 @@
 </div>
 
 <div id="page2" style="display: none" class="mainpage container-fluid" >
+<div id="formBsGrid">
 
   <div class="row" style="margin-top: -30px">
     <div class="col-8 text-left">
       <h2>Form PRJ</h2>
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+      <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
     </div>
   </div>
 
@@ -375,7 +387,7 @@
                 <input type="hidden" class="form-control" id="input_add_flagtipe" value=""  >
                 <input type="hidden" class="form-control" id="input_add_ppn" value=""  >
                 <input type="text" class="form-control" id="input_add_noinvoice" value="-" disabled >
-                <!-- <button class="btn btn-primary btn-sm text-right" id="buttonAddListNoInvoice" onclick="buttonAddListNoInvoice()"><i class="bi bi-plus"></i></button> -->
+                <!-- <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoInvoice" onclick="buttonAddListNoInvoice()"><i class="bi bi-search"></i></button> -->
               </div>
             </div>
           </div>
@@ -447,9 +459,15 @@
           </div> -->
             <div class="col-md-8">
               <div class="form-group input-group">
-                <input type="text" class="form-control" id="input_add_gudang" value="" disabled >
-                <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListGudang" onclick="buttonAddListGudang()"><i class="bi bi-search"></i></button>
-                <!-- <button class="btn btn-primary btn-sm text-right" id="buttonAddListGudang" onclick="buttonAddListGudang()"><i class="bi bi-plus"></i></button> -->
+                {{-- Gudang dipilih lewat dropdown (bukan browse), sama seperti "Dikirim Ke" di purchaseOrder.
+                     Isinya $listGudang yang sama dengan daftar di modal pemilih gudang. --}}
+                <select class="form-control" id="input_add_gudang" onchange="onChangeGudangDropdown()">
+                  <option value=""></option>
+                  @for ($i = 0; $i < count($listGudang); $i++)
+                  <option value="{{ $listGudang[$i]->KODEGDG }}">{{ $listGudang[$i]->KODEGDG }} - {{ $listGudang[$i]->NAMA }}</option>
+                  @endfor
+                </select>
+                <!-- <button class="btn btn-chip-biru btn-sm" id="buttonAddListGudang" onclick="buttonAddListGudang()"><i class="bi bi-search"></i></button> -->
                 <!-- <input type="hidden" class="form-control text-center" id="input_add_kodesales" value="" disabled > -->
               </div>
             </div>
@@ -587,11 +605,13 @@
 
 
   <div class="col-md-12 mt-2 text-right">
-  <button type="button" class="btn btn-primary" onclick="buttonAddAddItem()" class="btn btn-secondary" style="height: 30px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;" >+ Tambah Item</button>
+  <button type="button" class="btn btn-lg btn-chip-biru" onclick="buttonAddAddItem()" class="btn btn-secondary" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              transition: background-color 0.3s, box-shadow 0.3s;" >Tambah Item</button>
 </div>
 
 
@@ -637,7 +657,7 @@
       <div class="col-md-8">
         <div class="input-group form-group">
           <input id="AddAddKodeBrg" type="text" class="form-control" onkeypress="onKeyPressBarang(event)">
-          <button type="button" onclick="buttonAddListBarang()" class="btn btn-primary" >+</button>
+          <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button>
 
         </div>
       </div>
@@ -660,7 +680,7 @@
         <div class="input-group form-group">
           <input id="AddAddUrutBeli" type="hidden"  class="form-control" >
           <input id="AddAddNoBeli" type="text" class="form-control" disabled>
-          <!-- <button class="btn btn-primary btn-sm text-right" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-plus"></i></button> -->
+          <!-- <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-search"></i></button> -->
 
         </div>
         <!-- <input id="AddAddKodeGudang" type="hidden" class="form-control" disabled> -->
@@ -839,17 +859,25 @@
 
   <div class="row mt-2" style="margin-top: 0">
     <div class="col-md-12 text-right mt-4">
-      <button type="button" class="btn btn-secondary" onclick="buttonAddBatal()" style="height: 30px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;">Batal</button>
+      <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
 
-      <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-primary" style="height: 30px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;">Submit Add</button>
+      <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
       <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
     </div>
 
@@ -907,7 +935,7 @@
     <div class="col-md-8">
       <div class="input-group form-group">
         <input id="AddEditKodeBrg" type="text" class="form-control" disabled>
-        <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-primary" >+</button> -->
+        <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button> -->
 
       </div>
     </div>
@@ -930,7 +958,7 @@
       <div class="input-group form-group">
         <input id="AddEditUrutBeli" type="hidden" class="form-control" >
         <input id="AddEditNoBeli" type="text" class="form-control" disabled>
-        <!-- <button class="btn btn-primary btn-sm text-right" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-plus"></i></button> -->
+        <!-- <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-search"></i></button> -->
 
       </div>
       <!-- <input id="AddEditKodeGudang" type="hidden" class="form-control" disabled> -->
@@ -1113,17 +1141,25 @@
 
   <div class="row mt-2">
     <div class="col-md-12 text-right mt-4">
-      <button type="button" class="btn btn-secondary" onclick="buttonAddBatal()" style="height: 30px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;">Batal</button>
+      <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
 
-      <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" style="height: 30px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;">Submit Edit</button>
+      <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
       <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
     </div>
 
@@ -1150,17 +1186,29 @@
 
 
 
-  </div>
+  </div>{{-- /#formBsGrid --}}
+</div>
 
 
   <div id="page3" style="display: none" class="mainpage container-fluid" >
+<div id="formBsGrid">
 
     <div class="row" style="margin-top: -30px">
       <div class="col-8 text-left">
         <h2>Detail PRJ</h2>
       </div>
       <div class="col-4 text-right">
-        <button type="button" class="btn btn-primary btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+        <button type="button" class="btn btn-danger btn-lg" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+        Close
+      </button>
       </div>
     </div>
 
@@ -1489,7 +1537,8 @@
 
 
 
-    </div>
+    </div>{{-- /#formBsGrid --}}
+</div>
 
 
 
@@ -1574,7 +1623,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1648,7 +1697,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1724,7 +1773,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1792,7 +1841,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1867,7 +1916,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-batal-add" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1896,6 +1945,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 
@@ -2073,11 +2123,11 @@ function tulisTheadHeaderPRJM (tableSel, cols) {
 function prjmValueCell (row, col) {
   let raw = prjmPickCI(row, col[0]);
   let type = col[3];
-  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/') + '</td>'; }
+  if (type === 'date') { if (!raw) { return '<td></td>'; } return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>'; }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
 }
@@ -2086,12 +2136,12 @@ function tabelActionsCell (row) {
   let nobukti = prjmPickCI(row, 'NOBUKTI');
   let isOto = Number(prjmPickCI(row, 'IsOtorisasi1'));
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-success btn-sm" type="button" onclick="buttonEdit(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-pen"></i></button>';
+  html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
+  html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonEdit(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-pen"></i></button>';
   if (isOto) {
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
   } else {
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
   }
   html += '</div></td>';
   return html;
@@ -2101,11 +2151,11 @@ function tabel2ActionsCell (row) {
   let nobukti = prjmPickCI(row, 'NOBUKTI');
   let isOto = Number(prjmPickCI(row, 'IsOtorisasi1'));
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
+  html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
   } else {
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
   }
   html += '</div></td>';
   return html;
@@ -3227,6 +3277,12 @@ function buttonAddPickGudang (kodegdg) {
   // $("#form").modal('toggle')
 }
 
+// Dropdown gudang: sama dengan buttonAddPickGudang(), tanpa menutup modal pemilih.
+function onChangeGudangDropdown () {
+  console.log('onChangeGudangDropdown')
+  $('.showhideitem').hide();
+}
+
 function buttonAddPickNoInvoice (nobukti, noso , kodegdg, flagtipe, ppn) {
   console.log('buttonAddPickNoInvoice')
   document.getElementById("input_add_noinvoice").value = nobukti
@@ -3330,8 +3386,8 @@ function refreshDataTableAdd (NOBUKTI = "") {
               <td class="text-right">${item.QNT ? formatAngkaX(item.QNT): '0.00'}</td>
               <td>${item.SAT}</td>
               <td class="text-center">
-              <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
-               <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
+              <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
+               <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
               </tr>`
             });
 

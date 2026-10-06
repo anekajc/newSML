@@ -449,17 +449,18 @@
 </style>
 {{-- end tampilan search modal barang all --}}
 
+@include('marketing.partials.tampilan-purchasing-css')
 @endsection
 
 
 @section('content')
-<div id="page1" class="container-fluid">
+<div id="page1">
 
 <div id="printContainer" style="display:none">
 
 
 </div>
-<div id="contentContainer" class="container-fluid" >
+<div id="contentContainer" class="">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
 
@@ -482,7 +483,7 @@
         <div class="modal-header">
           <h5 class="modal-title">
             <i class="bi bi-funnel"></i>
-            Filter Data
+            Filter Retur Surat Jalan
             <span class="rt-active-badge" id="rsjFilterBadge">0 aktif</span>
           </h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterRSJ').modal('hide')">
@@ -492,14 +493,16 @@
 
         <div class="modal-body">
           <div class="rt-section">
-            <div class="rt-group-label">Status</div>
-            <div>
-              <label class="rt-field-label" for="input_filterrsj">Status Otorisasi</label>
-              <select class="rt-native" id="input_filterrsj">
-                <option value=0 selected>Semua</option>
-                <option value=1>Belum Otorisasi</option>
-                <option value=2>Sudah Otorisasi</option>
-              </select>
+            <div class="rt-group-label">Penyaringan Data</div>
+            <div class="rt-grid-2">
+              <div>
+                <label class="rt-field-label" for="input_filterrsj">Otorisasi</label>
+                <select class="rt-native" id="input_filterrsj">
+                  <option value=0 selected>Semua</option>
+                  <option value=2>Sudah</option>
+                  <option value=1>Belum</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -579,6 +582,7 @@
 </div>
 
 <div id="page2" class="container-fluid" style="display: none">
+<div id="formBsGrid">
 
   <div class="container-fluid">
 
@@ -589,18 +593,17 @@
       </div>
       <div class="col-auto text-right">
         <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
             onclick="buttonCloseForm()">
-          Close
-        </button>
+        Close
+      </button>
       </div>
     </div>
   <!-- <button onclick="loadAll()">tes</button> -->
@@ -844,16 +847,14 @@
   <div class="row">
     <div class="col-12  text-right">
 
-      <button type="button" class="btn btn-chip-biru btn-lg" style="
-        height: 30px;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        transition: background-color 0.3s, box-shadow 0.3s;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-        onclick="buttonAddAdd()" ><b>Tambah Item</b></button>
+      <button type="button" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              transition: background-color 0.3s, box-shadow 0.3s;"
+        onclick="buttonAddAdd()" >Tambah Item</button>
       </div>
     </div>
 
@@ -942,26 +943,26 @@
 
   <div class="row mt-2">
     <div class="col-md-12 text-right mt-4">
-      <button type="button" class="btn btn-danger btn-lg" style="
-      height: 30px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+      <button type="button" class="btn btn-lg btn-batal-add" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
       onclick="buttonBatalAdd()" class="btn btn-danger">Batal</button>
 
-      <button type="button" id="buttonSubmitAddAdd" class="btn btn-chip-biru btn-lg" style="
-      height: 30px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+      <button type="button" id="buttonSubmitAddAdd" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
       onclick="submitAddAdd()" class="btn btn-secondary">Simpan</button>
 </div>
 
@@ -1047,31 +1048,31 @@
 
   <div class="row mt-2">
     <div class="col-md-12 text-right mt-4">
-      <!-- <button type="button" class="btn btn-secondary" onclick="buttonBatalAdd()" >Batal</button>
+      <!-- <button type="button" class="btn btn-batal-add" onclick="buttonBatalAdd()" >Batal</button>
 
       <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
       <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
 
-      <button type="button" class="btn btn-danger btn-lg" style="
-      height: 30px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+      <button type="button" class="btn btn-lg btn-batal-add" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
       onclick="buttonBatalAdd()" class="btn btn-danger">Batal</button>
 
-      <button type="button" id="buttonSubmitAddEdit" class="btn btn-chip-biru btn-lg" style="
-      height: 30px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+      <button type="button" id="buttonSubmitAddEdit" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
       onclick="submitAddEdit()" class="btn btn-secondary">Simpan</button>
 
 
@@ -1083,11 +1084,13 @@
 </div>
 
 </div>
-  </div>
+  </div>{{-- /#formBsGrid --}}
+</div>
 
   </div>
 
   <div id="page3" class="container-fluid" style="display: none">
+<div id="formBsGrid">
 
     <div class="container-fluid">
 
@@ -1113,8 +1116,8 @@
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="buttonCloseForm()">
-            Close
-          </button>
+        Close
+      </button>
         </div>
       </div>
     <!-- <button onclick="loadAll()">tes</button> -->
@@ -1142,7 +1145,7 @@
             <div class="col-8">
               <div class="form-group input-group">
                 <input type="text" class="form-control" id="input_detail_nosj" placeholder="No SJ" disabled>
-                <!-- <button class="btn btn-primary btn-sm text-right" id="buttonAddListNoSJ" onclick="buttonAddListNoSJ()"><i class="bi bi-plus"></i></button> -->
+                <!-- <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoSJ" onclick="buttonAddListNoSJ()"><i class="bi bi-search"></i></button> -->
               </div>
             </div>
           </div>
@@ -1398,26 +1401,27 @@
     <div id="" class="container-fluid ">
       <div class="row">
         <div class="col-12 text-right">
-          <button type="button" id="buttonSubmitOto" class="btn btn-chip-biru btn-lg" style="
-          height: 30px;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          transition: background-color 0.3s, box-shadow 0.3s;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+          <button type="button" id="buttonSubmitOto" class="btn btn-lg btn-chip-biru" style="
+              height: 30px;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: background-color 0.3s, box-shadow 0.3s;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
           onclick="submitOto()" class="btn btn-secondary">Otorisasi</button>
 
         </div>
 
       </div>
-      <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
+      <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
     </div>
 
     </div>
 
-    </div>
+    </div>{{-- /#formBsGrid --}}
+</div>
 
 
 </div>
@@ -1575,13 +1579,13 @@
 
 
       <div id="modalBodyFooterList" class="modal-footer showhidemodalfooteradd">
-        <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-        <!-- <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()">Batal</button> -->
+        <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+        <!-- <button type="button" class="btn btn-batal-add" onclick="buttonAddListBatal()">Batal</button> -->
       </div>
 
       <div id="modalBodyFooterMain" class="modal-footer showhidemodalfooteradd">
-        <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-        <!-- <button type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
+        <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
+        <!-- <button type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button> -->
       </div>
     </div>
   </div>
@@ -1599,6 +1603,7 @@
 @endsection
 
 @section('js')
+@include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
 {{-- Modal pemilih bersama (#form) disamakan persis dengan modal pemilih menu Kas.
@@ -1734,12 +1739,12 @@ function tabelActionsCell(row) {
   var nobukti = rsjPickCI(row, 'NOBUKTI');
   var isOto1 = rsjPickCI(row, 'IsOtorisasi1');
   var html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button> ';
+  html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button> ';
   if (Number(isOto1) === 1) {
-    html += '<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOto(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOto(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
   } else {
-    html += '<button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + isOto1 + '\')"><i class="bi bi-pen"></i></button> ';
-    html += '<button class="btn btn-primary btn-sm" type="button" onclick="buttonOto(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
+    html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + isOto1 + '\')"><i class="bi bi-pen"></i></button> ';
+    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOto(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
   }
   html += '</div></td>';
   return html;
@@ -1754,7 +1759,7 @@ function retursuratjalanFormatTanggal(raw) {
   if (isNaN(d)) { return ''; }
   var dd = ('0' + d.getDate()).slice(-2);
   var mm = ('0' + (d.getMonth() + 1)).slice(-2);
-  return d.getFullYear() + '/' + mm + '/' + dd;
+  return dd + '/' + mm + '/' + d.getFullYear();
 }
 
 function tabelValueCell(row, col) {
@@ -2349,8 +2354,8 @@ function refreshDataTableAdd (nobukti) {
             <td class='text-right'>${parseFloat(item.QNT).toFixed(2)}</td>
             <td>${item.SAT_1}</td>
             <td class='text-center'>
-              <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEdit(${i})"><i class="bi bi-pen"></i></button>
-              <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDelete('${item.NOBUKTI}' ,  ${item.URUT})"><i class="bi bi-trash"></i></button>
+              <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEdit(${i})"><i class="bi bi-pen"></i></button>
+              <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonAddDelete('${item.NOBUKTI}' ,  ${item.URUT})"><i class="bi bi-trash"></i></button>
 
 
             </td>
