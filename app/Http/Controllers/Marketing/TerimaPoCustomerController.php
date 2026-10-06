@@ -183,6 +183,9 @@ class TerimaPoCustomerController extends Controller
       if ($kodecust === '') {
         return 'Customer harus dipilih';
       }
+      if (!is_numeric($req->totalpo ?: 0) || (float) $req->totalpo < 0) {
+        return 'Total PO tidak boleh negatif';
+      }
 
       // Kode customer harus ada di master (programajcSML membiarkan kode ketikan bebas
       // tersimpan). Tidak dicek isaktif supaya koreksi PO lama milik customer nonaktif tetap bisa.
@@ -238,6 +241,16 @@ class TerimaPoCustomerController extends Controller
       }
       if (trim((string) $req->keterangan) === '') {
         return 'Keterangan closing harus diisi';
+      }
+      // Hanya PO outstanding (belum di-close, belum diganti, belum ada SO) yang bisa di-close --
+      // mencegah close ganda dari dua layar yang terbuka bersamaan.
+      $po = DB::connection('SML')->select("
+        select A.ID from DBPOCUSTSUPP A
+        where A.ID = :ID and isnull(A.IsCLose,0) = 0 and isnull(A.pGanti,0) = 0
+          and not exists (select 1 from DBSO C where C.KODECUST = A.KodeCustSupp and C.NoPesanan = A.POCustomer)",
+        ["ID" => $req->ID]);
+      if (!$po) {
+        return 'PO Customer sudah di-close atau sudah dibuat SO, silakan muat ulang halaman';
       }
 
       DB::connection('SML')->update("Update dbpocustsupp set isclose=1,userclose=:iduser ,

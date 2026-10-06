@@ -124,10 +124,11 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
   }
 
   // Daftar PO Customer pengganti untuk modal Ubah PO: milik customer SO yang sama, belum
-  // diganti (pGanti), belum di-close, dan belum dipakai SO lain; PO yang sedang terpasang
-  // di SO ini tidak ikut ditampilkan.
+  // diganti (pGanti), belum di-close, dan belum dipakai SO lain (lewat NoPesanan maupun
+  // IDPOCust). PO yang sedang terpasang di SO ini -- lewat IDPOCust atau nomor yang sama
+  // dengan NoPesanan-nya (ada SO draft lama yang IDPOCust-nya 0) -- tidak ikut ditampilkan.
   public function listPO (Request $req) {
-    $so = DB::connection('SML')->select("select NOBUKTI, KODECUST, isnull(IDPOCust,0) IDPOCust from DBSO where NOBUKTI = :nobukti", ["nobukti" => $req->nobukti]);
+    $so = DB::connection('SML')->select("select NOBUKTI, KODECUST, isnull(NoPesanan,'') NoPesanan, isnull(IDPOCust,0) IDPOCust from DBSO where NOBUKTI = :nobukti", ["nobukti" => $req->nobukti]);
     if (!$so) {
       return [];
     }
@@ -137,10 +138,11 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
       from DBPOCUSTSUPP A
       where A.KodeCustSupp = :kodecust
         and isnull(A.pGanti,0) = 0 and isnull(A.IsCLose,0) = 0
-        and A.ID <> :idpocust
-        and not exists (select 1 from DBSO S where S.KODECUST = A.KodeCustSupp and S.NoPesanan = A.POCustomer and S.NOBUKTI <> :nobukti)
+        and A.ID <> :idpocust and A.POCustomer <> :nopesanan
+        and not exists (select 1 from DBSO S where S.NOBUKTI <> :nobukti
+                          and ((S.KODECUST = A.KodeCustSupp and S.NoPesanan = A.POCustomer) or S.IDPOCust = A.ID))
       order by A.TglInput desc, A.ID desc
-    ", ["kodecust" => $so[0]->KODECUST, "idpocust" => $so[0]->IDPOCust, "nobukti" => $so[0]->NOBUKTI]);
+    ", ["kodecust" => $so[0]->KODECUST, "idpocust" => $so[0]->IDPOCust, "nopesanan" => $so[0]->NoPesanan, "nobukti" => $so[0]->NOBUKTI]);
   }
 
   // Ubah No PO (NoPesanan) SO draft PO -- mengikuti cara aplikasi desktop:
@@ -181,12 +183,13 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
     if ($po->pGanti || $po->IsCLose) {
       return 'PO Customer ' . $po->POCustomer . ' sudah diganti / di-close';
     }
-    if ((int) $po->ID === (int) $so->IDPOCust) {
+    if ((int) $po->ID === (int) $so->IDPOCust || trim($po->POCustomer) === trim($so->NoPesanan)) {
       return 'No PO yang dipilih sama dengan No PO SO saat ini';
     }
     $dipakai = DB::connection('SML')->select("
-      select top 1 NOBUKTI from DBSO where KODECUST = :kodecust and NoPesanan = :nopo and NOBUKTI <> :nobukti",
-      ["kodecust" => $so->KODECUST, "nopo" => $po->POCustomer, "nobukti" => $so->NOBUKTI]);
+      select top 1 NOBUKTI from DBSO where NOBUKTI <> :nobukti
+        and ((KODECUST = :kodecust and NoPesanan = :nopo) or IDPOCust = :id)",
+      ["nobukti" => $so->NOBUKTI, "kodecust" => $so->KODECUST, "nopo" => $po->POCustomer, "id" => $po->ID]);
     if ($dipakai) {
       return 'PO Customer ' . $po->POCustomer . ' sudah dipakai SO ' . $dipakai[0]->NOBUKTI;
     }
@@ -199,9 +202,14 @@ order by A.NoBukti, B.Urut" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir] 
         DB::connection('SML')->update("update DBSO set NoPesanan = :nopo, IDPOCust = :id where NOBUKTI = :nobukti",
           ["nopo" => $po->POCustomer, "id" => $po->ID, "nobukti" => $so->NOBUKTI]);
 
-        if ((int) $so->IDPOCust > 0) {
-          DB::connection('SML')->update("update DBPOCUSTSUPP set pGanti = 1 where ID = :id", ["id" => $so->IDPOCust]);
-        }
+        // PO lama = baris IDPOCust SO, atau (untuk SO draft lama yang IDPOCust-nya 0) baris
+        // dengan nomor = NoPesanan lama milik customer yang sama. Tanpa ini PO draft lama
+        // muncul lagi di Outstanding Terima PO Customer.
+        DB::connection('SML')->update("
+          update DBPOCUSTSUPP set pGanti = 1
+          where ID <> :idbaru
+            and (ID = :idlama or (KodeCustSupp = :kodecust and POCustomer = :nolama))",
+          ["idbaru" => $po->ID, "idlama" => $so->IDPOCust, "kodecust" => $so->KODECUST, "nolama" => $poAsal]);
 
         $items = DB::connection('SML')->select("select Urut, KodeBrg, Harga from DBSODET where NOBUKTI = :nobukti order by Urut", ["nobukti" => $so->NOBUKTI]);
         foreach ($items as $item) {
