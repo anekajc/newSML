@@ -782,6 +782,7 @@
                         <th style="padding: 4px 12px;" scope="col">Oto</th>
                         <th style="padding: 4px 12px;" scope="col">User Oto</th>
                         <th style="padding: 4px 12px;" scope="col">Tgl Oto</th>
+                        <th style="padding: 4px 12px;" scope="col">Catatan</th>
                       </tr>
                     </thead>
                     <tbody id="tabel2_data" class="text-left"></tbody>
@@ -812,6 +813,7 @@
                         <th style="padding: 4px 12px;" scope="col">Oto</th>
                         <th style="padding: 4px 12px;" scope="col">User Oto</th>
                         <th style="padding: 4px 12px;" scope="col">Tgl Oto</th>
+                        <th style="padding: 4px 12px;" scope="col">Catatan</th>
                       </tr>
                     </thead>
                     <tbody id="tabel_oto_data" class="text-left"></tbody>
@@ -874,7 +876,7 @@
               <div class="input-group mb-3 position-relative">
                 <input type="text" class="form-control text-left" placeholder="Cari Pelanggan..."
                   id="input_add_kodepelanggan" onkeyup="searchPelanggan(this.value)" autocomplete="off">
-                <button type="button" class="btn btn-chip-biru btn-sm" onclick="buttonAddListPelanggan()"><i class="bi bi-search"></i></button>
+                <button type="button" id="buttonAddListPelanggan" class="btn btn-chip-biru btn-sm" onclick="buttonAddListPelanggan()"><i class="bi bi-search"></i></button>
                 <div id="dropdown_pelanggan" class="dropdown-menu w-100"></div>
               </div>
             </div>
@@ -1076,6 +1078,7 @@
                 <input type="hidden" id="input_add_idpo">
                 <button
                   type="button"
+                  id="buttonAddListNoPo"
                   class="btn btn-chip-biru flex-shrink-0"
                   onclick="buttonAddListNoPo()"
                 >
@@ -1172,11 +1175,13 @@
               <th style="padding: 4px 12px;" scope="col">Merk</th>
               <th style="padding: 4px 12px;" scope="col" class="text-center">Qty</th>
               <th style="padding: 4px 12px;" scope="col" class="text-center">Sat</th>
+              <th style="padding: 4px 12px;" scope="col" class="text-center">Alias</th>
               <th style="padding: 4px 12px;" scope="col" class="text-center">Tax</th>
               <th style="padding: 4px 12px;" scope="col" class="text-center">Harga</th>
               <th style="padding: 4px 12px;" scope="col" class="text-center">Diskon</th>
               <th style="padding: 4px 12px;" scope="col" class="text-center">Sub Total</th>
               <th style="padding: 4px 12px;" scope="col">No SPK</th>
+              <th style="padding: 4px 12px;" scope="col" class="text-center">Tambah PO</th>
               <th style="padding: 4px 12px;" scope="col" class="text-center">Actions</th>
             </tr>
           </thead>
@@ -1937,15 +1942,17 @@
             <th style="padding: 4px 12px;" scope="col">Merk</th>
             <th style="padding: 4px 12px;" scope="col" class="text-center">Qty</th>
             <th style="padding: 4px 12px;" scope="col" class="text-center">Sat</th>
+            <th style="padding: 4px 12px;" scope="col" class="text-center">Alias</th>
             <th style="padding: 4px 12px;" scope="col" class="text-center">Tax</th>
             <th style="padding: 4px 12px;" scope="col" class="text-center">Harga</th>
             <th style="padding: 4px 12px;" scope="col" class="text-center">Diskon</th>
             <th style="padding: 4px 12px;" scope="col" class="text-center">Sub Total</th>
             <th style="padding: 4px 12px;" scope="col">No SPK</th>
+            <th style="padding: 4px 12px;" scope="col" class="text-center">Tambah PO</th>
           </tr>
         </thead>
         <tbody id="tabel_data_detail" class="text-left">
-          <tr><td colspan=11 class="text-center">Belum ada data</td></tr>
+          <tr><td colspan=13 class="text-center">Belum ada data</td></tr>
         </tbody>
       </table>
     </div>
@@ -2690,6 +2697,7 @@ function soDefaultCart(urut) {
       ['NOBUKTI',      'No Bukti',    1, 'varchar', 0, 0],
       ['TANGGAL',      'Tanggal',     1, 'date',    0, 0],
       ['NAMACUSTSUPP', 'Nama Cust',   1, 'varchar', 0, 0],
+      ['NAMAPIC',      'PIC',         1, 'varchar', 0, 0],
       ['KODEBRG',      'Kode Brg',    1, 'varchar', 0, 0],
       ['NAMABRG',      'Nama Barang', 1, 'varchar', 0, 0],
       ['QNT',          'Qty',         1, 'float',   0, 2],
@@ -2708,12 +2716,29 @@ function soDefaultCart(urut) {
     ['TotDPP',       'DPP',            1, 'float',   0, 0],
     ['TotPPn',       'PPN',            1, 'float',   0, 0],
     ['TotNet',       'Total',          1, 'float',   0, 0],
+    ['catatanx',     'Catatan',        1, 'varchar', 0, 0],
     ['IsOtorisasi1', 'IsOto',          1, 'bool',    0, 0],
     ['OtoUser1',     'UserOto',        1, 'varchar', 0, 0],
     ['TglOto1',      'TglOto',         1, 'date',    0, 0],
     ['userunblock',  'User Open CBD',  1, 'varchar', 0, 0],
-    ['tglunblock',   'Tgl Open CBD',   1, 'date',    0, 0]
+    ['tglunblock',   'Tgl Open CBD',   1, 'date',    0, 0],
+    ['StatusSO',     'Status',         1, 'varchar', 0, 0]
   ];
+}
+
+// Header yang sudah tersimpan di DBHEADERTABLE sebelum kolom baru ditambahkan ke
+// soDefaultCart() tidak memuat kolom itu -- sisipkan di posisi default-nya supaya
+// tetap muncul tanpa user harus Reset Kolom. Mengembalikan true kalau ada yang ditambah.
+function soLengkapiCart(cart, urut) {
+  let ada = {}
+  cart.forEach((c) => { ada[String(c[0]).toLowerCase()] = true })
+  let berubah = false
+  soDefaultCart(urut).forEach((c, i) => {
+    if (ada[String(c[0]).toLowerCase()]) { return }
+    cart.splice(Math.min(i, cart.length), 0, c)
+    berubah = true
+  })
+  return berubah
 }
 
 // Port dari poBuatCart() -- lebih sederhana dari punya PO karena kolom
@@ -2831,6 +2856,10 @@ window.doSetHeader = function (mode, reset) {
         let isshown = res.isshown
         let tipe = res.desimal || []
         soCart[urut] = soBuatCart(header, value, isnumeric, isshown, tipe)
+        if (soLengkapiCart(soCart[urut], urut)) {
+          window.gcart_header = soCart[urut]
+          window.doSimpanHeader(SO_HREF, urut)
+        }
       } else {
         soCart[urut] = soDefaultCart(urut)
         // Simpan default barunya supaya getheadertable menemukan baris ini
@@ -2934,7 +2963,10 @@ function tabelActionsCell(row) {
   var nobukti = soPickCI(row, 'NOBUKTI');
   var html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  if (Number(soPickCI(row, 'IsOtorisasi1')) == 0) {
+  // Ikut programajcSML: SO masuk "Belum Otorisasi" (Otorisasi + Edit) selama masih ada level
+  // yang belum diotorisasi sesuai MaxOL (NeedOtorisasi), bukan hanya level 1 -- Batal & Print
+  // baru muncul setelah semua level selesai.
+  if (Number(soPickCI(row, 'NeedOtorisasi')) == 1) {
     html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
     html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonEdit(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button>';
   } else {
@@ -2951,9 +2983,22 @@ function tabelActionsCell(row) {
 // col[5] (decimals) is user-editable via the gear menu's stepper, so float
 // formatting has to read it live rather than assume a fixed precision --
 // #tabel's money columns default to 0dp, #tabel7's qty columns to 2dp.
+// Warna badge Status SO, disamakan dengan badge Status di purchaseOrder.
+const SO_BADGE_STATUS = {
+  'Full supply'     : 'is-active',
+  'Belum proses'    : 'is-user',
+  'Proses Sebagian' : 'is-supervisor',
+  'Terclose'        : 'is-inactive'
+}
+
 function tabelValueCell(row, col) {
   var raw = soPickCI(row, col[0]);
   var type = col[3];
+
+  if (String(col[0]).toLowerCase() === 'statusso') {
+    if (!raw) { return '<td></td>'; }
+    return '<td class="text-center"><span class="sp-badge ' + (SO_BADGE_STATUS[raw] || '') + '">' + raw + '</span></td>';
+  }
 
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
@@ -3226,6 +3271,7 @@ function renderTabel2Rows(rows) {
       + so2BoolCell(row.IsOtorisasi1)
       + '<td>' + (row.OtoUser1 || '') + '</td>'
       + '<td>' + so2FormatTanggalJam(row.TglOto1) + '</td>'
+      + '<td>' + (row.catatanx || '') + '</td>'
       + '</tr>'
   });
   document.getElementById('tabel2_data').innerHTML = html
@@ -3253,6 +3299,7 @@ function renderTabelOtoRows(rows) {
       + so2BoolCell(row.IsOtorisasi1)
       + '<td>' + (row.OtoUser1 || '') + '</td>'
       + '<td>' + so2FormatTanggalJam(row.TglOto1) + '</td>'
+      + '<td>' + (row.catatanx || '') + '</td>'
       + '</tr>'
   });
   document.getElementById('tabel_oto_data').innerHTML = html
@@ -3536,10 +3583,13 @@ function buttonFilterSO () {
 //   socbd cbdneedopen = 1
 // so belum oto needcbd = 0 need oto = 1
 // so sudah oto needcbd = 0 need oto = 0
+  // Async + lapisan Memuat, sama seperti ganti periode; nomor urut mencegah respons lama menimpa.
+  let nomorMuat = ++soNomorMuat
+  soTampilMemuat(true)
   $.ajax({
     url: "{!! url('soloadsofilter') !!}",
     type: "post",
-    async: false,
+    async: true,
     data: {
       _token,
       tglawal,
@@ -3553,6 +3603,7 @@ function buttonFilterSO () {
       tipebayar
     },
     success: function(res) {
+      if (nomorMuat !== soNomorMuat) { return }
       lastTabelRows = res;
       // Only draw #tabel immediately if it's actually the visible tab -- otherwise
       // this would silently undo the lazy-draw deferral loadAll() just set up
@@ -3563,12 +3614,16 @@ function buttonFilterSO () {
       } else {
         soPerluGambar.tabel = true;
       }
+      setPoKpiDariTabel();
     },
     error: function (err) {
       console.log(err)
       console.log(err.status)
       console.log(err.statusText)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    },
+    complete: function () {
+      if (nomorMuat === soNomorMuat) { soTampilMemuat(false) }
     }
 
   })
@@ -3853,7 +3908,11 @@ return
     success: function(res) {
       console.log("========================")
       console.log(res ,'!')
-      if (res) {
+      if (res == 4) {
+        alertify.warning('PO Customer sudah menjadi SO');
+      } else if (res == 5) {
+        alertify.warning('PO Customer tidak terdaftar');
+      } else if (res) {
         alertify.success('SO telah ditambah');
         loadAll()
           $('#page4').hide();
@@ -4003,7 +4062,7 @@ let nopo = $("#input_add_nopo").val()
             <td>${item.CATATAN}</td>
             <td>${item.KodeBrg}</td>
             <td>${item.NamaBrg}</td>
-            <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+            <td class="text-right">${item.Qnt ? formatAngka(parseFloat(item.Qnt).toFixed(2)) : '0.00'}</td>
             <td>${item.Satuan}</td>
 
             </tr>`
@@ -4108,7 +4167,7 @@ console.log(NOBUKTI, ppn)
 
             <td>${item.KodeBrg}</td>
             <td>${item.NamaBrg}</td>
-            <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+            <td class="text-right">${item.Qnt ? formatAngka(parseFloat(item.Qnt).toFixed(2)) : '0.00'}</td>
             <td>${item.Satuan}</td>
 
             </tr>`
@@ -4163,6 +4222,7 @@ $.ajax({
   data: {
     _token: $("#_token").val(),
     kodecustsupp: $("#input_tambahso_kodepelanggan").val(),
+    searchtambahso: keyword,
     search: keyword
   },
   success: function(res) {
@@ -4333,11 +4393,13 @@ function buttonOtorisasi (nobukti) {
 
         console.log('a',i)
         let xtempx = 1;
-        if (mssg) {
-          mssg += ' , '
-        }
 
         if (res[i].Ket != 'lanjut') {
+          // Koma hanya di antara barang yang bermasalah (dulu ikut ditambah untuk barang
+          // yang lolos, jadi pesannya berisi ", , ,").
+          if (mssg) {
+            mssg += ' , '
+          }
           mssg += `
             Barang ${res[i].kodebrg} - ${res[i].Ket}
           `
@@ -4512,6 +4574,8 @@ function lockCBD (nobukti) {
 function buttonBatalOtorisasi (nobukti) {
   console.log(nobukti)
 
+
+
   let akses = $("#akses_isotorisasi1").val();
   if (!Number(akses)) {
     alertify.warning('No access')
@@ -4520,7 +4584,9 @@ function buttonBatalOtorisasi (nobukti) {
 
 
 
-  alertify.prompt("Batal Otorisasi","Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+
+
+  alertify.prompt("Batal Otorisasi", "Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
   function(evt, value) {
     // alertify.success("You entered: " + value);
     let xpket = value;
@@ -4566,6 +4632,8 @@ function buttonBatalOtorisasi (nobukti) {
         })
       }
     ,function(){
+      console.log('no')
+      alertify.error("Action cancelled");
     });
 
 }
@@ -4941,7 +5009,25 @@ function submitAddAdd () {
     pppn = 1
   }
 
-
+  let flagnopo = 0
+  $.ajax({
+    url: "{!! url('sochecknoposo') !!}",
+    type: "get",
+    async: false,
+    data: { nobukti, nopo, kodepelanggan },
+    success: function(res) {
+      flagnopo = res
+      if (res == 4) {
+        alertify.warning('Nomor po customer sudah digunakan . Silahkan gunakan nomor po yang lain ')
+      }
+      if (res == 44) {
+        alertify.warning('Nomor po customer tidak sesuai dengan customer . Silahkan gunakan nomor po yang sesuai ')
+      }
+    }
+  })
+  if (flagnopo == 4 || flagnopo == 44) {
+    return
+  }
 
   console.log({
     _token ,
@@ -5118,7 +5204,12 @@ console.log('xhargacek:', xhargacek)
                     // $('#buttonSubmitSaveHeader').show();
                     // unlockFormAdd()
                     tipeform = 'edit'
-                    // document.getElementById("buttonAddListPelanggan").disabled = true
+                    // SO sudah terbentuk: Pelanggan, Sales dan No PO dikunci seperti mode edit.
+                    document.getElementById("input_add_nopo").disabled = true
+                    document.getElementById("input_add_kodepelanggan").disabled = true
+                    document.getElementById("buttonAddListPelanggan").disabled = true
+                    document.getElementById("buttonAddListNoPo").disabled = true
+                    document.getElementById("input_add_namasales").disabled = true
                     $('#divhargaterakhir').hide();
                     cleanFormAddAdd()
 
@@ -5222,7 +5313,12 @@ console.log('xhargacek:', xhargacek)
                     // $('#buttonSubmitSaveHeader').show();
                     // unlockFormAdd()
                     tipeform = 'edit'
-                    // document.getElementById("buttonAddListPelanggan").disabled = true
+                    // SO sudah terbentuk: Pelanggan, Sales dan No PO dikunci seperti mode edit.
+                    document.getElementById("input_add_nopo").disabled = true
+                    document.getElementById("input_add_kodepelanggan").disabled = true
+                    document.getElementById("buttonAddListPelanggan").disabled = true
+                    document.getElementById("buttonAddListNoPo").disabled = true
+                    document.getElementById("input_add_namasales").disabled = true
                     $('#divhargaterakhir').hide();
                     cleanFormAddAdd()
 
@@ -5320,7 +5416,7 @@ function submitAddEdit () {
   }
 
   let namaproduk =  $("#input_add_add_namaproduk").val()
-  let qty =  $("#input_add_add_qty").val()
+  let qty =  Number(($("#input_add_add_qty").val() || '0').replace(/,/g, ''))
   let nosat =  $("#input_add_add_nosat").val()
   let satuanproduk =  $("#input_add_add_satuanproduk").val()
   let harga = Number(($("#input_add_add_harga").val() || '0').replace(/,/g, ''))
@@ -5773,6 +5869,36 @@ function onChangeInputAddAddDiscRp () {
 
 
 function buttonAddAddItem () {
+  let flagnopo = 0
+  $.ajax({
+    url: "{!! url('sochecknoposo') !!}",
+    type: "get",
+    async: false,
+    data: {
+      nobukti: $("#input_add_nobukti").val(),
+      nopo: $("#input_add_nopo").val(),
+      kodecust: $("#input_add_kodepelanggan").val(),
+      kodepelanggan: $("#input_add_kodepelanggan").val()
+    },
+    success: function(res) {
+      flagnopo = res
+      if (res == 4) {
+        alertify.warning('Nomor po customer sudah digunakan . Silahkan gunakan nomor po yang lain ')
+      }
+      if (res == 44) {
+        alertify.warning('Nomor po customer tidak sesuai dengan customer ')
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      flagnopo = 4
+    }
+  })
+  if (flagnopo == 4 || flagnopo == 44) {
+    return
+  }
+
   tipeformitem = 'add'
   $('.showhide').hide();
 
@@ -5954,16 +6080,16 @@ if (tempAddEdit.nopl != '') {
         rowTable += `
         <tr>
           <td>${date1}</td>
-          <td class="text-right">${item.qnt2 ?? '-'}</td>
+          <td class="text-right">${item.qnt2 != null ? formatAngka((Number(item.qnt2) || 0).toFixed(2)) : '-'}</td>
           <td class="text-center">${item.satuan ?? '-'}</td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.harga) || 0)}
+            ${formatAngka((Number(item.harga) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.discrp1) || 0)}
+            ${formatAngka((Number(item.discrp1) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.disctot) || 0)}
+            ${formatAngka((Number(item.disctot) || 0).toFixed(2))}
           </td>
         </tr>`})
 
@@ -5983,16 +6109,16 @@ if (tempAddEdit.nopl != '') {
         rowTableBeli += `
         <tr>
           <td>${date1}</td>
-          <td class="text-right">${item.qntterima ?? '-'}</td>
+          <td class="text-right">${item.qntterima != null ? formatAngka((Number(item.qntterima) || 0).toFixed(2)) : '-'}</td>
           <td class="text-center">${item.satuan ?? '-'}</td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.harga) || 0)}
+            ${formatAngka((Number(item.harga) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.ndiskon) || 0)}
+            ${formatAngka((Number(item.ndiskon) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.disctot) || 0)}
+            ${formatAngka((Number(item.disctot) || 0).toFixed(2))}
           </td>
         </tr>`
       })
@@ -6292,7 +6418,7 @@ function buttonAddAddListBarang () {
           <td>${item.KODEBRG}</td>
           <td>${item.namaBrg}</td>
           <td>${item.namamerk}</td>
-          <td>${item.Sisa1}</td>
+          <td class="text-right">${formatAngka((Number(item.Sisa1) || 0).toFixed(2))}</td>
           <td>${item.SAT_1}</td>
           </tr>
           `
@@ -6987,16 +7113,16 @@ function onChangeInputAddAddNosat () {
         rowTable += `
         <tr>
           <td>${date1}</td>
-          <td class="text-right">${item.qnt2 ?? '-'}</td>
+          <td class="text-right">${item.qnt2 != null ? formatAngka((Number(item.qnt2) || 0).toFixed(2)) : '-'}</td>
           <td class="text-center">${item.satuan ?? '-'}</td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.harga) || 0)}
+            ${formatAngka((Number(item.harga) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.discrp1) || 0)}
+            ${formatAngka((Number(item.discrp1) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.disctot) || 0)}
+            ${formatAngka((Number(item.disctot) || 0).toFixed(2))}
           </td>
         </tr>`})
 
@@ -7016,16 +7142,16 @@ function onChangeInputAddAddNosat () {
         rowTableBeli += `
         <tr>
           <td>${date1}</td>
-          <td class="text-right">${item.qntterima ?? '-'}</td>
+          <td class="text-right">${item.qntterima != null ? formatAngka((Number(item.qntterima) || 0).toFixed(2)) : '-'}</td>
           <td class="text-center">${item.satuan ?? '-'}</td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.harga) || 0)}
+            ${formatAngka((Number(item.harga) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.ndiskon) || 0)}
+            ${formatAngka((Number(item.ndiskon) || 0).toFixed(2))}
           </td>
           <td class="text-right">
-            ${new Intl.NumberFormat('id-ID').format(Number(item.disctot) || 0)}
+            ${formatAngka((Number(item.disctot) || 0).toFixed(2))}
           </td>
         </tr>`
       })
@@ -7124,18 +7250,40 @@ function onChangeInputAddAddNosat () {
 // buttonFilterSO() yang cuma menyegarkan #tabel) supaya tab Penawaran ikut
 // mengikuti periode baru tanpa harus buka modal Filter lalu klik Terapkan.
 // Port dari validasi tanggal milik poIkatPeriode() di purchaseOrder.blade.php.
+// Kalender memicu onchange di setiap langkah (geser bulan/ketik per digit), jadi data
+// baru dimuat setelah tanggal berhenti diubah sebentar -- bukan sekali per langkah.
+let soTimerPeriode = null
+
 function onChangePeriodeSO () {
-  let awal = $("#input_tanggalawal").val()
-  let akhir = $("#input_tanggalakhir").val()
-  if (!awal || !akhir) { return }
-  if (awal > akhir) {
-    alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
-    return
-  }
-  loadAll()
+  clearTimeout(soTimerPeriode)
+  soTimerPeriode = setTimeout(function () {
+    let awal = $("#input_tanggalawal").val()
+    let akhir = $("#input_tanggalakhir").val()
+    if (!awal || !akhir) { return }
+    if (awal > akhir) {
+      alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
+      return
+    }
+    loadAll(true)
+  }, 350)
 }
 
-function loadAll () {
+let soNomorMuat = 0
+
+// Lapisan "Memuat data..." yang sama dengan tabel di purchaseOrder (CSS
+// .dataTables_processing/.po-loading-chip di atas). Tabel SO bukan server-side,
+// jadi lapisannya ditempel manual ke wrapper DataTables #tabel dan #tabel7.
+function soTampilMemuat (tampil) {
+  $('#tabel_wrapper, #tabel7_wrapper').children('.so-memuat').remove()
+  if (!tampil) { return }
+  $('#tabel_wrapper, #tabel7_wrapper').append(
+    '<div class="dataTables_processing so-memuat" style="display:block"><span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span></div>'
+  )
+}
+
+// asinkron=true dipakai saat periode diganti (layar tidak membeku); pemanggil lain tetap
+// sinkron seperti semula karena ada yang langsung lanjut memakai hasilnya.
+function loadAll (asinkron = false) {
   console.log('loadall tesaiu')
   let _token = $("#_token").val();
   let level = $("#level").val()
@@ -7186,19 +7334,13 @@ function loadAll () {
     ketclose = 1
   }
 
-  let dataRefreshOutstanding = []
-      let dataRefreshOutstanding7 = []
-      let dataRefreshOutstanding3 = []
-      let dataRefreshOutstanding5 = []
-      console.log({tglawal,
-      tglakhir,
-      tipefilter,
-      needoto,
-      cbdneedopen})
+  // Nomor urut permintaan: kalau periode diganti lagi sebelum respons lama datang,
+  // respons lama diabaikan supaya tabel tidak tertimpa data periode sebelumnya.
+  let nomorMuat = ++soNomorMuat
   $.ajax({
     url: "{!! url('soloadall') !!}",
     type: "post",
-    async: false,
+    async: asinkron,
     data: {
 
         _token,
@@ -7210,20 +7352,35 @@ function loadAll () {
         tipebayar,
         tipefilter,
         ketproses,
-        ketclose
+        ketclose,
+        hanyaso: asinkron ? 1 : 0
     },
     success: function(res) {
-      console.log('res loadall')
-      console.log(res)
-      dataRefreshOutstanding = res.tempOutstanding1
-      dataRefreshOutstanding3 = res.tempOutstanding3
-      dataRefreshOutstanding5 = res.tempOutstanding5
-      dataRefreshOutstanding7 = res.tempOutstanding7
+      if (nomorMuat !== soNomorMuat) { return }
+      soTerapkanLoadAll(res)
+    },
+    error: function (err) {
+      console.log(err)
+      if (asinkron) { alertify.warning('Gagal memuat data SO, silahkan coba lagi') }
+    },
+    complete: function () {
+      if (nomorMuat === soNomorMuat) { soTampilMemuat(false) }
+    }
+  })
+  if (asinkron) { soTampilMemuat(true) }
+}
 
-    }})
+function soTerapkanLoadAll (res) {
+    lastTabelRows = res.tempOutstanding1;
 
-    lastTabelRows = dataRefreshOutstanding;
-    lastTabel7Rows = dataRefreshOutstanding7;
+    // Ganti periode (hanyaso) hanya mengirim data tabel SO -- tabel lain tidak berubah.
+    if (res.tempOutstanding7 === undefined) {
+      if (activeVisibleTabKey() === 'tabel') { reinitTabel(); } else { soPerluGambar.tabel = true; }
+      setPoKpiDariTabel();
+      return
+    }
+
+    lastTabel7Rows = res.tempOutstanding7;
 
     // Only the tab the user is actually looking at gets redrawn immediately -- the other
     // is left marked soPerluGambar and only costs a redraw once its tab is actually opened
@@ -7239,14 +7396,15 @@ function loadAll () {
     }
 
     // #tabel2/#tabel_oto have no nav-tab button to defer to -- always refreshed in place.
-    lastTabel2Rows = dataRefreshOutstanding3;
+    lastTabel2Rows = res.tempOutstanding3;
     reinitTabel2();
-    lastTabelOtoRows = dataRefreshOutstanding5;
+    lastTabelOtoRows = res.tempOutstanding5;
     reinitTabelOto();
 
     setPoKpiDariTabel();
 
-    buttonFilterSO()
+    // buttonFilterSO() tidak dipanggil lagi di sini: soloadall di atas sudah memakai filter
+    // yang sama, jadi memanggilnya hanya mengambil & menggambar ulang data yang sama dua kali.
 
     // No re-bind/re-activate needed here (unlike before this port): ReportTable's
     // listeners are bound once for good by soInitReportTableSekali(), and the
@@ -8128,7 +8286,7 @@ function buttonAddAddPickBarangAll (kodebrg , x = 0) {
         <td>${date1}</td>
         <td>-</td>
         <td>${item.SATUAN}</td>
-        <td class="text-right">${Number(item.Xharga) ? parseFloat(item.Xharga).toFixed(2) : '0.00'}</td>
+        <td class="text-right">${Number(item.Xharga) ? formatAngka(parseFloat(item.Xharga).toFixed(2)) : '0.00'}</td>
         <td>-</td>
         <td>-</td>
 
@@ -8738,8 +8896,12 @@ if (pcekglobal) {
   $('#buttonSubmitSaveHeader').show();
   unlockFormAdd()
 
+  // Pelanggan, Sales dan No PO tidak boleh diubah setelah SO dibuat.
   document.getElementById("input_add_nopo").disabled = true
   document.getElementById("input_add_kodepelanggan").disabled = true
+  document.getElementById("buttonAddListPelanggan").disabled = true
+  document.getElementById("buttonAddListNoPo").disabled = true
+  document.getElementById("input_add_namasales").disabled = true
   let akses = $("#akses_iskoreksi").val();
 
   if (!Number(akses)) {
@@ -8868,6 +9030,9 @@ if (pcekglobal) {
   cleanFormAdd()
    document.getElementById("input_add_nopo").disabled = false
    document.getElementById("input_add_kodepelanggan").disabled = false
+   document.getElementById("buttonAddListPelanggan").disabled = false
+   document.getElementById("buttonAddListNoPo").disabled = false
+   document.getElementById("input_add_namasales").disabled = false
   // $('.showhidemodalbodyadd').hide();
   // $('#modalBodyAddListPelanggan').show();
   // $('#modalBodyAddMain').show();
@@ -8998,13 +9163,15 @@ function buttonDetail (NOBUKTI) {
           <td>${item.NamaBrg}</td>
           <td>${item.namabrgalias}</td>
           <td>${item.namamerk}</td>
-          <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${item.Qnt ? formatAngka(parseFloat(item.Qnt).toFixed(2)) : '0.00'}</td>
           <td>${item.Satuan}</td>
+          <td>${item.sATx ? item.sATx : ''}</td>
           <td>${item.NAMATAX ? item.NAMATAX : ''}</td>
           <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
           <td class="text-right">${item.DiscRp1 ? formatAngka(parseFloat(item.DiscRp1).toFixed(2)) : '0.00'}</td>
           <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
           <td>${item.noserah ? item.noserah : ''}</td>
+          <td>${item.IsPO == 1 ? 'Ya' : 'Tidak'}</td>
 
           </tr>`
 
@@ -9032,7 +9199,7 @@ function buttonDetail (NOBUKTI) {
         console.log('b')
         document.getElementById("input_detail_kodebackoffice").value = dataHeaderDetail.Boffice
         document.getElementById("input_detail_namabackoffice").value = dataHeaderDetail.NamaBoFFice
-        document.getElementById("input_detail_dp").value = dataHeaderDetail.DP ? parseFloat(dataHeaderDetail.DP).toFixed(2) : '0.00'
+        document.getElementById("input_detail_dp").value = dataHeaderDetail.DP ? formatAngka(parseFloat(dataHeaderDetail.DP).toFixed(2)) : '0.00'
         document.getElementById("input_detail_catatan").value = dataHeaderDetail.Catatan
         console.log('c')
         document.getElementById("input_detail_kodealamatkirim").value = dataHeaderDetail.NoAlamatKirim
@@ -9050,8 +9217,8 @@ function buttonDetail (NOBUKTI) {
         document.getElementById("input_detail_tanggalkirim").value = formatDate(dataHeaderDetail.TglKirim)
 
         document.getElementById("input_detail_totalDisplay").value = formatAngka(parseFloat(totalDisplayNumber).toFixed(2))
-        document.getElementById("input_detail_disc").value = parseFloat(dataHeaderDetail.Disc).toFixed(2)
-        document.getElementById("input_detail_discrp").value = parseFloat(dataHeaderDetail.TotDiskon).toFixed(2)
+        document.getElementById("input_detail_disc").value = formatAngka(parseFloat(dataHeaderDetail.Disc).toFixed(2))
+        document.getElementById("input_detail_discrp").value = formatAngka(parseFloat(dataHeaderDetail.TotDiskon).toFixed(2))
         document.getElementById("input_detail_dpp").value = formatAngka(parseFloat(dataHeaderDetail.TotDPP).toFixed(2))
         document.getElementById("input_detail_ppn").value = formatAngka(parseFloat(dataHeaderDetail.TotPPN).toFixed(2))
         document.getElementById("input_detail_grandtotal").value = formatAngka(parseFloat(dataHeaderDetail.TotNet).toFixed(2))
@@ -9109,7 +9276,7 @@ function refreshDataTableAdd (NOBUKTI = "") {
 
     // if(!dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="12">Belum ada barang</td>
+      <td class="text-center" colspan="14">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -9157,13 +9324,15 @@ function refreshDataTableAdd (NOBUKTI = "") {
             <td>${item.NamaBrg}</td>
             <td>${item.namabrgalias}</td>
             <td>${item.namamerk}</td>
-            <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+            <td class="text-right">${item.Qnt ? formatAngka(parseFloat(item.Qnt).toFixed(2)) : '0.00'}</td>
             <td>${item.Satuan}</td>
+            <td>${item.sATx ? item.sATx : ''}</td>
             <td>${item.NAMATAX ? item.NAMATAX : ''}</td>
             <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
             <td class="text-right">${item.DiscRp1 ? formatAngka(parseFloat(item.DiscRp1).toFixed(2)) : '0.00'}</td>
             <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
             <td>${item.noserah ? item.noserah : ''}</td>
+            <td>${item.IsPO == 1 ? 'Ya' : 'Tidak'}</td>
             <td class="text-center">
             <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
              <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
@@ -9175,7 +9344,7 @@ function refreshDataTableAdd (NOBUKTI = "") {
 
           if(!dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="12">Belum ada barang</td>
+            <td class="text-center" colspan="14">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("tabel_data_add").innerHTML = rowTable

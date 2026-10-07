@@ -216,9 +216,10 @@
           <div class="po-toolbar">
             <div class="po-filter-wrap">
               <label>Periode</label>
-              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalawal_umj1" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
+              {{-- Kosong = semua SO outstanding (seperti programajcSML); isi untuk menyaring per tanggal SO. --}}
+              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalawal_umj1" value="" title="Kosongkan untuk menampilkan semua SO outstanding">
               <span class="po-filter-sep">s/d</span>
-              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalakhir_umj1" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
+              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalakhir_umj1" value="" title="Kosongkan untuk menampilkan semua SO outstanding">
             </div>
             <input type="search" id="umjSearch1" class="po-search-inp" placeholder="Cari data">
             <div class="po-len-wrap"><label for="umjLen1">Tampilkan</label>
@@ -287,9 +288,9 @@
           <div class="po-toolbar">
             <div class="po-filter-wrap">
               <label>Periode</label>
-              <input type="date" onchange="onChangePeriodeUMJ()" class="po-filter-inp" id="input_tanggalawal_umj" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
+              <input type="date" onchange="onChangePeriodeUMJ()" class="po-filter-inp" id="input_tanggalawal_umj" value="{!! $tglawal !!}">
               <span class="po-filter-sep">s/d</span>
-              <input type="date" onchange="onChangePeriodeUMJ()" class="po-filter-inp" id="input_tanggalakhir_umj" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
+              <input type="date" onchange="onChangePeriodeUMJ()" class="po-filter-inp" id="input_tanggalakhir_umj" value="{!! $tglakhir !!}">
             </div>
             <input type="search" id="umjSearch2" class="po-search-inp" placeholder="Cari data">
             <div class="po-len-wrap"><label for="umjLen2">Tampilkan</label>
@@ -772,6 +773,7 @@ function umjValueCell (row, col) {
 function tabelActionsCell (row) {
   let nobukti = umjPickCI(row, 'NoBukti');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
+  html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
   html += '<button class="btn btn-success btn-sm" title="Buat Uang Muka" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>';
   html += '</div></td>';
   return html;
@@ -788,8 +790,8 @@ function umjTabel2Or3ActionsCell (row) {
   html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetailKoreksi(\'' + nobukti + '\', \'' + noso + '\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
     html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOto(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-key"></i></button>';
-    html += '<button title="Print" class="btn btn-primary btn-sm" type="button" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
-    html += '<button title="Print" class="btn btn-primary btn-sm" type="button" onclick="submitPrintTT(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+    html += '<button title="Print Invoice Uang Muka" class="btn btn-primary btn-sm" type="button" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+    html += '<button title="Print Tanda Terima" class="btn btn-primary btn-sm" type="button" onclick="submitPrintTT(\'' + nobukti + '\')"><i class="bi bi-printer-fill"></i></button>';
   } else {
     html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonEdit(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-pen"></i></button>';
     html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOto(\'' + nobukti + '\' , \'' + noso + '\')"><i class="bi bi-key"></i></button>';
@@ -1072,6 +1074,11 @@ if (pcekglobal) {
     },
     success: function(res) {
       console.log(res)
+      if (!res.header || !res.header.length) {
+        alertify.warning('SO ' + NOBUKTI + ' tidak ditemukan / belum otorisasi penuh, silahkan refresh')
+        loadAll()
+        return
+      }
       tempAdd = res.header[0]
 
       document.getElementById("input_add_noso").value = NOBUKTI
@@ -1159,6 +1166,10 @@ function buttonDetail (NOBUKTI) {
     },
     success: function(res) {
       console.log(res)
+      if (!res.header || !res.header.length) {
+        alertify.warning('SO ' + NOBUKTI + ' tidak ditemukan / belum otorisasi penuh, silahkan refresh')
+        return
+      }
       tempAdd = res.header[0]
 
       document.getElementById("input_detail_noso").value = NOBUKTI
@@ -1292,7 +1303,8 @@ if (pcekglobal) {
             flagtipe ,
             tglest ,
             maxol ,
-            jmlrecord
+            jmlrecord,
+            pbeli
           },
           success: function(res) {
             if (res == 1) {
@@ -1300,6 +1312,16 @@ if (pcekglobal) {
               alertify.success('Berhasil hapus UMJ')
               loadAll()
 
+            }
+
+            if (res == 3) {
+              alertify.warning('UMJ ' + nobukti + ' sudah diotorisasi, batal otorisasi dulu sebelum menghapus')
+              loadAll()
+            }
+
+            if (res && res.status == 7) {
+              alertify.warning('UMJ ' + nobukti + ' sudah dipakai di faktur ' + res.invoice + ', tidak bisa dihapus')
+              loadAll()
             }
 
           },
@@ -1328,6 +1350,32 @@ if (pcekglobal) {
 
 
 function buttonEdit (NOBUKTI, NOSO) {
+
+  // Cek kunci periode seperti Add & Hapus - koreksi juga mengubah data.
+  let pcekglobal = 0
+  $.ajax({
+    url: "{!! url('ceklockperiode') !!}",
+    type: "get",
+    async: false,
+    data: {
+    },
+    success: function(res) {
+      if (res.length ) {
+        pcekglobal = 1
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+
+  })
+
+  if (pcekglobal) {
+    alertify.warning("Periode sudah dikunci")
+    return
+  }
+
   console.log('buttonEdit')
   console.log(NOBUKTI , NOSO)
   let _token  = $("#_token").val()
@@ -1356,11 +1404,17 @@ function buttonEdit (NOBUKTI, NOSO) {
     },
     success: function(res) {
       console.log(res)
+      if (!res.header || !res.header.length || !res.detail || !res.detail.length) {
+        alertify.warning('Data UMJ ' + NOBUKTI + ' tidak ditemukan, silahkan refresh')
+        loadAll()
+        return
+      }
       tempAdd = res.header[0]
       let tempDetail =  res.detail[0]
 
       if (Number(tempDetail.IsOtorisasi1)) {
         alertify.warning('Sudah diotorisasi')
+        loadAll()
         return
       }
 
@@ -1372,7 +1426,9 @@ function buttonEdit (NOBUKTI, NOSO) {
       document.getElementById("input_add_kurs").value = tempAdd.kurs ? formatAngka(parseFloat(tempAdd.kurs).toFixed(2)) : '0.00'
       document.getElementById("input_add_dpp").value = tempAdd.TotDPP ? formatAngka(parseFloat(tempAdd.TotDPP).toFixed(2)) : '0.00'
       document.getElementById("input_add_ppn").value = tempAdd.TotPPN ? formatAngka(parseFloat(tempAdd.TotPPN).toFixed(2)) : '0.00'
-      document.getElementById("input_add_total").value = tempAdd.TotTotal ? formatAngka(parseFloat(tempAdd.TotTotal).toFixed(2)) : '0.00'
+      // TotNet (DPP + PPN), sama seperti saat Add. Dulu TotTotal (tanpa PPN), sehingga
+      // kalau persentase/DPP diubah saat koreksi, Subtotal tersimpan tanpa PPN.
+      document.getElementById("input_add_total").value = tempAdd.TotNet ? formatAngka(parseFloat(tempAdd.TotNet).toFixed(2)) : '0.00'
       document.getElementById("input_add_tipeppn").value = Number(tempAdd.TipePPN)
 
       document.getElementById("input_add_presentase").value = formatAngka(parseFloat(tempDetail.PERSEN || 0).toFixed(2))
@@ -1402,29 +1458,8 @@ function buttonEdit (NOBUKTI, NOSO) {
 
 function buttonDetailKoreksi (NOBUKTI, NOSO) {
 
-let pcekglobal = 0
-  $.ajax({
-    url: "{!! url('ceklockperiode') !!}",
-    type: "get",
-    async: false,
-    data: {
-    },
-    success: function(res) {
-      if (res.length ) {
-        pcekglobal = 1
-      }
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
-  })
-
-if (pcekglobal) {
-  alertify.warning("Periode sudah dikunci")
-  return
-}
+  // Detail hanya menampilkan data, jadi tidak diblokir kunci periode
+  // (cek ceklockperiode dipindah ke buttonEdit).
 
   console.log('buttonDetailKoreksi')
   console.log(NOBUKTI , NOSO)
@@ -1443,6 +1478,10 @@ if (pcekglobal) {
     },
     success: function(res) {
       console.log(res)
+      if (!res.header || !res.header.length || !res.detail || !res.detail.length) {
+        alertify.warning('Data UMJ ' + NOBUKTI + ' tidak ditemukan, silahkan refresh')
+        return
+      }
       tempAdd = res.header[0]
       let tempDetail =  res.detail[0]
 
@@ -1459,7 +1498,7 @@ if (pcekglobal) {
       document.getElementById("input_detail_kurs").value = tempAdd.kurs ? formatAngka(parseFloat(tempAdd.kurs).toFixed(2)) : '0.00'
       document.getElementById("input_detail_dpp").value = tempAdd.TotDPP ? formatAngka(parseFloat(tempAdd.TotDPP).toFixed(2)) : '0.00'
       document.getElementById("input_detail_ppn").value = tempAdd.TotPPN ? formatAngka(parseFloat(tempAdd.TotPPN).toFixed(2)) : '0.00'
-      document.getElementById("input_detail_total").value = tempAdd.TotTotal ? formatAngka(parseFloat(tempAdd.TotTotal).toFixed(2)) : '0.00'
+      document.getElementById("input_detail_total").value = tempAdd.TotNet ? formatAngka(parseFloat(tempAdd.TotNet).toFixed(2)) : '0.00'
       document.getElementById("input_detail_tipeppn").value = Number(tempAdd.TipePPN)
 
       document.getElementById("input_detail_presentase").value = formatAngka(parseFloat(tempDetail.PERSEN || 0).toFixed(2))
@@ -1520,6 +1559,12 @@ function submitAdd () {
   let jmlrecord = 0
   let pbeli = 0
 
+  // Sama seperti Uang Muka Beli: nilai 0 boleh, minus tidak boleh.
+  if (Number(subtotal) < 0 || Number(dppx) < 0) {
+    alertify.warning("Subtotal < 0")
+    return
+  }
+
   console.log({
     choice,
     nobukti ,
@@ -1561,7 +1606,8 @@ function submitAdd () {
       flagtipe ,
       tglest ,
       maxol ,
-      jmlrecord
+      jmlrecord,
+      pbeli
     },
     success: function(res) {
       if (res == 1) {
@@ -1575,6 +1621,16 @@ function submitAdd () {
       if (res == 2) {
         alertify.warning('Nobukti telah direfresh, silahkan submit ulang')
         setNewNoBukti()
+      }
+
+      if (res == 4) {
+        alertify.warning('SO ' + noso + ' sudah dibuatkan uang muka')
+        loadAll()
+        buttonCloseForm()
+      }
+
+      if (res == 6) {
+        alertify.warning('Total Uang Muka melebihi SO')
       }
 
     },
@@ -1621,6 +1677,16 @@ function buttonOto (nobukti) {
 
           },
           success: function(res) {
+            if (res == 3) {
+              alertify.warning('UMJ ' + nobukti + ' sudah diotorisasi')
+              loadAll()
+              return
+            }
+            if (res == 5) {
+              alertify.warning('UMJ ' + nobukti + ' tidak ditemukan, silahkan refresh')
+              loadAll()
+              return
+            }
             alertify.success('Berhasil update otorisasi')
             loadAll()
 
@@ -1666,9 +1732,9 @@ alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
     // alertify.success("You entered: " + value);
     let xpket = value;
 
-     if (xpket==''){
+     if ($.trim(xpket)==''){
           alertify.warning('Keterangan harus diisi.');
-          $.abort();
+          return false;
         }
 
         let _token = $("#_token").val();
@@ -1684,6 +1750,24 @@ alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
 
           },
           success: function(res) {
+            if (res == 3) {
+              alertify.warning('UMJ ' + nobukti + ' belum / sudah batal diotorisasi')
+              loadAll()
+              return
+            }
+            if (res == 4) {
+              alertify.warning('Keterangan harus diisi.')
+              return
+            }
+            if (res && res.status == 7) {
+              alertify.warning('UMJ ' + nobukti + ' sudah dipakai di faktur ' + res.invoice + ', batalkan/koreksi faktur dulu')
+              return
+            }
+            if (res == 5) {
+              alertify.warning('UMJ ' + nobukti + ' tidak ditemukan, silahkan refresh')
+              loadAll()
+              return
+            }
             alertify.success('Berhasil update otorisasi')
             loadAll()
 
@@ -1739,6 +1823,11 @@ function submitEdit () {
   let jmlrecord = 1
   let pbeli = 0
 
+  if (Number(subtotal) < 0 || Number(dppx) < 0) {
+    alertify.warning("Subtotal < 0")
+    return
+  }
+
   console.log({
     choice,
     nobukti ,
@@ -1780,7 +1869,8 @@ function submitEdit () {
       flagtipe ,
       tglest ,
       maxol ,
-      jmlrecord
+      jmlrecord,
+      pbeli
     },
     success: function(res) {
       if (res == 1) {
@@ -1789,6 +1879,22 @@ function submitEdit () {
         loadAll()
         buttonCloseForm()
 
+      }
+
+      if (res == 3) {
+        alertify.warning('UMJ ' + nobukti + ' sudah diotorisasi, tidak bisa dikoreksi')
+        loadAll()
+        buttonCloseForm()
+      }
+
+      if (res && res.status == 7) {
+        alertify.warning('UMJ ' + nobukti + ' sudah dipakai di faktur ' + res.invoice + ', tidak bisa dikoreksi')
+        loadAll()
+        buttonCloseForm()
+      }
+
+      if (res == 6) {
+        alertify.warning('Total Uang Muka melebihi SO')
       }
 
     },
@@ -1806,7 +1912,7 @@ function submitEdit () {
 }
 
 function onChangePresentase () {
-  let presentase = $("#input_add_presentase").val().split(',').join('')
+  let presentase = Number($("#input_add_presentase").val().split(',').join('')) || 0
   let dpp = $("#input_add_dpp").val().split(',').join('')
   let ppn = $("#input_add_ppn").val().split(',').join('')
   let total = $("#input_add_total").val().split(',').join('')
@@ -1816,6 +1922,7 @@ function onChangePresentase () {
   let ppnx = ppn * presentase / 100
   let subtotal = total * presentase / 100
 
+  document.getElementById("input_add_presentase").value = formatAngka(parseFloat(presentase).toFixed(2))
   document.getElementById("input_add_dppx").value = formatAngka(parseFloat(dppx).toFixed(2))
   document.getElementById("input_add_ppnx").value = formatAngka(parseFloat(ppnx).toFixed(2))
   document.getElementById("input_add_subtotal").value = formatAngka(parseFloat(subtotal).toFixed(2))
@@ -1825,7 +1932,7 @@ function onChangePresentase () {
 function onChangeDPP () {
   console.log('onChangeDPP')
   let dpp = $("#input_add_dpp").val().split(',').join('')
-  let dppx = $("#input_add_dppx").val().split(',').join('')
+  let dppx = Number($("#input_add_dppx").val().split(',').join('')) || 0
 
   // console.log(dpp, dppx)
   let ppn = $("#input_add_ppn").val().split(',').join('')
@@ -1895,7 +2002,7 @@ function submitPrint (nobukti) {
   //     <label style="display:block;margin-bottom:6px;">Ditandatangani oleh :</label>
   //     <select id="selectNamaTtd" style="width:100%;padding:6px;font-size:14px;border:1px solid #ccc;border-radius:4px;">
   //       <option value="">-- Pilih --</option>
-
+        
   //     </select>
   //     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
   //       <button id="btnBatalTtd" style="padding:6px 16px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;">Batal</button>
@@ -1927,13 +2034,13 @@ function submitPrint (nobukti) {
         dataPrint = res
 
         console.log(dataPrint)
-
+        
       }
     })
-
+  
     let arrayDataPrint = []
     console.log('err')
-    for (let i = 0; i < dataPrint.length; i+=7)
+    for (let i = 0; i < dataPrint.length; i+=7) 
     {
       let tempArray = dataPrint.slice(i,i+7)
       arrayDataPrint.push(tempArray)
@@ -1951,7 +2058,7 @@ function submitPrint (nobukti) {
 
     const now = new Date()
     const jamCetak = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
+    
     css = `<style type="text/css">
       body {
         font-family: sans-serif;
@@ -2371,7 +2478,7 @@ function submitPrint (nobukti) {
                         <div class="pb-1" style="width: 100%">E-Mail : spl@indo.net</div>
                       </div>
                     </div>
-
+                    
                     <div style="display: flex; width: 100%">
                       <div class="pb-1" style="width: 20%">Supplier</div>
                       <div class="pb-1" style="width: 5%">:</div>
@@ -2434,7 +2541,7 @@ function submitPrint (nobukti) {
     let subTotal = 0
     let ppnTotal = 0
     let totalTotal = 0
-
+    
     let tempPrintStr = ``
     tempPrintStr += `<html>
     <head>
@@ -2462,7 +2569,7 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 2%;">${z+1}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 5%;">${itemSub.KODEBRG}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 30%;">${itemSub.namabrg}</td>
-
+      
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 5%;">${itemSub.Satuan}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 5%;">${itemSub.Qnt ? parseFloat(itemSub.Qnt).toFixed(2) : ''}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 5%;">${formatAngka(parseFloat(itemSub.harga).toFixed(2))}</td>
@@ -2472,7 +2579,7 @@ item.forEach((itemSub, j) => {
   z++;
 });
 
-// Fill remaining empty rows ï¿½ table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows � table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {
@@ -2497,7 +2604,7 @@ tempPrintStr += `</table>`;
   <div style="width: 50%; font-family: sans-serif; font-size: 10px;" class='text-right'>
     <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 6px;">
       <tr>
-        <td class="no-border text-left" style="width: 34%; font-size:13px;">TRANSFER :
+        <td class="no-border text-left" style="width: 34%; font-size:13px;">TRANSFER : 
         CV. SARANA PRIMA LESTARI
         PT. BANK HSBC INDONESIA CABANG BANJARMASIN
         AC NO : 350-034-120-075 (IDR)</td>
@@ -2581,8 +2688,8 @@ tempPrintStr += `</table>`;
     w.document.write(tempPrintStr)
     w.print()
     w.close()
-
-  }
+    
+  } 
 
 
 
@@ -2594,7 +2701,7 @@ tempPrintStr += `</table>`;
 
   let namaTtdCetak = ''
   console.log('0')
-
+  
   console.log('1')
 
     $.ajax({
@@ -2611,13 +2718,13 @@ tempPrintStr += `</table>`;
         dataPrint = res
 
         console.log(dataPrint)
-
+        
       }
     })
-
+  
     let arrayDataPrint = []
     console.log('err')
-    for (let i = 0; i < dataPrint.length; i+=7)
+    for (let i = 0; i < dataPrint.length; i+=7) 
     {
       let tempArray = dataPrint.slice(i,i+7)
       arrayDataPrint.push(tempArray)
@@ -2635,7 +2742,7 @@ tempPrintStr += `</table>`;
 
     const now = new Date()
     const jamCetak = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
+    
     css = `<style type="text/css">
       body {
         font-family: sans-serif;
@@ -3047,18 +3154,18 @@ tempPrintStr += `</table>`;
 
                     <div style="display: flex; width: 100%">
                     <div class="pb-1" style="width: 20%">KEPADA YTH : ${(dataPrint[0].KodeCUST)} </div>
-
-
+                  
+                   
                     </div>
-
-
+                    
+                    
                     <div style="display: flex; width: 100%">
                       <div class="pb-1" style="width: 75%">${dataPrint[0].NamaCust}</div>
                     </div>
 
                     <div style="display: flex; width: 100%">
-
-
+                  
+                      
                       <div class="pb-1" style="width: 75%">${dataPrint[0].Alamat}</div>
                     </div>
                   </div>
@@ -3066,14 +3173,14 @@ tempPrintStr += `</table>`;
                   <div style="width: 40%">
                     <div style="display: flex; width: 100%">
                       <h2 class="m-0 pb-2">TANDA TERIMA</h2>
-
+                 
                     </div>
                     <div style="display: flex; width: 100%">
-
+                    
                       <h2 class="m-0 pb-2">UANG MUKA</h2>
                     </div>
 
-
+                    
                   </div>
 
                 </div>
@@ -3086,7 +3193,7 @@ tempPrintStr += `</table>`;
                     <td class="text-center" style="width: 30%">No. Uang Muka</td>
                     <td class="text-center" style="width: 5%">Nilai Uang Muka</td>
                     <td class="text-center" style="width: 5%">Keterangan</td>
-
+               
                   </tr>
                 </thead> `;
 
@@ -3096,7 +3203,7 @@ tempPrintStr += `</table>`;
     let subTotal = 0
     let ppnTotal = 0
     let totalTotal = 0
-
+    
     let tempPrintStr = ``
     tempPrintStr += `<html>
     <head>
@@ -3129,7 +3236,7 @@ item.forEach((itemSub, j) => {
   z++;
 });
 
-// Fill remaining empty rows ï¿½ table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows � table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {
@@ -3150,7 +3257,7 @@ tempPrintStr += `</table>`;
 
   <div style="width: 50%; font-family: sans-serif; font-size: 10px;" class='text-right'>
     <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 6px;">
-
+      
       <tr style="height: 2.5rem;">
         <td class="no-border" colspan="3">&nbsp;</td>
          <td class="no-border px-2">
@@ -3158,7 +3265,7 @@ tempPrintStr += `</table>`;
         </td>
       </tr>
 
-
+      
 
 
 
@@ -3167,7 +3274,7 @@ tempPrintStr += `</table>`;
         <td class="no-border px-2">
           <p class="m-0" style="border-bottom: 1px solid black; font-size:12px;">Nama</p>
         </td>
-
+        
         <td class="no-border px-2">
           <p class="m-0" style="border-bottom: 1px solid black; font-size:12px;">Nama</p>
         </td>
@@ -3187,12 +3294,12 @@ tempPrintStr += `</table>`;
 
     <div style="display: flex; font-size:13px; justify-content: flex-end; width: 100%; padding-bottom: 2px;">
       <div style="width: 60% margin-left:auto"> SUB TOTAL </div>
-
+     
     </div>
+    
 
-
-
-
+    
+    
 
   </div>
 
@@ -3218,10 +3325,16 @@ tempPrintStr += `</table>`;
     w.document.write(tempPrintStr)
     w.print()
     w.close()
-
-  }
+    
+  } 
 
 </script>
+
+
+
+
+
+
 
 
 @endsection

@@ -20,11 +20,13 @@ class PerformanceController extends Controller
   // "Perintah Uang Muka" (OtoPerf=1) digabung jadi satu daftar dengan filter status
   // (0=Semua,1=Belum,2=Sudah), sama seperti kreditnote/perintahreturjual.
   private function queryPerformance ($tglawal, $tglakhir, $filterperf) {
+    // "Belum" = SO CBD (tipebayar=0) seperti index() programajcSML; kondisi DP>0 di sana
+    // sengaja dikomentari (loadAll programajcSML masih DP>0 = sisa lama, tidak diikuti).
     $statusCondition = $filterperf == 1
-      ? "isnull(a.OtoPerf,0)=0 and ISNULL(a.DP,0)>0"
+      ? "isnull(a.OtoPerf,0)=0 and A.tipebayar=0"
       : ($filterperf == 2
         ? "isnull(a.OtoPerf,0)=1"
-        : "(isnull(a.OtoPerf,0)=1 or (isnull(a.OtoPerf,0)=0 and ISNULL(a.DP,0)>0))");
+        : "(isnull(a.OtoPerf,0)=1 or (isnull(a.OtoPerf,0)=0 and A.tipebayar=0))");
 
     return DB::connection("SML")->select("
 declare @Awal date, @Akhir date
@@ -66,6 +68,13 @@ order by A.NoBukti
 " , [ "tglawal" => $tglawal , "tglakhir" => $tglakhir ]);
   }
 
+  // Awal/akhir bulan periode aktif. Carbon::now()->month() dulu mengabaikan tahun periode
+  // dan meluap ke bulan berikutnya bila hari ini tgl 29-31 (mis. 31 Okt -> month(2) = Maret).
+  private function rentangPeriode ($periode) {
+    $awal = \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1);
+    return [$awal->format('Y-m-d'), $awal->copy()->endOfMonth()->format('Y-m-d')];
+  }
+
   public function index(Request $req) {
     $kodemenu = '041012';
     $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu , $req->path());
@@ -76,13 +85,14 @@ order by A.NoBukti
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(4);
 
-    $tglawal = \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    [$tglawal, $tglakhir] = $this->rentangPeriode($periode);
     $tempOutstanding = $this->queryPerformance($tglawal, $tglakhir, 0);
 
     return view('marketing.performance' , [
       "menul0" => $menul0,
       "periode" => $periode,
+      "tglawal" => $tglawal,
+      "tglakhir" => $tglakhir,
       "tempOutstanding" => $tempOutstanding,
       "akses" => $akses
     ]);
@@ -108,8 +118,9 @@ order by A.NoBukti
 
   public function loadAll (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $tglawal = $req->tglawal ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    [$defAwal, $defAkhir] = $this->rentangPeriode($periode);
+    $tglawal = $req->tglawal ?: $defAwal;
+    $tglakhir = $req->tglakhir ?: $defAkhir;
     $filterperf = $req->filterperf !== null ? (int) $req->filterperf : 0;
 
     $tempOutstanding = $this->queryPerformance($tglawal, $tglakhir, $filterperf);
@@ -197,7 +208,8 @@ Left Outer Join vwRpDetSO I on I.NoBukti=A.NoBukti
 Left Outer Join dbAlamatCust J on J.KodeCustsupp=A.KodeCust and J.Nomor=A.NoAlamatKirim
 Left outer join dbKaryawan K ON A.KODESLS=K.KeyNIK
 LEFT OUTER JOIN DBPICCUSTSUPP L ON A.KodePF=L.KODEPIC  and A.kodecust=L.kodecustsupp
-where (year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan)  and
+where /* filter bulan periode dibuang: daftar newSML memakai rentang tanggal bebas, header
+         dibatasi bulan periode membuat res.header kosong -> error 'NamaCust' di buttonAdd */
 Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                        Case when A.IsOtorisasi2=1 then 1 else 0 end+
                        Case when A.IsOtorisasi3=1 then 1 else 0 end+
@@ -225,6 +237,10 @@ order by A.NoBukti
 
   public function spBatalOtoPerf (Request $req) {
     // $tanggal = date('Y-m-d H:i:s');
+    $sudahUM = DB::connection('SML')->select("select top 1 NoBukti from dbumjual where noso= :nobukti", [ "nobukti" => $req->NOBUKTI ]);
+    if (count($sudahUM)) {
+      return response('Tidak bisa batal otorisasi, uang muka jual ' . $sudahUM[0]->NoBukti . ' sudah dibuat untuk SO ini', 422);
+    }
     $res = DB::connection('SML')->update("Update DBSO set OtoPerf='',TglOtoPerf=NULL,UserOtoPerf='' where nobukti= :nobukti", [ "nobukti" => $req->NOBUKTI ]);
     return 1;
   }

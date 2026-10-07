@@ -31,12 +31,11 @@ class UangMukaJualController extends Controller
 
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(4);
 
-    $tglawal1 = \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir1 = \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
-    $tempOutstanding = $this->queryOutstandingUM($tglawal1, $tglakhir1);
+    // Outstanding tanpa filter tanggal (semua SO yang belum dibuatkan uang muka),
+    // sama seperti programajcSML.
+    $tempOutstanding = $this->queryOutstandingUM(null, null);
 
-    $tglawal = \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    [$tglawal, $tglakhir] = $this->rentangPeriode($periode);
     $tempOutstanding2 = $this->queryUangMuka($tglawal, $tglakhir, 0);
 
     return view('marketing.uangmukajual' , [
@@ -45,16 +44,25 @@ class UangMukaJualController extends Controller
       // "users"=> $users,
       "tempOutstanding" => $tempOutstanding,
       "tempOutstanding2" => $tempOutstanding2,
+      "tglawal" => $tglawal,
+      "tglakhir" => $tglakhir,
       "akses" => $akses
     ]);
 
   }
 
+  // Tanggal awal & akhir bulan periode user. Dulu memakai Carbon::now()->month(),
+  // yang memakai tahun berjalan (bukan tahun periode) dan meleset ke bulan
+  // berikutnya kalau hari ini tanggal 31.
+  private function rentangPeriode ($periode) {
+    $awal = \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1);
+    return [$awal->format('Y-m-d'), $awal->copy()->endOfMonth()->format('Y-m-d')];
+  }
+
   // Satu query dipakai bareng oleh index() dan loadAll() buat tabel "Outstanding
-  // Uang Muka" -- sebelumnya periode-nya dead code (filter year/month di WHERE
-  // dikomentari, jadi query ini selalu menampilkan SEMUA baris tanpa peduli
-  // periode). Sekarang beneran menyaring pakai rentang tanggal, port 1:1 dari
-  // pola periode-picker milik so.blade.php/tab lain di halaman ini (queryUangMuka).
+  // Uang Muka". Di programajcSML tabel ini tidak disaring periode (semua SO yang
+  // belum punya UMJ tampil), jadi tanggal kosong = semua. Filter tanggal hanya
+  // dipakai kalau user mengisi periode di toolbar.
   private function queryOutstandingUM ($tglawal, $tglakhir) {
     return DB::connection("SML")->select("
 Select 	A.NoBukti, A.NoUrut, A.Tanggal, A.KodeCust, C.NamaCustSupp NamaCust,
@@ -80,7 +88,8 @@ Left Outer Join vwRpDetSO I on I.NoBukti=A.NoBukti
 Left Outer Join dbAlamatCust J on J.KodeCustsupp=A.KodeCust and J.Nomor=A.NoAlamatKirim
 Left outer join dbKaryawan K ON A.KODESLS=K.KeyNIK
 LEFT OUTER JOIN DBPICCUSTSUPP L ON A.KodePF=L.KODEPIC  and A.kodecust=L.kodecustsupp
-where A.Tanggal between :tglawal and :tglakhir and A.OtoPerf=1 and A.nobukti not in (select noso from dbumjual) and
+where (:tglawal is null or A.Tanggal >= convert(date, :tglawal2)) and (:tglakhir is null or A.Tanggal < dateadd(day, 1, convert(date, :tglakhir2)))
+  and A.OtoPerf=1 and A.nobukti not in (select noso from dbumjual) and
 Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                        Case when A.IsOtorisasi2=1 then 1 else 0 end+
                        Case when A.IsOtorisasi3=1 then 1 else 0 end+
@@ -89,7 +98,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                   else 1
              end As Bit)=0
 
-order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
+order by A.NoBukti" , ["tglawal" => $tglawal, "tglawal2" => $tglawal, "tglakhir" => $tglakhir, "tglakhir2" => $tglakhir]);
   }
 
   // Satu query dipakai bareng oleh index() dan loadAll() buat tabel "Uang Muka
@@ -119,7 +128,7 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
         from DBUMJUAL A
         Left Outer Join DBSO B on A.Noso=B.Nobukti
         Left Outer join DBCustSupp C on B.KodeCUst=C.KodeCUstSUpp
-        where A.Tanggal between ? and ? and Isnull(A.pBeli,0)=0
+        where A.Tanggal >= convert(date, ?) and A.Tanggal < dateadd(day, 1, convert(date, ?)) and Isnull(A.pBeli,0)=0
       ) x
       where (? = 0)
          or (? = 1 and isnull(x.IsOtorisasi1,0) = 0)
@@ -132,13 +141,15 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $tglawal1 = $req->tglawal1 ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir1 = $req->tglakhir1 ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    // Outstanding: tanggal kosong = semua (seperti programajcSML).
+    $tglawal1 = $req->tglawal1 ?: null;
+    $tglakhir1 = $req->tglakhir1 ?: null;
     $tempOutstanding = $this->queryOutstandingUM($tglawal1, $tglakhir1);
 
-    $tglawal = $req->tglawal ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
-    $filterumj = $req->filterumj ?: 0;
+    [$defAwal, $defAkhir] = $this->rentangPeriode($periode);
+    $tglawal = $req->tglawal ?: $defAwal;
+    $tglakhir = $req->tglakhir ?: $defAkhir;
+    $filterumj = (int) ($req->filterumj ?: 0);
     $tempOutstanding2 = $this->queryUangMuka($tglawal, $tglakhir, $filterumj);
 
     return ["tempOutstanding" => $tempOutstanding, "tempOutstanding2" => $tempOutstanding2];
@@ -297,10 +308,45 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
             if ($check) {
               return 2;
           }
+          // Satu SO hanya boleh punya satu uang muka jual (tabel Outstanding juga
+          // menyembunyikan SO yang sudah ada di DBUMJUAL). Mencegah dobel input
+          // dari layar yang belum di-refresh / dua user bersamaan.
+          $checkSO = DB::connection('SML')->select('select NOBUKTI from dbumjual where NOSO = :noso and isnull(pBeli,0) = 0', ["noso" => $req->noso]);
+          if ($checkSO) {
+            return 4;
+          }
         }
 
-		
-	if ($choice =='D') {	
+        // Sama seperti Uang Muka Beli (tidak boleh melebihi PO): DPP uang muka tidak
+        // boleh melebihi DPP SO. Dibandingkan per rupiah penuh karena DPP form
+        // bisa selisih beberapa sen akibat pembulatan persentase.
+        if ($choice == 'I' || $choice == 'U') {
+          $cekSO = DB::connection('SML')->select('select isnull(TotDPP,0) TotDPP from vwRpDetSO where NoBukti = :noso', ["noso" => $req->noso]);
+          if ($cekSO && round((float) $req->dppx) > round((float) $cekSO[0]->TotDPP)) {
+            return 6;
+          }
+        }
+
+        // Log, simpan, dan pengecekan dijalankan dalam satu transaksi: kalau salah
+        // satu gagal, semuanya dibatalkan (tidak ada log tanpa data atau sebaliknya).
+        return DB::connection('SML')->transaction(function () use ($req, $choice, $nobukti, $jmlrecord, $xurut) {
+
+        // UMJ yang sudah diotorisasi (sudah diposting ke piutang/jurnal) tidak boleh
+        // diubah atau dihapus - harus batal otorisasi dulu. Baris dikunci sampai
+        // transaksi selesai supaya tidak bentrok dengan otorisasi dari user lain.
+        if ($choice == 'U' || $choice == 'D') {
+          $cekOto = DB::connection('SML')->select('select isnull(IsOtorisasi1,0) IsOtorisasi1 from dbumjual with (updlock, holdlock) where NOBUKTI = :nobukti', ["nobukti" => $nobukti]);
+          if ($cekOto && (int) $cekOto[0]->IsOtorisasi1 === 1) {
+            return 3;
+          }
+          $invoice = $this->invoicePemakaiUMJ($nobukti);
+          if ($invoice) {
+            return ["status" => 7, "invoice" => $invoice];
+          }
+        }
+
+
+	if ($choice =='D') {
 		 $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'UMJ',$nobukti,'',0,'DBUMJUAL');
 	}
 
@@ -332,6 +378,25 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
 		 $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingDataTrans($choice,'UMJ',$nobukti,'',$xurut,'DBUMJUAL');
 	}
         return 1;
+        });
+      }
+
+      // Faktur penjualan (belum batal) yang sudah memotong uang muka dari UMJ ini.
+      // Di SML pemotongan uang muka tercatat di DBINVOICEPL (NoSPP = SO dari UMJ,
+      // NUangMuka <> 0, seperti view REPORTOUTUMJual) dan DBJUAL.NobuktiUM.
+      // UMJ seperti ini tidak boleh dibatal otorisasi / dikoreksi / dihapus.
+      private function invoicePemakaiUMJ ($nobukti) {
+        $pakai = DB::connection('SML')->select("
+          select top 1 X.NOBUKTI from (
+            select A.NOBUKTI
+            from DBINVOICEPL A
+            join DBUMJUAL B on A.NoSPP = B.NOSO and isnull(B.pBeli,0) = 0
+            where B.NOBUKTI = ? and isnull(A.NUangMuka,0) <> 0 and isnull(A.IsBatal,0) = 0
+            union all
+            select J.NOBUKTI from DBJUAL J
+            where J.NobuktiUM = ? and isnull(J.ISBATAL,0) = 0
+          ) X", [$nobukti, $nobukti]);
+        return $pakai ? $pakai[0]->NOBUKTI : null;
       }
 
 
@@ -339,6 +404,22 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
         // $tanggal = date('Y-m-d H:i:s');
      //    $tanggal = date('Y-m-d H:i:s');
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+
+        // Update status otorisasi, log, posting piutang & posting jurnal dijalankan
+        // dalam satu transaksi: kalau posting gagal, status otorisasi ikut dibatalkan
+        // (tidak ada UMJ "sudah otorisasi" tanpa piutang/jurnal).
+        return DB::connection('SML')->transaction(function () use ($req, $periode) {
+
+        // Cegah otorisasi dua kali (layar belum di-refresh / dua user bersamaan) -
+        // otorisasi ulang akan memposting piutang & jurnal lagi. Baris dikunci
+        // sampai transaksi selesai.
+        $cekOto = DB::connection('SML')->select('select isnull(IsOtorisasi1,0) IsOtorisasi1 from dbumjual with (updlock, holdlock) where NOBUKTI = :nobukti', ["nobukti" => $req->nobukti]);
+        if (!$cekOto) {
+          return 5;
+        }
+        if ((int) $cekOto[0]->IsOtorisasi1 === 1) {
+          return 3;
+        }
 
         $res = DB::connection('SML')->update("Update DBUMJUAL set TGLOTO1 = GetDate() ,  ISOTORISASI1 = 1,  OTOUSER1 = :username where nobukti= :nobukti", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
           $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData('oto','UMJ',$req->nobukti,'',0,'DBUMJUAL');
@@ -355,12 +436,37 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
 
 
         return 1;
+        });
       }
 
       public function spBatalOto (Request $req) {
         // $tanggal = date('Y-m-d H:i:s');
      //    $tanggal = date('Y-m-d H:i:s');
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+
+        if (trim((string) $req->pket) === '') {
+          return 4;
+        }
+
+        // Satu transaksi seperti spOto: kalau hapus posting gagal, status
+        // otorisasi tidak ikut berubah.
+        return DB::connection('SML')->transaction(function () use ($req, $periode) {
+
+        // Cegah batal otorisasi dua kali (layar belum di-refresh / dua user bersamaan).
+        $cekOto = DB::connection('SML')->select('select isnull(IsOtorisasi1,0) IsOtorisasi1 from dbumjual with (updlock, holdlock) where NOBUKTI = :nobukti', ["nobukti" => $req->nobukti]);
+        if (!$cekOto) {
+          return 5;
+        }
+        if ((int) $cekOto[0]->IsOtorisasi1 !== 1) {
+          return 3;
+        }
+
+        // Uang muka yang sudah dipotong di faktur penjualan tidak boleh dibatal
+        // otorisasi - faktur harus dibatalkan/dikoreksi dulu.
+        $invoice = $this->invoicePemakaiUMJ($req->nobukti);
+        if ($invoice) {
+          return ["status" => 7, "invoice" => $invoice];
+        }
 
         $res = DB::connection('SML')->update("Update DBUMJUAL set TGLOTO1 = NULL ,  ISOTORISASI1 = 0,  OTOUSER1 = '' where nobukti= :nobukti", [ "nobukti" => $req->nobukti ]);
 	 $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','UMJ',$req->nobukti,$req->pket,0,'DBUMJUAL');
@@ -376,6 +482,7 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglakhir" => $tglakhir]);
     DB::connection('SML')->statement('exec sp_ProsesPostingJurnalOto ?,?,?,?,?,?', $values);
 
         return 1;
+        });
       }
 
 
