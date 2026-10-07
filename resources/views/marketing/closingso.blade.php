@@ -6,20 +6,6 @@
 
 @endsection
 
-{{-- Rerouted to match Purchase Order's UI 1:1 via so.blade.php's own pattern,
-     same as invoicejasa/fakturpajak/cetaktandaterima/perintahreturjual/
-     returpenjualangudang/kreditnote/notareturpenjualan before it. Only
-     layout/toolbar/column-header interactivity changed -- business logic
-     (buttonAdd/buttonAddAll/buttonOpenSO/buttonOpenAllSO, submitAdd/
-     submitAddAll/submitOpenSO/submitOpenAllSO) is untouched.
-     Periode filter added later (tanggalawal/tanggalakhir, same widget as
-     so.blade.php's own): shown once on the "Outstanding SO" toolbar, same as
-     so.blade.php only shows it on its "SO" tab, but drives both #tabel and
-     #tabel2 together via loadAll() -- ClosingSOController's Outstanding SO
-     and Closing SO queries both got a new `and A.Tanggal between :tglawal
-     and :tglakhir` clause (additive, alongside their existing outstanding
-     qty > 0 / isbatal=1 filters), defaulting to the current periode's month
-     range when no range is sent. --}}
 @section('css')
 <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
 <style>
@@ -655,7 +641,9 @@ function tabelActionsCell (row) {
   let qntout = csoPickCI(row, 'QntOut');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-primary btn-sm" type="button" title="Close Item" onclick="buttonAdd(\'' + nobukti + '\' , \'' + kodebrg + '\' , \'' + urut + '\' , \'' + qntout + '\')"><i class="bi bi-lock-fill"></i></button>';
-  html += '<button class="btn btn-success btn-sm" type="button" title="Close NoBukti" onclick="buttonAddAll(\'' + nobukti + '\' , \'' + kodebrg + '\' , \'' + urut + '\' , \'' + qntout + '\')"><i class="bi bi-lock-fill"></i></button>';
+  // Close NoBukti dinonaktifkan seperti programajcSML: update all=1 mengisi QNTBATAL
+  // semua item dengan qty out item yang diklik.
+  // html += '<button class="btn btn-success btn-sm" type="button" title="Close NoBukti" onclick="buttonAddAll(\'' + nobukti + '\' , \'' + kodebrg + '\' , \'' + urut + '\' , \'' + qntout + '\')"><i class="bi bi-lock-fill"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -668,7 +656,8 @@ function tabel2ActionsCell (row) {
   let qntout = csoPickCI(row, 'QntOut');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" type="button" title="Open Item" onclick="buttonOpenSO(\'' + nobukti + '\' , \'' + kodebrg + '\' , \'' + urut + '\' , \'' + qntout + '\')"><i class="bi bi-unlock"></i></button>';
-  html += '<button class="btn btn-danger btn-sm" type="button" title="Open NoBukti" onclick="buttonOpenAllSO(\'' + nobukti + '\' , \'' + kodebrg + '\' , \'' + urut + '\' , \'' + qntout + '\')"><i class="bi bi-unlock-fill"></i></button>';
+  // Open NoBukti dinonaktifkan seperti programajcSML.
+  // html += '<button class="btn btn-danger btn-sm" type="button" title="Open NoBukti" onclick="buttonOpenAllSO(\'' + nobukti + '\' , \'' + kodebrg + '\' , \'' + urut + '\' , \'' + qntout + '\')"><i class="bi bi-unlock-fill"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -799,6 +788,8 @@ function submitAddAll (all = 0) {
         loadAll()
           $("#formAll").modal('toggle')
           alertify.success("Berhasil closing SO")
+      }else if (res == 99) {
+        alertify.warning("Tidak bisa closing SO, data sudah masuk picking")
       }
     },
     error: function (err) {
@@ -847,6 +838,8 @@ function submitAdd (all = 0) {
         loadAll()
           $("#form").modal('toggle')
           alertify.success("Berhasil closing SO")
+      }else if (res == 99) {
+        alertify.warning("Tidak bisa closing SO, data sudah masuk picking")
       }
     },
     error: function (err) {

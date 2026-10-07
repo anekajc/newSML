@@ -124,7 +124,7 @@ and A.Tanggal between :tglawal and :tglakhir
 order by A.NOBUKTI,B.Urut
 
 
-" , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
+" , ["bulan" => (int) $periode->bulan , "tahun" => (int) $periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
 
 
 $tempOutstanding2 = DB::connection("SML")->select("select 	A.NOBUKTI, B.URUT, B.KODEBRG, C.NamaBrg,
@@ -182,7 +182,7 @@ and
 isnull(B.Isbatal,0)=1
 and A.Tanggal between :tglawal and :tglakhir
 order by A.NOBUKTI,B.Urut
-" , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
+" , ["bulan" => (int) $periode->bulan , "tahun" => (int) $periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
 
     return view('marketing.closingso' , [
       "menul0" => $menul0,
@@ -285,7 +285,7 @@ order by A.NOBUKTI,B.Urut
   order by A.NOBUKTI,B.Urut
 
 
-  " , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
+  " , ["bulan" => (int) $periode->bulan , "tahun" => (int) $periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
 
 
 $tempOutstanding2 = DB::connection("SML")->select("select 	A.NOBUKTI, B.URUT, B.KODEBRG, C.NamaBrg,
@@ -345,7 +345,7 @@ and A.Tanggal between :tglawal and :tglakhir
 order by A.NOBUKTI,B.Urut
 
 
-" , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
+" , ["bulan" => (int) $periode->bulan , "tahun" => (int) $periode->tahun, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
 
 
     return [
@@ -357,19 +357,61 @@ order by A.NOBUKTI,B.Urut
 
 
 
+  // Cek picking (dboutbrgdet) milik SO yang belum habis jadi SPB (dikurangi retur SPB),
+  // dari programajcSML. Query program lama diluruskan: koma ganda (all=1 error SQL),
+  // return debug yang memblok tanpa pesan, dan join dboutbrgdet2 C yang salah kunci.
+  // $urut null = cek semua item NoBukti (Close NoBukti).
+  private function cekSudahPicking ($nobukti, $urut = null) {
+    $filterUrut = $urut === null ? "" : " AND A.UrutBeli = :urut";
+    $bind = ["nobukti" => $nobukti];
+    if ($urut !== null) { $bind["urut"] = $urut; }
+
+    $picking = DB::connection("SML")->select("
+      select a.NoBeli, a.UrutBeli, sum(A.QNT) - isnull(b.qnt,0) SISA
+      from dboutbrgdet A
+      left outer join (select sum(A.QNT) - sum(ISNULL(AA.Qnt,0)) qnt, M.NoBeli, M.UrutBeli
+                from DBOutBrgDET2 M
+                left outer join dbSPBDet A on m.NOBUKTI=A.NoOutBrg and m.urut=A.UrutOutBrg
+                left outer join (select NoSPB, UrutSPB,
+                          sum(case when A.NOSAT=1 then A.Qnt else A.QNT2 End) Qnt
+                          from DBRSPBDet A
+                          group by NoSPB, UrutSPB
+                    ) AA ON A.NoBukti=AA.NoSPB AND A.Urut=AA.UrutSPB
+                GROUP BY M.NoBeli, M.UrutBeli
+           ) B on A.NOBUKTI=b.NoBeli and a.urut=b.UrutBeli
+      WHERE A.NoBeli = :nobukti" . $filterUrut . "
+      GROUP BY B.qnt, a.NoBeli, a.UrutBeli, A.NObukti
+      having SUM(A.QNT) - ISNULL(b.Qnt,0) <> 0
+    ", $bind);
+
+    return count($picking) > 0;
+  }
+
   public function spClosingSO (Request $req) {
 
     if ($req->all == 1) {
+      if ($this->cekSudahPicking($req->NOBUKTI)) { return 99; }
+
       $tanggal = date('Y-m-d H:i:s');
       $res = DB::connection('SML')->update("Update dbsodet set QNTBATAL= :qntbatal,UserBatal= :username ,
                     TglBatal=getdate(),isbatal=1,Ketbatal= :keterangan where Nobukti= :nobukti
                   ", ["qntbatal"=> $req->qntout , "username" => \Auth::user()->username , "keterangan" => $req->keterangan , "nobukti" => $req->NOBUKTI ]);
 
+      $res = DB::connection('SML')->update("
+                    Insert into dbLogFile (Tahun, Bulan, Tanggal,Pemakai,Aktivitas,Sumber,NoBukti,Keterangan)
+                    values (year(getdate()),month(getdate()),getdate(),:pemakai,'CLW','SO',:nobukti,:keterangan)
+                  ",
+                  [ "pemakai" => \Auth::user()->username, "nobukti" => $req->NOBUKTI , "keterangan" => $req->keterangan ]);
+
     } else {
+      if ($this->cekSudahPicking($req->NOBUKTI, $req->urut)) { return 99; }
+
       $tanggal = date('Y-m-d H:i:s');
       $res = DB::connection('SML')->update("Update dbsodet set QNTBATAL= :qntbatal,UserBatal= :username ,
                     TglBatal=getdate(),isbatal=1,Ketbatal= :keterangan where Nobukti= :nobukti
                     and kodebrg= :kodebarang and Urut= :urut", ["qntbatal"=> $req->qntout , "username" => \Auth::user()->username , "keterangan" => $req->keterangan , "nobukti" => $req->NOBUKTI , "kodebarang" => $req->kodebrg , "urut" => $req->urut]);
+
+      $tempX2 = app('App\Http\Controllers\GlobalController')->LoggingData('CLW','SO', $req->NOBUKTI,'',$req->urut,'DBSODET');
 
     }
     return 1;

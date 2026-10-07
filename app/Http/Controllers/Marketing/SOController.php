@@ -33,7 +33,7 @@ class SOController extends Controller
     // $outstanding = VwPPL::all()->where('Bulan',$periode->bulan )->where('Tahun', $periode->tahun)->where('IsJasa', 0)->where('pAgen', 1)->groupBy('NoBukti');
     $tempOutstanding = DB::connection("SML")->select("
 
-              select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+              select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -48,6 +48,7 @@ class SOController extends Controller
               end As Bit) NeedOtorisasi, A.nopesanan,A.unblock,A.userunblock,A.tglunblock,
               a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
+  ,isnull(a.catatan,'') catatanx
   from dbso a
 Left Outer join dbSODet B on B.NoBukti=a.NoBukti
 LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -58,14 +59,14 @@ left outer join [user] Mx on a.boffice=Mx.keynik
 where
 month(a.TANGGAL) = :bulan and year(a.TANGGAL) = :tahun " , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun] );
 
-    $collection1 = collect($tempOutstanding)->groupBy('NOBUKTI');
+    $collection1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
     $tempOutstanding1 = [];
     foreach ($collection1 as $p) {
       // code...
       array_push($tempOutstanding1, $p);
     }
 
-    $tempOutstanding2 = DB::connection("SML")->select("select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+    $tempOutstanding2 = DB::connection("SML")->select("select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -80,6 +81,7 @@ month(a.TANGGAL) = :bulan and year(a.TANGGAL) = :tahun " , ["bulan" => $periode-
                    else 1
               end As Bit) NeedOtorisasi, A.nopesanan,A.unblock,A.userunblock,A.tglunblock
 
+    ,isnull(a.catatan,'') catatanx
     from dbso a
     Left Outer join dbSODet B on B.NoBukti=a.NoBukti
     LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -100,14 +102,14 @@ $listsattax = DB::connection("SML")->select("select * from dbsattax" );
 
 
 
-$collection2 = collect($tempOutstanding2)->groupBy('NOBUKTI');
+$collection2 = $this->soRingkas($tempOutstanding2);
 $tempOutstanding3 = [];
 foreach ($collection2 as $p) {
   // code...
   array_push($tempOutstanding3, $p);
 }
 
-$tempOutstanding4 = DB::connection("SML")->select("select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+$tempOutstanding4 = DB::connection("SML")->select("select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -124,6 +126,7 @@ $tempOutstanding4 = DB::connection("SML")->select("select a.* , m.NAMACUSTSUPP N
               case when A.tglunblock is null then '' else CONVERT(VARCHAR, a.tglunblock, 103) end tglunblock
 
 
+    ,isnull(a.catatan,'') catatanx
     from dbso a
     Left Outer join dbSODet B on B.NoBukti=a.NoBukti
     LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -162,7 +165,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
     from /*DBSPL..*/DBSODET
     group by NOtawar,Uruttawar ) D on B.NOBUKTI=D.NOtawar and B.Urut=D.Uruttawar
     where b.QNT * B.ISI - isnull (D.qNTSOX,0)>0
-    and B.kodebrg<>'-'  and isnull(B.IsVerf,0)=1 /* and isnull(A.isotorisasi1,0)=1  */
+    and B.kodebrg<>'-'  and isnull(B.IsVerf,0)=1  and isnull(A.isotorisasi1,0)=1
     and A.tanggal >= '05/01/2026'
     order by B.NoBukti
     " );
@@ -170,14 +173,14 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
 
 
 
-$collection3 = collect($tempOutstanding4)->groupBy('NOBUKTI');
+$collection3 = $this->soRingkas($tempOutstanding4);
 $tempOutstanding5 = [];
 foreach ($collection3 as $p) {
   // code...
   array_push($tempOutstanding5, $p);
 }
 
-$collection4 = collect($tempOutstanding6)->groupBy('NOBUKTI');
+$collection4 = $this->soRingkas($tempOutstanding6);
 $tempOutstanding7 = [];
 foreach ($collection4 as $p) {
   // code...
@@ -203,6 +206,100 @@ foreach ($collection4 as $p) {
 
   }
 
+  // Data daftar SO/Penawaran yang dikirim ke browser: tabel cuma memakai baris pertama tiap
+  // nobukti dan segelintir kolom, jadi sisanya (baris detail lain + ~100 kolom dbso) tidak
+  // ikut dikirim -- payload satu bulan turun dari beberapa MB jadi ratusan KB.
+  // Bentuknya tetap [[row], [row], ...] seperti hasil groupBy sebelumnya.
+  // $status (opsional): hasil statusSO(), ditempel sebagai kolom StatusSO.
+  private function soRingkas ($rows, $status = null) {
+    $pakai = array_flip(array_map('strtolower', [
+      'NOBUKTI', 'TANGGAL', 'KODECUST', 'NAMACUSTSUPP', 'NAMASALES', 'NAMAPIC', 'NAMABOFFICE',
+      'nopesanan', 'TotDPP', 'TotPPn', 'TotNet', 'catatanx', 'StatusSO',
+      'IsOtorisasi1', 'OtoUser1', 'TglOto1', 'NeedOtorisasi',
+      'unblock', 'userunblock', 'tglunblock', 'tipebayar', 'cbdneedopen',
+      'PPN', 'KODEBRG', 'NAMABRG', 'QNT', 'QntSO', 'Sisa', 'HARGA', 'FRANCO', 'DELIVERY', 'VALIDITAS', 'ID', 'Nosat',
+    ]));
+
+    return collect($rows)->groupBy('NOBUKTI')->map(function ($g) use ($pakai, $status) {
+      $baris = array_filter((array) $g->first(), function ($kolom) use ($pakai) {
+        return isset($pakai[strtolower($kolom)]);
+      }, ARRAY_FILTER_USE_KEY);
+      if ($status !== null) {
+        $baris['StatusSO'] = $status[$baris['NOBUKTI'] ?? ''] ?? '';
+      }
+      return [(object) $baris];
+    })->values();
+  }
+
+  // Kolom dbso yang dipakai daftar SO -- menggantikan a.* (106 kolom) yang membuat
+  // query daftar ~3x lebih lama hanya karena data yang ditarik dari server.
+  private function kolomSO () {
+    return "a.NOBUKTI, a.TANGGAL, a.KODECUST, a.KODEVLS, a.TIPEBAYAR, a.MAXOL, a.CATATAN,
+      a.IsOtorisasi1, a.OtoUser1, a.TglOto1, a.IsOtorisasi2, a.OtoUser2, a.TglOto2,
+      a.IsOtorisasi3, a.OtoUser3, a.TglOto3, a.IsOtorisasi4, a.OtoUser4, a.TglOto4,
+      a.IsOtorisasi5, a.OtoUser5, a.TglOto5";
+  }
+
+  // Status proses SO per nobukti (total Qty SO vs Qty SPB), sama dengan pilihan di modal Filter.
+  // Terclose diutamakan: ada Qty batal di salah satu baris.
+  // Satu query untuk seluruh SO di rentang tanggal, bukan subquery per baris: dbSPBDet tidak
+  // punya index NoSo, jadi versi per baris memindai seluruh SPB untuk tiap SO (~5 detik
+  // sebulan). OPTION (HASH JOIN) wajib -- tanpa itu SQL Server memilih nested loop yang sama
+  // lambatnya; dengan itu ~0,5 detik.
+  private function statusSO ($tglawal, $tglakhir) {
+    $rows = DB::connection("SML")->select("
+      select d.NoBukti,
+        case when sum(isnull(d.QNTBATAL,0))>0 then 'Terclose'
+             when sum(isnull(z.Qntspb,0))=0 then 'Belum proses'
+             when sum(isnull(z.Qntspb,0))<sum(isnull(d.QNT,0)) then 'Proses Sebagian'
+             else 'Full supply' end StatusSO
+      from dbSODet d
+      join dbso so on so.NoBukti=d.NoBukti and so.TANGGAL between :tglawal and :tglakhir
+      left outer join (select NoSo, UrutSo, SUM(QNT) Qntspb from dbSPBDet
+                       where NoSo in (select NoBukti from dbso where TANGGAL between :tglawal2 and :tglakhir2)
+                       group by NoSo, UrutSo) z on d.NoBukti=z.NoSo and d.urut=z.UrutSo
+      group by d.NoBukti
+      option (hash join)",
+      ["tglawal" => $tglawal, "tglakhir" => $tglakhir, "tglawal2" => $tglawal, "tglakhir2" => $tglakhir]);
+
+    $status = [];
+    foreach ($rows as $r) {
+      $status[$r->NoBukti] = $r->StatusSO;
+    }
+    return $status;
+  }
+
+  // Status untuk baris hasil query daftar SO: rentangnya diambil dari tanggal SO yang
+  // benar-benar tampil, jadi selalu cocok dengan isi tabel apa pun filternya.
+  private function statusSOBaris ($rows) {
+    $tanggal = collect($rows)->pluck('TANGGAL')->filter();
+    if ($tanggal->isEmpty()) {
+      return [];
+    }
+    return $this->statusSO(substr($tanggal->min(), 0, 10), substr($tanggal->max(), 0, 10) . ' 23:59:59');
+  }
+
+  public function checknoposo (Request $req) {
+
+    $pso = DB::connection('SML')->select("
+    select * from dbso where (nopesanan=:pocust or nospb=:pocust1)  and isnull(NOpesanan,'')<>'' and Nobukti<>:nobukti",
+  ["pocust" => $req->nopo, "nobukti" => $req->nobukti ?: '', "pocust1" => $req->nopo]);
+
+    if(!empty($pso)){
+       return 4;
+    }
+
+    $pcust = DB::connection('SML')->select("
+    select * from DBPOCUSTSUPP where pocustomer=:pocust and kodecustsupp=:kodecust",
+  ["pocust" => $req->nopo, "kodecust" => $req->kodepelanggan]);
+
+    if(empty($pcust)){
+       return 44;
+    }
+
+    return 1;
+  }
+
   public function loadSOFilter (Request $req) {
     $tempOutstanding1 = [];
     $queryTipeBayar = '';
@@ -223,7 +320,7 @@ foreach ($collection4 as $p) {
       select
     @bulan = :tglawal , @tahun = :tglakhir
 
-              select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+              select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -239,6 +336,7 @@ foreach ($collection4 as $p) {
               a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+  ,isnull(a.catatan,'') catatanx
   from dbso a
   Left Outer join dbSODet B on B.NoBukti=a.NoBukti
   LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -247,8 +345,8 @@ foreach ($collection4 as $p) {
   Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
   left outer join [user] Mx on a.boffice=Mx.keynik
   where
-  a.TANGGAL between @bulan and @tahun " . $queryTipeBayar , ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir ] );
-  $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+  a.TANGGAL between @bulan and @tahun " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir ] );
+  $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
 } else if ($req->tipefilter == 2) {
@@ -260,7 +358,7 @@ foreach ($collection4 as $p) {
   select
   @bulan = :tglawal , @tahun = :tglakhir
 
-          select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+          select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
   Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
   Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
   Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -276,6 +374,7 @@ foreach ($collection4 as $p) {
           a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+  ,isnull(a.catatan,'') catatanx
   from dbso a
   Left Outer join dbSODet B on B.NoBukti=a.NoBukti
   LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -291,8 +390,8 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                     Case when A.IsOtorisasi4=1 then 1 else 0 end+
                     Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
                else 1
-          end As Bit) = :needoto" , ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "needoto" => $req->needoto] );
-          $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+          end As Bit) = :needoto" . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "needoto" => $req->needoto] );
+          $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
 } else if ($req->tipefilter == 3) {
@@ -305,7 +404,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
       select
     @bulan = :tglawal , @tahun = :tglakhir
 
-              select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+              select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -321,6 +420,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
               a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+              ,isnull(a.catatan,'') catatanx
               from dbso a
                Left Outer join dbSODet B on B.NoBukti=a.NoBukti
                LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -336,8 +436,8 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
   and case when b.QNT = ISNULL(z.Qntspb,0) then 'F'
          when b.QNT - ISNULL(z.Qntspb,0) > 0 and ISNULL(z.Qntspb,0)<>0   then 'S'
          when  ISNULL(z.Qntspb,0)=0 then 'B'
-          end  = :ketproses " . $queryTipeBayar , ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketproses" => $req->ketproses] );
-              $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+          end  = :ketproses " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketproses" => $req->ketproses] );
+              $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
     } else if ($req->tipefilter == 4) {
@@ -350,7 +450,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
       select
     @bulan = :tglawal , @tahun = :tglakhir
 
-              select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+              select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -366,6 +466,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
               a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+              ,isnull(a.catatan,'') catatanx
               from dbso a
                Left Outer join dbSODet B on B.NoBukti=a.NoBukti
                LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -378,8 +479,8 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
             					group by NoSo,UrutSo)
             					 Z on b.nobukti=z.NoSo and b.urut=z.UrutSo
   where a.TANGGAL between @bulan and @tahun
- and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar , ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketclose" => $req->ketclose] );
-              $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+ and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketclose" => $req->ketclose] );
+              $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
 
@@ -515,7 +616,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
             select
           @bulan = :tglawal , @tahun = :tglakhir
 
-                    select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+                    select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
           Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
           Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
           Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -531,6 +632,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                     a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+        ,isnull(a.catatan,'') catatanx
         from dbso a
         Left Outer join dbSODet B on B.NoBukti=a.NoBukti
         LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -539,8 +641,8 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
         Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
         left outer join [user] Mx on a.boffice=Mx.keynik
         where
-        a.TANGGAL between @bulan and @tahun " . $queryTipeBayar , ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir ] );
-  $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+        a.TANGGAL between @bulan and @tahun " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir ] );
+  $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
     } else if ($req->tipefilter == 2) {
@@ -554,7 +656,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
       select
     @bulan = :tglawal , @tahun = :tglakhir
 
-              select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+              select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -570,6 +672,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
               a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+  ,isnull(a.catatan,'') catatanx
   from dbso a
   Left Outer join dbSODet B on B.NoBukti=a.NoBukti
   LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -578,14 +681,15 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
   Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
   left outer join [user] Mx on a.boffice=Mx.keynik
   where
+  a.TANGGAL between @bulan and @tahun and
    Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                        Case when A.IsOtorisasi2=1 then 1 else 0 end+
                         Case when A.IsOtorisasi3=1 then 1 else 0 end+
                         Case when A.IsOtorisasi4=1 then 1 else 0 end+
                         Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
                    else 1
-              end As Bit) = :needoto" , ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "needoto" => $req->needoto] );
-              $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+              end As Bit) = :needoto" . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "needoto" => $req->needoto] );
+              $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
     } else if ($req->tipefilter == 3) {
@@ -598,7 +702,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
       select
     @bulan = :tglawal , @tahun = :tglakhir
 
-              select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+              select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -614,6 +718,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
               a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+  ,isnull(a.catatan,'') catatanx
   from dbso a
   Left Outer join dbSODet B on B.NoBukti=a.NoBukti
   LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -621,12 +726,16 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
   Left Outer Join dbKaryawan M1 on A.KODESLS=M1.KeyNIK
   Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
   left outer join [user] Mx on a.boffice=Mx.keynik
+  left outer join (select NoSo,UrutSo,SUM(QNT) Qntspb
+            from dbSPBDet
+            group by NoSo,UrutSo)
+             Z on b.nobukti=z.NoSo and b.urut=z.UrutSo
   where a.TANGGAL between @bulan and @tahun
   and case when b.QNT = ISNULL(z.Qntspb,0) then 'F'
          when b.QNT - ISNULL(z.Qntspb,0) > 0 and ISNULL(z.Qntspb,0)<>0   then 'S'
          when  ISNULL(z.Qntspb,0)=0 then 'B'
-          end  = :ketproses " . $queryTipeBayar , ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketproses" => $req->ketproses] );
-              $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+          end  = :ketproses " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketproses" => $req->ketproses] );
+              $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
     } else if ($req->tipefilter == 4) {
@@ -639,7 +748,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
       select
     @bulan = :tglawal , @tahun = :tglakhir
 
-              select a.* , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
+              select " . $this->kolomSO() . " , m.NAMACUSTSUPP NAMACUSTSUPP , m1.Nama NAMASALES , m3.Nama NAMAPIC , mx. username  NAMABOFFICE,
     Case when A.Kodevls='IDR' then B.SubTotalRp  else B.SubTotal end Total,
     Case when A.Kodevls='IDR' then I.TotDiskonRp  else I.TotDiskon end Diskon,
     Case when A.Kodevls='IDR' then I.TotDPPRp  else I.TotDPP end TotDPP,
@@ -655,6 +764,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
               a.tipebayar,case when  a.TIPEBAYAR = 0 and isnull(A.unblock, 0) = 0 then 1 else 0 end cbdneedopen
 
 
+  ,isnull(a.catatan,'') catatanx
   from dbso a
   Left Outer join dbSODet B on B.NoBukti=a.NoBukti
   LEFT outer join DBCUSTSUPP M on M.KODECUSTSUPP = a.kodecust
@@ -663,8 +773,8 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
   Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
   left outer join [user] Mx on a.boffice=Mx.keynik
   where a.TANGGAL between @bulan and @tahun
- and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar , ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketclose" => $req->ketclose] );
-              $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+ and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketclose" => $req->ketclose] );
+              $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
 
@@ -678,8 +788,16 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
     // its "Purchase Order" tab via loadTabelPO(). Periode-scoped like index(), not
     // tglawal/tglakhir-filtered like tempOutstanding1 above -- neither tab is wired to the
     // date-range filter modal in the UI.
+    //
+    // Ganti periode di kalender (hanyaso=1) cuma mempengaruhi tabel SO di atas -- data di
+    // bawah (tabel2/tabel_oto per DBPERIODE, Penawaran) tidak bergantung tanggal, jadi
+    // dilewati supaya tidak menunggu query yang hasilnya sama.
+    if ($req->hanyaso) {
+      return ["tempOutstanding1" => $tempOutstanding1];
+    }
+
     $tempOutstanding2 = DB::connection("SML")->select("
-        select a.* ,Isnull(M6.PoCustomer, A.NoPesanan) as NoPesanan, m.NAMACUSTSUPP , m1.Nama NAMASALES ,
+        select " . $this->kolomSO() . " ,Isnull(M6.PoCustomer, A.NoPesanan) as NoPesanan, m.NAMACUSTSUPP , m1.Nama NAMASALES ,
                m3.Nama NAMAPIC , mx.username NAMABOFFICE,
 
         Case when A.Kodevls='IDR' then B.SubTotalRp else B.SubTotal end Total,
@@ -705,6 +823,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
  case when A.tglunblock is null then '' else CONVERT(VARCHAR, a.tglunblock, 103) end tglunblock
 
 
+        ,isnull(a.catatan,'') catatanx
         from dbso a
         left join dbSODet B on B.NoBukti=a.NoBukti
         left join dbPOCustsupp M6 on A.IDPOCUst = M6.ID
@@ -732,11 +851,11 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
         As Bit) = 0
     ", ["bulan" => $periode->bulan, "tahun" => $periode->tahun]);
 
-    $tempOutstanding3 = collect($tempOutstanding2)->groupBy('NOBUKTI')->values();
+    $tempOutstanding3 = $this->soRingkas($tempOutstanding2);
 
 
     $tempOutstanding4 = DB::connection("SML")->select("
-        select a.* ,Isnull(M6.PoCustomer, A.NoPesanan) as NoPesanan, m.NAMACUSTSUPP , m1.Nama NAMASALES ,
+        select " . $this->kolomSO() . " ,Isnull(M6.PoCustomer, A.NoPesanan) as NoPesanan, m.NAMACUSTSUPP , m1.Nama NAMASALES ,
                m3.Nama NAMAPIC , mx.username NAMABOFFICE,
 
         Case when A.Kodevls='IDR' then B.SubTotalRp else B.SubTotal end Total,
@@ -760,6 +879,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
 
         A.nopesanan, A.unblock, A.userunblock, A.tglunblock
 
+        ,isnull(a.catatan,'') catatanx
         from dbso a
         left join dbSODet B on B.NoBukti=a.NoBukti
         left join dbPOCustsupp M6 on A.IDPOCUst = M6.ID
@@ -786,7 +906,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
         As Bit) = 0
     ", ["bulan" => $periode->bulan, "tahun" => $periode->tahun]);
 
-    $tempOutstanding5 = collect($tempOutstanding4)->groupBy('NOBUKTI')->values();
+    $tempOutstanding5 = $this->soRingkas($tempOutstanding4);
 
     $tempOutstanding6 = DB::connection("SML")->select("
     declare @Tahun int, @Bulan int,@pAgen Bit,@pJasa bit
@@ -811,11 +931,11 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
     from /*DBSPL..*/DBSODET
     group by NOtawar,Uruttawar ) D on B.NOBUKTI=D.NOtawar and B.Urut=D.Uruttawar
     where b.QNT * B.ISI - isnull (D.qNTSOX,0)>0
-    and B.kodebrg<>'-'  and isnull(B.IsVerf,0)=1 /* and isnull(A.isotorisasi1,0)=1  */
+    and B.kodebrg<>'-'  and isnull(B.IsVerf,0)=1  and isnull(A.isotorisasi1,0)=1
     and A.tanggal >= '05/01/2026'
     order by B.NoBukti
     " );
-    $tempOutstanding7 = collect($tempOutstanding6)->groupBy('NOBUKTI')->values();
+    $tempOutstanding7 = $this->soRingkas($tempOutstanding6);
 
     return [
         // "tempOutstanding" => $tempOutstanding,
@@ -836,14 +956,18 @@ public function listNoPoTambahSO (Request $req) {
 select a.* , b.namacustsupp
     from dbpocustsupp a
     left outer join dbcustsupp b on a.kodecustsupp = b.kodecustsupp
-     left outer join DBSO c on a.POCustomer=c.NoPesanan and a.KodeCustSupp=c.KODECUST
+    left outer join (select nopesanan,KODECUST from DBSO
+            union all
+            select NOSPB,KODECUST from DBSO
+            ) c on a.POCustomer=c.NoPesanan and a.KodeCustSupp=c.KODECUST
   where    isnull(IsClose,0)=0  and isnull(A.pGanti,0)=0 and c.NoPesanan is  null
   /*isnull(a.id, 0) not in(select isnull(idpocust, 0) from dbso)*/
 
+  and a.pocustomer like :search
 
-
- and a.KodeCustSupp = :kodecustsupp",
-  ["kodecustsupp" => $req->kodecustsupp]);
+ and a.KodeCustSupp = :kodecustsupp
+ order by a.tglinput  ",
+  ["kodecustsupp" => $req->kodecustsupp, "search" => '%' . $req->input('searchtambahso') . '%']);
   return $listData;
 }
 
@@ -1073,6 +1197,21 @@ $date = $req->input('tanggal');
     ];
   }
 
+  // Dicek sebelum SP_IsiNobukti supaya nomor SO tidak terpakai kalau PO ditolak.
+  $pso = DB::connection('SML')->select("
+    select * from dbso where nopesanan=:pocust and isnull(NOpesanan,'')<>''",
+  ["pocust" => $req->nopo]);
+  if(!empty($pso)){
+     return 4;
+  }
+
+  $pcust = DB::connection('SML')->select("
+    select * from DBPOCUSTSUPP where pocustomer=:pocust and kodecustsupp=:kodecust",
+  ["pocust" => $req->nopo, "kodecust" => $req->kodecust]);
+  if(empty($pcust)){
+     return 5;
+  }
+
   $noBukti = DB::connection('SML')->select('exec SP_IsiNobukti ?,?,?,?',$values);
   // return ["asd" => $noBukti[0]->Nobukti];
     // return [$data,$date,$nourut,$nosj,$norspb,$nooutso,$nopolkendaraan,$expedisi];
@@ -1098,6 +1237,7 @@ $d['URUT']
     DB::connection("SML")->statement('exec SP_InsertPSOweb ?,?,?,?,?,?,?,?,?,?,?',$values1);
   }
    DB::connection('SML')->update('exec Sp_UpdateSO ?', [$noBukti[0]->Nobukti]);
+   $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData('I','SO',$noBukti[0]->Nobukti,'',0,'DBSO');
 
 
 return $noBukti[0]->Nobukti;
@@ -1259,8 +1399,9 @@ return 1;
 
   public function updateBatalOtorisasi (Request $req) {
     $username = \Auth::user()->username;
-    $maxOL = DB::connection('SML')->select("select * from dbmenu where href = 'purchaseorder'");
-
+    // Dulu disalin dari Purchase Order (menu 'purchaseorder' + nilai DBPODET), sehingga nilai SO
+    // tidak pernah terbaca (nnet selalu kosong) dan user tanpa akses menu PO akan error.
+    // Sekarang memakai menu 'so' + nilai DBSODET, aturan plafonnya sama dengan updateOtorisasi().
     $cekOto = DB::connection('SML')->select("
     select b.*,c.KodeJab,isnull(d.PlafonOtoSO , 0) PlafonOtoPO,
            case when B.IsOtorisasi1=1 then 1
@@ -1272,27 +1413,31 @@ return 1;
         join dbflmenu b on a.kodemenu = b.l1
         join DBFLPASS c on b.USERID=c.USERID
         join DBJABATAN d on c.KodeJab=d.KODEJAB
-        left outer join (select nobukti,SUM(nnet) nnet from DBPODET
+        left outer join (select nobukti,SUM(nnet) nnet from DBSODET
     					 where NOBUKTI= :nobukti
     					 group by nobukti
     					 ) E on 1=1
-        where a.href ='purchaseorder' and b.USERID= :username", ["nobukti" => $req->nobukti , "username" => $username]);
-    $tanggal = date('Y-m-d H:i:s');
-    if ( $cekOto[0]->nnet > $cekOto[0]->PlafonOtoPO ) {
+        where a.href ='so' and b.USERID= :username", ["nobukti" => $req->nobukti , "username" => $username]);
+    if (empty($cekOto)) {
+      return 0;
+    }
+    // Keterangan dari prompt "batal otorisasi" ikut dicatat di log.
+    $keterangan = $req->pket ?: '';
+    if ( (int)$cekOto[0]->nnet > (int)$cekOto[0]->PlafonOtoPO ) {
       if($cekOto[0]->leveloto == 1) {
 
         return 0;
       } else {
         $res = DB::connection('SML')->update("update dbso set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL  where nobukti = :nobukti", ["nobukti" => $req->nobukti]);
 
-         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','SO',$req->nobukti,'',0,'DBSO');
+         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','SO',$req->nobukti,$keterangan,0,'DBSO');
 
       }
 
     } else {
       $res = DB::connection('SML')->update("update dbso set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL  where nobukti = :nobukti", [ "nobukti" => $req->nobukti]);
 
-       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','SO',$req->nobukti,'',0,'DBSO');
+       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','SO',$req->nobukti,$keterangan,0,'DBSO');
 
 
     }
@@ -1432,14 +1577,18 @@ select A.nobukti,a.tanggal,a.refPR from (
 select a.* , b.namacustsupp
     from dbpocustsupp a
     left outer join dbcustsupp b on a.kodecustsupp = b.kodecustsupp
-     left outer join DBSO c on a.POCustomer=c.NoPesanan and a.KodeCustSupp=c.KODECUST
+     left outer join (select nopesanan,KODECUST from DBSO
+            union all
+            select NOSPB,KODECUST from DBSO
+            ) c on a.POCustomer=c.NoPesanan and a.KodeCustSupp=c.KODECUST
   where    isnull(IsClose,0)=0  and isnull(A.pGanti,0)=0 and c.NoPesanan is  null
   /*isnull(a.id, 0) not in(select isnull(idpocust, 0) from dbso)*/
 
-
-
- and a.KodeCustSupp = :kodecustsupp",
-  ["kodecustsupp" => $req->kodecustsupp]);
+and a.pocustomer like :search
+ and a.KodeCustSupp = :kodecustsupp
+order by a.tglinput
+ ",
+  ["kodecustsupp" => $req->kodecustsupp, "search" => '%' . $req->input('search') . '%']);
     return $listData;
   }
 
@@ -1638,6 +1787,9 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
       $murut = $req->urut;
     }
 
+    if ($choice =='D'){
+      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'SO',$nobukti,'',$murut,'DBSODET');
+    }
 
     $jmlrecord = $req->jmlrecord;
 
@@ -1748,6 +1900,15 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
       DB::connection('SML')->statement('exec sp_SO ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?', $values);
       // return $queries = DB::getQueryLog();
       DB::connection('SML')->update('exec Sp_UpdateSO ?', [$nobukti]);
+
+      if ($choice =='I'){
+        $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'SO',$nobukti,'',$murut,'DBSODET');
+        $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'SO',$nobukti,'',0,'DBSO');
+      }
+
+      if ($choice =='U'){
+        $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'SO',$nobukti,'',$murut,'DBSODET');
+      }
     return 1;
   }
 
@@ -1888,7 +2049,7 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
             Case when A.Kodevls='IDR' then I.TotNetRp  else I.TotNet end TotalNetto,
             B.Discp2,Discp3,Discp4,Discp5,
             ltrim(M2.ALAMAT1+case when ltrim(m2.ALAMAT2)<>'' then char(13)+M2.ALAMAT2 else '' end+
-    	case when ltrim(isnull(M2.KOTA,''))<>'' then char(13)+isnull(M2.KOTA,'')+' '+M2.KodePos else '' end) ALAMAT,
+    	case when ltrim(isnull(M2.KOTA,''))<>'' then char(13)+isnull(M2.KOTA,'')+' '+isnull(M2.KodePos,'') else '' end) ALAMAT,
             NoResi,NoPolKend,Sopir,JumlahTagihan ,M2.plafon,A.kodePF,M3.Nama NamaPF,/*case when ISNULL(b.notawar,'')='' then*/ B.namaBRg pNamaBRG/*else '' End*/ ,
             A.KODEKEBUN,M4.NAMA NAMAKEBUN, b.sATx
             ,case when ISnull(B.iscetakKitir,0)=0 then 'Tidak' else 'Ya' End KetPO
@@ -1962,7 +2123,7 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
             Case when A.Kodevls='IDR' then I.TotNetRp  else I.TotNet end TotalNetto,
             B.Discp2,Discp3,Discp4,Discp5,
             ltrim(M2.ALAMAT1+case when ltrim(m2.ALAMAT2)<>'' then char(13)+M2.ALAMAT2 else '' end+
-    	case when ltrim(isnull(M2.KOTA,''))<>'' then char(13)+isnull(M2.KOTA,'')+' '+M2.KodePos else '' end) ALAMAT,
+    	case when ltrim(isnull(M2.KOTA,''))<>'' then char(13)+isnull(M2.KOTA,'')+' '+isnull(M2.KodePos,'') else '' end) ALAMAT,
             NoResi,NoPolKend,Sopir,JumlahTagihan ,M2.plafon,A.kodePF,M3.Nama NamaPF,/*case when ISNULL(b.notawar,'')='' then*/ B.namaBRg pNamaBRG/*else '' End*/ ,
             A.KODEKEBUN,M4.NAMA NAMAKEBUN, b.sATx
             ,case when ISnull(B.iscetakKitir,0)=0 then 'Tidak' else 'Ya' End KetPO
