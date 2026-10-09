@@ -33,8 +33,8 @@ class InvoiceJasaController extends Controller
 
     $listBarangAll = DB::connection('SML')->select("select Kodebrg , Namabrg , sat1 , isi1 from dbbarang where isjasa = 1 and IsAktif = 1" );
 
-    $tglawal = \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    $tglawal = $this->tglAwalPeriode($periode);
+    $tglakhir = $this->tglAkhirPeriode($periode);
     $tempOutstanding = $this->queryInvoiceJasaOtorisasi($tglawal, $tglakhir, 0);
 
 
@@ -46,9 +46,30 @@ class InvoiceJasaController extends Controller
       // "users"=> $users,
       "tempOutstanding" => $tempOutstanding,
       "akses" => $akses,
-      "listBarangAll" => $listBarangAll
+      "listBarangAll" => $listBarangAll,
+      "tglawal" => $tglawal,
+      "tglakhir" => $tglakhir
     ]);
 
+  }
+
+  // Rentang default = bulan & tahun periode kerja. Dulu memakai Carbon::now()->month(bulan):
+  // tahunnya ikut tahun berjalan (salah kalau periode kerja masih di tahun lalu) dan pada
+  // tanggal 29-31 month() meluber ke bulan berikutnya (mis. 31 Okt -> month(2) = 3 Mar).
+  private function tglAwalPeriode ($periode) {
+    return \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+  }
+
+  private function tglAkhirPeriode ($periode) {
+    return \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
+  }
+
+  // Invoice yang sudah diotorisasi tidak boleh diubah lagi (tombol Edit di layar juga sudah
+  // menolaknya); dicek ulang di server untuk kasus layar yang terbuka sebelum user lain
+  // mengotorisasi invoice yang sama.
+  private function sudahOtorisasi ($nobukti) {
+    $cek = DB::connection('SML')->select('select isnull(IsOtorisasi1,0) IsOtorisasi1 from dbinvoicepl where NoBukti = :nobukti', ["nobukti" => $nobukti]);
+    return $cek && (int) $cek[0]->IsOtorisasi1 === 1;
   }
 
   // Satu query dipakai bareng oleh index() dan loadAll() -- dulu tabel (Belum
@@ -277,6 +298,10 @@ Order by B.Urut
       }
     }
 
+    if ($this->sudahOtorisasi($req->nobukti)) {
+      return 3;
+    }
+
     $values = [
         $req->choice,
         $req->nobukti,
@@ -363,16 +388,24 @@ Order by B.Urut
   public function loadAll (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $tglawal = $req->tglawal ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
-    $filterij = $req->filterij ?: 0;
+    $tglawal = $req->tglawal ?: $this->tglAwalPeriode($periode);
+    $tglakhir = $req->tglakhir ?: $this->tglAkhirPeriode($periode);
+    $filterij = (int) ($req->filterij ?: 0);
     $tempOutstanding = $this->queryInvoiceJasaOtorisasi($tglawal, $tglakhir, $filterij);
 
     return ["tempOutstanding" => $tempOutstanding];
   }
 
 
+  // Nama kolom datang dari browser dan disambung langsung ke SQL, jadi hanya kolom yang
+  // memang diubah form invoice jasa yang diterima (pola sama dengan InvoicePenjualanController).
   public function onChangeHeader (Request $req) {
+    if (!in_array(strtolower((string) $req->field), ['pono', 'footnote', 'kodelokasi', 'hari', 'kurs', 'ppn', 'flagtipe', 'nuangmuka', 'tipebayar'], true)) {
+      abort(422, 'Kolom tidak diizinkan');
+    }
+    if ($this->sudahOtorisasi($req->nobukti)) {
+      abort(422, 'Invoice sudah diotorisasi');
+    }
     $query = 'update dbinvoicepl set ' . $req->field . ' = :value where nobukti = :nobukti';
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
     return $res;
@@ -380,6 +413,12 @@ Order by B.Urut
   }
 
   public function onChangeDetail (Request $req) {
+    if (!in_array(strtolower((string) $req->field), ['kurs', 'ppn'], true)) {
+      abort(422, 'Kolom tidak diizinkan');
+    }
+    if ($this->sudahOtorisasi($req->nobukti)) {
+      abort(422, 'Invoice sudah diotorisasi');
+    }
     $query = 'update dbinvoicepldet set ' . $req->field . ' = :value where nobukti = :nobukti';
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
     return $res;

@@ -36,8 +36,10 @@ class SuratJalanController extends Controller
     // dipindah ke toolbar yang dipakai bersama semua tab jadi ikut menyaring tempOutstanding/
     // tempOutstanding2 juga (tempOutstanding4 dilewati -- tab "Out SO Booking"
     // yang menampungnya sudah tidak terhubung ke nav manapun).
-    $tglawalspb = \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhirspb = \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    // Pakai tahun+bulan periode (bukan Carbon::now()->month(): tahunnya ikut tahun
+    // berjalan dan tanggal 29-31 bisa meluber ke bulan berikutnya).
+    $tglawalspb = \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $tglakhirspb = \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
 
     // $listData = DB::connection('SML')->select('SELECT * FROM DBMERK');
 
@@ -59,6 +61,9 @@ class SuratJalanController extends Controller
 
 
 $tempOutstanding6 = $this->queryOtorisasiSPB($tglawalspb, $tglakhirspb, 0);
+
+// Tab "Out SO Prioritas" (tabel5) -- query sama persis dengan programajcSML.
+$tempOutstanding5 = $this->queryOutstanding5SJ();
 
 
 
@@ -216,6 +221,7 @@ and Isnull(B.PBooking,0)=1
       "tempOutstanding2" => $tempOutstanding2,
       "tempOutstanding2Total" => $tempOutstanding2Total,
       "tempOutstanding4" => $tempOutstanding4,
+      "tempOutstanding5" => $tempOutstanding5,
       "tempOutstanding6" => $tempOutstanding6,
       "akses" => $akses,
       "listBarang" => $listBarang,
@@ -672,15 +678,155 @@ ORDER BY RowNum
     return ["rows" => $rows, "total" => $total];
   }
 
+  // Tab "Out SO Prioritas" (tabel5): outstanding SO yang ditandai urgent
+  // (DBSODET.PUrgent=1) dan stoknya ada. Query disalin apa adanya dari
+  // programajcSML (SuratJalanController@index/loadAll $tempOutstanding5).
+  private function queryOutstanding5SJ () {
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    return DB::connection("SML")->select("
+Declare @bulan Int,@tahun Int,@IDuser varchar(20)
+select @Bulan= :bulan ,@Tahun= :tahun ,@IDUser= :username
+select 	A.NOBUKTI, B.URUT, B.KODEBRG, C.NamaBrg,
+        case when B.NOSAT=1 Then B.QNT when B.NOSAT=2 Then B.QNT2 when B.Nosat=3 then B.qnt2  End Qnt,
+        B.SATUAN,
+		case when B.NOSAT=1 then B.QNT-(Isnull(m1.QNT1SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT1RSPB,0)
+		     when B.NOSAT=2 Then B.QNT2-(Isnull(m1.QNT2SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT2RSPB,0)
+                     when B.NOSAT=3 Then B.QNT2-(Isnull(m1.QNT2SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT2RSPB,0)
+		End QntOut,
+    D.KodeCustSupp,D.NamaCustSupp,A.KodeGdg,A.Tanggal,
+    A.Nobukti+cast(B.urut as varchar(3)) KeyNobukti,Isnull(A.TipePPN,0) TipePPN,
+    A.NoResi,A.NoPolKend,A.Sopir,A.JumlahTagihan,A.Kodeexp,
+    D.namaCustSupp+'('+A.KodeCust+')' CXcust ,  A.NOBUKTI+cast(B.URUT as varchar(3)) KeyUrut,
+    M2.NAMA+'('+A.KODEKEBUN+')' xcKEBUN,isnull(A.DP,0) DP,
+    M3.ALAMAT ,A.kodekebun,A.Nopesanan,C.PartNumber,M5.NamaMerk,A.TGLKIRIM DUEDATE,A.UserID ,A.RefPR ,
+
+    case when ISNULL(B.NOserah,'')  IN ('','-')
+    then
+         case when b.nosat=1 then m6.saldoQnt
+         when b.nosat=2 then m6.saldoqnt/c.isi2
+         when b.nosat=3 then m6.saldoqnt/c.isi3 end
+    else
+         case when b.nosat=1 then (m6.saldoQnt) + (ISNULL(m61.saldoQnt,0))
+         when b.nosat=2 then (m6.saldoqnt/c.isi2) + (m61.saldoqnt/c.isi2)
+         when b.nosat=3 then (m6.saldoqnt/c.isi3) + (m61.saldoqnt/c.isi3) end
+    End
+    SaldoQnt ,A.tglKirim,A.TglKirim,ISnull(M7.Nama,'-') namakebun,
+
+    case when
+         case when ISNULL(B.NOserah,'') IN ('','-')
+		 then
+				case when b.nosat=1 then m6.saldoQnt
+				when b.nosat=2 then m6.saldoqnt/c.isi2
+				when b.nosat=3 then m6.saldoqnt/c.isi3 end
+		else
+				case when b.nosat=1 then (m6.saldoQnt) + (ISNULL(m61.saldoQnt,0))
+				when b.nosat=2 then (m6.saldoqnt/c.isi2) + (m61.saldoqnt/c.isi2)
+				when b.nosat=3 then (m6.saldoqnt/c.isi3) + (m61.saldoqnt/c.isi3) end
+		End
+         >
+		case when B.NOSAT=1 then B.QNT-(Isnull(m1.QNT1SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT1RSPB,0)
+			when B.NOSAT=2 Then B.QNT2-(Isnull(m1.QNT2SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT2RSPB,0)
+			when B.NOSAT=3 Then B.QNT2-(Isnull(m1.QNT2SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT2RSPB,0)
+		End THEN
+		        case when B.NOSAT=1 then B.QNT-(Isnull(m1.QNT1SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT1RSPB,0)
+			when B.NOSAT=2 Then B.QNT2-(Isnull(m1.QNT2SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT2RSPB,0)
+			when B.NOSAT=3 Then B.QNT2-(Isnull(m1.QNT2SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT2RSPB,0)
+		END
+	ELSE
+	     case when ISNULL(B.NOserah,'')  IN ('','-')
+		 then
+			case when b.nosat=1 then m6.saldoQnt
+			when b.nosat=2 then m6.saldoqnt/c.isi2
+			when b.nosat=3 then m6.saldoqnt/c.isi3 end
+		else
+			case when b.nosat=1 then (m6.saldoQnt) + (ISNULL(m61.saldoQnt,0))
+			when b.nosat=2 then (m6.saldoqnt/c.isi2) + (m61.saldoqnt/c.isi2)
+			when b.nosat=3 then (m6.saldoqnt/c.isi3) + (m61.saldoqnt/c.isi3) end
+    End
+
+
+    END QNTXZ
+
+    ,Isnull(A.RefPR,0) RefPR,A.catatan ,ISnull(D.pBlackLIst,0) pBlackLIst
+from	dbSO A
+left outer join dBSODet B on B.NoBukti=A.NoBukti
+left outer join dbBarang C on C.KodeBrg=B.KodeBrg
+left outer join dbCustSupp D on D.KodeCustSupp=A.KODECUST
+lEFT oUTER JOIN (SELECT NOSO,UrutSO,SUM(iSNULL(QNT,0)) QNT1SPB,SUM(ISNULL(QNT2,0)) QNT2SPB
+				FROM dbSPBDet
+				GROUP BY NoSO,UrutSO) M1 ON B.NOBUKTI=M1.NoSO AND B.URUT=M1.UrutSO
+lEFT oUTER JOIN (SELECT b.NoSo,B.UrutSo,SUM(iSNULL(A.QNT,0)) QNT1RSPB,SUM(ISNULL(A.QNT2,0)) QNT2RSPB
+				FROM dbRSPBDet A
+				LEFT OUTER JOIN dbSPBDet B ON A.NoSPB=B.NoBukti AND A.UrutSPB=B.Urut
+				GROUP BY b.NoSo,B.UrutSo) M4 ON B.NOBUKTI=M4.NoSO AND B.URUT=M4.UrutSO
+left outer join dbkebuncustsupp m2 on A.KODEKEBUN=M2.KODEKEBUN AND A.KODECUST=M2.KODECUSTSUPP
+LEFT OUTER JOIN DBALAMATCUST M3 ON A.NOALAMATKIRIM=M3.NOMOR   AND A.KODECUST=M3.KODECUSTSUPP
+Left Outer Join Dbmerk M5 on C.KodeMerk=M5.kodeMerk
+LEFT OUTER JOIN (select kodebrg, sum(SALDOQNT)SaldoQnt,BULAN,TAHUN  from DBSTOCKBRG
+                 Where BUlan=@bulan and Tahun=@Tahun  and KOdeGdg<>'GTC'
+                 and kodegdg in (Select kodegdg from dbPemakaigdg
+                          where userid=@IDuser)
+                 and KodeGdg in (select kodegdg from dbgudang where Isnull(IStakeinOut,0)=0)
+                 group by KODEBRG,BULAN,TAHUN
+                 ) M6 ON B.KODEBRG=M6.KODEBRG
+
+LEFT OUTER JOIN (select kodebrg, sum(SALDOQNT)SaldoQnt,BULAN,TAHUN  from DBSTOCKBRG
+				  where BUlan=@bulan and Tahun=@Tahun
+                        and kodegdg in (Select kodegdg from dbPemakaigdg where userid=@IDUser)
+					    and KodeGdg in (select kodegdg from dbgudang where Isnull(IStakeinOut,0)=1)
+				  group by KODEBRG,BULAN,TAHUN
+				) M61 ON B.KODEBRG=M61.KODEBRG
+
+LEFT OUTER JOIN DBKEBUNCUSTSUPP m7 on a.KODECUST=m7.KODECUSTSUPP and a.KODEKEBUN=m7.KODEKEBUN
+where
+      Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+                      Case when A.IsOtorisasi2=1 then 1 else 0 end+
+                      Case when A.IsOtorisasi3=1 then 1 else 0 end+
+                      Case when A.IsOtorisasi4=1 then 1 else 0 end+
+                      Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+                 else 1
+            end As Bit)=0
+and
+
+/*B.QNT-(Isnull(m1.QNT1SPB,0)+Isnull(B.QntBatal,0))+Isnull(m4.QNT1RSPB,0)>0  */
+case when b.NOSAT=1 then
+			B.QNT-(Isnull(m1.QNT1SPB,0)+
+			 case when b.nosat=1 then Isnull(B.QntBatal,0)
+			 when b.nosat=2 then isnull(b.qntBatal,0) * B.isi
+			 when b.nosat=3 then isnull(b.qntBatal,0) * B.isi end)
+			+ Isnull(m4.QNT1RSPB,0)
+	 when b.NOSAT=2 then
+			B.QNT2-(Isnull(m1.QNT2SPB,0)+
+			 case when b.nosat=1 then Isnull(B.QntBatal,0)/b.ISI
+			 when b.nosat=2 then isnull(b.qntBatal,0)
+			 when b.nosat=3 then isnull(b.qntBatal,0) end)
+			+ Isnull(m4.QNT2RSPB,0)
+	when b.NOSAT=3 then
+			B.QNT2-(Isnull(m1.QNT2SPB,0)+
+			 case when b.nosat=1 then Isnull(B.QntBatal,0)/b.ISI
+			 when b.nosat=2 then isnull(b.qntBatal,0)
+			 when b.nosat=3 then isnull(b.qntBatal,0) end)
+			+ Isnull(m4.QNT2RSPB,0)
+end>0
+AND  case when ISNULL(B.NOserah,'')  IN ('','-') then isnull(M6.SALDOQNT,0)
+		  Else isnull(M6.SALDOQNT,0) + isnull(M61.SALDOQNT,0) End
+>0
+and Isnull(B.PUrgent,0)=1
+
+
+
+
+
+
+" , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun, "username" =>  \Auth::user()->username]);
+  }
+
   // Endpoint AJAX generik utk pagination server-side "SO Belum Siap Kirim"/
   // "SO Siap Kirim" -- keduanya TIDAK dibatasi periode (beda dari "Surat Jalan
   // Otorisasi"/queryOtorisasiSPB yang memang periode-scoped), masing-masing
   // punya search & page sendiri, tidak saling memengaruhi. (Tab "Out SO
-  // Prioritas"/tabel5/queryOutstanding5SJ dihapus -- query-nya cuma varian
-  // queryOutstanding2SJ yang difilter B.PUrgent=1 dengan kalkulasi saldo yang
-  // lebih lama/sederhana; sekarang "SO Siap Kirim" sendiri sudah menampilkan
-  // kolom URGENT/NOTURGENT jadi baris prioritas tetap kelihatan tanpa tab
-  // terpisah.)
+  // Prioritas"/tabel5 dihidupkan lagi sesuai programajcSML, datanya dari
+  // queryOutstanding5SJ() lewat index()/loadAll(), bukan endpoint ini.)
   public function paginateOutstanding (Request $req) {
     $table = $req->table;
     $page = max(1, (int) ($req->page ?: 1));
@@ -753,8 +899,8 @@ ORDER BY RowNum
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $tglawalspb = $req->tglawalspb ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhirspb = $req->tglakhirspb ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    $tglawalspb = $req->tglawalspb ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $tglakhirspb = $req->tglakhirspb ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
 
     // foreach ($outstanding as $p) {
     //   // code...
@@ -904,6 +1050,7 @@ and Isnull(B.PBooking,0)=1
 
     return [
       "tempOutstanding4" => $tempOutstanding4,
+      "tempOutstanding5" => $this->queryOutstanding5SJ(),
       "tempOutstanding6" => $tempOutstanding6,
     ];
   }
@@ -1367,7 +1514,7 @@ public function getDetailKoreksi (Request $req) {
   LEFT OUTER JOIN DBKEBUNCUSTSUPP m7 on a.KODECUSTsupp=m7.KODECUSTSUPP and a.KODEKEBUN=m7.KODEKEBUN
   LEFT OUTER JOIN DBKEBUNCUSTSUPP m9 on f.KODECUST=m9.KODECUSTSUPP and f.KODEKEBUN=m9.KODEKEBUN
   LEFT OUTER JOIN DBRSPB M8 ON A.NOBUKTI=M8.NOSPB
-  where	year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan  and A.Nobukti not like '%POS%' and A.Nobukti = :nobukti
+  where	(:semuaperiode = 1 or (year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan))  and A.Nobukti not like '%POS%' and A.Nobukti = :nobukti
   /*and (C.kodegdg in (Select kodegdg from dbPemakaigdg
                             where userid=:0 ) or ISNULL(A.ISBATAL,0)=1) */
 
@@ -1375,7 +1522,7 @@ public function getDetailKoreksi (Request $req) {
 
 
   order by A.NoBukti
-  " , [ "tahun" =>$periode->tahun, "bulan" => $periode->bulan , "nobukti" => $req->nobukti ]);
+  " , [ "tahun" =>$periode->tahun, "bulan" => $periode->bulan , "nobukti" => $req->nobukti, "semuaperiode" => (int) $req->semuaperiode ]);
 
   $detail = DB::connection("SML")->select("
   Declare @nobukti varchar(50)
@@ -1403,13 +1550,42 @@ order by B.Urut
 
 
 
+  // Hasil: 1 = berhasil, selain itu teks pesan yang ditampilkan JS sebagai peringatan.
   public function spOtorisasi ( Request $req) {
+    $cek = DB::connection('SML')->select("select Isnull(IsOtorisasi1,0) IsOtorisasi1 from dbSPB where NoBukti = :nobukti", ["nobukti" => $req->NOBUKTI]);
+    if (!$cek) {
+      return 'Surat jalan ' . $req->NOBUKTI . ' tidak ditemukan';
+    }
+    if ((int) $cek[0]->IsOtorisasi1 == 1) {
+      return 'Surat jalan ' . $req->NOBUKTI . ' sudah diotorisasi';
+    }
+
     $res = DB::connection('SML')->update("update dbSPB set IsOtorisasi1 = 1, OtoUser1 = :username , TglOto1 = getDate() , IsBatal = NULL, UserBatal = NULL , TglBatal = NULL , MaxOL = 1  where NoBukti = :nobukti", ["username" => \Auth::user()->username , "nobukti" => $req->NOBUKTI ]);
+    app('App\Http\Controllers\GlobalController')->LoggingData('oto', 'SPB', $req->NOBUKTI, '', 0, 'DBSPB');
     return 1;
   }
 
   public function spBatalOtorisasi ( Request $req) {
+    $cek = DB::connection('SML')->select("select Isnull(IsOtorisasi1,0) IsOtorisasi1 from dbSPB where NoBukti = :nobukti", ["nobukti" => $req->NOBUKTI]);
+    if (!$cek) {
+      return 'Surat jalan ' . $req->NOBUKTI . ' tidak ditemukan';
+    }
+    if ((int) $cek[0]->IsOtorisasi1 != 1) {
+      return 'Surat jalan ' . $req->NOBUKTI . ' belum diotorisasi';
+    }
+    // Surat jalan yang sudah ditagih (invoice penjualan) atau sudah diretur tidak boleh
+    // dibatalkan, karena batal otorisasi sekaligus menandai surat jalan ini batal.
+    $invoice = DB::connection('SML')->select("select top 1 NoBukti from dbInvoicePLDet where NoSPB = :nobukti", ["nobukti" => $req->NOBUKTI]);
+    if ($invoice) {
+      return 'Surat jalan sudah dibuat invoice ' . $invoice[0]->NoBukti . ', tidak bisa batal otorisasi';
+    }
+    $retur = DB::connection('SML')->select("select top 1 NoBukti from DBRSPBDet where NoSPB = :nobukti", ["nobukti" => $req->NOBUKTI]);
+    if ($retur) {
+      return 'Surat jalan sudah diretur ' . $retur[0]->NoBukti . ', tidak bisa batal otorisasi';
+    }
+
     $res = DB::connection('SML')->update("update dbSPB set IsBatal = 1, UserBatal = :username , TglBatal = GETDATE() , IsOtorisasi1 = 0, OtoUser1 = '' , TglOto1 = NULL , maxol = -1 where NoBukti = :nobukti ", ["username" => \Auth::user()->username , "nobukti" => $req->NOBUKTI ]);
+    app('App\Http\Controllers\GlobalController')->LoggingData('btloto', 'SPB', $req->NOBUKTI, (string) $req->pket, 0, 'DBSPB');
     return 1;
   }
 

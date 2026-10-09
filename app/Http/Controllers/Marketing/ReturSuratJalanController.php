@@ -27,8 +27,10 @@ class ReturSuratJalanController extends Controller
 
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(4);
 
-    $tglawal = \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    // Pakai tahun+bulan periode (bukan Carbon::now()->month(): tahunnya ikut tahun
+    // berjalan dan tanggal 29-31 bisa meluber ke bulan berikutnya).
+    $tglawal = \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $tglakhir = \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
     $tempOutstanding = $this->queryReturSuratJalanOtorisasi($tglawal, $tglakhir, 0);
 
     return view('marketing.retursuratjalan' , [
@@ -120,16 +122,20 @@ class ReturSuratJalanController extends Controller
     left Outer join (Select x.NoBukti, x.Tanggal, 'Ekpsor' Tipe
                      from DBSPB x
                      ) C on C.NoBukti=A.NoSPB
-    where	year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan and A.nobukti = :nobukti
+    where	(:semuaperiode = 1 or (year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan)) and A.nobukti = :nobukti
     order by A.NoBukti
 ", ["tahun" => $periode->tahun,
-"bulan" => $periode->bulan, "nobukti" => $nobukti ]);
+"bulan" => $periode->bulan, "nobukti" => $nobukti, "semuaperiode" => (int) $req->semuaperiode ]);
 
+// QtyMaks = sisa SJ (belum diretur) + qty item ini sendiri, dalam satuan yang tampil di
+// form Edit Item (nosat 1 = Sat1, selain itu Sat2) -- batas qty saat koreksi item.
 $detail = DB::connection('SML')->select("
 select 	B.NOBUKTI, B.URUT, B.NoSPB NoSC, B.UrutSPB UrutSC, B.KODEBRG, C.NAMABRG, '' Jns_Kertas, '' Ukr_Kertas,
-        B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.ISI, B.NetW, B.GrossW, '' KetDetail ,B.NOSAT , b.ISI , b.FlagKembali
+        B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.ISI, B.NetW, B.GrossW, '' KetDetail ,B.NOSAT , b.ISI , b.FlagKembali,
+        case when B.NOSAT=1 then isnull(O.QntSisa,0)+isnull(B.QNT,0) else isnull(O.Qnt2Sisa,0)+isnull(B.QNT2,0) end QtyMaks
 from	dbRSPBDet B
 left outer join dbBarang C on C.KodeBrg=B.KodeBrg
+left outer join vwOutSPB_RSPB O on O.NoBukti=B.NoSPB and O.Urut=B.UrutSPB
 where	B.NoBukti= :nobukti
 order by B.Urut
 ", ["nobukti" => $nobukti]);
@@ -292,13 +298,69 @@ if ($header) {
         return $listData;
   }
 
+  // Tanggal transaksi harus di bulan periode aktif. Di programajcSML daftar hanya
+  // menampilkan periode aktif; di newSML daftar bisa difilter rentang tanggal lain,
+  // jadi koreksi/otorisasi/batal otorisasi tetap dibatasi ke periode aktif di sini.
+  private function dalamPeriodeAktif ($tanggal) {
+    if (!$tanggal) {
+      return false;
+    }
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $tgl = \Carbon\Carbon::parse($tanggal);
+    return (int) $tgl->year == (int) $periode->tahun && (int) $tgl->month == (int) $periode->bulan;
+  }
+
+  // Hasil: 1 = berhasil, 2 = nobukti sudah terpakai (JS mengambil nobukti baru),
+  // selain itu teks pesan yang ditampilkan JS sebagai peringatan.
   public function spAdd (Request $req) {
     if ($req->choice == "I" && $req->isempty == 0) {
       $check = DB::connection('SML')->select('select * from dbrspb where Nobukti = :nobukti', ["nobukti" => $req->nobukti]);
         if ($check) {
           return 2;
       }
+      if (!$this->dalamPeriodeAktif($req->tanggal)) {
+        return 'Tanggal tidak sesuai periode';
+      }
+    } else {
+      // Tambah item ke retur yang sudah ada, edit item, atau hapus item.
+      $header = DB::connection('SML')->select("select Isnull(IsOtorisasi1,0) IsOtorisasi1, Tanggal from dbRSPB where NoBukti = :nobukti", ["nobukti" => $req->nobukti]);
+      if (!$header) {
+        return 'Retur SJ ' . $req->nobukti . ' tidak ditemukan, silahkan muat ulang data';
+      }
+      if ((int) $header[0]->IsOtorisasi1 == 1) {
+        return 'Retur SJ ' . $req->nobukti . ' sudah diotorisasi, tidak bisa dikoreksi';
+      }
+      if (!$this->dalamPeriodeAktif($header[0]->Tanggal)) {
+        return 'Retur SJ ' . $req->nobukti . ' di luar periode aktif, tidak bisa dikoreksi';
+      }
     }
+
+    // Qty retur tidak boleh melebihi sisa surat jalan yang belum diretur. Dibandingkan
+    // dalam satuan dasar (QNT = QNT2 * ISI), sama untuk semua NOSAT.
+    if ($req->choice == "I" || $req->choice == "U") {
+      $qnt = (float) $req->qnt;
+      if ($qnt <= 0) {
+        return 'Qty harus lebih dari 0';
+      }
+      $nospb = $req->nosj;
+      $urutspb = $req->urutsj;
+      $qntLama = 0;
+      if ($req->choice == "U") {
+        $item = DB::connection('SML')->select("select NoSPB, UrutSPB, QNT from dbRSPBDet where NoBukti = :nobukti and Urut = :urut", ["nobukti" => $req->nobukti, "urut" => $req->urut]);
+        if (!$item) {
+          return 'Item tidak ditemukan, silahkan muat ulang data';
+        }
+        $nospb = $item[0]->NoSPB;
+        $urutspb = $item[0]->UrutSPB;
+        $qntLama = (float) $item[0]->QNT;
+      }
+      $sisa = DB::connection('SML')->select("select QntSisa from vwOutSPB_RSPB where NoBukti = :nospb and Urut = :urutspb", ["nospb" => $nospb, "urutspb" => $urutspb]);
+      $maks = ($sisa ? (float) $sisa[0]->QntSisa : 0) + $qntLama;
+      if ($qnt > $maks + 0.0005) {
+        return 'Qty retur melebihi sisa surat jalan';
+      }
+    }
+
     $username = \Auth::user()->username;
 
     $values = [
@@ -352,12 +414,39 @@ if ($header) {
   }
 
 
+  // Hasil: 1 = berhasil, selain itu teks pesan yang ditampilkan JS sebagai peringatan.
   public function spOtorisasi ( Request $req) {
+    $cek = DB::connection('SML')->select("select Isnull(IsOtorisasi1,0) IsOtorisasi1, Tanggal from dbRSPB where NoBukti = :nobukti", ["nobukti" => $req->nobukti]);
+    if (!$cek) {
+      return 'Retur SJ ' . $req->nobukti . ' tidak ditemukan';
+    }
+    if ((int) $cek[0]->IsOtorisasi1 == 1) {
+      return 'Retur SJ ' . $req->nobukti . ' sudah diotorisasi';
+    }
+    if (!$this->dalamPeriodeAktif($cek[0]->Tanggal)) {
+      return 'Retur SJ ' . $req->nobukti . ' di luar periode aktif, tidak bisa diotorisasi';
+    }
+
     $res = DB::connection('SML')->update("update dbrSPB set IsOtorisasi1 = 1, OtoUser1 = :username , TglOto1 = getDate(), MaxOL = 1  where NoBukti = :nobukti", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    app('App\Http\Controllers\GlobalController')->LoggingData('oto', 'RSJ', $req->nobukti, '', 0, 'dbrSPB');
     return 1;
   }
 
   public function spBatalOtorisasi ( Request $req) {
+    if (trim((string) $req->pket) == '') {
+      return 'Keterangan batal otorisasi harus diisi';
+    }
+    $cek = DB::connection('SML')->select("select Isnull(IsOtorisasi1,0) IsOtorisasi1, Tanggal from dbRSPB where NoBukti = :nobukti", ["nobukti" => $req->nobukti]);
+    if (!$cek) {
+      return 'Retur SJ ' . $req->nobukti . ' tidak ditemukan';
+    }
+    if ((int) $cek[0]->IsOtorisasi1 != 1) {
+      return 'Retur SJ ' . $req->nobukti . ' belum diotorisasi';
+    }
+    if (!$this->dalamPeriodeAktif($cek[0]->Tanggal)) {
+      return 'Retur SJ ' . $req->nobukti . ' di luar periode aktif, tidak bisa batal otorisasi';
+    }
+
     $res = DB::connection('SML')->update("update dbrSPB set IsOtorisasi1 = 0, OtoUser1 = '' , TglOto1 = NULL , maxol = -1 where NoBukti = :nobukti ", [ "nobukti" => $req->nobukti ]);
     app('App\Http\Controllers\GlobalController')->LoggingData('btloto', 'RSJ', $req->nobukti, $req->pket, 0, 'dbrSPB');
     return 1;
@@ -367,8 +456,8 @@ if ($header) {
   public function loadAll (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $tglawal = $req->tglawal ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    $tglawal = $req->tglawal ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
     $filterrsj = $req->filterrsj ?: 0;
     $tempOutstanding = $this->queryReturSuratJalanOtorisasi($tglawal, $tglakhir, $filterrsj);
 

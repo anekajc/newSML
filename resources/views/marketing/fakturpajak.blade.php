@@ -160,8 +160,7 @@
   color: #dc2626; border-color: #f7cfcf; background: #fdeaea;
 }
 
-#tabel thead th,
-#tabel_export thead th {
+#tabel thead th {
   background: #f8f9fb !important;
   color: #6b7280 !important;
   font-size: 12px;
@@ -172,13 +171,11 @@
   border-top: none;
 }
 
-#tabel tbody tr:nth-of-type(odd),
-#tabel_export tbody tr:nth-of-type(odd) {
+#tabel tbody tr:nth-of-type(odd) {
   background-color: #fbfbfc;
 }
 
-#tabel tbody tr:hover,
-#tabel_export tbody tr:hover {
+#tabel tbody tr:hover {
   background-color: #f5f3ff;
 }
 </style>
@@ -240,25 +237,6 @@
 </style>
 {{-- end tampilan search bar 2 --}}
 
-{{-- tampilan search bar modal add export --}}
-
-<style>
-  #tabel_export_filter{
-    display: flex;
-    align-items: flex-end;
-    margin-bottom: -10px;
-
-  }
-  #tabel_export_filter label input {
-    width: 150px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    box-shadow: none;
-    font-size: 0.65rem;
-  }
-</style>
-
-{{-- end tampilan search bar modal add export --}}
 
 {{-- tampilan search bar modal add pelanggan --}}
 <style>
@@ -365,21 +343,6 @@
   vertical-align: middle;
   }
 
-  /* Hide action buttons until the row is hovered */
-  #tabel tbody .action-buttons-wrap {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-6px);
-    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
-  }
-  /* Show them when hovering the table row */
-  #tabel tbody tr:hover .action-buttons-wrap,
-  #tabel tbody tr:focus-within .action-buttons-wrap {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(0);
-  }
-
   .data-table th,
   .data-table td {
     white-space: nowrap;
@@ -422,40 +385,16 @@
     </div>
   </div> --}}
 
-  {{-- Toolbar: periode (with its existing onchange="loadAll()" kept exactly as-is)
-       + Export Excel/Import Excel now inline in the same row, PO's po-toolbar-act
-       pattern, instead of their old separate rows above the tab bar. --}}
+  {{-- Satu card, satu toolbar seperti tab Purchase Order di purchasing:
+       periode (onchange="loadAll()" tetap) + cari + tampilkan + Import/Export di kanan. --}}
   <div class="card">
-    <div class="card-body" style="padding:0;">
-      <div class="po-toolbar">
-        <div class="po-filter-wrap">
-          <label>Periode</label>
-          <input type="date" onchange="loadAll()" class="po-filter-inp" id="input_tanggalawal" value="{!! \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') !!}">
-          <span class="po-filter-sep">s/d</span>
-          <input type="date" onchange="loadAll()" class="po-filter-inp" id="input_tanggalakhir" value="{!! \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') !!}">
-        </div>
-
-        <div class="po-toolbar-act">
-          <form id="formImport" action="{{ url('fakturpajakimportexcel') }}" method="POST" enctype="multipart/form-data" style="margin:0;">
-            @csrf
-            <input type="file" id="import_file" name="import_file" hidden
-                  onchange="document.getElementById('formImport').submit()">
-            <label for="import_file" class="btn btn-chip-biru" style="margin:0; cursor:pointer;">Import Excel</label>
-          </form>
-          <button type="button" class="btn btn-chip-biru" onclick="openModalExport()">Export Excel</button>
-        </div>
-      </div>
+    <div class="card-body" style="padding: 0">
       @if (Session::has('success'))
-      <div class="alert alert-success" style="margin: 0 14px 10px;">
+      <div class="alert alert-success" style="margin: 12px 14px 0;">
           <a href="#" class="close" data-dismiss="alert" aria-label="close">×</a>
           <p>{{ Session::get('success') }}</p>
       </div>
       @endif
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-body" style="padding: 0">
       <div class="tab-content" id="myTabContent">
 
         <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
@@ -463,6 +402,12 @@
             <div class="col-md-12">
               <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
                 <div class="po-toolbar">
+                  <div class="po-filter-wrap">
+                    <label>Periode</label>
+                    <input type="date" onchange="loadAll()" class="po-filter-inp" id="input_tanggalawal" value="{!! \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') !!}">
+                    <span class="po-filter-sep">s/d</span>
+                    <input type="date" onchange="loadAll()" class="po-filter-inp" id="input_tanggalakhir" value="{!! \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') !!}">
+                  </div>
                   <input type="search" id="fpSearch1" class="po-search-inp" placeholder="Cari data">
                   <div class="po-len-wrap">
                     <label for="fpLen1">Tampilkan</label>
@@ -473,6 +418,12 @@
                       <option value="100">100</option>
                       <option value="-1">Semua</option>
                     </select>
+                  </div>
+                  <div class="po-toolbar-act">
+                    {{-- File dibaca di browser (SheetJS) lalu dikirim lewat AJAX - lihat fpImportExcel(). --}}
+                    <input type="file" id="import_file" accept=".xlsx,.xls,.csv" hidden onchange="fpImportExcel(this)">
+                    <button type="button" id="btnImportExcel" class="btn btn-chip-biru" onclick="document.getElementById('import_file').click()">Import Excel</button>
+                    <button type="button" class="btn btn-chip-biru" onclick="openModalExport()">Export Excel</button>
                   </div>
                 </div>
                 <div id="rtBarTabel"></div>
@@ -597,7 +548,10 @@
 </div>
 </div>
 <!-- start modal export -->
-<div class="modal fade" id="formExport" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+{{-- Gaya modal pemilih purchasing (picker-kas): dropdown "Tampilkan", Search, pagination,
+     seperti modal checklist invoicepenjualan. Isi = invoice periode yang sedang tampil
+     di tabel utama (lihat openModalExport()). Kolom sama dengan programajcSML. --}}
+<div class="modal fade picker-kas" id="formExport" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -606,47 +560,43 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div id="formBsGrid">
       <div class="modal-body">
         <div class="container-fluid">
-          <div class="row mb-2 col-12">
-            <button type="button"
-                    class="btn btn-chip-biru"
-                    onclick="ExportDataToExcel()">
-            Export
-            </button>
+          <div class="row">
+            <div class="col-12 text-right mb-2">
+              <span id="fpExportTerpilih" class="mr-2" style="font-size:12.5px; color:#6b7280;"></span>
+              <button type="button" id="btnExportExcel" class="btn btn-chip-biru" onclick="ExportDataToExcel()" style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                height: 30px;
+                padding: 0 16px;
+                line-height: 1;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;">Export</button>
+            </div>
           </div>
           <div class="row">
             <div class="col-12">
-              <table id="tabel_export" class="data-table">
-                <thead id="theadCustom" class="text-center">
+              <table id="tabel_export" class="table table-hover" style="width:100%">
+                <thead>
                   <tr>
-                    <th scope="col"></th>
-                    <th scope="col">Nomor Bukti</th>
-                    <th scope="col">Tanggal</th>
-                    <th scope="col">Nama Cust</th>
-                    <th scope="col">No. PO</th>
+                    <th class="text-center"><input type="checkbox" id="fpExportCekSemua" title="Pilih semua yang tampil (hasil pencarian)"></th>
+                    <th>Nomor Bukti</th>
+                    <th>Tanggal</th>
+                    <th>No Pajak</th>
+                    <th>Nama Cust</th>
+                    <th>No. PO</th>
                   </tr>
                 </thead>
-                <tbody id="tabel_data_export" class="text-left">
-                  @for ($i = 0; $i < count($tempOutstanding); $i++)
-                    <tr>
-                      <td class="text-center">
-                        <input type="checkbox" id="exportData{{ $i }}" name="option1" value="{{ $tempOutstanding[$i]->NoBukti }}">
-                      </td>
-                      <td>{{ $tempOutstanding[$i]->NoBukti }}</td>
-                      <td>{!! date("Y/m/d", strtotime($tempOutstanding[$i]->Tanggal)) !!}</td>
-                      <td>{{ $tempOutstanding[$i]->NamaCustSupp }}</td>
-                      <td>{{ $tempOutstanding[$i]->PONo }}</td>
-                    </tr>
-                  @endfor
-                </tbody>
+                <tbody id="tabel_data_export"></tbody>
               </table>
             </div>
           </div>
         </div>
       </div>
-      </div>{{-- /#formBsGrid --}}
     </div>
   </div>
 </div>
@@ -812,36 +762,47 @@ function fpValueCell (row, col) {
   let type = col[3];
 
   if (type === 'date') {
-    if (!raw) { return '<td></td>'; }
-    return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>';
+    if (!raw) { return ''; }
+    return formatDate(raw, '/').split('/').reverse().join('/');
   }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
   }
-  return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
+  return (raw !== undefined && raw !== null ? raw : '');
 }
 
 function tabelActionsCell (row) {
   let nobukti = fpPickCI(row, 'NoBukti');
-  let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-success btn-sm" title="Buat Faktur Pajak" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + fpPickCI(row, 'NoPajak') + '\' , \'' + fpPickCI(row, 'TglFPJ') + '\')"><i class="bi bi-plus-lg"></i></button>';
+  // NoPajak/TglFPJ kosong (null) dikirim sebagai '' - dulu jadi teks "null" di input No Pajak.
+  let nopajak = fpPickCI(row, 'NoPajak') || '';
+  let tglfpj = fpPickCI(row, 'TglFPJ') || '';
+  let html = '<div class="action-buttons-wrap">';
+  html += '<button class="btn btn-success btn-sm" title="Buat Faktur Pajak" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + nopajak + '\' , \'' + tglfpj + '\')"><i class="bi bi-plus-lg"></i></button>';
   html += '<button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonDelete(\'' + nobukti + '\')"><i class="bi bi-trash"></i></button>';
-  html += '</div></td>';
+  html += '</div>';
   return html;
 }
 
-function renderTabelRows (rows) {
+// Tabel digambar dari array data dengan deferRender (pola invoicepenjualan):
+// hanya baris di halaman yang sedang tampil yang dibuat jadi <tr>. Dulu semua
+// baris periode ditulis ke DOM sekaligus sehingga mundur periode jadi lambat.
+function fpKolomTabel () {
   let cols = (fpCart.length ? fpCart : gcart_header).filter(function (c) { return c[2] === 1; });
-  let html = "";
-  (rows || []).forEach(function (row) {
-    html += '<tr>' + tabelActionsCell(row);
-    cols.forEach(function (col) { html += fpValueCell(row, col); });
-    html += '</tr>';
-  });
-  document.getElementById('tabel_data').innerHTML = html;
   tulisTheadHeaderFP(cols);
+
+  let columns = [{
+    data : null, orderable : false, className : 'text-center',
+    render : function (d, t, row) { return t === 'display' ? tabelActionsCell(row) : '' }
+  }]
+  cols.forEach(function (col) {
+    columns.push({
+      data : null, className : col[3] === 'float' ? 'text-right' : '',
+      render : function (d, t, row) { return fpValueCell(row, col) }
+    })
+  })
+  return columns
 }
 
 let lastTabelRows = []
@@ -883,10 +844,17 @@ const FP_DOM_STRING = "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-1
 
 function reinitTabel () {
   try {
-    if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().destroy(); }
-    renderTabelRows(lastTabelRows);
+    if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().clear().destroy(); }
+    $('#tabel tbody').empty();
     $('#tabel').DataTable({
       dom: FP_DOM_STRING,
+      data: lastTabelRows || [],
+      columns: fpKolomTabel(),
+      deferRender: true,
+      language: {
+        emptyTable: 'Tidak ada data',
+        zeroRecords: 'Tidak ada data yang cocok dengan pencarian'
+      },
       lengthChange: false,
       pageLength: fpPanjangHalaman,
       paging: true,
@@ -908,118 +876,70 @@ $(document).ready(function(){
       reinitTabel();
       fpInitReportTableSekali();
 
-	$("#tabel_export").DataTable({
-          lengthChange: false,
-          paging: false,
-          searching: true,
-          order: [[1, 'asc']],
-          columnDefs: [
-              { targets:[0], orderable:false }
-          ]
-      });
 
 
   //   formAddListItem
 });
 
-function loadAll () {
-  console.log('loadall');
+// Ganti tanggal di date picker memicu onchange per bagian (hari/bulan/tahun), jadi
+// permintaan ditunda sebentar dan yang lama dibatalkan. Request async supaya
+// browser tidak membeku selama data periode panjang diambil.
+let fpLoadTimer = null
+let fpLoadXhr = null
 
+// Lapisan "Memuat data..." yang sama dengan purchaseOrder/so (CSS .dataTables_processing
+// dan .po-loading-chip dari partial tampilan-purchasing-css). Tabel ini bukan server-side,
+// jadi lapisannya ditempel manual ke wrapper DataTables #tabel.
+function fpTampilMemuat (tampil) {
+  $('#tabel_wrapper').children('.fp-memuat').remove()
+  if (!tampil) { return }
+  $('#tabel_wrapper').append(
+    '<div class="dataTables_processing fp-memuat" style="display:block"><span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span></div>'
+  )
+}
+
+function loadAll () {
+  if (fpLoadTimer) { clearTimeout(fpLoadTimer) }
+  fpTampilMemuat(true)
+  fpLoadTimer = setTimeout(fpAmbilData, 350)
+}
+
+function fpAmbilData () {
   let _token  = $("#_token").val()
   let tglawal = $("#input_tanggalawal").val()
   let tglakhir = $("#input_tanggalakhir").val()
 
-  $.ajax({
+  if (fpLoadXhr) { fpLoadXhr.abort() }
+  fpTampilMemuat(true)
+
+  fpLoadXhr = $.ajax({
     url: "{!! url('fakturpajakloadall') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       tglawal,
       tglakhir
     },
     success: function(res) {
-
-      $('#tabel').DataTable().destroy();
-
-      let rowTable = ''
-
-
-
-
-      res.tempOutstanding.forEach((item, i) => {
-        rowTable += `<tr>
-        <td class='text-center'>
-            <button class="btn btn-success btn-sm" title="Buat Faktur Pajak" type="button" onclick="buttonAdd('${item.NoBukti }' , '${item.NoPajak }' , '${item.TglFPJ }')"><i class="bi bi-plus-lg"></i></button>
-
-            <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonDelete('${item.NoBukti }' )"><i class="bi bi-trash"></i></button>
-
-
-
-          </td>
-          <td>${item.NoBukti }</td>
-          <td>${formatDate(item.Tanggal , '/')}</td>
-         <!-- <td>${item.KodeCustSupp }</td> -->
-          <td>${item.NamaCustSupp }</td>
-          <td>${item.PONo ? item.PONo : '' }</td>
-
-          <td>${item.NoPajak ? item.NoPajak : ''  }</td>
-          <td>${ item.TglFPJ ? formatDate(item.TglFPJ , '/') : '' }</td>
-
-          <td>${formatAngka(parseFloat(item.DPP).toFixed(2)) }</td>
-          <td>${formatAngka(parseFloat(item.PPN).toFixed(2) )}</td>
-          <td>${formatAngka(parseFloat(item.NNET).toFixed(2)) }</td>
-
-
-
-
-
-
-
-        </tr>`
-      });
-
-
-
-
-
-
-
-
-      document.getElementById("tabel_data").innerHTML = rowTable
-
-
-$("#tabel").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[1, 'asc']],
-          "columnDefs": [
-              {"targets" :[0] , 'orderable' : false},
-          // { "type": "date", "targets": [3] },
-          { "className": "text-right", "targets": [7, 8, 9] },
-          // "columns" : [{"width" : "20px"}]
-
-        ]
-        });
-
-
-
-
-
-
-
-
-
+      // Render ulang lewat jalur yang sama dengan load awal (reinitTabel) supaya
+      // tabel tetap di dalam card (po-table-wrap), tombol aksi pakai action-buttons-wrap
+      // seperti purchasing, dan search bawaan DataTables tidak muncul lagi.
+      lastTabelRows = res.tempOutstanding || []
+      reinitTabel()
     },
     error: function (err) {
+      if (err.statusText === 'abort') { return }
       console.log(err)
       console.log(err.status)
       console.log(err.statusText)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    },
+    complete: function (xhr) {
+      if (xhr !== fpLoadXhr) { return }
+      fpLoadXhr = null
+      fpTampilMemuat(false)
     }
-
   })
-
 }
 
 
@@ -1039,6 +959,17 @@ function submitAdd () {
   // console.log(x)
 
   console.log(nobukti , tanggal , nopajak)
+
+  // Tanggal kosong akan tersimpan sebagai 1900-01-01 di SQL Server; No Pajak kosong
+  // cukup lewat tombol Hapus.
+  if (!$.trim(nopajak)) {
+    alertify.warning('No Pajak wajib diisi')
+    return
+  }
+  if (!tanggal) {
+    alertify.warning('Tgl Pajak wajib diisi')
+    return
+  }
 
   $.ajax({
     url: "{!! url('fakturpajakspadd') !!}",
@@ -1184,34 +1115,106 @@ function formatAngka (angkaString) {
 
 
 
-function openModalExport (POCustomer, cust, barang) {
+// ---- Modal Export -------------------------------------------------------------
+// Isi modal = invoice periode yang sedang tampil di tabel utama (lastTabelRows), jadi
+// ikut periode yang dipilih (dulu tetap daftar bulan berjalan saat halaman dibuka).
+// Pilihan disimpan per NoBukti di fpExportPilih supaya tetap ada walau pindah halaman
+// atau dicari; yang dikirim saat Export juga dari sini, bukan dari checkbox di DOM.
+let fpExportPilih = new Set()
 
-  $('.showhide').hide();
-  $("#formExport").modal('toggle');
+function fpExportTulisJumlah () {
+  let n = fpExportPilih.size
+  $('#fpExportTerpilih').text(n ? n + ' invoice dipilih' : '')
 }
 
-  // reference only for routing purposes 
-  // Route::post('/fakturpajakexportexcel' , 'FakturPajakController@spExport')->middleware('auth');
-  
+function fpExportSinkronCekSemua () {
+  if (!$.fn.DataTable.isDataTable('#tabel_export')) { return }
+  let rows = $('#tabel_export').DataTable().rows({ search: 'applied' }).data().toArray()
+  let semua = rows.length > 0 && rows.every(function (r) { return fpExportPilih.has(r.NoBukti) })
+  $('#fpExportCekSemua').prop('checked', semua)
+}
+
+function openModalExport () {
+  let ada = new Set((lastTabelRows || []).map(function (r) { return r.NoBukti }))
+  fpExportPilih.forEach(function (nb) { if (!ada.has(nb)) { fpExportPilih.delete(nb) } })
+  fpExportTulisJumlah()
+
+  if ($.fn.DataTable.isDataTable('#tabel_export')) { $('#tabel_export').DataTable().clear().destroy() }
+  $('#tabel_data_export').empty()
+
+  // Tabel dibuat setelah modal tampil supaya lebar kolom benar (pola invoicepenjualan).
+  $('#formExport').one('shown.bs.modal', function () {
+    pickerKasInit('tabel_export', {
+      _pk: true,
+      data: lastTabelRows || [],
+      deferRender: true,
+      autoWidth: false,
+      order: [[1, 'asc']],
+      columns: [
+        { data: null, orderable: false, className: 'text-center', render: function (d, t, row) {
+            if (t !== 'display') { return '' }
+            let cek = fpExportPilih.has(row.NoBukti) ? 'checked' : ''
+            return '<input type="checkbox" class="fp-export-cek" value="' + row.NoBukti + '" ' + cek + '>'
+        } },
+        { data: 'NoBukti' },
+        { data: 'Tanggal', render: function (d, t) {
+            if (!d) { return '' }
+            return t === 'display' ? formatDate(d, '/') : d
+        } },
+        { data: 'NoPajak', render: function (d) { return d || '' } },
+        { data: 'NamaCustSupp', render: function (d) { return d || '' } },
+        { data: 'PONo', render: function (d) { return d || '' } },
+      ],
+      drawCallback: fpExportSinkronCekSemua
+    })
+  })
+  $('#formExport').modal('show')
+}
+
+$(document).on('change', '#tabel_export .fp-export-cek', function () {
+  if (this.checked) { fpExportPilih.add(this.value) } else { fpExportPilih.delete(this.value) }
+  fpExportTulisJumlah()
+  fpExportSinkronCekSemua()
+})
+
+// Centang semua = semua baris hasil pencarian (semua halaman), bukan hanya halaman ini.
+$(document).on('change', '#fpExportCekSemua', function () {
+  let cek = this.checked
+  let api = $('#tabel_export').DataTable()
+  api.rows({ search: 'applied' }).data().toArray().forEach(function (r) {
+    if (cek) { fpExportPilih.add(r.NoBukti) } else { fpExportPilih.delete(r.NoBukti) }
+  })
+  $('#tabel_export .fp-export-cek').prop('checked', cek)
+  fpExportTulisJumlah()
+})
+
+// Isi file sama dengan programajcSML: Baris dari SP (penghubung sheet Faktur dan
+// DetailFaktur), Tanggal 19 karakter (dd/mm/yyyy hh:mm:ss), IDTKUPenjual2, angka detail
+// sebagai number.
 function ExportDataToExcel() {
-    let selectedNoBukti = [];
-    document.querySelectorAll('#tabel_data_export input[type="checkbox"]:checked').forEach(function(checkbox) {
-        selectedNoBukti.push(checkbox.value);
-    });
+    let selectedNoBukti = Array.from(fpExportPilih);
 
     if (selectedNoBukti.length === 0) {
-        alert('Pilih minimal satu data!');
+        alertify.warning('Pilih minimal satu data!');
         return;
     }
 
+    let $btn = $('#btnExportExcel')
+    if ($btn.prop('disabled')) { return }
+    $btn.prop('disabled', true).text('Memproses...')
+
     $.ajax({
         url: "{!! url('fakturpajakexportexcel') !!}",
-        type: "get",
-        async: false,
+        type: "post",
         data: {
+            _token: $("#_token").val(),
             nobukti: selectedNoBukti
         },
         success: function(res) {
+    if (!res.header || !res.header.length) {
+        alertify.warning('Data faktur untuk invoice terpilih tidak ditemukan');
+        return;
+    }
 
     // -- Sheet 1: Header --------------------------------------
     let wsData = [
@@ -1231,10 +1234,10 @@ function ExportDataToExcel() {
         ],
 
         // Row 4+ - data rows
-        ...res.header.map(function(h,i) {
+        ...res.header.map(function(h) {
             return [
-                i+1,
-                h.Tanggal ? h.Tanggal.substring(0, 10) : '',
+                Number(h.Baris ?? ''),
+                h.Tanggal ? h.Tanggal.substring(0, 19) : '',
                 h.JenisFaktur ?? '',
                 h.KodeTransaksi ?? '',
                 h.KeteranganTambahan ?? '',
@@ -1242,7 +1245,7 @@ function ExportDataToExcel() {
                 h['Periode dok pendukung'] ?? '',
                 h.referensi ?? '',
                 h.capfasilitas ?? '',
-                h.IDTKUPenjual ?? '',
+                h.IDTKUPenjual2 ?? '',
                 h.NPWPNIKPembeli ?? '',
                 h.JenisIDPembeli ?? '',
                 h.NegaraPembeli ?? '',
@@ -1282,22 +1285,22 @@ function ExportDataToExcel() {
     ],
 
     // Row 2+ - data rows
-    ...res.detail.map(function(d, i) {   // ? res.detail, not res.header
+    ...res.detail.map(function(d) {
         return [
-            i + 1,
+            Number(d.Baris ?? ''),
             d.BarangJasa ?? '',
             d.KodeBarangJasa ?? '',
             d.NamaBarangJasa ?? '',
             d.NamaSatuanUkur ?? '',
-            d.HargaSatuan ?? '',
-            d.JumlahBarangJasa ?? '',
-            d.TotalDiskon ?? '',
-            d.DPP ?? '',
-            d.DPPNilaiLain ?? '',
-            d.TarifPPN ?? '',
-            d.PPN ?? '',
-            d.tarifppnbm ?? '',
-            d.ppnbm ?? '',
+            Number(d.HargaSatuan ?? ''),
+            Number(d.JumlahBarangJasa ?? ''),
+            Number(d.TotalDiskon ?? ''),
+            Number(d.DPP ?? ''),
+            Number(d.DPPNilaiLain ?? ''),
+            Number(d.TarifPPN ?? ''),
+            Number(d.PPN ?? ''),
+            Number(d.tarifppnbm ?? ''),
+            Number(d.ppnbm ?? ''),
         ];
     }),
 
@@ -1308,26 +1311,143 @@ function ExportDataToExcel() {
     // -- Build workbook with 2 sheets -------------------------
     let wb = XLSX.utils.book_new();
 
-    let wsHeader = XLSX.utils.aoa_to_sheet(wsData);  
+    let wsHeader = XLSX.utils.aoa_to_sheet(wsData);
 
     wsHeader['!merges'] = [
     { s: { r: 0, c: 2 }, e: { r: 0, c: 17 } },  // Row 1 merge
     { s: { r: 1, c: 2 }, e: { r: 1, c: 17 } },  // Row 2 merge
-];     // switched to aoa
+];
 
     XLSX.utils.book_append_sheet(wb, wsHeader, 'Faktur');   // Sheet 1
 
-    let wsDetail = XLSX.utils.aoa_to_sheet(detailData);    // detail stays as json_to_sheet
+    let wsDetail = XLSX.utils.aoa_to_sheet(detailData);
     XLSX.utils.book_append_sheet(wb, wsDetail, 'DetailFaktur');   // Sheet 2
 
     // -- Download ---------------------------------------------
     XLSX.writeFile(wb, 'FakturPajak_' + new Date().toISOString().slice(0, 10) + '.xlsx');
-}
+        },
+        error: function (err) {
+            console.log(err)
+            alertify.warning((err.responseJSON && err.responseJSON.message) || 'Gagal export, silahkan coba lagi')
+        },
+        complete: function () {
+            $btn.prop('disabled', false).text('Export')
+        }
     });
-
-    $('.showhide').hide();
 }
 
+// ---- Import Excel (file Coretax) ----------------------------------------------
+// Judul kolom dijadikan slug seperti Excel::load() di programajcSML (heading 'slugged',
+// pemisah '_'): "Nomor Faktur Pajak" -> nomor_faktur_pajak, "Referensi" -> referensi.
+function fpSlugJudul (s) {
+  return String(s == null ? '' : s).toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
+function fpTeksSel (v) {
+  if (v === null || v === undefined) { return '' }
+  // Nomor faktur yang tersimpan sebagai angka: tulis utuh tanpa notasi E / desimal.
+  if (typeof v === 'number') { return Number.isInteger(v) ? v.toFixed(0) : String(v) }
+  if (v instanceof Date) { return v }
+  return String(v).trim()
+}
+
+// Tanggal ke yyyy-mm-dd: sel tanggal Excel, teks dd/mm/yyyy atau dd-mm-yyyy (format
+// Indonesia), atau teks yang sudah yyyy-mm-dd.
+function fpTanggalImport (v) {
+  if (v === '' || v === null || v === undefined) { return '' }
+  if (v instanceof Date) {
+    let d = new Date(v.getTime() + 12 * 3600 * 1000)   // geser ke siang: hindari selisih zona waktu
+    return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0')
+  }
+  let s = String(v).trim()
+  let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/)
+  if (m) { return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') }
+  m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/)
+  if (m) { return m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0') }
+  return s
+}
+
+function fpBacaBarisImport (wb) {
+  for (let nama of wb.SheetNames) {
+    let aoa = XLSX.utils.sheet_to_json(wb.Sheets[nama], { header: 1, raw: true, defval: '' })
+    // Baris judul = baris pertama yang punya kolom "Referensi" dan "Nomor Faktur Pajak".
+    for (let i = 0; i < Math.min(aoa.length, 15); i++) {
+      let judul = aoa[i].map(fpSlugJudul)
+      let iRef = judul.indexOf('referensi')
+      let iNo = judul.indexOf('nomor_faktur_pajak')
+      let iTgl = judul.indexOf('tanggal_faktur_pajak')
+      if (iRef === -1 || iNo === -1) { continue }
+
+      let hasil = []
+      aoa.slice(i + 1).forEach(function (r) {
+        let referensi = fpTeksSel(r[iRef])
+        if (!referensi) { return }
+        hasil.push({
+          referensi: String(referensi),
+          nomor_faktur_pajak: String(fpTeksSel(r[iNo])),
+          tanggal_faktur_pajak: iTgl === -1 ? '' : fpTanggalImport(fpTeksSel(r[iTgl])),
+        })
+      })
+      return hasil
+    }
+  }
+  return null
+}
+
+function fpImportExcel (input) {
+  let file = input.files && input.files[0]
+  input.value = ''   // supaya file yang sama bisa dipilih lagi
+  if (!file) { return }
+
+  let $btn = $('#btnImportExcel')
+  $btn.prop('disabled', true).text('Memproses...')
+  let selesai = function () { $btn.prop('disabled', false).text('Import Excel') }
+
+  let reader = new FileReader()
+  reader.onerror = function () { selesai(); alertify.warning('File tidak bisa dibaca') }
+  reader.onload = function (e) {
+    let rows
+    try {
+      let wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true })
+      rows = fpBacaBarisImport(wb)
+    } catch (err) {
+      console.log(err)
+      selesai()
+      alertify.warning('File bukan file Excel yang valid')
+      return
+    }
+    if (rows === null) {
+      selesai()
+      alertify.warning('Kolom "Referensi" / "Nomor Faktur Pajak" tidak ditemukan di file')
+      return
+    }
+    if (!rows.length) {
+      selesai()
+      alertify.warning('File tidak berisi data faktur pajak')
+      return
+    }
+
+    $.ajax({
+      url: "{!! url('fakturpajakimportexcel') !!}",
+      type: "post",
+      data: {
+        _token: $("#_token").val(),
+        rows: JSON.stringify(rows)
+      },
+      success: function (res) {
+        alertify.success('Update data berhasil: ' + res.jumlah + ' invoice diperbarui dari ' + res.baris + ' baris')
+        loadAll()
+      },
+      error: function (err) {
+        console.log(err)
+        alertify.warning((err.responseJSON && err.responseJSON.message) || 'Gagal import, silahkan coba lagi')
+      },
+      complete: selesai
+    })
+  }
+  reader.readAsArrayBuffer(file)
+}
 
 </script>
 

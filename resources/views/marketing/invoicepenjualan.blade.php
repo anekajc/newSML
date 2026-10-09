@@ -281,13 +281,15 @@
 
 #tabel_wrapper,
 #tabel2_wrapper,
-#tabel3_wrapper {
+#tabel3_wrapper,
+#tabelListInvoice_wrapper {
   position: relative;
 }
 
 #tabel_wrapper > .dataTables_processing,
 #tabel2_wrapper > .dataTables_processing,
-#tabel3_wrapper > .dataTables_processing {
+#tabel3_wrapper > .dataTables_processing,
+#tabelListInvoice_wrapper > .dataTables_processing {
   position: absolute;
   top: 0;
   left: 0;
@@ -585,6 +587,20 @@
 </style>
 {{-- end tampilan search modal barang all --}}
 @include('marketing.partials.tampilan-purchasing-css')
+<style>
+  /* Modal Checklist Print Invoice: semua teks sebaris (nowrap). Selector memakai id
+     modal supaya menang dari aturan picker-kas.css (yang juga !important). Bila tabel
+     lebih lebar dari modal, .ip-cl-scroll yang digeser ke samping. min-height memberi
+     ruang untuk lapisan "Memuat data..." saat tabel belum berisi. */
+  #modalListChecklistInvoice#modalListChecklistInvoice.modal.picker-kas #tabelListInvoice.dataTable thead th,
+  #modalListChecklistInvoice#modalListChecklistInvoice.modal.picker-kas #tabelListInvoice.dataTable tbody td {
+    white-space: nowrap !important;
+  }
+  #modalListChecklistInvoice .ip-cl-scroll {
+    overflow-x: auto;
+    min-height: 220px;
+  }
+</style>
 @endsection
 
 @section('content')
@@ -626,7 +642,7 @@
             Surat Pengiriman Barang
           </a>
           <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">
-            Invoice Otorisasi
+            Invoice
           </a>
 
         </div>
@@ -647,15 +663,6 @@
         <div class="col-12">
           <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
             <div class="po-toolbar">
-              <div class="po-filter-wrap">
-                <label>Periode</label>
-              {{-- <button class="btn btn-primary" type="button" onclick="loadAll()"> --}}
-                {{-- <i class="bi bi-funnel"></i> Load All --}}
-              {{-- </button> --}}
-                <input type="date" onchange="onChangePeriodeIP1()" class="po-filter-inp" id="input_tanggalawal_ip1" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
-                <span class="po-filter-sep">s/d</span>
-                <input type="date" onchange="onChangePeriodeIP1()" class="po-filter-inp" id="input_tanggalakhir_ip1" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
-              </div>
               <input type="search" id="ipSearch1" class="po-search-inp" placeholder="Cari data">
               <div class="po-len-wrap">
                 <label for="ipLen1">Tampilkan</label>
@@ -746,9 +753,9 @@
             <div class="po-toolbar">
               <div class="po-filter-wrap">
                 <label>Periode</label>
-                <input type="date" onchange="onChangePeriodeIP()" class="po-filter-inp" id="input_tanggalawal_ip" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
+                <input type="date" onchange="onChangePeriodeIP()" class="po-filter-inp" id="input_tanggalawal_ip" value="{!! \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d') !!}">
                 <span class="po-filter-sep">s/d</span>
-                <input type="date" onchange="onChangePeriodeIP()" class="po-filter-inp" id="input_tanggalakhir_ip" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
+                <input type="date" onchange="onChangePeriodeIP()" class="po-filter-inp" id="input_tanggalakhir_ip" value="{!! \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d') !!}">
               </div>
               <input type="search" id="ipSearch2" class="po-search-inp" placeholder="Cari data">
               <div class="po-len-wrap">
@@ -764,6 +771,9 @@
               <button class="po-btn-filter" type="button" onclick="$('#modalFilterIP').modal('show')">
                 <i class="bi bi-funnel"></i> Filter
               </button>
+              <div class="po-toolbar-act">
+                <button type="button" class="btn btn-chip-biru" onclick="printAll()">Checklist Print Invoice</button>
+              </div>
             </div>
             <div id="rtBarTabel2"></div>
             <table id="tabel2" class="data-table">
@@ -2542,66 +2552,54 @@
   </div>
 
 <!-- End modal oto-->
-<div class="modal fade" id="modalListChecklistInvoice" tabindex="-1">
+<div class="modal fade picker-kas" id="modalListChecklistInvoice" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
 
       <div class="modal-header">
         <h5 class="modal-title">Pilih Invoice</h5>
-  <button type="button" class="close" data-dismiss="modal">
+        <button type="button" class="close" data-dismiss="modal">
           <span>&times;</span>
         </button>
       </div>
 
+      {{-- Gaya modal pemilih purchasing (picker-kas): dropdown "Tampilkan" 10/25/50/100/Semua,
+           Search, pagination. Data dimuat per halaman dari server (lihat printAll()). --}}
       <div class="modal-body">
-        <div id="" class="row">
-          <div class="col-12 text-right">
-
-            <!-- <button type="button" class="btn btn-batal-add" data-dismiss="modal" >Batal</button> -->
-            <button id="" type="button" onclick="openPrintModalAll()" class="btn btn-chip-biru" style="height: 30px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;">Print</button>
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-12 text-right mb-2">
+              <button type="button" onclick="openPrintModalAll()" class="btn btn-chip-biru" style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                height: 30px;
+                padding: 0 16px;
+                line-height: 1;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;">Print</button>
+            </div>
           </div>
-        </div>
 
-        <div class="row">
-          <div class="col-12">
-            <div class="table-responsive">
-
-                  <table id="tabelListInvoice" class="data-table">
-                    <thead class="text-center">
-                      <tr>
-                        <th style="padding: 4px 12px;" class="text-center" scope="col">v</th>
-                        <th style="padding: 4px 12px;" scope="col">No Invoice</th>
-                        <th style="padding: 4px 12px;" scope="col">Tanggal</th>
-                        <th style="padding: 4px 12px;" scope="col">Customer</th>
-                        <th style="padding: 4px 12px;" scope="col">No SPB</th>
-
-                        <th style="padding: 4px 12px;" scope="col">Tgl SPB</th>
-                        <th style="padding: 4px 12px;" scope="col">No SO</th>
-                        <th style="padding: 4px 12px;" scope="col">Tgl SO</th>
-
-
-                      </tr>
-                    </thead>
-
-
-                    <tbody id="tabelListInvoice_data" class="text-left">
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-
-
-
-                    </tbody>
-                  </table>
+          <div class="row">
+            <div class="col-12">
+              <table id="tabelListInvoice" class="table table-hover" style="width:100%">
+                <thead>
+                  <tr>
+                    <th class="text-center">v</th>
+                    <th>No Invoice</th>
+                    <th>Tanggal</th>
+                    <th>Customer</th>
+                    <th>No SPB</th>
+                    <th>Tgl SPB</th>
+                    <th>No SO</th>
+                    <th>Tgl SO</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelListInvoice_data"></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -2923,7 +2921,7 @@ function ipDefaultCart (urut) {
       ['TglSO',        'Tgl So',    1, 'date',    0, 0],
     ]
   }
-  // urut 2: Invoice Otorisasi -- gabungan kolom tab lama "Belum Diotorisasi" +
+  // urut 2: Invoice -- gabungan kolom tab lama "Belum Diotorisasi" +
   // "Sudah Diotorisasi" (OtoUser1/TglOto1), sejak keduanya digabung jadi satu tabel.
   let cart = [
     ['NoBukti',      'No Invoice', 1, 'varchar', 0, 0],
@@ -3124,37 +3122,40 @@ function tulisTheadHeaderIP (tableSel, cols) {
   thead.innerHTML = headRowHtml;
 }
 
-// col[5] (decimals) is user-editable via the gear menu's stepper, so float
-// formatting has to read it live rather than assume a fixed precision.
-// Isbatal-style bool columns render the same check2/x icon pair the
-// original Blade loops and loadAll() used.
-function ipValueCell (row, col) {
+// Isi sel per kolom untuk render DataTables (mode data). col[5] (desimal)
+// bisa diubah user lewat roda gigi, jadi dibaca langsung saat render.
+function ipNilaiSel (row, col) {
   let raw = ipPickCI(row, col[0]);
   let type = col[3];
 
   if (type === 'date') {
-    if (!raw) { return '<td></td>'; }
-    return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>';
+    return raw ? formatDate(raw, '/').split('/').reverse().join('/') : '';
   }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
   }
   if (type === 'bool') {
     return Number(raw)
-      ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
-      : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
+      ? '<i class="bi bi-check2 text-success" style="-webkit-text-stroke-width: 2px;"></i>'
+      : '<i class="bi bi-x text-danger" style="-webkit-text-stroke-width: 2px;"></i>';
   }
-  return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
+  return (raw !== undefined && raw !== null) ? raw : '';
+}
+
+function ipKelasSel (col) {
+  if (col[3] === 'float') { return 'text-right'; }
+  if (col[3] === 'bool') { return 'text-center'; }
+  return '';
 }
 
 function tabelActionsCell (row) {
   let nobukti = ipPickCI(row, 'NoBukti');
-  let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetailSPB(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  let html = '<div class="action-buttons-wrap">';
+  html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonAddDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
   html += '<button class="btn btn-success btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd(\'' + ipPickCI(row, 'Noso') + '\' , \'' + ipPickCI(row, 'NamaCustSupp') + '\' , \'' + ipPickCI(row, 'KodeCustSupp') + '\' , \'' + ipPickCI(row, 'TglSO') + '\' , \'' + ipPickCI(row, 'PPNCUST') + '\')"><i class="bi bi-plus-lg"></i></button>';
-  html += '</div></td>';
+  html += '</div>';
   return html;
 }
 
@@ -3164,7 +3165,7 @@ function tabelActionsCell (row) {
 function tabel2ActionsCell (row) {
   let nobukti = ipPickCI(row, 'NoBukti');
   let isOto = Number(ipPickCI(row, 'IsOtorisasi1'));
-  let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
+  let html = '<div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
     html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
@@ -3173,37 +3174,11 @@ function tabel2ActionsCell (row) {
     html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="submitOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   }
   html += '<button class="btn btn-primary btn-sm" title="Print" onclick="openPrintModal(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
-  html += '</div></td>';
+  html += '</div>';
   return html;
 }
 
-function renderTabelRows (rows) {
-  if (ipActiveUrut !== 1 && ipCart[1].length === 0) { ipAktifkanTabel(1); }
-  let cols = (ipCart[1].length ? ipCart[1] : gcart_header).filter(function (c) { return c[2] === 1; });
-  let html = "";
-  (rows || []).forEach(function (row) {
-    html += '<tr>' + tabelActionsCell(row);
-    cols.forEach(function (col) { html += ipValueCell(row, col); });
-    html += '</tr>';
-  });
-  document.getElementById('tabel_data').innerHTML = html;
-  tulisTheadHeaderIP('#tabel', cols);
-}
-
-function renderTabel2Rows (rows) {
-  let cols = (ipCart[2].length ? ipCart[2] : gcart_header).filter(function (c) { return c[2] === 1; });
-  let html = "";
-  (rows || []).forEach(function (row) {
-    html += '<tr>' + tabel2ActionsCell(row);
-    cols.forEach(function (col) { html += ipValueCell(row, col); });
-    html += '</tr>';
-  });
-  document.getElementById('tabel2_data').innerHTML = html;
-  tulisTheadHeaderIP('#tabel2', cols);
-}
-
 let lastTabelRows = []
-let lastTabel2Rows = []
 let ipPanjangHalaman = { 1 : 10, 2 : 10 }
 
 function ipIkatSearch (urut) {
@@ -3244,18 +3219,75 @@ function ipIkatPanjangHalaman (urut) {
 
 const IP_DOM_STRING = "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
 
+// Tab SPB digambar dari array data (deferRender). Tab Invoice server-side:
+// hanya baris halaman yang tampil yang diambil dari database (getListInvoice),
+// karena satu bulan bisa ribuan invoice dan dulu semuanya dikirim + ditulis
+// ke DOM sekaligus sehingga lambat / browser macet.
+function ipGambarTabel (urut, rows) {
+  let id = urut === 1 ? '#tabel' : '#tabel2'
+  let aksi = urut === 1 ? tabelActionsCell : tabel2ActionsCell
+  let cols = (ipCart[urut].length ? ipCart[urut] : gcart_header).filter(function (c) { return c[2] === 1; })
+
+  if ($.fn.DataTable.isDataTable(id)) { $(id).DataTable().clear().destroy(); }
+  $(id + ' tbody').empty()
+  tulisTheadHeaderIP(id, cols)
+
+  let columns = [{
+    data : null, orderable : false, className : 'text-center',
+    render : function (d, t, row) { return aksi(row) }
+  }]
+  cols.forEach(function (col) {
+    columns.push({
+      data : null, className : ipKelasSel(col),
+      render : function (d, t, row) { return ipNilaiSel(row, col) }
+    })
+  })
+
+  let sumber = urut === 2 ? {
+    serverSide : true,
+    ajax : {
+      url : "{!! url('invoicepenjualangetlistinvoice') !!}",
+      type : 'post',
+      data : function (d) {
+        d._token = $('#_token').val()
+        d.tglawal = $('#input_tanggalawal_ip').val()
+        d.tglakhir = $('#input_tanggalakhir_ip').val()
+        d.filterip = $('#input_filterip').val()
+      },
+      error : function (err) {
+        console.log(err)
+        alertify.warning('Gagal memuat data invoice, silahkan coba lagi')
+      }
+    }
+  } : {
+    data : rows || [],
+    deferRender : true
+  }
+
+  $(id).DataTable($.extend({
+    // "r" = lapisan "Memuat data..." gaya purchasing (CSS .po-loading-* di atas).
+    dom : 'r' + IP_DOM_STRING,
+    processing : true,
+    language : {
+      processing : '<span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span>',
+      emptyTable : 'Tidak ada data',
+      zeroRecords : 'Tidak ada data yang cocok dengan pencarian'
+    },
+    columns : columns,
+    lengthChange : false,
+    pageLength : ipPanjangHalaman[urut],
+    paging : true,
+    ordering : false,
+    search : { search : $('#ipSearch' + urut).val() || '' },
+  }, sumber))
+  // Kelas "card" dari integrasi Bootstrap DataTables membuat lapisan memuat
+  // tidak bisa disembunyikan (lihat partial tampilan-purchasing-js).
+  $(id + '_wrapper > .dataTables_processing').removeClass('card')
+}
+
 function reinitTabel () {
   try {
-    if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().destroy(); }
-    renderTabelRows(lastTabelRows);
-    $('#tabel').DataTable({
-      dom: IP_DOM_STRING,
-      lengthChange: false,
-      pageLength: ipPanjangHalaman[1],
-      paging: true,
-      order: [[1, 'asc']],
-      ordering: false,
-    });
+    ipGambarTabel(1, lastTabelRows);
     ipIkatSearch(1);
     ipIkatPanjangHalaman(1);
     ipPerluGambar[1] = false;
@@ -3267,16 +3299,7 @@ function reinitTabel () {
 
 function reinitTabel2 () {
   try {
-    if ($.fn.DataTable.isDataTable('#tabel2')) { $('#tabel2').DataTable().destroy(); }
-    renderTabel2Rows(lastTabel2Rows);
-    $('#tabel2').DataTable({
-      dom: IP_DOM_STRING,
-      lengthChange: false,
-      pageLength: ipPanjangHalaman[2],
-      paging: true,
-      order: [[1, 'asc']],
-      ordering: false,
-    });
+    ipGambarTabel(2);
     ipIkatSearch(2);
     ipIkatPanjangHalaman(2);
     ipPerluGambar[2] = false;
@@ -3296,48 +3319,25 @@ function ipUpdateFilterBadge () {
 }
 
 function buttonFilterIP () {
-  let tglawal = $('#input_tanggalawal_ip').val()
-  let tglakhir = $('#input_tanggalakhir_ip').val()
-  let filterip = $('#input_filterip').val()
-  $.ajax({
-    url: "{!! url('invoicepenjualanloadall') !!}",
-    type: "get", async: false,
-    data: { tglawal, tglakhir, filterip },
-    success: function (res) {
-      lastTabel2Rows = res.tempOutstanding2
-      reinitTabel2()
-      ipUpdateFilterBadge()
-    },
-    error: function (err) { console.log(err); alertify.warning('Terjadi kesalahan silahkan refresh browser') }
-  })
+  ipUpdateFilterBadge()
+  loadAll({ bagian : 'invoice' })
 }
 
+// Ganti tanggal awal lalu tanggal akhir dulu memicu 2x muat ulang beruntun --
+// ditunggu sebentar supaya cukup sekali muat setelah user selesai memilih.
+let ipTimerPeriode = null
 function onChangePeriodeIP () {
-  let tglawal = $('#input_tanggalawal_ip').val()
-  let tglakhir = $('#input_tanggalakhir_ip').val()
-  if (tglawal && tglakhir && tglawal > tglakhir) {
-    alertify.warning('Tanggal awal tidak boleh lebih besar dari tanggal akhir')
-    return
-  }
-  // #tabel ("Surat Pengiriman Barang") punya widget periode sendiri (ip1) supaya
-  // kelihatan di tab itu juga -- disamakan ke sini karena loadAll() (satu-satunya
-  // yang me-refresh tabel & tabel2 sekaligus) baca dari #input_tanggalawal_ip/
-  // #input_tanggalakhir_ip yang sama, bukan dari input_..._ip1.
-  $('#input_tanggalawal_ip1').val(tglawal)
-  $('#input_tanggalakhir_ip1').val(tglakhir)
-  loadAll()
-}
-
-function onChangePeriodeIP1 () {
-  let tglawal = $('#input_tanggalawal_ip1').val()
-  let tglakhir = $('#input_tanggalakhir_ip1').val()
-  if (tglawal && tglakhir && tglawal > tglakhir) {
-    alertify.warning('Tanggal awal tidak boleh lebih besar dari tanggal akhir')
-    return
-  }
-  $('#input_tanggalawal_ip').val(tglawal)
-  $('#input_tanggalakhir_ip').val(tglakhir)
-  loadAll()
+  if (ipTimerPeriode) { clearTimeout(ipTimerPeriode) }
+  ipTimerPeriode = setTimeout(function () {
+    let tglawal = $('#input_tanggalawal_ip').val()
+    let tglakhir = $('#input_tanggalakhir_ip').val()
+    if (!tglawal || !tglakhir) { return }
+    if (tglawal > tglakhir) {
+      alertify.warning('Tanggal awal tidak boleh lebih besar dari tanggal akhir')
+      return
+    }
+    loadAll({ bagian : 'invoice' })
+  }, 600)
 }
 
 $(document).ready(function(){
@@ -3348,7 +3348,6 @@ $(document).ready(function(){
 
   ipAktifkanTabel(2);
   window.doSetHeader(2, false);
-  lastTabel2Rows = @json($tempOutstanding2);
   reinitTabel2();
 
   ipInitReportTableSekali();
@@ -3390,80 +3389,93 @@ function buttonClickInvoice (i) {
 }
 
 
+// Modal checklist bergaya modal pemilih purchasing (picker-kas: "Tampilkan"
+// 10/25/50/100/Semua, Search, pagination) dan server-side: hanya baris halaman
+// yang tampil yang diambil dari database, jadi tidak perlu menunggu ribuan
+// invoice sebulan terkirim. dataChecklistInvoice = baris halaman yang sedang
+// tampil (buttonClickInvoice(i) memakai indeks baris di halaman itu). Status
+// centang dibaca dari arrayListInvoice saat baris digambar, jadi tetap benar
+// walau pindah halaman / dicari.
 function printAll () {
   arrayListInvoice = []
-  $.ajax({
-    url: "{!! url('invoicepenjualangetlistinvoicecetak') !!}",
-    type: "get",
-    async: false,
-    data: {
+  dataChecklistInvoice = []
 
+  if ($.fn.DataTable.isDataTable('#tabelListInvoice')) { $('#tabelListInvoice').DataTable().clear().destroy(); }
+  $('#tabelListInvoice_data').empty()
+
+  let tgl = function (v) { return v ? formatDate(v , '/') : '' }
+  // Tabel baru dibuat setelah modal selesai tampil: kalau dibuat saat modal
+  // masih tersembunyi, lebar kolom salah hitung dan lapisan "Memuat data..."
+  // terpotong di atas header (tabel masih kosong / pendek).
+  $("#modalListChecklistInvoice").one('shown.bs.modal', function () {
+  $("#tabelListInvoice").DataTable({
+    _pk: true,
+    serverSide: true,
+    autoWidth: false,
+    // Tabel dibungkus .ip-cl-scroll supaya bisa digeser ke samping bila teks
+    // satu baris (nowrap) lebih lebar dari modal.
+    dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>r<'ip-cl-scroll't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+    processing: true,
+    searchDelay: 400,
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+    pageLength: 10,
+    paging: true,
+    order: [[1, 'asc']],
+    language: {
+      lengthMenu: 'Tampilkan _MENU_',
+      emptyTable: 'Tidak ada data',
+      zeroRecords: 'Tidak ada data yang cocok dengan pencarian',
+      processing: '<span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span>'
     },
-    success: function(res) {
-
-      console.log(res)
-
-      dataChecklistInvoice = res
-      $('#tabelListInvoice').DataTable().destroy();
-      rowTable = ``
-
-      dataChecklistInvoice.forEach((item, i) => {
-          rowTable += `
-            <tr>
-            <td>
-            <div class="form-check text-center">
-              <input id="invoiceChecklist${i}" class="form-check-input" type="checkbox" value="" onchange="buttonClickInvoice(${i})">
-            </div>
-            </td>
-
-            <td>${item.NoBukti }</td>
-            <td>${formatDate(item.Tanggal , '/')}</td>
-            <td>${item.NamaCustSupp }</td>
-            <td>${item.NoSPB }</td>
-            <td>${formatDate(item.TglSPB , '/')}</td>
-            <td>${item.NOSO }</td>
-            <td>${formatDate(item.TGLSO , '/')}</td>
-
-            </tr>
-          `
-      });
-
-      document.getElementById("tabelListInvoice_data").innerHTML = rowTable
-      // document.getElementById("input_add_tanggal").value = formatDate(new Date())
-      $("#tabelListInvoice").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[1, 'asc']],
-          "columnDefs": [
-            {"targets" :[0] , 'orderable' : false},
-          // { "type": "date", "targets": [3] },
-          // {  "className": "text-right", "targets": [9,10,11,12] },
-          // "columns" : [{"width" : "20px"}]
-
-        ]
-        });
-
-      // $('.showhideform').hide();
-      $("#modalListChecklistInvoice").modal('toggle')
-      // $('#modalListChecklistInvoice').toggle();
-
-
-      // $("#form").modal('toggle')
-
-      // $('#page2').show();
-      // $('#page1').hide();
-
-
-
+    ajax: {
+      url: "{!! url('invoicepenjualangetlistinvoicecetak') !!}",
+      type: "post",
+      data: function (d) {
+        d._token = $('#_token').val()
+        d.tglawal = $('#input_tanggalawal_ip').val()
+        d.tglakhir = $('#input_tanggalakhir_ip').val()
+      },
+      dataSrc: function (json) {
+        dataChecklistInvoice = json.data || []
+        return dataChecklistInvoice
+      },
+      error: function (err) {
+        console.log(err)
+        alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      }
     },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
+    columns: [
+      { data: null, orderable: false, className: 'text-center', render: function (d, t, row, meta) {
+          let cek = arrayListInvoice.indexOf(row.NoBukti) !== -1 ? 'checked' : ''
+          return `<div class="form-check text-center">
+            <input id="invoiceChecklist${meta.row}" class="form-check-input" type="checkbox" value="" ${cek} onchange="buttonClickInvoice(${meta.row})">
+          </div>`
+      } },
+      { data: 'NoBukti', defaultContent: '' },
+      { data: null, render: function (d, t, row) { return tgl(row.Tanggal) } },
+      { data: 'NamaCustSupp', defaultContent: '' },
+      { data: 'NoSPB', defaultContent: '' },
+      { data: null, render: function (d, t, row) { return tgl(row.TglSPB) } },
+      { data: 'NOSO', defaultContent: '' },
+      { data: null, render: function (d, t, row) { return tgl(row.TGLSO) } },
+    ]
+  });
+  $('#tabelListInvoice_wrapper > .dataTables_processing').removeClass('card')
   })
 
+  $("#modalListChecklistInvoice").modal('show')
 }
+
+// Klik di mana saja pada baris = centang/batal centang (seperti modal pemilih
+// purchasing yang dipilih dengan klik baris).
+$(document).on('click', '#tabelListInvoice tbody tr', function (e) {
+  if ($(e.target).is('input[type="checkbox"]')) { return }
+  let cb = $(this).find('input[type="checkbox"]')[0]
+  if (!cb) { return }
+  cb.checked = !cb.checked
+  cb.dispatchEvent(new Event('change'))
+})
 
 function getDateDiff (xdate1 , xdate2) {
   const date1 = new Date(xdate1);
@@ -3769,7 +3781,7 @@ function buttonBatalOtorisasi (nobukti) {
 
      if (xpket==''){
           alertify.warning('Keterangan harus diisi.');
-          $.abort();
+          return
         }
         let _token = $("#_token").val();
 
@@ -3787,7 +3799,10 @@ function buttonBatalOtorisasi (nobukti) {
             console.log('!', res)
             loadAll()
 
-            // lockFormAdd()
+            if (res && res.status === 0) {
+              alertify.warning(res.pesan)
+              return
+            }
 
             alertify.success('Berhasil Batal Otorisasi Invoice')
 
@@ -3840,9 +3855,12 @@ function submitOtorisasi (nobukti) {
       console.log('!', res)
       loadAll()
 
-      // lockFormAdd()
       // $("#formOtorisasi").modal('toggle')
       buttonCloseForm()
+      if (res && res.status === 0) {
+        alertify.warning(res.pesan)
+        return
+      }
       alertify.success('Berhasil Otorisasi')
 
     },
@@ -4593,7 +4611,7 @@ function buttonAddDetail (nobukti) {
   `)
 
   $.ajax({
-    url: "{!! url('invoicepenjualangetdetail') !!}",
+    url: "{!! url('invoicepenjualangetdetailadd') !!}",
     type: 'post',
     data: {
       _token,
@@ -4651,79 +4669,6 @@ function buttonAddDetail (nobukti) {
   })
 }
 
-// Details button for the "Surat Pengiriman Barang" (outstanding, not-yet-invoiced) tab.
-// buttonAddDetail() looks up dbInvoicePL by nobukti -- but every row on this tab is an
-// SPB that the tab's own query (InvoicePenjualanController::loadAll, tempOutstanding)
-// deliberately filters to "F.NoSPB is null", i.e. has NO invoice yet. Calling
-// buttonAddDetail() here can never find a match ("Data tidak ditemukan" every time).
-// This instead looks up the SPB itself (DBSPB/DBSPBDET via spAddDetailKoreksi), which
-// returns the same header/line-item shape so it can reuse the #page5 detail panel.
-function buttonDetailSPB (nobukti) {
-  console.log('buttonDetailSPB', nobukti)
-
-  let _token = $("#_token").val()
-
-  $('#detailAddTableData').html(`
-    <tr>
-      <td colspan="7" class="text-center">Loading...</td>
-    </tr>
-  `)
-
-  $.ajax({
-    url: "{!! url('invoicepenjualangetspbdetail') !!}",
-    type: 'post',
-    data: {
-      _token,
-      nobukti
-    },
-    success: function(res) {
-      console.log('spb detail res:', res)
-
-      if (!res.length) {
-        alertify.warning('Data tidak ditemukan')
-        return
-      }
-
-      let header = res[0]
-
-      $('#input_add_detail_customer').val(header.NAMACUSTSUPP)
-      $('#input_add_detail_alamat').val(header.Alamat1A)
-
-      $('#input_add_detail_nobukti').val(header.NOBUKTI)
-      $('#input_add_detail_nopo').val(header.Nosc || '')
-
-      $('#input_add_detail_tanggal').val(formatDate(header.TANGGAL, '-'))
-
-      let html = ''
-
-      res.forEach(item => {
-        html += `
-          <tr>
-            <td>${item.KODEBRG}</td>
-            <td>${item.NamaBrg}</td>
-            <td>${item.NAMAPRODUK || ''}</td>
-            <td>${item.Kodegdg || ''}</td>
-            <td class="text-center">${item.Satuan}</td>
-            <td class="text-right">${formatAngka(item.QNT)}</td>
-            <td class="text-right">${formatAngka(item.QNTRSPB)}</td>
-
-          </tr>
-        `
-      })
-
-      $('#detailAddTableData').html(html)
-
-      $('.mainpage').hide()
-      $('#page5').show()
-
-    },
-    error: function(err) {
-      console.log(err)
-      alertify.error('Gagal load detail')
-    }
-  })
-}
-
 function buttonCloseFormDetail () {
   $('#page4').hide();
   $('#page1').show();
@@ -4734,155 +4679,51 @@ function buttonCloseFormAddDetail () {
   $('#page1').show();
 }
 
-function loadAll () {
-  console.log('loadAll')
-  let tglawal = $('#input_tanggalawal_ip').val()
-  let tglakhir = $('#input_tanggalakhir_ip').val()
-  let filterip = $('#input_filterip').val()
-          $.ajax({
-            url: "{!! url('invoicepenjualanloadall') !!}",
-            type: "get",
-            async: false,
-            data: {
-              tglawal, tglakhir, filterip
-            },
-            success: function(res) {
+// Muat ulang tabel tanpa membekukan halaman (async).
+//  - Tab Invoice server-side: cukup minta DataTables mengambil ulang halamannya.
+//    opsi.bagian = 'invoice' (ganti tanggal/filter) kembali ke halaman 1,
+//    selain itu (habis simpan/otorisasi/batal) tetap di halaman yang sama.
+//  - Tab SPB dimuat ulang kecuali opsi.bagian = 'invoice'. Respons SPB yang
+//    datang terlambat (sudah ada permintaan lebih baru) diabaikan.
+let ipNomorMuat = 0
+function ipTandaMemuat (aktif) {
+  $('#tabel_wrapper').children('.dataTables_processing').removeClass('card').css('display', aktif ? 'block' : 'none')
+}
 
-              $('#tabel').DataTable().destroy();
+function loadAll (opsi) {
+  opsi = opsi || {}
+  let keHalamanAwal = opsi.bagian === 'invoice'
 
-              let rowTable = ''
+  if ($.fn.DataTable.isDataTable('#tabel2')) {
+    $('#tabel2').DataTable().ajax.reload(null, keHalamanAwal)
+  } else {
+    reinitTabel2()
+  }
+  if (opsi.bagian === 'invoice') { return }
 
-              res.tempOutstanding.forEach((item, i) => {
-                rowTable += `<tr>
-                <td class="text-center">
-                  <div class="action-buttons-wrap">
-                   <button class="btn btn-warning btn-sm"
-                    type="button"
-                    title="Detail"
-                    onclick="buttonDetailSPB('${item.NoBukti}')">
-                    <i class="bi bi-info"></i>
-                   </button>
-                   <button class="btn btn-success btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd('${item.Noso }' , '${item.NamaCustSupp }' , '${item.KodeCustSupp }' , '${item.TglSO }' , ${item.PPNCUST })"><i class="bi bi-plus-lg"></i></button>
-                  </div>
-                </td>
-                  <td>${item.NoBukti}</td>
-                  <td>${ formatDate(item.Tanggal , '/')}</td>
-                  <td>${item.NamaCustSupp ? item.NamaCustSupp : ''}</td>
-                  <td>${item.Noso}</td>
-                  <td>${ formatDate(item.TglSO , '/')}</td>
-                </tr>`
-              });
-
-
-              document.getElementById("tabel_data").innerHTML = rowTable
-
-
-
-              $("#tabel").DataTable({
-        "dom": IP_DOM_STRING,
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[1, 'asc']],
-          "columnDefs": [
-              {"targets" :[0] , 'orderable' : false},
-          // { "type": "date", "targets": [3] },
-          // {  "className": "text-right", "targets": [9,10,11,12] },
-          // "columns" : [{"width" : "20px"}]
-
-        ]
-        });
-
-                $('#tabel2').DataTable().destroy();
-
-                let rowTable2 = ''
-
-                // Digabung dari 2 blok (tabel2 "Belum Diotorisasi" + tabel3 "Sudah
-                // Diotorisasi") jadi satu, port 1:1 dari pola tabel2ActionsCell
-                // gabungan -- lihat komentarnya di dekat definisi tabel2ActionsCell.
-                res.tempOutstanding2.forEach((item, i) => {
-
-                  rowTable2 += `
-                  <tr>
-                  <td class='text-center' style="vertical-align:middle"><div class="action-buttons-wrap">`
-
-                    if (Number(item.IsOtorisasi1)) {
-                      rowTable2 += `<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi('${ item.NoBukti }')"><i class="bi bi-key"></i></button>`
-
-                    } else {
-                      rowTable2 += `
-                      <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi('${item.NoBukti }' , '${item.IsOtorisasi1}')"><i class="bi bi-pen"></i></button>
-                      <button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="submitOtorisasi('${ item.NoBukti }')"><i class="bi bi-key"></i></button>`
-
-                    }
-
-                    rowTable2 +=  `<button class="btn btn-primary btn-sm" title="Print"         onclick="openPrintModal('${item.NoBukti}')">
-                      <i class="bi bi-printer"></i>
-                      </button>
-                      <button class="btn btn-warning btn-sm"
-                        type="button"
-                        title="Detail"
-                        onclick="buttonDetail('${item.NoBukti}')">
-                        <i class="bi bi-info"></i>
-                      </button>
-                      </div>
-                      </td>
-                      <td>${item.NoBukti }</td>
-                      <td>${formatDate(item.Tanggal , '/')}</td>
-                      <td>${item.NamaCustSupp }</td>
-                      <td>${item.NoSPB }</td>
-                      <td>${formatDate(item.TglSPB , '/')}</td>
-                      <td>${item.NOSO }</td>
-                      <td>${formatDate(item.TGLSO , '/')}</td>
-
-                      <td>${item.NoPajak ? item.NoPajak : '' }</td>
-                      <td>${item.NoPesanan ? item.NoPesanan : '' }</td>
-                      <td class='text-right'>${formatAngka(parseFloat(item.totdpp).toFixed(2))}</td>
-                      <td class='text-right'>${formatAngka(parseFloat(item.totppn).toFixed(2))}</td>
-                      <td class='text-right'>${formatAngka(parseFloat(item.totnet).toFixed(2))}</td>
-
-                      <td>${item.OtoUser1 ? item.OtoUser1 : '' }</td>
-                      <td>${item.TglOto1 ? formatDate(item.TglOto1 , '/') : '' }</td>
-
-                      ${Number(item.Isbatal) ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>' : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'}
-
-                      <td>${item.userBatal ? item.userBatal : '' }</td>
-                      <td>${item.tglBatal ? formatDate(item.tglBatal , '/') : '' }</td>
-
-                  </tr>`
-                });
-
-
-                document.getElementById("tabel2_data").innerHTML = rowTable2
-
-                $("#tabel2").DataTable({
-          "dom": IP_DOM_STRING,
-          "lengthChange": false,
-            "paging": false ,
-            "order": [[1, 'asc']],
-            "columnDefs": [
-              {"targets" :[0] , 'orderable' : false},
-            // { "type": "date", "targets": [3] },
-            // {  "className": "text-right", "targets": [9,10,11,12] },
-            // "columns" : [{"width" : "20px"}]
-
-          ]
-          });
-
-
-
-
-
-
-
-            },
-            error: function (err) {
-              console.log(err)
-              console.log(err.status)
-              console.log(err.statusText)
-              alertify.warning('Terjadi kesalahan silahkan refresh browser')
-            }
-
-          })
+  let nomor = ++ipNomorMuat
+  ipTandaMemuat(true)
+  $.ajax({
+    url: "{!! url('invoicepenjualanloadall') !!}",
+    type: "get",
+    success: function(res) {
+      if (nomor !== ipNomorMuat) { return }
+      lastTabelRows = res.tempOutstanding
+      let urutAktif = activeVisibleTabKeyIP()
+      ipAktifkanTabel(1)
+      reinitTabel()
+      ipAktifkanTabel(urutAktif)
+    },
+    error: function (err) {
+      console.log(err)
+      if (nomor === ipNomorMuat) {
+        alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      }
+    },
+    complete: function () {
+      if (nomor === ipNomorMuat) { ipTandaMemuat(false) }
+    }
+  })
 }
 
 
@@ -5300,19 +5141,21 @@ function submitPrint3All () {
       width: 21cm;
       height: 13.5cm;
       position: relative;
+      overflow: hidden;
     }
 
-    .footer-sign {
-      padding-top: 5px;
+    .page-header {
+    }
+
+    .page-items {
+      overflow: hidden;
+    }
+
+    .page-bottom {
       position: absolute;
+      left: 0;
+      bottom: 0;
       width: 100%;
-      bottom: 12px;
-    }
-
-    .footer-print-date {
-      position: absolute;
-      width: 95%;
-      bottom: 30px;
     }
 
      .solid{
@@ -5324,391 +5167,319 @@ function submitPrint3All () {
       }
 
     </style>`;
-    let tempPrintStr = ``
-    // tempPrintStr += `<html>
-    // <head>
-    //   <title></title>
-    // </head>
+    let tempPrintStr = `<html>
+    <head>
+      <title></title>
+    </head>
 
-    // <body onload="window.print()">
-    //   ` + css
+    <body onload="window.print()">
+      ` + css
 
-  console.log("Dataprintxlength" , dataPrintx.length)
-  dataPrintx.forEach((item , i) => {
-  dataPrint = item
-  
-  let arrayDataPrint = []
-  for (let i = 0; i < dataPrint.length; i+=8) {
-    let tempArray = dataPrint.slice(i,i+8)
-    arrayDataPrint.push(tempArray)
+  let PAGE_W_PX = 794
+  let PAGE_H_PX = 510
+  let SAFE_PX = 8
+
+  let colgroupHtml = `<colgroup>
+    <col style="width:23px"><col style="width:145px"><col style="width:232px">
+    <col style="width:38px"><col style="width:60px"><col style="width:45px">
+    <col style="width:75px"><col style="width:53px"><col style="width:83px">
+  </colgroup>`
+
+  let tableOpenStyle = `width:754px; table-layout:fixed; border-collapse:collapse; margin:10px 0 0 0; font-family:sans-serif; font-size:12px;`
+
+  let theadHtml = `<thead>
+    <tr>
+      <td class="text-center" style="width:23px">No.</td>
+      <td class="text-center" style="width:145px">NO SPB</td>
+      <td class="text-center" style="width:232px">NAMA BARANG</td>
+      <td class="text-center" style="width:38px">SAT</td>
+      <td class="text-center" style="width:60px">SAT TAX</td>
+      <td class="text-center" style="width:45px">QTY</td>
+      <td class="text-center" style="width:75px">HARGA</td>
+      <td class="text-center" style="width:53px">DISKON</td>
+      <td class="text-center" style="width:83px">JUMLAH</td>
+    </tr>
+  </thead>`
+
+  function buildRowHtml3All (itemSub, nomor, rapat) {
+    let pad = rapat ? rapat.pad : '3px 4px'
+    let lh = rapat ? rapat.lh : '14px'
+    return `<tr>
+      <td class="text-center" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${nomor}</td>
+      <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; line-height:${lh}; word-break:break-word;">${itemSub.nospb ?? ''}</td>
+      <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; line-height:${lh}; word-break:break-word;">${itemSub.NamaBrg ?? ''}</td>
+      <td class="text-center" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.satuan ?? ''}</td>
+      <td class="text-center" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.SATTAX ?? ''}</td>
+      <td class="text-right" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.Qty ? parseFloat(itemSub.Qty).toFixed(2) : ''}</td>
+      <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; text-align:right;">
+        ${itemSub.Harga
+          ? Number(itemSub.Harga).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+          : ''}
+      </td>
+      <td class="text-right" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.DISC ? parseFloat(itemSub.DISC).toFixed(2) + '%' : ''}</td>
+      <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; text-align:right;">
+        ${itemSub.SubTotal
+          ? Number(itemSub.SubTotal).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+          : ''}
+      </td>
+    </tr>`
   }
 
-  let printContent = ''
-  let imageContent = document.getElementById(`imagecontainer`).innerHTML;
-  // let css = ''
-  let hdr = ''
-  let str= ''
-  let ftr= ''
-  let tanggalOnly = dataPrint[0].Tanggal.split(' ')[0].split('-').reverse().join('/');
-  let tanggalJthTempo = dataPrint[0].JthTmpo ? dataPrint[0].JthTmpo.split(' ')[0].split('-').reverse().join('/') : '-';
+  let fillerRowHtml3All = `<tr>
+    <td style="border-top:none; border-bottom:none;">&nbsp;</td>
+    <td style="border-top:none; border-bottom:none;"></td>
+    <td style="border-top:none; border-bottom:none;"></td>
+    <td style="border-top:none; border-bottom:none;"></td>
+    <td style="border-top:none; border-bottom:none;"></td>
+    <td style="border-top:none; border-bottom:none;"></td>
+    <td style="border-top:none; border-bottom:none;"></td>
+    <td style="border-top:none; border-bottom:none;"></td>
+    <td style="border-top:none; border-bottom:none;"></td>
+  </tr>`
 
-   tempPrintStr += `<html>
-  <head>
-    <title></title>
-  </head>
+  let separatorRowHtml3All = `<tr>
+    <td colspan="9" style="border-top:none; border-left:none; border-right:none; border-bottom:1px solid black; padding:0; height:0;"></td>
+  </tr>`
 
-  <body onload="window.print()">
-    ` + css
-      hdr = `<div style="display: flex; justify-content: space-between; width: 100%">
-            <div class="pe-1" style="width: 60%">
-              <div style="display: flex; width: 100%">
-                <div class="pb-1" style="width: 15%; margin-top: 15px">
-                  `+ imageContent +`
-                </div>
-                <div class="pb-1 ps-3" style="width: 85%; margin-top: 10px;">
-                  <h2 class="m-0 pb-2">CV. SINAR MAHAKAM LESTARI</h2>
-                  <p class="m-0" style="font-size: 10px;">
-                    JL. AMPERA PERGUDANGAN MANGKUPALAS BISNIS CENTRE BLOK D NO.18
-                    RT. 022 SIMPANG PASIR PALARAN SAMARINDA-KALIMANTAN TIMUR
-                  </p>
-                </div>
+  function buildPageDateHtml3All (nomorHalaman, totalHalaman) {
+    return `<div class="footer-print-date">
+      <table class="m-0" style="width:754px; font-family:sans-serif; font-size:11px;">
+        <tr>
+          <td class="no-border"></td>
+          <td class="no-border text-right">Page ${nomorHalaman} of ${totalHalaman}</td>
+        </tr>
+      </table>
+    </div>`
+  }
+
+  dataPrintx.forEach((invoiceItems, invoiceIdx) => {
+    dataPrint = invoiceItems
+
+    let printContent = ''
+    let imageContent = document.getElementById(`imagecontainer`).innerHTML;
+    let tanggalOnly = dataPrint[0].Tanggal.split(' ')[0].split('-').reverse().join('/');
+    let tanggalJthTempo = dataPrint[0].JthTmpo ? dataPrint[0].JthTmpo.split(' ')[0].split('-').reverse().join('/') : '-';
+
+    let hdr = `<div style="display: flex; justify-content: space-between; width: 100%">
+          <div class="pe-1" style="width: 60%">
+            <div style="display: flex; width: 100%">
+              <div class="pb-1" style="width: 15%; margin-top: 15px">
+                `+ imageContent +`
               </div>
-              <div style="display: flex; width: 100%">
-                <div class="pb-1" style="width: 100%; font-size: 10px; margin-top:15px;">Kepada YTH :</div>
-              </div>
-              <div style="display: flex; width: 100%">
-                <div class="pb-1" style="width: 100%; font-size: 10px;">${dataPrint[0].NamaCustSupp ?? '-'}</div>
-              </div>
-              <div style="display: flex; width: 100%">
-                <div class="pb-1" style="width: 100%; font-size: 10px;">${dataPrint[0].Alamat ?? '-'}</div>
+              <div class="pb-1 ps-3" style="width: 85%; margin-top: 10px;">
+                <h2 class="m-0 pb-2">CV. SINAR MAHAKAM LESTARI</h2>
+                <p class="m-0" style="font-size: 12px;">
+                  JL. AMPERA PERGUDANGAN MANGKUPALAS BISNIS CENTRE BLOK D NO.18
+                  RT. 022 SIMPANG PASIR PALARAN SAMARINDA-KALIMANTAN TIMUR
+                </p>
               </div>
             </div>
-
-
-            <div style="width: 40%; margin-left: 90px; margin-top: 15px;">
-              <div style="display: flex; width: 100%">
-                <h2 class="m-0 pb-2">INVOICE</h2>
-              </div>
-              <div style="display: flex; width: 100%; font-size: 12px;">
-                <div class="pb-1" style="width: 30%">Nomor</div>
-                <div class="pb-1" style="width: 5%">:</div>
-                <div class="pb-1" style="width: 65%; font-weight: bold;">`+dataPrint[0].NoBukti+`</div>
-              </div>
-              <div style="display: flex; width: 100%; font-size: 12px;">
-                <div class="pb-1" style="width: 30%">Tanggal</div>
-                <div class="pb-1" style="width: 5%">:</div>
-                <div class="pb-1" style="width: 65%">`+tanggalOnly+`</div>
-              </div>
-              <div style="display: flex; width: 100%; font-size: 12px;">
-                <div class="pb-1" style="width: 30%">No PO</div>
-                <div class="pb-1" style="width: 5%">:</div>
-                <div class="pb-1" style="width: 65%">${dataPrint[0].PONO ?? '-'}</div>
-              </div>
-              <div style="display: flex; width: 100%; font-size: 12px;">
-                <div class="pb-1" style="width: 30%">Pembayaran</div>
-                <div class="pb-1" style="width: 5%">:</div>
-                <div class="pb-1" style="width: 65%">${dataPrint[0].HARI ? dataPrint[0].HARI + ' HARI' : '-'}</div>
-              </div>
-              <div style="display: flex; width: 100%; font-size: 12px;">
-                <div class="pb-1" style="width: 30%">Jatuh Tempo</div>
-                <div class="pb-1" style="width: 5%">:</div>
-                <div class="pb-1" style="width: 65%">`+tanggalJthTempo+`</div>
-              </div>
-              <div style="display: flex; width: 100%">
-                <div class="pb-1" style="width: 0%"></div>
-              </div>
+            <div style="display: flex; width: 100%">
+              <div class="pb-1" style="width: 100%; font-size: 12px; margin-top:15px;">Kepada YTH :</div>
             </div>
-            <div
-              style="
-                height: 80px;
-                overflow: hidden;">`+printContent+`
+            <div style="display: flex; width: 100%">
+              <div class="pb-1" style="width: 100%; font-size: 12px;">${dataPrint[0].NamaCustSupp ?? '-'}</div>
+            </div>
+            <div style="display: flex; width: 100%">
+              <div class="pb-1" style="width: 100%; font-size: 12px;">${dataPrint[0].Alamat ?? '-'}</div>
             </div>
           </div>
 
-      <table style="width:95%; margin-top: 10px; margin-left:-5px; border-collapse:collapse; font-family:sans-serif; font-size:10px;">
-          <thead>
-            </tr>
-                <tr>
-                  <td rowspan="2" class="text-center" style="width: 1%">No.</td>
-                  <td rowspan="2" class="text-center" style="width: 15%">NO SPB</td>
-                  <td rowspan="2" class="text-center" style="width: 40%">NAMA BARANG</td>
-                  <td rowspan="2" class="text-center" style="width: 5%">SAT</td>
-                  <td rowspan="2" class="text-center" style="width: 10%">SAT TAX</td>
-                  <td rowspan="2" class="text-center" style="width: 5%">QTY</td>
-                  <td rowspan="2" class="text-center" style="width: 10%">HARGA</td>
-                  <td rowspan="2" class="text-center" style="width: 5%">DISKON</td>
-                  <td rowspan="2" class="text-center" style="width: 15%">JUMLAH</td>
-                </tr>
-              </thead> `;
 
-  let z = 0
-  let maxRow = 8;
-  // let tempPrintStr = ``
-  // buat hitung grandtotal
-  let grandTotalJumlah = 0;
-  
-  dataPrint.forEach(item => {
+          <div style="width: 40%; margin-left: 60px; margin-top: 15px;">
+            <div style="display: flex; width: 100%">
+              <h2 class="m-0 pb-2">INVOICE</h2>
+            </div>
+            <div style="display: flex; width: 100%; font-size: 12px;">
+              <div class="pb-1" style="width: 30%">Nomor</div>
+              <div class="pb-1" style="width: 5%">:</div>
+              <div class="pb-1" style="width: 65%; font-weight: bold;">`+dataPrint[0].NoBukti+`</div>
+            </div>
+            <div style="display: flex; width: 100%; font-size: 12px;">
+              <div class="pb-1" style="width: 30%">Tanggal</div>
+              <div class="pb-1" style="width: 5%">:</div>
+              <div class="pb-1" style="width: 65%">`+tanggalOnly+`</div>
+            </div>
+            <div style="display: flex; width: 100%; font-size: 12px;">
+              <div class="pb-1" style="width: 30%">No PO</div>
+              <div class="pb-1" style="width: 5%">:</div>
+              <div class="pb-1" style="width: 65%">${dataPrint[0].PONO ?? '-'}</div>
+            </div>
+            <div style="display: flex; width: 100%; font-size: 12px;">
+              <div class="pb-1" style="width: 30%">Pembayaran</div>
+              <div class="pb-1" style="width: 5%">:</div>
+              <div class="pb-1" style="width: 65%">${dataPrint[0].HARI ? dataPrint[0].HARI + ' HARI' : '-'}</div>
+            </div>
+            <div style="display: flex; width: 100%; font-size: 12px;">
+              <div class="pb-1" style="width: 30%">Jatuh Tempo</div>
+              <div class="pb-1" style="width: 5%">:</div>
+              <div class="pb-1" style="width: 65%">`+tanggalJthTempo+`</div>
+            </div>
+            <div style="display: flex; width: 100%">
+              <div class="pb-1" style="width: 0%"></div>
+            </div>
+          </div>
+          <div
+            style="
+              height: 80px;
+              overflow: hidden;">`+printContent+`
+          </div>
+        </div>`
 
-    if (item.SubTotal) {
-      grandTotalJumlah += Number(item.SubTotal) || 0;
+    let grandTotalJumlah = 0
+    dataPrint.forEach(it => {
+      if (it.SubTotal) {
+        grandTotalJumlah += Number(it.SubTotal) || 0
+      }
+    })
+
+    let totalsTableStyle = tableOpenStyle.replace('margin:10px 0 0 0', 'margin:0')
+    let totalsTableHtml = `<table style="${totalsTableStyle}">
+      ${colgroupHtml}
+      <tbody>
+        <tr>
+          <td colspan="3" rowspan="2" style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; vertical-align:top; padding:5px 4px; font-weight:bold;">
+            TERBILANG : ${dataPrint[0].TerBIlang ?? '-'} Rupiah
+          </td>
+          <td colspan="3" style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:center; vertical-align:top; padding:5px 4px;">
+            Hormat Kami,
+          </td>
+          <td style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">JUMLAH</td>
+          <td style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:right; vertical-align:top; font-weight:bold; padding:3px 4px;">${Math.round(grandTotalJumlah).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">DISKON</td>
+          <td style="border:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border:none; text-align:right; vertical-align:top; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].POtongan || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" rowspan="5" style="border:none; vertical-align:top; padding:45px 4px 5px 4px; font-size:11px;">
+            <p class="m-0">TRANSFER : </p>
+            <p class="m-0">CV. SINAR MAHAKAM LESTARI</p>
+            <p class="m-0">PT. BANK DANAMON INDONESIA Tbk Cabang Banjarmasin</p>
+            <p class="m-0">AC NO : 003646465454</p>
+          </td>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border-bottom:1px solid black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">U.MUKA</td>
+          <td style="border-bottom:1px solid black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border-bottom:1px solid black; border-top:none; border-left:none; border-right:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].TotalUM || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">DPP</td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].NdppRp || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr> 
+          <td colspan="3" style="border:none;"></td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">PPN</td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].NPpnRp || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border-bottom:3px double black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">TOTAL</td>
+          <td style="border-bottom:3px double black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border-bottom:3px double black; border-top:none; border-left:none; border-right:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].NNetRp || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none; text-align:center; vertical-align:bottom; padding:3px 4px;">${dataPrint[0].namattd ?? '-'}</td>
+          <td colspan="3" style="border:none; height:30px; padding:0;"></td>
+        </tr>
+      </tbody>
+    </table>`
+
+    // ===== ukur tinggi asli pakai iframe tersembunyi (tanpa CSS aplikasi/Bootstrap) =====
+    let hHeader = ukurTinggiCetak3(css + hdr, PAGE_W_PX)
+    let hThead = ukurTinggiCetak3(css + `<table style="${tableOpenStyle}">${colgroupHtml}${theadHtml}</table>`, PAGE_W_PX)
+    let hFiller = ukurTinggiCetak3(css + `<table style="${tableOpenStyle}">${colgroupHtml}<tbody>${fillerRowHtml3All}</tbody></table>`, PAGE_W_PX)
+    let hPageDate = ukurTinggiCetak3(css + buildPageDateHtml3All(1, 1), PAGE_W_PX)
+    let hTotals = ukurTinggiCetak3(css + totalsTableHtml, PAGE_W_PX)
+
+    let budgetNormal = PAGE_H_PX - SAFE_PX - hHeader - hThead - hPageDate
+    let budgetFinal = PAGE_H_PX - SAFE_PX - hHeader - hThead - hPageDate - hTotals
+
+    // ===== susun halaman: tepat 6 item per halaman, baris dirapatkan bertahap =====
+    // hanya kalau penjagaan tinggi menganggap 6 item itu tidak muat (mis. nama barang membungkus)
+    let MAX_ITEM_PER_PAGE = 6
+    let RAPAT_STAGES = [
+      { pad: '3px 4px', lh: '14px' }, // sama seperti tampilan sekarang
+      { pad: '2px 4px', lh: '13px' },
+      { pad: '1px 4px', lh: '12px' },
+      { pad: '1px 4px', lh: '11px' }  // paling rapat
+    ]
+
+    let pages = []
+    for (let idx = 0; idx < dataPrint.length; idx += MAX_ITEM_PER_PAGE) {
+      pages.push(
+        Array.from(
+          { length: Math.min(MAX_ITEM_PER_PAGE, dataPrint.length - idx) },
+          (_, k) => idx + k
+        )
+      )
     }
 
-  });
-  // end
-  console.log("AAAAAAAAAAAA")
-  console.log(arrayDataPrint)
-  
-
-    arrayDataPrint.forEach((item, i) => {
-      console.log('arrayDataPrint' , i)
-      if (i == 0) {
-
-        tempPrintStr +=  `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px; margin-top:5px">`
-      // } else if ( i < 1) {
-      //   tempPrintStr +=  `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px; padding-top:15px; page-break-before: always">`
-      } else {
-        tempPrintStr +=  `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px;padding-top:7px; ">`
+    let pageRapat = []
+    let pageRowHeights = []
+    pages.forEach((idxArr, pageIdx) => {
+      let isLast = pageIdx === pages.length - 1
+      let budget = isLast ? budgetFinal : budgetNormal
+      let stage = 0
+      let heights = []
+      for (stage = 0; stage < RAPAT_STAGES.length; stage++) {
+        heights = ukurTinggiBarisCetak3(
+          css + `<table style="${tableOpenStyle}">${colgroupHtml}${theadHtml}<tbody>` +
+            idxArr.map(idx => buildRowHtml3All(dataPrint[idx], idx + 1, RAPAT_STAGES[stage])).join('') +
+            `</tbody></table>`,
+          PAGE_W_PX,
+          'tbody tr'
+        )
+        let total = heights.reduce((s, h) => s + h, 0)
+        if (total <= budget || stage === RAPAT_STAGES.length - 1) break
       }
-      tempPrintStr += hdr
-      console.log(tempPrintStr)
-      console.log("SINIIII")
-      console.log(tempPrintStr)
-      item.forEach((itemSub, j) => {
-        tempPrintStr += ``
+      pageRapat[pageIdx] = RAPAT_STAGES[stage]
+      pageRowHeights[pageIdx] = heights
+    })
 
-       tempPrintStr += `
-       <tr>
-       <td class="text-center"
-             style="width: 1%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${z+1}</td>
-       <td class="text-align: left"
-             style="width: 15%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.nospb ?? ''}</td>
-       <td class="text-align: left"
-             style="width: 40%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.NamaBrg ?? ''}</td>
-       <td class="text-center"
-             style="width: 5%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.satuan ?? ''}</td>
-       <td class="text-center"
-             style="width: 10%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.SATTAX ?? ''}</td>
-       <td class="text-right"
-             style="width: 5%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.Qty ? parseFloat(itemSub.Qty).toFixed(2) : ''}</td>
-       <td style="width: 10%; text-align: right; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">
-          ${itemSub.Harga
-            ? Number(itemSub.Harga).toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : ''}
-        </td>
-        <td class="text-right"
-             style="width: 5%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.DISC ? parseFloat(itemSub.DISC).toFixed(2) + '%' : ''}</td>
-        <td style="width: 15%; text-align: right; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">
-          ${itemSub.SubTotal
-            ? Number(itemSub.SubTotal).toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : ''}
-        </td>
-       </tr>`;
+    document.getElementById('ukur-tinggi-print3')?.remove()
 
-         z++;
+    pages.forEach((idxArr, pageIdx) => {
+      let isLast = pageIdx === pages.length - 1
 
-      });
+      let rapat = pageRapat[pageIdx]
+      let rowsHtml = idxArr.map(idx => buildRowHtml3All(dataPrint[idx], idx + 1, rapat)).join('')
 
-      // TAMBAHAN
-      let sisaRow = maxRow - item.length;
-
-      for (let k = 0; k < sisaRow; k++) {
-        tempPrintStr += `
-        <tr>
-          <td style="border-top:none; border-bottom:none;">&nbsp;</td>
-          <td style="border-top:none; border-bottom:none;"></td>
-          <td style="border-top:none; border-bottom:none;"></td>
-          <td style="border-top:none; border-bottom:none;"></td>
-          <td style="border-top:none; border-bottom:none;"></td>
-          <td style="border-top:none; border-bottom:none;"></td>
-          <td style="border-top:none; border-bottom:none;"></td>
-          <td style="border-top:none; border-bottom:none;"></td>
-          <td style="border-top:none; border-bottom:none;"></td>
-        </tr>`;
+      let budget = isLast ? budgetFinal : budgetNormal
+      let usedHeight = pageRowHeights[pageIdx].reduce((s, h) => s + h, 0)
+      let sisa = budget - usedHeight
+      let fillerCount = hFiller > 0 ? Math.max(0, Math.floor(sisa / hFiller)) : 0
+      let fillerHtml = ''
+      for (let k = 0; k < fillerCount; k++) {
+        fillerHtml += fillerRowHtml3All
       }
 
-      if (i != arrayDataPrint.length - 1) {
-          tempPrintStr += `
-          <tr>
-              <td colspan="9"
-                  style="border-top:none; border-left:none; border-right:none; border-bottom:1px solid black; padding:0; height:0;">
-              </td>
-          </tr>`;
-        }
+      let tableHtml = `<table style="${tableOpenStyle}">
+        ${colgroupHtml}
+        ${theadHtml}
+        <tbody>
+          ${rowsHtml}
+          ${fillerHtml}
+          ${isLast ? '' : separatorRowHtml3All}
+        </tbody>
+      </table>`
 
-      // total berada di paling bawah
-      console.log(i, arrayDataPrint.length)
-      if(i == arrayDataPrint.length - 1){
-
-      tempPrintStr += `
-      <tr>
-        <td colspan="3" style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; padding:5px; font-weight:bold; padding-right:20px;">
-          TERBILANG : ${(item && item.length > 0) ? item[0].TerBIlang : '-'} Rupiah
-        </td>
-        <td colspan="3" style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; padding:5px; font-weight:bold;">
-        </td>
-        <td style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; text-align:left; font-weight:bold;">
-          JUMLAH
-        </td>
-        <td style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; text-align:left; font-weight:bold;">
-          IDR
-        </td>
-        <td style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; text-align:right; font-weight:bold;">
-          ${grandTotalJumlah.toLocaleString('id-ID', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })}
-        </td>
-      </tr>
-      <!-- DISKON -->
-      <tr>
-        <td colspan="6" style="border:none;"></td>
-        <td style="border:none; text-align:left; font-weight:bold;">
-          DISKON
-        </td>
-        <td style="border:none; text-align:left; font-weight:bold;">
-          IDR
-        </td>
-        <td style="border:none; text-align:right; font-weight:bold;">
-          ${Number(dataPrint[0].POtongan || 0).toLocaleString('id-ID', {minimumFractionDigits:2})}
-        </td>
-      </tr>
-
-      <!-- UANG MUKA -->
-      <tr>
-        <td colspan="6" style="border:none;"></td>
-        <td style="border-bottom:1px solid black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-          U.MUKA
-        </td>
-        <td style="border-bottom:1px solid black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-          IDR
-        </td>
-        <td style="border-bottom:1px solid black; border-left:none; border-top:none; border-right:none; text-align:right; font-weight:bold;">
-          ${Number(dataPrint[0].TotalUM || 0).toLocaleString('id-ID', {minimumFractionDigits:2})}
-        </td>
-      </tr>
-
-      <!-- DPP -->
-      <tr>
-        <td colspan="6" style="border:none;"></td>
-        <td style="border:none; text-align:left; font-weight:bold;">
-          DPP
-        </td>
-        <td style="border:none; text-align:left; font-weight:bold;">
-          IDR
-        </td>
-        <td style="border:none; text-align:right; font-weight:bold;">
-          ${Number(dataPrint[0].NdppRp || 0).toLocaleString('id-ID', {minimumFractionDigits:2})}
-        </td>
-      </tr>
-      <!-- PPN -->
-      <tr>
-        <td colspan="6" style="border:none;"></td>
-        <td style="border:none; text-align:left; font-weight:bold;">
-          PPN
-        </td>
-        <td style="border:none; text-align:left; font-weight:bold;">
-          IDR
-        </td>
-        <td style="border:none; text-align:right; font-weight:bold;">
-          ${Number(dataPrint[0].NPpnRp || 0).toLocaleString('id-ID', {minimumFractionDigits:2})}
-        </td>
-      </tr>
-      <!-- TOTAL -->
-      <tr>
-        <td colspan="6" style="border:none; border-left:none; border-top:none; border-right:none;"></td>
-        <td style="border-bottom:3px double black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-          TOTAL
-        </td>
-        <td style="border-bottom:3px double black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-          IDR
-        </td>
-        <td style="border-bottom:3px double black; border-left:none; border-top:none; border-right:none; text-align:right; font-weight:bold;">
-          ${Number(dataPrint[0].NNetRp || 0).toLocaleString('id-ID', {minimumFractionDigits:2})}
-        </td>
-      </tr>`};
-      // end
-
-       tempPrintStr += `</tbody>`;
-
-       tempPrintStr += `</table>`
-
-       if (i == arrayDataPrint.length - 1) {
-        tempPrintStr += `
-       <div class="footer-sign font-family: sans-serif;
-         font-size: 11px ">
-
-       <div class="row mt-3" style="text-align: left;font-family: sans-serif;
-       font-size: 11px ">
-       <span style="float: left; display: block; clear: left;">
-       </span>
-
-       <div style="width:100%; display:flex; font-weight:bold; margin-top:5px;">
-
-        </div>
-
-       </div>
-
-       <div style="display:flex; justify-content:space-between; width:100%; font-family:sans-serif; font-size:10px;">
-
-       <!-- KIRI -->
-        <div style="width:40%; font-size:11px; margin-top:-100px;">
-          <p class="m-0">TRANSFER : </p>
-          <p class="m-0">CV. SINAR MAHAKAM LESTARI</p>
-          <p class="m-0">PT. BANK DANAMON INDONESIA Tbk Cabang Banjarmasin</p>
-          <p class="m-0">AC NO : 003646465454</p>
-        </div>
-
-        <!-- KANAN -->
-        <div style="width:60%;  margin-top:-160px; margin-left: 20px;">
-        <table
-           class="detail-spb-table mb-2"
-           style="width: 100%; font-family: sans-serif;
-           font-size: 10px ">
-           <tr>
-             <td class="no-border text-center" style="width: 20%">Hormat Kami,</td>
-             <td class="no-border text-center" style="width: 20%"></td>
-           </tr>
-           <tr style="height: 6rem">
-             <td class="no-border">&nbsp;</td>
-           </tr>
-
-           <tr>
-             <td class="no-border px-2">
-             <p class="m-0" style="text-align: center;">ISKANDAR</p>
-             </td>
-             <td class="no-border px-2">
-             </td>
-           </tr>
-         </table>
-        </div>
-      </div>
-
-       </div>`};
-
-       tempPrintStr += `
-       <div class="footer-print-date">
-         <table class="m-0" style="width: 100% ; font-family: sans-serif;
-         font-size: 11px ">
-           <tr>
-             <td class="no-border"></td>
-             <td class="no-border text-right">Page ${i+1} of ${arrayDataPrint.length}</td>
-           </tr>
-         </table>
-       </div>`
-
-
+      tempPrintStr += `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px; ${pageIdx === 0 ? 'margin-top:5px' : 'padding-top:7px'}">`
+      tempPrintStr += `<div class="page-header">${hdr}</div>`
+      tempPrintStr += `<div class="page-items">${tableHtml}${isLast ? totalsTableHtml : ''}</div>`
+      tempPrintStr += `<div class="page-bottom">`
+      tempPrintStr += buildPageDateHtml3All(pageIdx + 1, pages.length)
       tempPrintStr += `</div>`
-    });
-
+      tempPrintStr += `</div>`
+    })
   })
   tempPrintStr +=  `</body></html>`
-  console.log(tempPrintStr)
   w=window.open(' ')
   w.document.write(tempPrintStr)
 
@@ -7173,9 +6944,6 @@ function submitPrintAll (nobukti) {
 
 
   function submitPrint3 (nobukti) {
-    // for (var i = 0; i < 30; i++) {
-    //   dataPrint.push(dataPrint[0])
-    // }
     let _token = $('#_token').val()
     $.ajax({
       url: "{!! url('invoicepenjualandetailCetak3') !!}",
@@ -7186,28 +6954,14 @@ function submitPrintAll (nobukti) {
         NOBUKTI: nobukti
       },
       success: function(res) {
-        console.log(res)
-
         dataPrint = res
-        console.log(res[0])
-        console.log(res[0][0])
-
-        // console.log(res[0][0].IsOtorisasi1)
       }
     })
-
-    let arrayDataPrint = []
-    for (let i = 0; i < dataPrint.length; i+=8) {
-      let tempArray = dataPrint.slice(i,i+8)
-      arrayDataPrint.push(tempArray)
-    }
 
     let printContent = ''
     let imageContent = document.getElementById(`imagecontainer`).innerHTML;
     let css = ''
     let hdr = ''
-    let str= ''
-    let ftr= ''
     let tanggalOnly = dataPrint[0].Tanggal.split(' ')[0].split('-').reverse().join('/');
     let tanggalJthTempo = dataPrint[0].JthTmpo ? dataPrint[0].JthTmpo.split(' ')[0].split('-').reverse().join('/') : '-';
 
@@ -7590,19 +7344,21 @@ function submitPrintAll (nobukti) {
         width: 21cm;
         height: 13.5cm;
         position: relative;
+        overflow: hidden;
       }
 
-      .footer-sign {
-        padding-top: 5px;
+      .page-header {
+      }
+
+      .page-items {
+        overflow: hidden;
+      }
+
+      .page-bottom {
         position: absolute;
+        left: 0;
+        bottom: 0;
         width: 100%;
-        bottom: 12px;
-      }
-
-      .footer-print-date {
-        position: absolute;
-        width: 95%;
-        bottom: 10px;
       }
 
        .solid{
@@ -7622,24 +7378,24 @@ function submitPrintAll (nobukti) {
                   </div>
                   <div class="pb-1 ps-3" style="width: 85%; margin-top: 10px;">
                     <h2 class="m-0 pb-2">CV. SINAR MAHAKAM LESTARI</h2>
-                    <p class="m-0" style="font-size: 11px;">
+                    <p class="m-0" style="font-size: 12px;">
                       JL. AMPERA PERGUDANGAN MANGKUPALAS BISNIS CENTRE BLOK D NO.18
                       RT. 022 SIMPANG PASIR PALARAN SAMARINDA-KALIMANTAN TIMUR
                     </p>
                   </div>
                 </div>
                 <div style="display: flex; width: 100%">
-                  <div class="pb-1" style="width: 100%; font-size: 11px; margin-top:15px;">Kepada YTH :</div>
+                  <div class="pb-1" style="width: 100%; font-size: 12px; margin-top:15px;">Kepada YTH :</div>
                 </div>
                 <div style="display: flex; width: 100%">
-                  <div class="pb-1" style="width: 100%; font-size: 11px;">${dataPrint[0].NamaCustSupp ?? '-'}</div>
+                  <div class="pb-1" style="width: 100%; font-size: 12px;">${dataPrint[0].NamaCustSupp ?? '-'}</div>
                 </div>
                 <div style="display: flex; width: 100%">
-                  <div class="pb-1" style="width: 100%; font-size: 11px;">${dataPrint[0].Alamat ?? '-'}</div>
+                  <div class="pb-1" style="width: 100%; font-size: 12px;">${dataPrint[0].Alamat ?? '-'}</div>
                 </div>
               </div>
 
-              <div style="width: 40%; margin-left: 90px; margin-top: 15px;">
+              <div style="width: 40%; margin-left: 60px; margin-top: 15px;">
                 <div style="display: flex; width: 100%">
                   <h2 class="m-0 pb-2">INVOICE</h2>
                 </div>
@@ -7677,39 +7433,207 @@ function submitPrintAll (nobukti) {
                   height: 80px;
                   overflow: hidden;">`+printContent+`
               </div>
-            </div>
+            </div>`;
 
-        <table style="width:95%; margin-top: 10px; margin-left:-5px; border-collapse:collapse; font-family:sans-serif; font-size:11px;">
-            <thead>
-              </tr>
-                  <tr>
-                    <td rowspan="2" class="text-center" style="width: 1%">No.</td>
-                    <td rowspan="2" class="text-center" style="width: 15%">NO SPB</td>
-                    <td rowspan="2" class="text-center" style="width: 40%">NAMA BARANG</td>
-                    <td rowspan="2" class="text-center" style="width: 5%">SAT</td>
-                    <td rowspan="2" class="text-center" style="width: 10%">SAT TAX</td>
-                    <td rowspan="2" class="text-center" style="width: 5%">QTY</td>
-                    <td rowspan="2" class="text-center" style="width: 10%">HARGA</td>
-                    <td rowspan="2" class="text-center" style="width: 5%">DISKON</td>
-                    <td rowspan="2" class="text-center" style="width: 15%">JUMLAH</td>
-                  </tr>
-                </thead> `;
+    // ===== ukuran cetak =====
+    let PAGE_W_PX = 794   // 21cm
+    let PAGE_H_PX = 510   // 13.5cm
+    let SAFE_PX = 8       // buffer aman supaya tidak terpotong overflow:hidden
 
-    let z = 0
-    let maxRow = 8;
-    let tempPrintStr = ``
-    // buat hitung grandtotal
+    let colgroupHtml = `<colgroup>
+      <col style="width:23px"><col style="width:145px"><col style="width:232px">
+      <col style="width:38px"><col style="width:60px"><col style="width:45px">
+      <col style="width:75px"><col style="width:53px"><col style="width:83px">
+    </colgroup>`
+
+    let tableOpenStyle = `width:754px; table-layout:fixed; border-collapse:collapse; margin:10px 0 0 0; font-family:sans-serif; font-size:12px;`
+
+    let theadHtml = `<thead>
+      <tr>
+        <td class="text-center" style="width:23px">No.</td>
+        <td class="text-center" style="width:145px">NO SPB</td>
+        <td class="text-center" style="width:232px">NAMA BARANG</td>
+        <td class="text-center" style="width:38px">SAT</td>
+        <td class="text-center" style="width:60px">SAT TAX</td>
+        <td class="text-center" style="width:45px">QTY</td>
+        <td class="text-center" style="width:75px">HARGA</td>
+        <td class="text-center" style="width:53px">DISKON</td>
+        <td class="text-center" style="width:83px">JUMLAH</td>
+      </tr>
+    </thead>`
+
+    function buildRowHtml (itemSub, nomor, rapat) {
+      let pad = rapat ? rapat.pad : '3px 4px'
+      let lh = rapat ? rapat.lh : '14px'
+      return `<tr>
+        <td class="text-center" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${nomor}</td>
+        <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; line-height:${lh}; word-break:break-word;">${itemSub.nospb ?? ''}</td>
+        <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; line-height:${lh}; word-break:break-word;">${itemSub.NamaBrg ?? ''}</td>
+        <td class="text-center" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.satuan ?? ''}</td>
+        <td class="text-center" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.SATTAX ?? ''}</td>
+        <td class="text-right" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.Qty ? parseFloat(itemSub.Qty).toFixed(2) : ''}</td>
+        <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; text-align:right;">
+          ${itemSub.Harga
+            ? Number(itemSub.Harga).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+            : ''}
+        </td>
+        <td class="text-right" style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad};">${itemSub.DISC ? parseFloat(itemSub.DISC).toFixed(2) + '%' : ''}</td>
+        <td style="border-top:none; border-bottom:none; vertical-align:top; padding:${pad}; text-align:right;">
+          ${itemSub.SubTotal
+            ? Number(itemSub.SubTotal).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+            : ''}
+        </td>
+      </tr>`
+    }
+
+    let fillerRowHtml = `<tr>
+      <td style="border-top:none; border-bottom:none;">&nbsp;</td>
+      <td style="border-top:none; border-bottom:none;"></td>
+      <td style="border-top:none; border-bottom:none;"></td>
+      <td style="border-top:none; border-bottom:none;"></td>
+      <td style="border-top:none; border-bottom:none;"></td>
+      <td style="border-top:none; border-bottom:none;"></td>
+      <td style="border-top:none; border-bottom:none;"></td>
+      <td style="border-top:none; border-bottom:none;"></td>
+      <td style="border-top:none; border-bottom:none;"></td>
+    </tr>`
+
+    let separatorRowHtml = `<tr>
+      <td colspan="9" style="border-top:none; border-left:none; border-right:none; border-bottom:1px solid black; padding:0; height:0;"></td>
+    </tr>`
+
+    function buildPageDateHtml (nomorHalaman, totalHalaman) {
+      return `<div class="footer-print-date">
+        <table class="m-0" style="width:754px; font-family:sans-serif; font-size:11px;">
+          <tr>
+            <td class="no-border"></td>
+            <td class="no-border text-right">Page ${nomorHalaman} of ${totalHalaman}</td>
+          </tr>
+        </table>
+      </div>`
+    }
+
     let grandTotalJumlah = 0;
-
     dataPrint.forEach(item => {
-
       if (item.SubTotal) {
         grandTotalJumlah += Number(item.SubTotal) || 0;
       }
-
     });
-    // end
-    tempPrintStr += `<html>
+
+    let totalsTableStyle = tableOpenStyle.replace('margin:10px 0 0 0', 'margin:0')
+    let totalsTableHtml = `<table style="${totalsTableStyle}">
+      ${colgroupHtml}
+      <tbody>
+        <tr>
+          <td colspan="3" rowspan="2" style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; vertical-align:top; padding:5px 4px; font-weight:bold;">
+            TERBILANG : ${dataPrint[0].TerBIlang ?? '-'} Rupiah
+          </td>
+          <td colspan="3" style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:center; vertical-align:top; padding:5px 4px;">
+            Hormat Kami,
+          </td>
+          <td style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">JUMLAH</td>
+          <td style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border-top:1px solid black; border-left:none; border-right:none; border-bottom:none; text-align:right; vertical-align:top; font-weight:bold; padding:3px 4px;">${Math.round(grandTotalJumlah).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">DISKON</td>
+          <td style="border:none; text-align:left; vertical-align:top; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border:none; text-align:right; vertical-align:top; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].POtongan || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" rowspan="5" style="border:none; vertical-align:top; padding:45px 4px 5px 4px; font-size:11px;">
+            <p class="m-0">TRANSFER : </p>
+            <p class="m-0">CV. SINAR MAHAKAM LESTARI</p>
+            <p class="m-0">PT. BANK DANAMON INDONESIA Tbk Cabang Banjarmasin</p>
+            <p class="m-0">AC NO : 003646465454</p>
+          </td>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border-bottom:1px solid black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">U.MUKA</td>
+          <td style="border-bottom:1px solid black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border-bottom:1px solid black; border-top:none; border-left:none; border-right:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].TotalUM || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">DPP</td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].NdppRp || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">PPN</td>
+          <td style="border:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].NPpnRp || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none;"></td>
+          <td style="border-bottom:3px double black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">TOTAL</td>
+          <td style="border-bottom:3px double black; border-top:none; border-left:none; border-right:none; text-align:left; font-weight:bold; padding:3px 4px;">IDR</td>
+          <td style="border-bottom:3px double black; border-top:none; border-left:none; border-right:none; text-align:right; font-weight:bold; padding:3px 4px;">${Math.round(Number(dataPrint[0].NNetRp || 0)).toLocaleString('id-ID')}</td>
+        </tr>
+        <tr>
+          <td colspan="3" style="border:none; text-align:center; vertical-align:bottom; padding:3px 4px;">${dataPrint[0].namattd ?? '-'}</td>
+          <td colspan="3" style="border:none; height:30px; padding:0;"></td>
+        </tr>
+      </tbody>
+    </table>`
+
+    // ===== ukur tinggi asli pakai iframe tersembunyi (tanpa CSS aplikasi/Bootstrap) =====
+    let hHeader = ukurTinggiCetak3(css + hdr, PAGE_W_PX)
+    let hThead = ukurTinggiCetak3(css + `<table style="${tableOpenStyle}">${colgroupHtml}${theadHtml}</table>`, PAGE_W_PX)
+    let hFiller = ukurTinggiCetak3(css + `<table style="${tableOpenStyle}">${colgroupHtml}<tbody>${fillerRowHtml}</tbody></table>`, PAGE_W_PX)
+    let hPageDate = ukurTinggiCetak3(css + buildPageDateHtml(1, 1), PAGE_W_PX)
+    let hTotals = ukurTinggiCetak3(css + totalsTableHtml, PAGE_W_PX)
+
+    let budgetNormal = PAGE_H_PX - SAFE_PX - hHeader - hThead - hPageDate
+    let budgetFinal = PAGE_H_PX - SAFE_PX - hHeader - hThead - hPageDate - hTotals
+
+    // ===== susun halaman: tepat 6 item per halaman, baris dirapatkan bertahap =====
+    // hanya kalau penjagaan tinggi menganggap 6 item itu tidak muat (mis. nama barang membungkus)
+    let MAX_ITEM_PER_PAGE = 6
+    let RAPAT_STAGES = [
+      { pad: '3px 4px', lh: '14px' }, // sama seperti tampilan sekarang
+      { pad: '2px 4px', lh: '13px' },
+      { pad: '1px 4px', lh: '12px' },
+      { pad: '1px 4px', lh: '11px' }  // paling rapat
+    ]
+
+    let pages = []
+    for (let idx = 0; idx < dataPrint.length; idx += MAX_ITEM_PER_PAGE) {
+      pages.push(
+        Array.from(
+          { length: Math.min(MAX_ITEM_PER_PAGE, dataPrint.length - idx) },
+          (_, k) => idx + k
+        )
+      )
+    }
+
+    let pageRapat = []
+    let pageRowHeights = []
+    pages.forEach((idxArr, pageIdx) => {
+      let isLast = pageIdx === pages.length - 1
+      let budget = isLast ? budgetFinal : budgetNormal
+      let stage = 0
+      let heights = []
+      for (stage = 0; stage < RAPAT_STAGES.length; stage++) {
+        heights = ukurTinggiBarisCetak3(
+          css + `<table style="${tableOpenStyle}">${colgroupHtml}${theadHtml}<tbody>` +
+            idxArr.map(idx => buildRowHtml(dataPrint[idx], idx + 1, RAPAT_STAGES[stage])).join('') +
+            `</tbody></table>`,
+          PAGE_W_PX,
+          'tbody tr'
+        )
+        let total = heights.reduce((s, h) => s + h, 0)
+        if (total <= budget || stage === RAPAT_STAGES.length - 1) break
+      }
+      pageRapat[pageIdx] = RAPAT_STAGES[stage]
+      pageRowHeights[pageIdx] = heights
+    })
+
+    document.getElementById('ukur-tinggi-print3')?.remove()
+
+    // ===== render tiap halaman =====
+    let tempPrintStr = `<html>
     <head>
       <title></title>
     </head>
@@ -7717,253 +7641,41 @@ function submitPrintAll (nobukti) {
     <body onload="window.print()">
       ` + css
 
-      arrayDataPrint.forEach((item, i) => {
-        console.log('arrayDataPrint' , i)
-        if (i == 0) {
+    pages.forEach((idxArr, pageIdx) => {
+      let isLast = pageIdx === pages.length - 1
 
-          tempPrintStr +=  `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px; margin-top:5px">`
-        // } else if ( i < 1) {
-        //   tempPrintStr +=  `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px; padding-top:15px; page-break-before: always">`
-        } else {
-          tempPrintStr +=  `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px;padding-top:7px; ">`
-        }
-        tempPrintStr += hdr
-        item.forEach((itemSub, j) => {
-          tempPrintStr += ``
+      let rapat = pageRapat[pageIdx]
+      let rowsHtml = idxArr.map(idx => buildRowHtml(dataPrint[idx], idx + 1, rapat)).join('')
 
-         tempPrintStr += `
-         <tr>
-         <td class="text-center"
-               style="width: 1%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${z+1}</td>
-         <td class="text-align: left"
-               style="width: 15%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.nospb ?? ''}</td>
-         <td class="text-align: left"
-               style="width: 40%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.NamaBrg ?? ''}</td>
-         <td class="text-center"
-               style="width: 5%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.satuan ?? ''}</td>
-         <td class="text-center"
-               style="width: 10%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.SATTAX ?? ''}</td>
-         <td class="text-right"
-               style="width: 5%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.Qty ? parseFloat(itemSub.Qty).toFixed(2) : ''}</td>
-         <td style="width: 10%; text-align: right; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">
-            ${itemSub.Harga
-              ? Number(itemSub.Harga).toLocaleString('id-ID', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0
-                })
-              : ''}
-          </td>
-          <td class="text-right"
-               style="width: 5%; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">${itemSub.DISC ? parseFloat(itemSub.DISC).toFixed(2) + '%' : ''}</td>
-          <td style="width: 15%; text-align: right; border-bottom: none; border-top: none; vertical-align: top; padding: 3px 4px;">
-            ${itemSub.SubTotal
-              ? Number(itemSub.SubTotal).toLocaleString('id-ID', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0
-                })
-              : ''}
-          </td>
-         </tr>`;
+      let budget = isLast ? budgetFinal : budgetNormal
+      let usedHeight = pageRowHeights[pageIdx].reduce((s, h) => s + h, 0)
+      let sisa = budget - usedHeight
+      let fillerCount = hFiller > 0 ? Math.max(0, Math.floor(sisa / hFiller)) : 0
+      let fillerHtml = ''
+      for (let k = 0; k < fillerCount; k++) {
+        fillerHtml += fillerRowHtml
+      }
 
-           z++;
+      let tableHtml = `<table style="${tableOpenStyle}">
+        ${colgroupHtml}
+        ${theadHtml}
+        <tbody>
+          ${rowsHtml}
+          ${fillerHtml}
+          ${isLast ? '' : separatorRowHtml}
+        </tbody>
+      </table>`
 
-        });
+      tempPrintStr += `<div class="body-main-prints" style="break-inside: avoid; margin-left: 7px; ${pageIdx === 0 ? 'margin-top:5px' : 'padding-top:7px'}">`
+      tempPrintStr += `<div class="page-header">${hdr}</div>`
+      tempPrintStr += `<div class="page-items">${tableHtml}${isLast ? totalsTableHtml : ''}</div>`
+      tempPrintStr += `<div class="page-bottom">`
+      tempPrintStr += buildPageDateHtml(pageIdx + 1, pages.length)
+      tempPrintStr += `</div>`
+      tempPrintStr += `</div>`
+    })
 
-        // TAMBAHAN
-        let sisaRow = maxRow - item.length;
-
-        for (let k = 0; k < sisaRow; k++) {
-          tempPrintStr += `
-          <tr>
-            <td style="border-top:none; border-bottom:none;">&nbsp;</td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-          </tr>`;
-        }
-
-        if (i != arrayDataPrint.length - 1) {
-          tempPrintStr += `
-          <tr>
-              <td colspan="9"
-                  style="border-top:none; border-left:none; border-right:none; border-bottom:1px solid black; padding:0; height:0;">
-              </td>
-          </tr>`;
-        }
-
-        // total berada di paling bawah
-        console.log(i, arrayDataPrint.length)
-        if(i == arrayDataPrint.length - 1){
-
-        tempPrintStr += `
-        <tr>
-          <td colspan="3" style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; padding:5px; font-weight:bold; padding-right:20px;">
-            TERBILANG : ${(item && item.length > 0) ? item[0].TerBIlang : '-'} Rupiah
-          </td>
-          <td colspan="3" style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; padding:5px; font-weight:bold;">
-          </td>
-          <td style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; text-align:left; font-weight:bold;">
-            JUMLAH
-          </td>
-          <td style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; text-align:left; font-weight:bold;">
-            IDR
-          </td>
-          <td style="border-top:1px solid black; border-left:none; border-bottom:none; border-right:none; text-align:right; font-weight:bold;">
-            ${Math.round(grandTotalJumlah).toLocaleString('id-ID')}
-          </td>
-        </tr>
-        <!-- DISKON -->
-        <tr>
-          <td colspan="6" style="border:none;"></td>
-          <td style="border:none; text-align:left; font-weight:bold;">
-            DISKON
-          </td>
-          <td style="border:none; text-align:left; font-weight:bold;">
-            IDR
-          </td>
-          <td style="border:none; text-align:right; font-weight:bold;">
-            ${Math.round(Number(dataPrint[0].POtongan || 0)).toLocaleString('id-ID')}
-          </td>
-        </tr>
-
-        <!-- UANG MUKA -->
-        <tr>
-          <td colspan="6" style="border:none;"></td>
-          <td style="border-bottom:1px solid black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-            U.MUKA
-          </td>
-          <td style="border-bottom:1px solid black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-            IDR
-          </td>
-          <td style="border-bottom:1px solid black; border-left:none; border-top:none; border-right:none; text-align:right; font-weight:bold;">
-            ${Math.round(Number(dataPrint[0].TotalUM || 0)).toLocaleString('id-ID')}
-          </td>
-        </tr>
-
-        <!-- DPP -->
-        <tr>
-          <td colspan="6" style="border:none;"></td>
-          <td style="border:none; text-align:left; font-weight:bold;">
-            DPP
-          </td>
-          <td style="border:none; text-align:left; font-weight:bold;">
-            IDR
-          </td>
-          <td style="border:none; text-align:right; font-weight:bold;">
-            ${Math.round(Number(dataPrint[0].NdppRp || 0)).toLocaleString('id-ID')}
-          </td>
-        </tr>
-        <!-- PPN -->
-        <tr>
-          <td colspan="6" style="border:none;"></td>
-          <td style="border:none; text-align:left; font-weight:bold;">
-            PPN
-          </td>
-          <td style="border:none; text-align:left; font-weight:bold;">
-            IDR
-          </td>
-          <td style="border:none; text-align:right; font-weight:bold;">
-            ${Math.round(Number(dataPrint[0].NPpnRp || 0)).toLocaleString('id-ID')}
-          </td>
-        </tr>
-        <!-- TOTAL -->
-        <tr>
-          <td colspan="6" style="border:none; border-left:none; border-top:none; border-right:none;"></td>
-          <td style="border-bottom:3px double black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-            TOTAL
-          </td>
-          <td style="border-bottom:3px double black; border-left:none; border-top:none; border-right:none; text-align:left; font-weight:bold;">
-            IDR
-          </td>
-          <td style="border-bottom:3px double black; border-left:none; border-top:none; border-right:none; text-align:right; font-weight:bold;">
-            ${Math.round(Number(dataPrint[0].NNetRp || 0)).toLocaleString('id-ID')}
-          </td>
-        </tr>`};
-        // end
-
-         tempPrintStr += `</tbody>`;
-
-         tempPrintStr += `</table>`
-
-         if (i == arrayDataPrint.length - 1) {
-         tempPrintStr += `
-         <div class="footer-sign font-family: sans-serif;
-           font-size: 11px">
-
-         <div class="row mt-3" style="text-align: left;font-family: sans-serif;
-         font-size: 12px">
-         <span style="float: left; display: block; clear: left;">
-         </span>
-
-         <div style="width:100%; display:flex; font-weight:bold; margin-top:5px;">
-
-          </div>
-
-         </div>
-
-         <div style="display:flex; justify-content:space-between; width:100%; font-family:sans-serif; font-size:11px;">
-
-         <!-- KIRI -->
-          <div style="width:40%; font-size:11px; margin-top:-100px;">
-            <p class="m-0">TRANSFER : </p>
-            <p class="m-0">CV. SINAR MAHAKAM LESTARI</p>
-            <p class="m-0">PT. BANK DANAMON INDONESIA Tbk Cabang Banjarmasin</p>
-            <p class="m-0">AC NO : 003646465454</p>
-          </div>
-
-          <!-- KANAN -->
-          <div style="width:60%;  margin-top:-160px; margin-left: 40px;">
-          <table
-             class="detail-spb-table mb-2"
-             style="width: 100%; font-family: sans-serif;
-             font-size: 11px ">
-             <tr>
-               <td class="no-border text-center" style="width: 20%">Hormat Kami,</td>
-               <td class="no-border text-center" style="width: 20%"></td>
-             </tr>
-             <tr style="height: 6rem">
-               <td class="no-border">&nbsp;</td>
-             </tr>
-
-             <tr>
-               <td class="no-border px-2">
-               <p class="m-0" style="text-align: center;">ISKANDAR</p>
-               </td>
-               <td class="no-border px-2">
-               </td>
-             </tr>
-           </table>
-          </div>
-        </div>
-
-         </div>`};
-
-
-         tempPrintStr += `
-         <div class="footer-print-date">
-           <table class="m-0" style="width: 100% ; font-family: sans-serif;
-           font-size: 11px ">
-             <tr>
-               <td class="no-border"></td>
-               <td class="no-border text-right">Page ${i+1} of ${arrayDataPrint.length}</td>
-             </tr>
-           </table>
-
-         </div>`
-
-
-        tempPrintStr += `</div>`
-      });
-
-
-      tempPrintStr +=  `</body></html>`
-
-
+    tempPrintStr += `</body></html>`
 
     w=window.open(' ')
     w.document.write(tempPrintStr)
@@ -7973,6 +7685,41 @@ function submitPrintAll (nobukti) {
 
   }
 
+  function siapkanFramePrint3 (lebarPx) {
+    let frame = document.getElementById('ukur-tinggi-print3')
+    if (!frame) {
+      frame = document.createElement('iframe')
+      frame.id = 'ukur-tinggi-print3'
+      frame.style.position = 'absolute'
+      frame.style.visibility = 'hidden'
+      frame.style.left = '-9999px'
+      frame.style.top = '0'
+      frame.style.border = '0'
+      frame.style.pointerEvents = 'none'
+      frame.style.height = '3000px'
+      document.body.appendChild(frame)
+    }
+    frame.style.width = lebarPx + 'px'
+    return frame
+  }
+
+  function ukurTinggiCetak3 (htmlStr, lebarPx) {
+    let frame = siapkanFramePrint3(lebarPx)
+    let doc = frame.contentDocument
+    doc.open()
+    doc.write(`<body style="margin:0;padding:0"><div id="ukur-wrap" style="width:${lebarPx}px; overflow:hidden">${htmlStr}</div></body>`)
+    doc.close()
+    return doc.getElementById('ukur-wrap').offsetHeight
+  }
+
+  function ukurTinggiBarisCetak3 (htmlStr, lebarPx, selector) {
+    let frame = siapkanFramePrint3(lebarPx)
+    let doc = frame.contentDocument
+    doc.open()
+    doc.write(`<body style="margin:0;padding:0"><div id="ukur-wrap" style="width:${lebarPx}px; overflow:hidden">${htmlStr}</div></body>`)
+    doc.close()
+    return Array.from(doc.querySelectorAll(selector)).map(el => Math.ceil(el.getBoundingClientRect().height))
+  }
 
   function formatTanggalKwitansi (tanggal) {
     if (!tanggal) return '-';
@@ -8020,7 +7767,7 @@ function submitPrintAll (nobukti) {
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        padding: 40px 45px;
+        padding: 50px 10px 10px 10px;
       }
       .kwitansi-title {
         text-align: center;
@@ -8072,9 +7819,8 @@ function submitPrintAll (nobukti) {
       .kwitansi-date {
         text-align: right;
         font-weight: bold;
-        margin-top: 45px;
+        margin-top: 30px;
         margin-bottom: 15px;
-        padding-right: 60px;
         font-size: 15px;
       }
       .kwitansi-amount-box {
@@ -8099,8 +7845,7 @@ function submitPrintAll (nobukti) {
       .kwitansi-footer {
         display: flex;
         justify-content: flex-end;
-        margin-top: -20px;
-        padding-right: 60px;
+        margin-top: -40px;
       }
       .kwitansi-sign {
         text-align: center;
@@ -8146,7 +7891,7 @@ function submitPrintAll (nobukti) {
       <div class="kwitansi-footer">
         <div class="kwitansi-sign">
           <div style="height: 100px;"></div>
-          <div>ISKANDAR</div>
+          <div>${dataPrint[0].namattd ?? '-'}</div>
         </div>
       </div>
 
@@ -8347,7 +8092,7 @@ function submitPrintKwitansiAll (nobukti) {
       <div class="kwitansi-footer">
         <div class="kwitansi-sign">
           <div style="height: 100px;"></div>
-          <div>ISKANDAR</div>
+          <div>${dataPrint[0].namattd ?? '-'}</div>
         </div>
       </div>
 

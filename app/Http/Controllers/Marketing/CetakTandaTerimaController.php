@@ -36,84 +36,12 @@ class CetakTandaTerimaController extends Controller
 
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(4);
 
-    $tempOutstanding = DB::connection("SML")->select("
-    select A.nobukti,A.tanggal,A.kodecustsupp,C.namacustsupp,B.NOBUKTI nott,B.usercetak,B.TANGGAL tglcetak
-    from dbinvoicepl A
-    left outer join DBNOMORTT B on A.NoBukti=b.NOINVOICE
-    left outer join DBCUSTSUPP c on A.KodeCustSupp=c.KODECUSTSUPP
-    Left Outer join (select NoInvoice
-                from dbTTInvc
-                group by NoInvoice
-                ) D on A.nobukti=D.Noinvoice
-    WHERE /*MONTH(A.Tanggal)=:0 */ YEAR(A.Tanggal) > 2020 AND
-    D.NoInvoice IS NULL      and  isnull(A.IsBatal,0)=0
-    " , []);
-
-
-
-        $collection1 = collect($tempOutstanding)->groupBy('nobukti');
-        $tempOutstanding1 = [];
-        foreach ($collection1 as $p) {
-          // code...
-          array_push($tempOutstanding1, $p);
-        }
-
-        $tempPenerimaan = DB::connection("SML")->select("
-       declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun, @Bulan=:bulan
-
-select  A.nobukti, A.NoUrut, A.tanggal,
-        A.kodecustsupp, F.NAMACUSTSUPP namacustsupp, A.Consignee, A.NotifyParty,
-        A.ContractNo, A.PONo, A.PaymentTerm, A.DocCreditNo, A.PoL, A.PoD,
-        A.NameOfVessel, A.ShipOnBoardDate, A.Packing, A.Others, A.ISLOKAL,
-        A.IsCetak, A.iduser,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-        A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-        A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-        A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-        A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                else 1
-           end As Bit) NeedOtorisasi
-        ,Isnull(A.IsBatal,0) Isbatal,A.userBatal,A.tglBatal, A.NoPajak,E.NOBUKTI noso,E.TANGGAL tglso,E.nopesanan,
-        m1.NOBUKTI nocetak,M1.TANGGAL tglcetak,M1.usercetak ,M1.tglterima,M1.namapenerima,D.aldok ,E1.Nama namadok,E1.Alamat alamatdok
-from	dbInvoicePL A
-left Outer join dbSO E on E.Nobukti=A.NoSPP
-left outer join DBCUSTSUPP F on F.KODECUSTSUPP=A.KodeCustSupp
-left outer join DBNOMORTT M1 on A.NoBukti=M1.NOINVOICE
-Left Outer join (select NoInvoice,AlDok
-                from dbTTInvc
-                group by NoInvoice ,AlDok
-                ) D on A.nobukti=D.Noinvoice
-Left outer join DbAlamatCust E1 on  A.kodecust=E1.KOdeCustSUpp And D.AlDok=E1.Nomor
-where  year(A.tanggal)>2020 and 	year(m1.Tanggal) in (@Tahun,@tahun-1)  and
-/*isnull(A.FlagKasir,0)=0  And */
-Isnull(A.pJasa,0)=0  AND D.Noinvoice is not null
-order by A.NoBukti
-
-
-" ,
-["tahun" =>$periode->tahun , "bulan" => $periode->bulan ]);
-
-
-
-            $collection2 = collect($tempPenerimaan)->groupBy('nocetak');
-            $tempPenerimaan1 = [];
-            foreach ($collection2 as $p) {
-              // code...
-              array_push($tempPenerimaan1, $p);
-            }
-
+    // Data kedua tab tidak lagi ikut dirender di sini (dulu menarik ±20 ribu baris
+    // tanda terima 2 tahun sekaligus sehingga menu terasa loading terus). Halaman
+    // tampil dulu, lalu tabel diisi lewat loadAll() dengan animasi "Memuat data...".
     return view('marketing.cetaktandaterima' , [
       "menul0" => $menul0,
       "periode" => $periode,
-      "tempOutstanding" => $tempOutstanding1,
-      "tempPenerimaan" => $tempPenerimaan1,
       "akses" => $akses,
       "tempListPerkiraan" => $tempListPerkiraan,
     ]);
@@ -137,14 +65,33 @@ order by A.NoBukti
       return $tempCetak1;
   }
 
-  public function loadAll () {
+  public function getDetailCetakUlang(Request $req)
+  {
+      $noBukti = $req->input('NOBUKTI');
 
+      $cetak = DB::connection("SML")->select(
+          "EXEC dbo.CetakUlangTTInvoicePenjualan ?",
+          [$noBukti]
+      );
+
+      $tempCetak1 = [];
+      foreach ($cetak as $p) {
+          array_push($tempCetak1, $p);
+      }
+
+      return $tempCetak1;
+  }
+
+  public function loadAll (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $tempOutstanding = DB::connection("SML")->select("
+    // Rentang Tgl Cetak tab "sudah cetak"; default sebulan periode aktif.
+    $tglawal = $req->input('tglawal') ?: date('Y-m-01', mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun));
+    $tglakhir = $req->input('tglakhir') ?: date('Y-m-t', strtotime($tglawal));
 
-     select A.nobukti,A.tanggal,A.kodecustsupp,C.namacustsupp,B.NOBUKTI nott,B.usercetak,B.TANGGAL tglcetak
+    $tempOutstanding = DB::connection("SML")->select("
+    select A.nobukti,A.tanggal,A.kodecustsupp,C.namacustsupp,B.NOBUKTI nott,B.usercetak,B.TANGGAL tglcetak
     from dbinvoicepl A
     left outer join DBNOMORTT B on A.NoBukti=b.NOINVOICE
     left outer join DBCUSTSUPP c on A.KodeCustSupp=c.KODECUSTSUPP
@@ -152,72 +99,42 @@ order by A.NoBukti
                 from dbTTInvc
                 group by NoInvoice
                 ) D on A.nobukti=D.Noinvoice
-    WHERE /*MONTH(A.Tanggal)=:0 AND YEAR(A.Tanggal)=:1 AND */
+    WHERE /*MONTH(A.Tanggal)=:0 */ YEAR(A.Tanggal) > 2020 AND
     D.NoInvoice IS NULL      and  isnull(A.IsBatal,0)=0
     " , []);
 
-
-
-        $collection1 = collect($tempOutstanding)->groupBy('nobukti');
-        $tempOutstanding1 = [];
-        foreach ($collection1 as $p) {
-          // code...
-          array_push($tempOutstanding1, $p);
-        }
-
-
+        // Satu baris per invoice; bentuk [row] dipertahankan karena JS membaca row[0].
+        $tempOutstanding1 = collect($tempOutstanding)->groupBy('nobukti')
+          ->map(function ($g) { return [$g[0]]; })->values()->all();
 
         $tempPenerimaan = DB::connection("SML")->select("
-
-        declare @Tahun int, @Bulan int
-
-select @Tahun=:tahun, @Bulan=:bulan
-
 select  A.nobukti, A.NoUrut, A.tanggal,
-        A.kodecustsupp, F.NAMACUSTSUPP namacustsupp, A.Consignee, A.NotifyParty,
-        A.ContractNo, A.PONo, A.PaymentTerm, A.DocCreditNo, A.PoL, A.PoD,
-        A.NameOfVessel, A.ShipOnBoardDate, A.Packing, A.Others, A.ISLOKAL,
+        A.kodecustsupp, F.NAMACUSTSUPP namacustsupp,
         A.IsCetak, A.iduser,
         A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-        A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-        A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-        A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-        A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                else 1
-           end As Bit) NeedOtorisasi
-        ,Isnull(A.IsBatal,0) Isbatal,A.userBatal,A.tglBatal, A.NoPajak,E.NOBUKTI noso,E.TANGGAL tglso,E.nopesanan,
-        m1.NOBUKTI nocetak,M1.TANGGAL tglcetak,M1.usercetak ,M1.tglterima,M1.namapenerima,D.aldok ,E1.Nama namadok,E1.Alamat alamatdok
+        Isnull(A.IsBatal,0) Isbatal, A.NoPajak,E.NOBUKTI noso,E.TANGGAL tglso,E.nopesanan,
+        m1.NOBUKTI nocetak,M1.TANGGAL tglcetak,M1.usercetak ,M1.tglterima,isnull(M1.namapenerima,'') namapenerima,D.aldok ,E1.Nama namadok,E1.Alamat alamatdok
 from	dbInvoicePL A
 left Outer join dbSO E on E.Nobukti=A.NoSPP
 left outer join DBCUSTSUPP F on F.KODECUSTSUPP=A.KodeCustSupp
-left outer join DBNOMORTT M1 on A.NoBukti=M1.NOINVOICE
+inner join DBNOMORTT M1 on A.NoBukti=M1.NOINVOICE
 Left Outer join (select NoInvoice,AlDok
                 from dbTTInvc
                 group by NoInvoice ,AlDok
                 ) D on A.nobukti=D.Noinvoice
 Left outer join DbAlamatCust E1 on  A.kodecust=E1.KOdeCustSUpp And D.AlDok=E1.Nomor
-where  year(A.tanggal)>2020 and 	year(m1.Tanggal) in (@Tahun,@tahun-1)  and
+where  M1.TANGGAL >= :tglawal and M1.TANGGAL < dateadd(day, 1, :tglakhir) and
 /*isnull(A.FlagKasir,0)=0  And */
 Isnull(A.pJasa,0)=0  AND D.Noinvoice is not null
 order by A.NoBukti
-
-
 " ,
-["tahun" =>$periode->tahun , "bulan" => $periode->bulan ]);
+["tglawal" => $tglawal , "tglakhir" => $tglakhir ]);
 
+            // Dulu dikelompokkan dengan kunci 'NoBukti' yang tidak ada di hasil query
+            // sehingga semua tanda terima jadi satu baris; kuncinya nocetak seperti programajcSML.
+            $tempPenerimaan1 = collect($tempPenerimaan)->groupBy('nocetak')
+              ->map(function ($g) { return [$g[0]]; })->values()->all();
 
-
-            $collection2 = collect($tempPenerimaan)->groupBy('NoBukti');
-            $tempPenerimaan1 = [];
-            foreach ($collection2 as $p) {
-              // code...
-              array_push($tempPenerimaan1, $p);
-            }
     return [
     "tempOutstanding" => $tempOutstanding1,
     "tempPenerimaan" => $tempPenerimaan1];
@@ -425,7 +342,15 @@ order by A.KasBank, A.NoFaktur, A.Perkiraan, A.Urut
 
     $username = \Auth::user()->username;
     $listData = $req->tempData ?? [];
+    DB::connection('SML')->transaction(function () use ($req, $listData, $username) {
     foreach ($listData as $d)  {
+
+      // Invoice yang sudah punya tanda terima dilewati supaya tidak tercatat dua kali
+      // (mis. tombol Cetak ditekan ulang sebelum daftar diperbarui).
+      $sudah = DB::connection('SML')->select('select top 1 1 ada from DBNOMORTT where NOINVOICE = :noinvoice', ["noinvoice" => $d['NoBukti']]);
+      if ($sudah) {
+        continue;
+      }
 
       DB::connection('SML')->update('insert into DBNOMORTT (NOURUT,NOBUKTI,TANGGAL,NOINVOICE,ISCETAK,USERCETAK)
       values (:nourut , :nobukti , :tanggal , :noinvoice , 1 , :username)
@@ -441,13 +366,8 @@ DB::connection('SML')->update('Insert Into dbTTInvc (Noinvoice , urut)
 values (:noinvoice , :urut)
 ', [ "noinvoice" => $d['NoBukti'] , "urut" => $tempUrut[0]->urut]);
 
-
-
-
-
-
-
     }
+    });
     return 1;
 
 

@@ -528,6 +528,25 @@
   .data-table td {
     white-space: nowrap;
   }
+
+  /* Form modal Kirim/Terima & Terima ACC: grid label-di-atas-input, salinan 1:1 dari
+     purchasing/invoicepembelian.blade.php (.pba-fgrid/.pba-fcol/.pba-f). */
+  .pba-fgrid{display:flex;gap:0 20px;margin-bottom:16px;align-items:flex-start;}
+  .pba-fcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
+  .pba-fcol-wide{flex:2;}
+  .pba-f{min-width:0;margin-bottom:0;}
+  .pba-f label{display:block;font-size:11px;font-weight:700;letter-spacing:.03em;color:#6b7280;text-transform:uppercase;margin-bottom:4px;white-space:nowrap;}
+  .pba-f .form-control,.pba-f select{width:100%;}
+  .pba-f textarea.form-control{resize:none;}
+
+  /* Tanggal di modal Kirim/Terima & Terima ACC tampil dd/mm/yyyy: kotak teks yang terlihat
+     + tombol kalender; <input type="date"> aslinya disembunyikan (format tampilannya
+     ikut bahasa browser, mis. mm/dd/yyyy) dan hanya dipakai untuk kalender & nilai simpan. */
+  .sj-tgl{position:relative;}
+  .sj-tgl .sj-tgl-teks{padding-right:36px;}
+  .sj-tgl-btn{position:absolute;top:0;right:0;height:38px;width:36px;border:0;background:transparent;color:#6b7280;cursor:pointer;}
+  .sj-tgl-btn:hover{color:#2563eb;}
+  .sj-tgl-asli{position:absolute;right:0;bottom:0;width:36px;height:38px;opacity:0;pointer-events:none;border:0;padding:0;}
 </style>
 
 @include('marketing.partials.tampilan-purchasing-css')
@@ -563,6 +582,10 @@
     <div class="card-body">
       <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
 
+        <a class="nav-item nav-link" id="nav-profile3-tab" data-toggle="tab" href="#profile3" role="tab" aria-controls="nav-profile3" aria-selected="false">
+          Out SO Prioritas
+        </a>
+
         <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">
           SO Siap Kirim
         </a>
@@ -572,7 +595,7 @@
         </a>
 
         <a class="nav-item nav-link" id="nav-profile4-tab" data-toggle="tab" href="#profile4" role="tab" aria-controls="nav-profile4" aria-selected="false">
-          Surat Jalan Otorisasi
+          Surat Jalan
         </a>
 
         <!--   <a class="nav-item nav-link" id="nav-profile2-tab" data-toggle="tab" href="#profile2" role="tab" aria-controls="nav-profile2" aria-selected="false">
@@ -783,7 +806,7 @@
             <div class="modal-header">
               <h5 class="modal-title">
                 <i class="bi bi-funnel"></i>
-                Filter Surat Jalan Otorisasi
+                Filter Surat Jalan
                 <span class="rt-active-badge" id="spbFilterBadge">0 aktif</span>
               </h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterSPB').modal('hide')">
@@ -823,9 +846,9 @@
       <div class="po-toolbar">
         <div class="po-filter-wrap">
           <label>Periode</label>
-          <input type="date" onchange="onChangePeriodeSPB()" class="po-filter-inp" id="input_tanggalawal_spb" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
+          <input type="date" onchange="onChangePeriodeSPB()" class="po-filter-inp" id="input_tanggalawal_spb" value="{!! \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d') !!}">
           <span class="po-filter-sep">s/d</span>
-          <input type="date" onchange="onChangePeriodeSPB()" class="po-filter-inp" id="input_tanggalakhir_spb" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
+          <input type="date" onchange="onChangePeriodeSPB()" class="po-filter-inp" id="input_tanggalakhir_spb" value="{!! \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d') !!}">
         </div>
         <input type="search" id="tabelSearch6" class="po-search-inp" placeholder="Cari data">
         <div class="po-len-wrap">
@@ -852,6 +875,40 @@
         <table id="tabel6" class="tb data-table">
           <thead style="white-space:nowrap;"></thead>
           <tbody id="tabel6_data" class="text-left"></tbody>
+        </table>
+      <div class="po-rt-hint">
+        <i class="bi bi-info-circle"></i>
+        Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
+        untuk menyembunyikan kolom atau mengatur jumlah desimal.
+      </div>
+  </div>
+  {{-- Out SO Prioritas (tabel5): sama seperti programajcSML -- outstanding SO urgent
+       (DBSODET.PUrgent=1) yang stoknya ada, hanya informasi tanpa kolom Actions.
+       Datanya dari queryOutstanding5SJ(), dipaginate DataTables di browser seperti tabel6. --}}
+  <div class="tab-pane fade" id="profile3" role="tabpanel" aria-labelledby="profile3-tab">
+      <div class="po-toolbar">
+        <input type="search" id="tabelSearch5" class="po-search-inp" placeholder="Cari data">
+        <div class="po-len-wrap">
+          <label for="tabelLen5">Tampilkan</label>
+          <select id="tabelLen5" class="po-len-inp">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="-1">Semua</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="rt-bar-row">
+        <button class="rt-reset-btn" type="button" title="Reset kolom" onclick="buttonHeaderTable('tabel5')">
+          <i class="bi bi-arrow-clockwise"></i> Reset kolom
+        </button>
+        <div id="rtBarTabel5"></div>
+      </div>
+        <table id="tabel5" class="tb data-table">
+          <thead style="white-space:nowrap;"></thead>
+          <tbody id="tabel5_data" class="text-left"></tbody>
         </table>
       <div class="po-rt-hint">
         <i class="bi bi-info-circle"></i>
@@ -1585,6 +1642,8 @@
               <th style="padding: 4px 12px;" scope="col">Nama Produk</th>
               <th style="padding: 4px 12px;" scope="col">Qty</th>
               <th style="padding: 4px 12px;" scope="col">Sat</th>
+              <th style="padding: 4px 12px;" scope="col">Qty2</th>
+              <th style="padding: 4px 12px;" scope="col">Sat2</th>
               <th style="padding: 4px 12px;" scope="col">Gudang</th>
               <th style="padding: 4px 12px;" scope="col">Actions</th>
 
@@ -3119,160 +3178,120 @@
 </div>
 <!-- End modal koreksi-->
 
-<!-- start modal add -->
-<div class="modal fade"  id="formKirimTerima" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered"  role="document" style="max-width: 500px">
-    <div class="modal-content">
+<!-- start modal kirim / terima -->
+{{-- Bentuk modal disamakan dengan modal form purchasing terbaru (invoicepembelian.blade.php):
+     #formBsGrid + .pba-fgrid, label di atas input, tombol Batal/Simpan soft. --}}
+<div class="modal fade" id="formKirimTerima" tabindex="-1" role="dialog" aria-labelledby="formKirimTerimaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 720px;">
+    <div class="modal-content rounded-4">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Tgl Kirim / Terima</h5>
+        <h5 class="modal-title" id="formKirimTerimaLabel">Tgl Kirim / Terima</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+
       <div id="formBsGrid">
       <div class="modal-body">
-        <!-- <h1>Tes Modal</h1> -->
-
-        <div class="container-fluid">
-          <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
-          
-          <div class="row">
-            <div class="col-4 text-left">
-              <div class="form-group text-left">
-                <h4 id='titleInvoice'>No Invoice</h4>
-              </div>
+        <div class="pba-fgrid">
+          <div class="pba-fcol">
+            <div class="pba-f">
+              <label>No Bukti</label>
+              <input type="text" class="form-control" id="input_kt_nobukti" disabled>
             </div>
-
+            <div class="pba-f">
+              <label>Customer</label>
+              <input type="text" class="form-control" id="input_kt_customer" disabled>
+            </div>
           </div>
 
-          
-          <div class="row">
-            <div class="col-8">
-              <div class="form-group">
-                <h4 id='titleSupplier'>Supplier</h4>
+          <div class="pba-fcol">
+            <div class="pba-f">
+              <label>Tgl Kirim</label>
+              <div class="sj-tgl">
+                <input type="text" class="form-control text-center sj-tgl-teks" id="teks_add_tanggalKirim" data-tgl="input_add_tanggalKirim" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                <button type="button" class="sj-tgl-btn" tabindex="-1" title="Pilih tanggal" onclick="sjBukaKalender('input_add_tanggalKirim')"><i class="bi bi-calendar3"></i></button>
+                <input type="date" class="sj-tgl-asli" id="input_add_tanggalKirim" tabindex="-1" aria-hidden="true">
               </div>
             </div>
-
+            <div class="pba-f">
+              <label>Tgl Terima Barang</label>
+              <div class="sj-tgl">
+                <input type="text" class="form-control text-center sj-tgl-teks" id="teks_add_tanggalTerimaBarang" data-tgl="input_add_tanggalTerimaBarang" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                <button type="button" class="sj-tgl-btn" tabindex="-1" title="Pilih tanggal" onclick="sjBukaKalender('input_add_tanggalTerimaBarang')"><i class="bi bi-calendar3"></i></button>
+                <input type="date" class="sj-tgl-asli" id="input_add_tanggalTerimaBarang" tabindex="-1" aria-hidden="true">
+              </div>
+            </div>
+            <div class="pba-f">
+              <label>Tgl Terima</label>
+              <div class="sj-tgl">
+                <input type="text" class="form-control text-center sj-tgl-teks" id="teks_add_tanggalTerima" data-tgl="input_add_tanggalTerima" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                <button type="button" class="sj-tgl-btn" tabindex="-1" title="Pilih tanggal" onclick="sjBukaKalender('input_add_tanggalTerima')"><i class="bi bi-calendar3"></i></button>
+                <input type="date" class="sj-tgl-asli" id="input_add_tanggalTerima" tabindex="-1" aria-hidden="true">
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+      </div>{{-- /#formBsGrid --}}
 
-          <div class="row">
-            <div class="col-4 text-left">
-              <div class="form-group text-left">
-                <label class="text-left">Tanggal Kirim</label>
-              </div>
-            </div>
-            <div class="col-8">
-              <div class="form-group">
-                <input type="date" class="form-control" id="input_add_tanggalKirim">
-              </div>
-            </div>
-
-          </div>
-
-          <div class="row">
-            <div class="col-4 text-left">
-              <div class="form-group text-left">
-                <label class="text-left">Tanggal Terima Barang</label>
-              </div>
-            </div>
-            <div class="col-8">
-              <div class="form-group">
-                <input type="date" class="form-control" id="input_add_tanggalTerimaBarang">
-              </div>
-            </div>
-
-          </div>
-
-            
-          <div class="row">
-            <div class="col-4 text-left">
-              <div class="form-group text-left">
-                <label class="text-left">Tanggal Terima</label>
-              </div>
-            </div>
-            <div class="col-8">
-              <div class="form-group">
-                <input type="date" class="form-control" id="input_add_tanggalTerima">
-              </div>
-            </div>
-
-          </div>
-
+      <div class="modal-footer">
+        <button type="button" class="btn btn-batal-add" data-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-chip-biru" onclick="submitKirimTerima()">Simpan</button>
+      </div>
     </div>
   </div>
-      </div>{{-- /#formBsGrid --}}
-  <div class="modal-footer">
-    <button type="button" class="btn btn-batal-add" data-dismiss="modal">Batal</button>
-    <button type="button" class="btn btn-chip-biru" onclick="submitKirimTerima()">Simpan</button>
-  </div>
 </div>
-</div>
-</div>
-<!-- End modal add-->
+<!-- End modal kirim / terima -->
 
 
-<!-- start modal add -->
-<div class="modal fade"  id="formKirimTerimaAcc" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered"  role="document" style="max-width: 500px">
-    <div class="modal-content">
+<!-- start modal terima acc -->
+<div class="modal fade" id="formKirimTerimaAcc" tabindex="-1" role="dialog" aria-labelledby="formKirimTerimaAccLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 720px;">
+    <div class="modal-content rounded-4">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Tgl Terima ACC</h5>
+        <h5 class="modal-title" id="formKirimTerimaAccLabel">Tgl Terima ACC</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+
       <div id="formBsGrid">
       <div class="modal-body">
-        <!-- <h1>Tes Modal</h1> -->
-
-        <div class="container-fluid">
-          <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
-          
-          <div class="row">
-            <div class="col-4 text-left">
-              <div class="form-group text-left">
-                <h4 id='titleInvoice2'>No Invoice</h4>
-              </div>
+        <div class="pba-fgrid">
+          <div class="pba-fcol">
+            <div class="pba-f">
+              <label>No Bukti</label>
+              <input type="text" class="form-control" id="input_kta_nobukti" disabled>
             </div>
-
+            <div class="pba-f">
+              <label>Customer</label>
+              <input type="text" class="form-control" id="input_kta_customer" disabled>
+            </div>
           </div>
 
-          
-          <div class="row">
-            <div class="col-8">
-              <div class="form-group">
-                <h4 id='titleSupplier2'>Supplier</h4>
+          <div class="pba-fcol">
+            <div class="pba-f">
+              <label>Tgl Terima ACC</label>
+              <div class="sj-tgl">
+                <input type="text" class="form-control text-center sj-tgl-teks" id="teks_add_tanggalKirimAcc" data-tgl="input_add_tanggalKirimAcc" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                <button type="button" class="sj-tgl-btn" tabindex="-1" title="Pilih tanggal" onclick="sjBukaKalender('input_add_tanggalKirimAcc')"><i class="bi bi-calendar3"></i></button>
+                <input type="date" class="sj-tgl-asli" id="input_add_tanggalKirimAcc" tabindex="-1" aria-hidden="true">
               </div>
             </div>
-
           </div>
+        </div>
+      </div>
+      </div>{{-- /#formBsGrid --}}
 
-          <div class="row">
-            <div class="col-4 text-left">
-              <div class="form-group text-left">
-                <label class="text-left">Tanggal Kirim</label>
-              </div>
-            </div>
-            <div class="col-8">
-              <div class="form-group">
-                <input type="date" class="form-control" id="input_add_tanggalKirimAcc">
-              </div>
-            </div>
-
-          </div>
-
-
+      <div class="modal-footer">
+        <button type="button" class="btn btn-batal-add" data-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-chip-biru" onclick="submitKirimTerimaAcc()">Simpan</button>
+      </div>
     </div>
   </div>
-      </div>{{-- /#formBsGrid --}}
-  <div class="modal-footer">
-    <button type="button" class="btn btn-batal-add" data-dismiss="modal">Batal</button>
-    <button type="button" class="btn btn-chip-biru" onclick="submitKirimTerimaAcc()">Simpan</button>
-  </div>
 </div>
-</div>
-</div>
-<!-- End modal add-->
+<!-- End modal terima acc -->
 
 @endsection
 
@@ -3328,16 +3347,18 @@ var g_modeReport = 1;
 var gcart_header = [];
 var gsum_issubtotal = 0, gsum_isgrandtotal = 0;
 
-var sjCart = { tabel: [], tabel2: [], tabel6: [] };
+var sjCart = { tabel: [], tabel2: [], tabel5: [], tabel6: [] };
 var sjActiveKey = null;
 var SJ_TABLE_INFO = {
   tabel:  { href: 'suratjalan_tabel',  setDefault: setDefaultHeaderTabel  },
   tabel2: { href: 'suratjalan_tabel2', setDefault: setDefaultHeaderTabel2 },
+  tabel5: { href: 'suratjalan_tabel5', setDefault: setDefaultHeaderTabel5 },
   tabel6: { href: 'suratjalan_tabel6', setDefault: setDefaultHeaderTabel6 }
 };
 
 var lastTabelRows = [];
 var lastTabel2Rows = [];
+var lastTabel5Rows = [];
 var lastTabel6Rows = [];
 
 // Dua sumber data di halaman ini kadang mengembalikan field logis yang sama
@@ -3394,6 +3415,28 @@ window.doSimpanHeader = function (_hrefArg, _mode, _cart, _issubtotal, _isgrandt
   });
 };
 
+// Susunan kolom yang sudah tersimpan user (DBSIMPANHEADER) dibuat sebelum kolom baru
+// ditambahkan (mis. Customer, Tgl Terima ACC, Tgl Terima Brg), jadi kolom default yang
+// belum ada di simpanan disisipkan di posisi default-nya supaya tetap tampil.
+function sjTambahKolomBaru(key) {
+  var tersimpan = gcart_header;
+  SJ_TABLE_INFO[key].setDefault();
+  var bawaan = gcart_header;
+  var ada = {};
+  tersimpan.forEach(function (c) { ada[String(c[0]).toLowerCase()] = true; });
+  var berubah = false;
+  bawaan.forEach(function (c, i) {
+    if (!ada[String(c[0]).toLowerCase()]) {
+      tersimpan.splice(Math.min(i, tersimpan.length), 0, c.slice());
+      berubah = true;
+    }
+  });
+  gcart_header = tersimpan;
+  if (berubah) {
+    window.doSimpanHeader(g_href, g_modeReport, gcart_header, gsum_issubtotal, gsum_isgrandtotal);
+  }
+}
+
 function sjDoSetHeader(key, isReset) {
   isReset = isReset || false;
   var _strHeader = "";
@@ -3414,6 +3457,7 @@ function sjDoSetHeader(key, isReset) {
   }
   if (_strHeader != "") {
     gcart_header = sjDoGetHeader(_strHeader);
+    sjTambahKolomBaru(key);
   } else {
     SJ_TABLE_INFO[key].setDefault();
     window.doSimpanHeader(g_href, g_modeReport, gcart_header, gsum_issubtotal, gsum_isgrandtotal);
@@ -3449,6 +3493,7 @@ function setDefaultHeaderTabel() {
     ['NOBUKTI',    'No. Bukti',       1, 'varchar', 0, 0],
     ['URGENT',     'Prioritas',       1, 'varchar', 0, 0],
     ['Tanggal',    'Tanggal',         1, 'date',    0, 0],
+    ['NamaCustSupp', 'Customer',      1, 'varchar', 0, 0],
     ['NamaBrg',    'Nama Barang',     1, 'varchar', 0, 0],
     ['KODEBRG',    'Kode Barang',     1, 'varchar', 0, 0],
     ['Nopesanan',  'PO Cust',         1, 'varchar', 0, 0],
@@ -3465,16 +3510,15 @@ function setDefaultHeaderTabel() {
 }
 
 // #tabel2 ("SO Siap Kirim") shares dbSuratJalan's same outstanding-SO query shape as
-// #tabel ("SO Belum Siap Kirim"), just pre-filtered to rows ready to ship. Also absorbs
-// what used to be the separate "Out SO Prioritas" tab (#tabel5/queryOutstanding5SJ,
-// removed) -- that tab's query was just this same one filtered to B.PUrgent=1, so
-// instead of a separate tab the priority flag is now its own URGENT/NOTURGENT column
-// here and every row shows regardless of priority.
+// #tabel ("SO Belum Siap Kirim"), just pre-filtered to rows ready to ship. Kolom
+// Prioritas (URGENT) tetap ada di sini; tab "Out SO Prioritas" (#tabel5) juga
+// dihidupkan lagi sesuai programajcSML.
 function setDefaultHeaderTabel2() {
   gcart_header = [
     ['NOBUKTI',    'No. Bukti',       1, 'varchar', 0, 0],
     ['URGENT',     'Prioritas',       1, 'varchar', 0, 0],
     ['Tanggal',    'Tanggal',         1, 'date',    0, 0],
+    ['NamaCustSupp', 'Customer',      1, 'varchar', 0, 0],
     ['NamaBrg',    'Nama Barang',     1, 'varchar', 0, 0],
     ['KODEBRG',    'Kode Barang',     1, 'varchar', 0, 0],
     ['Nopesanan',  'PO Cust',         1, 'varchar', 0, 0],
@@ -3499,6 +3543,8 @@ function setDefaultHeaderTabel6() {
     ['IDUser',         'User',            1, 'varchar', 0, 0],
     ['TGLKIRIM',       'Tgl Kirim',       1, 'date',    0, 0],
     ['TGLTERIMA',      'Tgl Terima',      1, 'date',    0, 0],
+    ['TglSPBINVC',     'Tgl Terima ACC',  1, 'date',    0, 0],
+    ['TglTerimaBRG',   'Tgl Terima Brg',  1, 'date',    0, 0],
     ['OtoUser1',       'User Oto1',       1, 'varchar', 0, 0],
     ['TglOto1',        'Tgl Oto1',        1, 'date',    0, 0],
     ['LokasiPenerima', 'Lokasi Penerima', 1, 'varchar', 0, 0],
@@ -3509,15 +3555,45 @@ function setDefaultHeaderTabel6() {
   ];
 }
 
+// Kolom tab "Out SO Prioritas" -- sama dengan tabel5 programajcSML.
+function setDefaultHeaderTabel5() {
+  gcart_header = [
+    ['NOBUKTI',      'Nobukti',    1, 'varchar', 0, 0],
+    ['Tanggal',      'Tanggal',    1, 'date',    0, 0],
+    ['NamaCustSupp', 'Nama Cust',  1, 'varchar', 0, 0],
+    ['NamaBrg',      'Nama Brg',   1, 'varchar', 0, 0],
+    ['RefPR',        'Ref PR',     1, 'varchar', 0, 0],
+    ['Nopesanan',    'NoPesanan',  1, 'varchar', 0, 0],
+    ['Qnt',          'Qnt',        1, 'float',   0, 2],
+    ['QntOut',       'Qty',        1, 'float',   0, 2],
+    ['SATUAN',       'Satuan',     1, 'varchar', 0, 0],
+    ['SaldoQnt',     'SaldoQnt',   1, 'float',   0, 2],
+    ['catatan',      'Catatan',    1, 'varchar', 0, 0],
+    ['DUEDATE',      'DueDate',    1, 'date',    0, 0],
+    ['namakebun',    'Nama Kebun', 1, 'varchar', 0, 0],
+    ['PartNumber',   'PartNumber', 1, 'varchar', 0, 0],
+    ['NamaMerk',     'Nama Merk',  1, 'varchar', 0, 0],
+    ['UserID',       'UserID',     1, 'varchar', 0, 0]
+  ];
+}
+
+// Nilai argumen onclick='...': null/undefined jadi '' (bukan teks "null" yang membuat
+// formatTanggal() error), tanda kutip/backslash di-escape supaya nama customer seperti
+// O'NEIL tidak memutus string JS, dan " di-escape karena atributnya memakai kutip ganda.
+function sjArg(v) {
+  if (v === null || v === undefined) { return ''; }
+  return String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
 // Fixed, non-draggable Actions cell for #tabel6 -- same buttons/onclick args the old
 // static markup and loadAll() row-builder both used, just read via pickCI() now.
 function tabel6ActionsCell(row) {
-  var nobukti = sjPickCI(row, 'NOBUKTI');
-  var namaCustSupp = sjPickCI(row, 'NamaCustSupp');
-  var tglKirim = sjPickCI(row, 'TGLKIRIM');
-  var tglTerimaBrg = sjPickCI(row, 'TglTerimaBRG');
-  var tglTerima = sjPickCI(row, 'TGLTERIMA');
-  var tglSpbInvc = sjPickCI(row, 'TglSPBINVC');
+  var nobukti = sjArg(sjPickCI(row, 'NOBUKTI'));
+  var namaCustSupp = sjArg(sjPickCI(row, 'NamaCustSupp'));
+  var tglKirim = sjArg(sjPickCI(row, 'TGLKIRIM'));
+  var tglTerimaBrg = sjArg(sjPickCI(row, 'TglTerimaBRG'));
+  var tglTerima = sjArg(sjPickCI(row, 'TGLTERIMA'));
+  var tglSpbInvc = sjArg(sjPickCI(row, 'TglSPBINVC'));
   var isOto = Number(sjPickCI(row, 'IsOtorisasi1'));
   var html = '<td class="text-center"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" title="Detail" type="button" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button> ';
@@ -3571,7 +3647,7 @@ function tabelValueCell(row, col) {
       ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
       : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
   }
-  return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
+  return '<td>' + (raw !== undefined && raw !== null ? $('<div>').text(raw).html() : '') + '</td>';
 }
 
 // ReportTable.init()'s bindHead(thead) attaches drag/gear listeners with no matching
@@ -3612,6 +3688,22 @@ function sjAturTinggiTabel() {
   wrap.style.maxHeight = Math.max(200, Math.floor(sisa)) + 'px';
 }
 
+// Ikat ulang ReportTable ke tabel milik tab yang sedang terbuka.
+function sjAktifkanTabSekarang() {
+  var pane = document.querySelector('#myTabContent .tab-pane.active');
+  var peta = {
+    home:     { key: 'tabel',  bar: '#rtBarTabel',  reinit: reinitTabel  },
+    profile:  { key: 'tabel2', bar: '#rtBarTabel2', reinit: reinitTabel2 },
+    profile3: { key: 'tabel5', bar: '#rtBarTabel5', reinit: reinitTabel5 },
+    profile4: { key: 'tabel6', bar: '#rtBarTabel6', reinit: reinitTabel6 }
+  };
+  var t = pane ? peta[pane.id] : null;
+  if (!t || !window.ReportTable) { return; }
+  sjAktifkanTabel(t.key);
+  ReportTable.init({ table: '#' + t.key, bar: t.bar, onChange: t.reinit });
+  sjAturTinggiTabel();
+}
+
 // dom string disamakan 1:1 dengan so.blade.php: 'po-table-wrap't membungkus HANYA isi
 // tabelnya dalam kotak scroll, sedangkan info+pagination ('i'/'p') ada DI LUAR kotak itu
 // supaya tidak ikut tergulung -- menggantikan moveDataTablePagination()/
@@ -3647,12 +3739,30 @@ function renderTabel2Rows(rows) {
   var cols = gcart_header.filter(function (c) { return c[2] === 1; });
   var html = '';
   (rows || []).forEach(function (row) {
-    html += '<tr>' + tabel2ActionsCell(row);
+    // NONAKTIF kolom Actions tab SO Siap Kirim (programajcSML tidak memakai tombol ini)
+    // - hidupkan lagi dengan membuka komentar di 2 titik bertanda ini.
+    // html += '<tr>' + tabel2ActionsCell(row);
+    html += '<tr>';
     cols.forEach(function (col) { html += tabelValueCell(row, col); });
     html += '</tr>';
   });
   document.getElementById('tabel2_data').innerHTML = html;
-  suratjalanReplaceThead('#tabel2', cols, '<th style="padding: 4px 12px;">Actions</th>');
+  // NONAKTIF kolom Actions tab SO Siap Kirim - hidupkan lagi dengan membuka komentar di 2 titik bertanda ini.
+  // suratjalanReplaceThead('#tabel2', cols, '<th style="padding: 4px 12px;">Actions</th>');
+  suratjalanReplaceThead('#tabel2', cols);
+}
+
+function renderTabel5Rows(rows) {
+  if (sjActiveKey !== 'tabel5') { sjAktifkanTabel('tabel5'); }
+  var cols = gcart_header.filter(function (c) { return c[2] === 1; });
+  var html = '';
+  (rows || []).forEach(function (row) {
+    html += '<tr>';
+    cols.forEach(function (col) { html += tabelValueCell(row, col); });
+    html += '</tr>';
+  });
+  document.getElementById('tabel5_data').innerHTML = html;
+  suratjalanReplaceThead('#tabel5', cols);
 }
 
 function renderTabel6Rows(rows) {
@@ -3823,11 +3933,29 @@ function buttonFilterTabel (key) {
   sjUpdateFilterBadgeTabel(key)
 }
 
+function reinitTabel5() {
+  try {
+    if ($.fn.DataTable.isDataTable('#tabel5')) { $('#tabel5').DataTable().destroy(); }
+    renderTabel5Rows(lastTabel5Rows);
+    $('#tabel5').DataTable({ dom: SJ_DOM_STRING, lengthChange: false, paging: true, pageLength: Number($('#tabelLen5').val()) || 10, ordering: false, drawCallback: function () { setTimeout(sjAturTinggiTabel, 0); } });
+    var cari5 = $('#tabelSearch5').val();
+    if (cari5) { $('#tabel5').DataTable().search(cari5).draw(); }
+    ReportTable.init({ table: '#tabel5', bar: '#rtBarTabel5', onChange: reinitTabel5 });
+    sjAturTinggiTabel();
+  } catch (e) {
+    console.error('reinitTabel5 failed:', e);
+    alertify.error('Gagal memperbarui tabel: ' + e.message);
+  }
+}
+
 function reinitTabel6() {
   try {
     if ($.fn.DataTable.isDataTable('#tabel6')) { $('#tabel6').DataTable().destroy(); }
     renderTabel6Rows(lastTabel6Rows);
-    $('#tabel6').DataTable({ dom: SJ_DOM_STRING, lengthChange: false, paging: true, order: [[1, 'asc']], ordering: false, drawCallback: function () { setTimeout(sjAturTinggiTabel, 0); } });
+    $('#tabel6').DataTable({ dom: SJ_DOM_STRING, lengthChange: false, paging: true, pageLength: Number($('#tabelLen6').val()) || 10, order: [[1, 'asc']], ordering: false, drawCallback: function () { setTimeout(sjAturTinggiTabel, 0); } });
+    // Pertahankan kata pencarian yang masih tertulis di kotak cari setelah tabel dimuat ulang.
+    var cari6 = $('#tabelSearch6').val();
+    if (cari6) { $('#tabel6').DataTable().search(cari6).draw(); }
     ReportTable.init({ table: '#tabel6', bar: '#rtBarTabel6', onChange: reinitTabel6 });
     sjAturTinggiTabel();
   } catch (e) {
@@ -3840,7 +3968,7 @@ function buttonHeaderTable(key) {
   alertify.confirm('Reset Kolom', 'Kembalikan kolom tabel ke tampilan default?', function () {
     sjAktifkanTabel(key);
     sjDoSetHeader(key, true);
-    ({ tabel: reinitTabel, tabel2: reinitTabel2, tabel6: reinitTabel6 })[key]();
+    ({ tabel: reinitTabel, tabel2: reinitTabel2, tabel5: reinitTabel5, tabel6: reinitTabel6 })[key]();
     alertify.success('Kolom telah direset ke tampilan default');
   }, function () {});
 }
@@ -3857,6 +3985,11 @@ $(document).ready(function(){
       sjDoSetHeader('tabel6', false);
       lastTabel6Rows = @json($tempOutstanding6);
       reinitTabel6();
+
+      sjAktifkanTabel('tabel5');
+      sjDoSetHeader('tabel5', false);
+      lastTabel5Rows = @json($tempOutstanding5);
+      reinitTabel5();
 
       sjAktifkanTabel('tabel2');
       sjDoSetHeader('tabel2', false);
@@ -3894,6 +4027,25 @@ $(document).ready(function(){
         ReportTable.init({ table: '#tabel6', bar: '#rtBarTabel6', onChange: reinitTabel6 });
         sjAturTinggiTabel();
       });
+      $('#nav-profile3-tab').on('shown.bs.tab', function () {
+        sjAktifkanTabel('tabel5');
+        ReportTable.init({ table: '#tabel5', bar: '#rtBarTabel5', onChange: reinitTabel5 });
+        sjAturTinggiTabel();
+      });
+
+      // "Out SO Prioritas" (tabel5): search/length lewat DataTables di browser, sama seperti tabel6.
+      var tabel5SearchTimeout;
+      $('#tabelSearch5').on('input', function () {
+        var value = this.value;
+        clearTimeout(tabel5SearchTimeout);
+        tabel5SearchTimeout = setTimeout(function () {
+          if ($.fn.DataTable.isDataTable('#tabel5')) { $('#tabel5').DataTable().search(value).draw(); }
+        }, 400);
+      });
+      $('#tabelLen5').on('change', function () {
+        var len = Number(this.value);
+        if ($.fn.DataTable.isDataTable('#tabel5')) { $('#tabel5').DataTable().page.len(len).draw(); }
+      });
 
       // "Surat Jalan Otorisasi" (tabel6) tetap dipaginate DataTables penuh di browser
       // (datanya sudah dibatasi periode dari server), jadi search/length-nya sendiri
@@ -3901,7 +4053,8 @@ $(document).ready(function(){
       // sekarang idnya sendiri (#tabelSearch6/#tabelLen6), tidak berbagi lagi dengan
       // tabel/tabel2.
       var tabel6SearchTimeout;
-      $('#tabelSearch6').on('keyup', function () {
+      // 'input' (bukan 'keyup') supaya tombol "x" pada kotak cari ikut mereset pencarian.
+      $('#tabelSearch6').on('input', function () {
         var value = this.value;
         clearTimeout(tabel6SearchTimeout);
         tabel6SearchTimeout = setTimeout(function () {
@@ -4436,6 +4589,7 @@ function loadAll () {
   let tglawalspb = $("#input_tanggalawal_spb").val()
   let tglakhirspb = $("#input_tanggalakhir_spb").val()
   let filterspb = $("#input_filterspb").val()
+  let gagalMuat = true
 
   $.ajax({
     url: "{!! url('suratjalanloadall') !!}",
@@ -4445,11 +4599,19 @@ function loadAll () {
       tglawalspb, tglakhirspb, filterspb
     },
     success: function(res) {
-      dataRefreshOutstanding4 = res.tempOutstanding4
-      dataRefreshOutstanding6 = res.tempOutstanding6
+      dataRefreshOutstanding4 = res.tempOutstanding4 || []
+      dataRefreshOutstanding5 = res.tempOutstanding5 || []
+      dataRefreshOutstanding6 = res.tempOutstanding6 || []
+      gagalMuat = false
 
-
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal memuat ulang data, silahkan refresh browser')
     }})
+
+  // Kalau server gagal, jangan kosongkan tabel yang sedang tampil.
+  if (gagalMuat) { return }
 
   // tabel/tabel2 ("SO Siap Kirim"/"SO Belum Siap Kirim") sudah dipaginate server-side
   // sendiri (lihat sjFetchPage()) dan TIDAK lagi termasuk di response
@@ -4461,8 +4623,15 @@ function loadAll () {
   sjFetchPage('tabel')
   sjFetchPage('tabel2')
 
+  lastTabel5Rows = dataRefreshOutstanding5
+  reinitTabel5()
+
   lastTabel6Rows = dataRefreshOutstanding6
   reinitTabel6()
+
+  // reinitTabelX() di atas memindahkan ReportTable ke tabel terakhir yang dibangun;
+  // kembalikan ke tabel milik tab yang sedang dibuka.
+  sjAktifkanTabSekarang()
 
           $('#tabel4').DataTable().destroy();
 
@@ -4601,6 +4770,8 @@ function refreshDataTableKoreksi (NOBUKTI) {
           <td>${item.namabrgx ? item.namabrgx : ''}</td>
           <td class="text-right">${parseFloat(item.QNT).toFixed(2)}</td>
           <td>${item.SAT_1}</td>
+          <td class="text-right">${parseFloat(item.QNT2 || 0).toFixed(2)}</td>
+          <td>${item.SAT_2 ? item.SAT_2 : ''}</td>
 
           <td>${item.NAMAGDG}</td>
           <td class='text-center'>
@@ -4612,8 +4783,6 @@ function refreshDataTableKoreksi (NOBUKTI) {
         </tr>
         `
 
-          // <td class="text-right">${parseFloat(item.QNT2).toFixed(2)}</td>
-          // <td>${item.SAT_2}</td>
       });
 
 
@@ -4865,6 +5034,12 @@ function buttonKoreksiSPB (NOBUKTI) {
     },
     success: function(res) {
       console.log(res)
+      // Koreksi hanya untuk surat jalan di periode aktif (sama seperti programajcSML);
+      // tab Surat Jalan bisa menampilkan rentang tanggal lain, jadi header bisa kosong.
+      if (!res.header || !res.header.length) {
+        alertify.warning('Surat jalan ' + NOBUKTI + ' di luar periode aktif, tidak bisa dikoreksi')
+        return
+      }
       if (res.header[0].IsOtorisasi1 == 1) {
 
         alertify.warning('Nobukti sudah di otorisasi')
@@ -4895,6 +5070,8 @@ function buttonKoreksiSPB (NOBUKTI) {
             <td>${item.namabrgx ? item.namabrgx : ''}</td>
             <td class="text-right">${parseFloat(item.QNT).toFixed(2)}</td>
             <td>${item.SAT_1}</td>
+            <td class="text-right">${parseFloat(item.QNT2 || 0).toFixed(2)}</td>
+            <td>${item.SAT_2 ? item.SAT_2 : ''}</td>
 
             <td>${item.NAMAGDG}</td>
             <td class='text-center'>
@@ -4908,8 +5085,6 @@ function buttonKoreksiSPB (NOBUKTI) {
 
       });
 
-            // <td class="text-right">${parseFloat(item.QNT2).toFixed(2)}</td>
-            // <td>${item.SAT_2}</td>
 
       document.getElementById("koreksiTableData").innerHTML = rowTableKoreksi
 
@@ -5037,6 +5212,11 @@ function buttonOtorisasiSPB (NOBUKTI) {
           },
           success: function(res) {
             console.log('!', res)
+            if (res != 1) {
+              alertify.warning(res)
+              loadAll()
+              return
+            }
             loadAll()
 
             // lockFormAdd()
@@ -5067,8 +5247,15 @@ function buttonBatalOtorisasiSPB (NOBUKTI) {
     return
   }
 
-  alertify.confirm('Batal Otorisasi', 'Batal Otorisasi SPB ' + NOBUKTI + ' ?',
-      function() {
+  // Pola purchasing (purchaseOrder.blade.php): minta keterangan batal otorisasi,
+  // keterangannya dicatat ke dbLogFile lewat LoggingData di controller.
+  alertify.prompt('Batal Otorisasi', 'Masukkan keterangan batal otorisasi nomor ' + NOBUKTI, '',
+      function(evt, value) {
+        let pket = (value || '').trim()
+        if (pket == '') {
+          alertify.warning('Keterangan harus diisi.')
+          return false
+        }
         let _token = $("#_token").val();
 
 
@@ -5079,11 +5266,17 @@ function buttonBatalOtorisasiSPB (NOBUKTI) {
           async: false,
           data: {
             _token,
-            NOBUKTI
+            NOBUKTI,
+            pket
 
           },
           success: function(res) {
             console.log('!', res)
+            if (res != 1) {
+              alertify.warning(res)
+              loadAll()
+              return
+            }
             loadAll()
 
             // lockFormAdd()
@@ -5316,7 +5509,9 @@ function buttonDetail (NOBUKTI) {
     async: false,
     data: {
       _token,
-      nobukti: NOBUKTI
+      nobukti: NOBUKTI,
+      // Detail hanya melihat, jadi boleh untuk surat jalan di luar periode aktif.
+      semuaperiode: 1
     },
     success: function(res) {
       console.log(res)
@@ -5348,6 +5543,8 @@ function buttonDetail (NOBUKTI) {
             <td>${item.namabrgx ? item.namabrgx : ''}</td>
             <td class="text-right">${parseFloat(item.QNT).toFixed(2)}</td>
             <td>${item.SAT_1}</td>
+            <td class="text-right">${parseFloat(item.QNT2 || 0).toFixed(2)}</td>
+            <td>${item.SAT_2 ? item.SAT_2 : ''}</td>
             <td>${item.NAMAGDG}</td>
             <td></td>
           </tr>
@@ -5355,7 +5552,7 @@ function buttonDetail (NOBUKTI) {
       });
 
       if (!res.detail.length) {
-        rowTableKoreksi = `<tr><td class="text-center" colspan="7">Belum ada barang</td></tr>`
+        rowTableKoreksi = `<tr><td class="text-center" colspan="9">Belum ada barang</td></tr>`
       }
 
       document.getElementById("koreksiTableData").innerHTML = rowTableKoreksi
@@ -5466,8 +5663,10 @@ function submitKirimTerima () {
 
   console.log('Submit KirimTerima')
 
+    if (!sjSinkronTgl(['input_add_tanggalKirim', 'input_add_tanggalTerimaBarang', 'input_add_tanggalTerima'])) { return }
+
     let _token = $("#_token").val();
-    let tanggalKirim = document.getElementById("input_add_tanggalKirim").value
+    let tanggalKirim =document.getElementById("input_add_tanggalKirim").value
     let tanggalTerimaBarang = document.getElementById("input_add_tanggalTerimaBarang").value
     let tanggalTerima = document.getElementById("input_add_tanggalTerima").value
   
@@ -5492,10 +5691,15 @@ function submitKirimTerima () {
 
       },
       success: function(res) {
+          if (!Number(res)) {
+            alertify.warning('Surat jalan ' + kodeInvoiceTemp + ' tidak ditemukan')
+            return
+          }
           loadAll()
-          
 
-  $("#formKirimTerima").modal('toggle')
+
+  $("#formKirimTerima").modal('hide')
+          alertify.success('Tanggal kirim / terima telah disimpan')
 
       },
       error: function (err) {
@@ -5512,8 +5716,10 @@ function submitKirimTerimaAcc () {
 
   console.log('Submit KirimTerima')
 
+    if (!sjSinkronTgl(['input_add_tanggalKirimAcc'])) { return }
+
     let _token = $("#_token").val();
-    let tanggalKirimAcc = document.getElementById("input_add_tanggalKirimAcc").value
+    let tanggalKirimAcc =document.getElementById("input_add_tanggalKirimAcc").value
   
     console.log(
       {
@@ -5534,10 +5740,15 @@ function submitKirimTerimaAcc () {
 
       },
       success: function(res) {
+          if (!Number(res)) {
+            alertify.warning('Surat jalan ' + kodeInvoiceTemp + ' tidak ditemukan')
+            return
+          }
           loadAll()
-          
 
-  $("#formKirimTerimaAcc").modal('toggle')
+
+  $("#formKirimTerimaAcc").modal('hide')
+          alertify.success('Tanggal terima ACC telah disimpan')
 
       },
       error: function (err) {
@@ -5569,15 +5780,15 @@ function buttonKirimTerima(kodeInvoice, kodeCust, tglKirim, tglTerimaBarang, tgl
   kodeCustTemp = kodeCust;
   kodeInvoiceTemp = kodeInvoice;
 
-  document.getElementById('titleInvoice').innerHTML = kodeInvoice;
-  document.getElementById('titleSupplier').innerHTML = kodeCust;
+  document.getElementById('input_kt_nobukti').value = kodeInvoice;
+  document.getElementById('input_kt_customer').value = kodeCust;
 
-  document.getElementById('input_add_tanggalKirim').value = formatTanggal(tglKirim)
-  document.getElementById('input_add_tanggalTerimaBarang').value = formatTanggal(tglTerimaBarang)
-  document.getElementById('input_add_tanggalTerima').value = formatTanggal(tglTerima)
+  sjSetTgl('input_add_tanggalKirim', formatTanggal(tglKirim) || sjHariIni())
+  sjSetTgl('input_add_tanggalTerimaBarang', formatTanggal(tglTerimaBarang) || sjHariIni())
+  sjSetTgl('input_add_tanggalTerima', formatTanggal(tglTerima) || sjHariIni())
   
 
-  $("#formKirimTerima").modal('toggle')
+  $("#formKirimTerima").modal('show')
 
 }
 
@@ -5586,20 +5797,94 @@ function buttonTerimaAcc (kodeInvoice, kodeCust, tglAcc){
   kodeCustTemp = kodeCust;
   kodeInvoiceTemp = kodeInvoice;
 
-  document.getElementById('titleInvoice2').innerHTML = kodeInvoice;
-  document.getElementById('titleSupplier2').innerHTML = kodeCust;
+  document.getElementById('input_kta_nobukti').value = kodeInvoice;
+  document.getElementById('input_kta_customer').value = kodeCust;
 
-  document.getElementById('input_add_tanggalKirimAcc').value = formatTanggal(tglAcc)
+  sjSetTgl('input_add_tanggalKirimAcc', formatTanggal(tglAcc) || sjHariIni())
   
 
-  $("#formKirimTerimaAcc").modal('toggle')
+  $("#formKirimTerimaAcc").modal('show')
 
 }
 
+// Ubah tanggal dari server ("2026-10-07 00:00:00.000") ke nilai <input type="date">.
+// Dulu memakai new Date(x).toISOString(): error "Invalid time value" kalau tanggalnya
+// kosong (tombol mengirim teks 'null'), dan mundur sehari karena dikonversi ke UTC (WIB +7).
 function formatTanggal(dateStr) {
-    if (!dateStr) return '';
-    return new Date(dateStr).toISOString().split('T')[0]; // "2024-01-15"
+    if (!dateStr || dateStr === 'null' || dateStr === 'undefined') return '';
+    let m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return m[1] + '-' + m[2] + '-' + m[3]; // "2024-01-15"
+    let d = new Date(dateStr);
+    if (isNaN(d)) return '';
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
 }
+
+// ===== Isian tanggal dd/mm/yyyy (modal Kirim/Terima & Terima ACC) =====
+// Nilai yang disimpan tetap di <input type="date" id="input_add_..."> (yyyy-mm-dd);
+// kotak teks "teks_add_..." hanya tampilan dd/mm/yyyy yang bisa diketik langsung.
+function sjYmdKeDmy(ymd) {
+  let m = String(ymd || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : ''
+}
+
+// '7/10/2026', '07-10-2026', '07102026' -> '2026-10-07'; null kalau tidak valid.
+function sjDmyKeYmd(teks) {
+  let t = String(teks || '').trim()
+  let m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/) || t.match(/^(\d{2})(\d{2})(\d{4})$/)
+  if (!m) { return null }
+  let d = Number(m[1]), b = Number(m[2]), y = Number(m[3])
+  let cek = new Date(y, b - 1, d)
+  if (cek.getFullYear() !== y || cek.getMonth() !== b - 1 || cek.getDate() !== d) { return null }
+  return y + '-' + ('0' + b).slice(-2) + '-' + ('0' + d).slice(-2)
+}
+
+// Tanggal hari ini (jam komputer user) dalam format yyyy-mm-dd -- dipakai sebagai isi
+// awal tanggal yang masih kosong di database saat modal dibuka.
+function sjHariIni() {
+  let d = new Date()
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2)
+}
+
+function sjSetTgl(id, ymd) {
+  document.getElementById(id).value = ymd || ''
+  $('[data-tgl="' + id + '"]').val(sjYmdKeDmy(ymd))
+}
+
+function sjBukaKalender(id) {
+  let el = document.getElementById(id)
+  try {
+    if (el.showPicker) { el.showPicker(); return }
+  } catch (e) {}
+  el.focus()
+  el.click()
+}
+
+// Salin isi kotak teks ke input tanggal aslinya. Kosong = tanggal dikosongkan.
+// Mengembalikan false (dan memberi peringatan) kalau ada tanggal yang tidak valid.
+function sjSinkronTgl(ids) {
+  for (let i = 0; i < ids.length; i++) {
+    let teks = $('[data-tgl="' + ids[i] + '"]')
+    let isi = String(teks.val() || '').trim()
+    if (isi === '') { document.getElementById(ids[i]).value = ''; continue }
+    let ymd = sjDmyKeYmd(isi)
+    if (!ymd) {
+      alertify.warning('Tanggal "' + isi + '" tidak valid, gunakan format dd/mm/yyyy')
+      teks.focus()
+      return false
+    }
+    sjSetTgl(ids[i], ymd)
+  }
+  return true
+}
+
+$(document).on('change', '.sj-tgl-asli', function () {
+  $('[data-tgl="' + this.id + '"]').val(sjYmdKeDmy(this.value))
+})
+$(document).on('blur', '.sj-tgl-teks', function () {
+  let isi = String(this.value || '').trim()
+  let ymd = sjDmyKeYmd(isi)
+  if (ymd) { sjSetTgl($(this).data('tgl'), ymd) }
+})
 </script>
 
 
