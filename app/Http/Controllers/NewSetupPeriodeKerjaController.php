@@ -28,7 +28,7 @@ class NewSetupPeriodeKerjaController extends Controller
 
     // $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0();
 
-    return view('newsetupperiodekerja' , [
+    return view('berkas.newsetupperiodekerja' , [
       "menul0" =>[],
       "periode" => $periode,
       // "users"=> $users
