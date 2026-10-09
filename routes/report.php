@@ -418,10 +418,11 @@ Route::get('/laporanperintahopname_doFilter', [LaporanPerintahOpnameController::
 Route::get('/laporanperintahopname_doReportFilter', [LaporanPerintahOpnameController::class, 'doReportFilter']);
 
 // CLOSING PERINTAH OPNAME
-Route::get('/laporanclosingperintahopname', [LaporanClosingPerintahOpnameController::class, 'index']);
-Route::get('/laporanclosingperintahopname_doReport', [LaporanClosingPerintahOpnameController::class, 'doReport']);
-Route::get('/laporanclosingperintahopname_doFilter', [LaporanClosingPerintahOpnameController::class, 'doFilter']);
-Route::get('/laporanclosingperintahopname_doReportFilter', [LaporanClosingPerintahOpnameController::class, 'doReportFilter']);
+// Dinonaktifkan: LaporanClosingPerintahOpnameController (dan view-nya) belum ada, route ini membuat php artisan route:list error.
+// Route::get('/laporanclosingperintahopname', [LaporanClosingPerintahOpnameController::class, 'index']);
+// Route::get('/laporanclosingperintahopname_doReport', [LaporanClosingPerintahOpnameController::class, 'doReport']);
+// Route::get('/laporanclosingperintahopname_doFilter', [LaporanClosingPerintahOpnameController::class, 'doFilter']);
+// Route::get('/laporanclosingperintahopname_doReportFilter', [LaporanClosingPerintahOpnameController::class, 'doReportFilter']);
 
 // OPNAME
 Route::get('/laporanopname', [LaporanOpnameController::class, 'index']);
@@ -914,7 +915,7 @@ Route::get('/laporanaccountinglabarugi_loaddivisi',[LaporanAccountingLabaRugiCon
 Route::get('/laporanaccountinglabarugi_doKasharian', [LaporanAccountingLabaRugiController::class, 'doKasharian']);
 Route::get('/laporanaccountinglabarugi_doInvoice', [LaporanAccountingLabaRugiController::class, 'doInvoice']);
 Route::get('/laporanaccountinglabarugi_doLpb', [LaporanAccountingLabaRugiController::class, 'doLpb']);
-Route::get('/laporanaccountinglabarugi_doBp', [laporanaccountinglabarugiLaporanAccountingLabaRugiController::class, 'doBp']);
+Route::get('/laporanaccountinglabarugi_doBp', [LaporanAccountingLabaRugiController::class, 'doBp']);
 
 // LABA RUGI TAHUNAN
 Route::get('/laporanaccountinglabarugitahunan', [LaporanAccountingLabaRugiTahunanController::class, 'index']);

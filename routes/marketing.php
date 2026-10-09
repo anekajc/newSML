@@ -229,8 +229,9 @@ Route::get('/socheckhargaddd', [SOController::class, 'SOCheckHargaAdd']);
   Route::post('/ambilNomorSPB', [InvoicePenjualanController::class, 'getDetailCetakSPB']);
   Route::post('/invoicePenjualanPrintSPB', [InvoicePenjualanController::class, 'getDetailPenerimaancetak']);
   Route::post('/invoicepenjualangetdetail', [InvoicePenjualanController::class, 'spDetailKoreksi']);
-  Route::post('/invoicepenjualangetspbdetail', [InvoicePenjualanController::class, 'spAddDetailKoreksi']);
-  Route::get('/invoicepenjualangetlistinvoicecetak', [InvoicePenjualanController::class, 'getListInvoiceCetak']);
+  Route::post('/invoicepenjualangetdetailadd', [InvoicePenjualanController::class, 'spAddDetailKoreksi']);
+  Route::post('/invoicepenjualangetlistinvoicecetak', [InvoicePenjualanController::class, 'getListInvoiceCetak']);
+  Route::post('/invoicepenjualangetlistinvoice', [InvoicePenjualanController::class, 'getListInvoice']);
   Route::post('/invoicepenjualandetailcetakall', [InvoicePenjualanController::class, 'getDetailCetakAll']);
 
   // Invoice Jasa
@@ -252,7 +253,7 @@ Route::get('/socheckhargaddd', [SOController::class, 'SOCheckHargaAdd']);
   Route::post('/fakturpajakspdelete', [FakturPajakController::class, 'spDelete']);
   Route::post('/fakturpajakloadall', [FakturPajakController::class, 'loadAll']);
   Route::post('/fakturpajakimportexcel', [FakturPajakController::class, 'importExcel']);
-  Route::get('/fakturpajakexportexcel', [FakturPajakController::class, 'spExport']);
+  Route::post('/fakturpajakexportexcel', [FakturPajakController::class, 'spExport']);
 
   // Perintah Retur Jual
   Route::get('/perintahreturjualcetak', [PerintahReturJualController::class, 'spCetak']);
@@ -354,10 +355,12 @@ Route::post('/cetaktandaterimadetailoutstanding', [CetakTandaTerimaController::c
 Route::post('/cetaktandaterimalistproses', [CetakTandaTerimaController::class, 'listProses']);
 
 Route::post('/cetaktandaterimaspadd', [CetakTandaTerimaController::class, 'spAdd']);
+Route::post('/cetaktandaterimaspcetak', [CetakTandaTerimaController::class, 'spCetak']);
 Route::post('/cetaktandaterimaspkoreksi', [CetakTandaTerimaController::class, 'spKoreksi']);
 Route::post('/cetaktandaterimaspproses', [CetakTandaTerimaController::class, 'spProses']);
-Route::get('/cetaktandaterimaloadall' , 'CetakTandaTerimaController@loadAll' )->middleware('auth');
+Route::get('/cetaktandaterimaloadall', [CetakTandaTerimaController::class, 'loadAll']);
 Route::post('/cetaktandaterimadetailCetak', [CetakTandaTerimaController::class, 'getDetailCetak']);
+Route::post('/cetaktandaterimadetailCetakUlang', [CetakTandaTerimaController::class, 'getDetailCetakUlang']);
 
 
 });

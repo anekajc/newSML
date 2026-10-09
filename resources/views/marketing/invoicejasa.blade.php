@@ -364,15 +364,6 @@
 {{-- end tampilan search sales --}}
 
 <style>
-  /* Search-icon button appended flush to an input, ported from so.blade.php. */
-  .btn-icon-search {
-    height: 31px;
-    border-radius: 0% 20% 20% 0%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   .btn-chip-biru {
     background-color: #e8edff;
     border-color: #cfdcff;
@@ -437,13 +428,8 @@
     white-space: nowrap;
   }
 
-  /* #formBsGrid di public/css/newmaster.css memaku input 38px (dipakai ~20 halaman lain).
-     Halaman ini memakai tombol cari 31px (.btn-icon-search di atas), jadi tinggi input
-     dikembalikan ke ukuran bawaan tema di sini saja; textarea tetap mengikuti atribut rows. */
-  #formBsGrid .form-control {
-    height: calc(1.5em + 0.75rem + 2px);
-  }
-
+  /* Tinggi input & tombol browse (kaca pembesar) mengikuti purchaseOrder lewat
+     marketing/partials/tampilan-purchasing-css: input 38px, tombol menempel dan membulat. */
   #formBsGrid textarea.form-control {
     height: auto;
   }
@@ -525,9 +511,9 @@
       <div class="po-toolbar">
         <div class="po-filter-wrap">
           <label>Periode</label>
-          <input type="date" onchange="onChangePeriodeIJ()" class="po-filter-inp" id="input_tanggalawal_ij" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
+          <input type="date" onchange="onChangePeriodeIJ()" class="po-filter-inp" id="input_tanggalawal_ij" value="{!! $tglawal !!}">
           <span class="po-filter-sep">s/d</span>
-          <input type="date" onchange="onChangePeriodeIJ()" class="po-filter-inp" id="input_tanggalakhir_ij" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
+          <input type="date" onchange="onChangePeriodeIJ()" class="po-filter-inp" id="input_tanggalakhir_ij" value="{!! $tglakhir !!}">
         </div>
         <input type="search" id="ijSearch1" class="po-search-inp" placeholder="Cari data">
         <div class="po-len-wrap">
@@ -639,7 +625,7 @@
                 <div class="col-md-8">
                   <div class="form-group input-group">
                     <input type="text" class="form-control" id="input_add_kodecustomer" placeholder="" disabled>
-                    <button class="btn-chip-biru btn-icon-search" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
+                    <button type="button" title="Cari" class="btn btn-chip-biru btn-sm" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
               </div>
@@ -662,7 +648,7 @@
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Tgl</label>
+                    <label>Tanggal</label>
                   </div>
                 </div>
                 <div class="col-md-8">
@@ -740,7 +726,7 @@
                   <div class="form-group input-group">
                     <input type="text" class="form-control" id="input_add_sales" value="" disabled >
                     <input type="hidden" class="form-control text-center" id="input_add_kodesales" value="" disabled >
-                    <button class=" btn-chip-biru btn-icon-search" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-search"></i></button>
+                    <button type="button" title="Cari" class="btn btn-chip-biru btn-sm" id="buttonAddListSales" onclick="buttonAddListSales()"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
 
@@ -767,7 +753,7 @@
                   <div class="form-group input-group">
                     <input type="hidden" class="form-control text-center" id="input_add_kodelokasipenerima" value="" disabled >
                     <input type="text" class="form-control" id="input_add_lokasipenerima" value="" disabled >
-                    <button class="btn-chip-biru btn-icon-search" id="buttonAddListLokasiPenerima" onclick="buttonAddListLokasiPenerima()"><i class="bi bi-search"></i></button>
+                    <button type="button" title="Cari" class="btn btn-chip-biru btn-sm" id="buttonAddListLokasiPenerima" onclick="buttonAddListLokasiPenerima()"><i class="bi bi-search"></i></button>
                   </div>
                 </div>
                 <!-- </div>
@@ -1026,8 +1012,8 @@
             <div class="col-md-3">
               <div class="input-group form-group">
 
-                <input id="AddAddKodeBrg" type="text" class="form-control" onkeypress="onKeyPressBarang(event)">
-                <button type="button" onclick="buttonAddListBarang()" class="btn-chip-biru btn-icon-search"><i class="bi bi-search"></i></button>
+                <input id="AddAddKodeBrg" type="text" class="form-control text-left" placeholder="Kode Barang" autocomplete="off" onkeypress="onKeyPressBarang(event)" oninput="onInputKodeBarang()">
+                <button type="button" title="Cari" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
               </div>
             </div>
 
@@ -1380,7 +1366,7 @@
             <div class="row">
               <div class="col-md-4">
                 <div class="form-group">
-                  <label>Tgl</label>
+                  <label>Tanggal</label>
                 </div>
               </div>
               <div class="col-md-8">
@@ -1966,7 +1952,7 @@
               <tbody id="tabel_data_add_list_barang" class="text-left" >
 
                 @for ($i = 0; $i < count($listBarangAll); $i++)
-                <tr class="pick-row" onclick="buttonAddAddPickBarangAll('{{ $listBarangAll[$i]->Kodebrg }}' , '{{ $listBarangAll[$i]->Namabrg }}' , '{{ $listBarangAll[$i]->isi1 }}' , '{{ $listBarangAll[$i]->sat1 }}')">
+                <tr class="pick-row" onclick="buttonAddAddPickBarangIndex({{ $i }})">
 
                   <td>{{ $listBarangAll[$i]->Kodebrg }}</td>
                   <td>{{ $listBarangAll[$i]->Namabrg }}</td>
@@ -2123,6 +2109,16 @@ let dataTableKoreksi = []
 let dataEdit = {}
 
 let tempKode = ''
+
+// Master barang jasa (dbbarang isjasa=1, aktif) - sumber yang sama dengan isi modal Barang.
+// Dipakai pencarian kode/nama barang yang diketik langsung di input Barang.
+let listBarangAll = @json($listBarangAll)
+
+// Hasil daftar Sales/Lokasi Penerima terakhir: baris modal memilih lewat indeks, bukan
+// menulis nama ke dalam onclick (nama yang mengandung tanda kutip memutus onclick).
+let listSalesAll = []
+let listLokasiAll = []
+let listCustomerAll = []
 
 /* ============ Header tabel interaktif (window.ReportTable) ============
  * Port 1:1 dari poCart/poAktifkanTabel/poInitReportTableSekali milik
@@ -2530,6 +2526,10 @@ function setNewNoBukti (ppn = 1) {
       document.getElementById("input_add_nobukti").value = res[0].Nobukti
       document.getElementById("input_add_nourut").value = res[0].Nourut
 
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil No Bukti, silahkan refresh browser')
     }})
 }
 
@@ -2634,7 +2634,12 @@ function submitAddAdd () {
       return
   }
   if (tipeform == 'add') {
-    let xcheckdate = getDateDiff( new Date(), checkDate)
+    // Dibandingkan per tanggal lokal: new Date('YYYY-MM-DD') dibaca sebagai UTC (07:00 WIB),
+    // sehingga sebelum jam 7 pagi tanggal hari ini sempat dianggap "hari esok" dan ditolak.
+    let hariIni = new Date()
+    hariIni.setHours(0, 0, 0, 0)
+    let tglInput = new Date(checkDate.getUTCFullYear(), checkDate.getUTCMonth(), checkDate.getUTCDate())
+    let xcheckdate = Math.round(getDateDiff(hariIni, tglInput))
     console.log(new Date(), checkDate)
     console.log(xcheckdate)
     console.log("===========")
@@ -2699,7 +2704,7 @@ function submitAddAdd () {
 
   let jmlrecord = Number(dataTableAdd.length) ? 1 : 0
 
-  if (!kodecustomer || !kodebarang || Number(kurs) < 0 || Number(qty) < 0 || Number(uangmuka) < 0 || Number(hari) < 0 || Number(harga) < 0) {
+  if (!nobukti || !kodecustomer || !kodebarang || Number(kurs) < 0 || Number(qty) < 0 || Number(uangmuka) < 0 || Number(hari) < 0 || Number(harga) < 0) {
     alertify.warning("Data tidak lengkap")
     return
   }
@@ -2812,6 +2817,10 @@ function submitAddAdd () {
         alertify.warning('Nobukti telah di refresh, silahkan submit ulang');
       }
 
+      if (res == 3) {
+        alertify.warning('Invoice sudah diotorisasi, tidak bisa diubah')
+      }
+
 
     },
     error: function (err) {
@@ -2882,6 +2891,12 @@ function submitAddEdit () {
 
   let jmlrecord = Number(dataTableAdd.length) ? 1 : 0
   // let jmlrecord = 0
+
+  // Aturan isian sama dengan Add Item (submitAddAdd).
+  if (!kodecustomer || !kodebarang || Number(kurs) < 0 || Number(qty) < 0 || Number(uangmuka) < 0 || Number(hari) < 0 || Number(harga) < 0) {
+    alertify.warning("Data tidak lengkap")
+    return
+  }
 
   console.log(
     {
@@ -2974,6 +2989,10 @@ function submitAddEdit () {
         alertify.success('Berhasil Edit item')
       }
 
+      if (res == 3) {
+        alertify.warning('Invoice sudah diotorisasi, tidak bisa diubah')
+      }
+
 
 
 
@@ -3021,6 +3040,23 @@ function buttonAddAddPickBarangAll (kode, nama , isi , sat ) {
   //
   // }
 
+  isiBarangTerpilih(kode, nama, isi, sat)
+
+  closeShowHideAdd()
+  // $("#form").modal('toggle')
+  // document.getElementById("input_add_lokasipenerima").scrollIntoView();
+}
+
+function buttonAddAddPickBarangIndex (i) {
+  let item = listBarangAll[i]
+  if (!item) {
+    alertify.warning('Data barang tidak valid')
+    return
+  }
+  buttonAddAddPickBarangAll(item.Kodebrg, item.Namabrg, item.isi1, item.sat1)
+}
+
+function isiBarangTerpilih (kode, nama, isi, sat) {
   tempKode = kode
 
   document.getElementById("AddAddNamaBrg").value = nama
@@ -3030,32 +3066,15 @@ function buttonAddAddPickBarangAll (kode, nama , isi , sat ) {
 
   document.getElementById("AddAddInputSatuan").value = sat
 
-  closeShowHideAdd()
-  // $("#form").modal('toggle')
-  // document.getElementById("input_add_lokasipenerima").scrollIntoView();
+  setTimeout(() => {
+    document.getElementById("AddAddInputQty").focus()
+    document.getElementById("AddAddInputQty").select()
+  }, 300)
 }
 
 
 function buttonAddListBarang () {
-
-
-  $('.showhideform').hide();
-  $('#modalListBarang').show();
-
-
-  // // document.getElementById("#tabel_add_list_barang_filter").value = '123'
-  // let tempDiv = document.getElementById("tabel_add_list_barang_filter");
-  // let tempLabel = tempDiv.querySelector('label');
-  // let tempInput = tempDiv.querySelector('input');
-  // tempInput.value = '123'
-  // var table = $('#tabel_add_list_barang').DataTable();
-  // // tempInput.focus()
-  // table.search('123').draw()
-  $("#form").modal('toggle')
-
-
-
-
+  bukaModalBarang('')
 }
 
 function buttonAddListLokasiPenerima () {
@@ -3078,10 +3097,11 @@ function buttonAddListLokasiPenerima () {
     },
     success: function(res) {
       if ($.fn.DataTable.isDataTable('#tabel_add_list_lokasi')) { $('#tabel_add_list_lokasi').DataTable().destroy(); }
+      listLokasiAll = res
       let rowTable = ``
       res.forEach((item, i) => {
         rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickLokasiPenerima('${item.kodekebun}' , '${item.nama}')">
+        <tr class="pick-row" onclick="buttonAddPickLokasiPenerimaIndex(${i})">
         <td>${item.kodekebun}</td>
         <td>${item.nama}</td>
 
@@ -3157,10 +3177,11 @@ function buttonAddListSales () {
 
     },
     success: function(res) {
+      listSalesAll = res
       let rowTable = ``
       res.forEach((item, i) => {
         rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickSales('${item.keynik}' , '${item.nama}')">
+        <tr class="pick-row" onclick="buttonAddPickSalesIndex(${i})">
         <td>${item.keynik}</td>
         <td>${item.nama}</td>
 
@@ -3194,42 +3215,66 @@ function buttonAddListSales () {
 
 }
 
+// Input Barang bisa diketik seperti permintaan pembelian agen: ketik kode atau nama barang
+// lalu Enter. Kode yang persis sama, atau hasil cari yang tinggal satu, langsung dipilih;
+// selain itu modal Barang dibuka dengan kata kunci tersebut sudah terisi di kotak Search.
 function onKeyPressBarang(e) {
-  if (e.which == 13) {
-    let kodebrg = $('#AddAddKodeBrg').val();
+  if (e.which != 13) {
+    return
+  }
+  e.preventDefault()
 
-    // document.getElementById("#tabel_add_list_barang_filter").value = '123'
-    let tempDiv = document.getElementById("tabel_add_list_barang_filter");
-    let tempLabel = tempDiv.querySelector('label');
-    let tempInput = tempDiv.querySelector('input');
-
-    var table = $('#tabel_add_list_barang').DataTable();
-    // tempInput.focus()
-    table.search(kodebrg).draw()
-    console.log(table.rows({ search: 'applied' }).count() == 1)
-    if (table.rows({ search: 'applied' }).count() == 1) {
-      // console.log('if yes')
-      let tempxData = table.rows({ search: 'applied' }).data().toArray();
-      // console.log(tempxData)
-      // console.log()
-
-      tempKode = tempxData[1]
-      document.getElementById("AddAddKodeBrg").value = tempxData[0][0]
-      document.getElementById("AddAddNamaBrg").value = tempxData[0][1]
-      document.getElementById("AddAddInputIsi").value = 1
-      document.getElementById("AddAddInputSatuan").value = ''
-
-      // console.log(table.rows({ search: 'applied' }).indexes())
-    } else {
-      // console.log('if no')
-      // console.log(table.rows({ search: 'applied' }).indexes())
-        $('.showhideform').hide();
-        $('#modalListBarang').show();
-        $("#form").modal('toggle')
-
-    }
+  let cari = $('#AddAddKodeBrg').val().trim()
+  if (!cari) {
+    alertify.warning('Silakan ketik kode atau nama barang terlebih dahulu.')
+    return
   }
 
+  let kunci = cari.toLowerCase()
+  let indexSama = listBarangAll.findIndex(item => String(item.Kodebrg || '').trim().toLowerCase() === kunci)
+  if (indexSama >= 0) {
+    let item = listBarangAll[indexSama]
+    isiBarangTerpilih(item.Kodebrg, item.Namabrg, item.isi1, item.sat1)
+    return
+  }
+
+  let hasil = listBarangAll.filter(item =>
+    String(item.Kodebrg || '').toLowerCase().includes(kunci) ||
+    String(item.Namabrg || '').toLowerCase().includes(kunci)
+  )
+  if (hasil.length === 1) {
+    isiBarangTerpilih(hasil[0].Kodebrg, hasil[0].Namabrg, hasil[0].isi1, hasil[0].sat1)
+    return
+  }
+
+  bukaModalBarang(cari)
+}
+
+// Kode diubah setelah barang dipilih: nama/isi/satuan barang lama dikosongkan supaya yang
+// tersimpan tidak tercampur dengan barang sebelumnya (submit tetap menolak lewat tempKode).
+function onInputKodeBarang () {
+  if ($('#AddAddKodeBrg').val() === tempKode) {
+    return
+  }
+  tempKode = ''
+  document.getElementById("AddAddNamaBrg").value = ''
+  document.getElementById("AddAddInputIsi").value = ''
+  document.getElementById("AddAddInputSatuan").value = ''
+}
+
+function bukaModalBarang (cari) {
+  $('.showhideform').hide();
+  $('#modalListBarang').show();
+  $("#form").modal('show')
+
+  // Kotak Search dipasang setelah modal tampil karena tabel dibentuk ulang menjadi tabel
+  // pemilih (picker-kas) saat modal dibuka.
+  $('#form').one('shown.bs.modal', function () {
+    if ($.fn.DataTable.isDataTable('#tabel_add_list_barang')) {
+      $('#tabel_add_list_barang').DataTable().search(cari || '').draw()
+    }
+    $('#tabel_add_list_barang_filter input').val(cari || '').trigger('focus')
+  })
 }
 
 function buttonAddEditItem (index) {
@@ -3251,7 +3296,7 @@ function buttonAddEditItem (index) {
   document.getElementById("AddEditNamaBrg").value = dataEdit.NAMABRG
   document.getElementById("AddEditKeterangan").value = dataEdit.KetDetail
   document.getElementById("AddEditInputQty").value = parseFloat(dataEdit.Qnt).toFixed(2)
-  document.getElementById("AddEditInputHarga").value = parseFloat(dataEdit.HARGA).toFixed(2)
+  $("#AddEditInputHarga").autoNumeric('set', Number(dataEdit.HARGA) || 0)
 
   document.getElementById("AddEditInputUrutItem").value = dataEdit.Urut
 
@@ -3278,7 +3323,9 @@ function buttonAddAddItem () {
     // document.getElementById("AddAddNamaGdg").value = ''
     document.getElementById("AddAddKeterangan").value = ''
     document.getElementById("AddAddInputQty").value = '0.00'
-    document.getElementById("AddAddInputHarga").value = '0.00'
+    $("#AddAddInputHarga").autoNumeric('set', 0)
+    document.getElementById("AddAddInputIsi").value = ''
+    document.getElementById("AddAddInputSatuan").value = ''
 
 
     $('.showhideitem').hide();
@@ -3301,10 +3348,11 @@ function buttonAddListCustomer () {
     },
     success: function(res) {
       console.log('res' , res)
+      listCustomerAll = res
       let rowTable = ``
       res.forEach((item, i) => {
         rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickCustomer('${item.kodecustsupp}' , '${item.namacustsupp}' , '${item.alamat1}', '${item.hari}' ,  '${item.PPNCUST}')">
+        <tr class="pick-row" onclick="buttonAddPickCustomerIndex(${i})">
         <td>${item.kodecustsupp}</td>
         <td>${item.namacustsupp}</td>
         <td>${item.alamat1}</td>
@@ -3338,6 +3386,24 @@ function buttonAddListCustomer () {
   })
 
 
+}
+
+function buttonAddPickSalesIndex (i) {
+  let item = listSalesAll[i]
+  if (!item) { alertify.warning('Data sales tidak valid'); return }
+  buttonAddPickSales(item.keynik, item.nama)
+}
+
+function buttonAddPickLokasiPenerimaIndex (i) {
+  let item = listLokasiAll[i]
+  if (!item) { alertify.warning('Data lokasi tidak valid'); return }
+  buttonAddPickLokasiPenerima(item.kodekebun, item.nama)
+}
+
+function buttonAddPickCustomerIndex (i) {
+  let item = listCustomerAll[i]
+  if (!item) { alertify.warning('Data customer tidak valid'); return }
+  buttonAddPickCustomer(item.kodecustsupp, item.namacustsupp, item.alamat1, item.hari, item.PPNCUST)
 }
 
 function buttonAddPickSales (kode, nama ) {
@@ -3829,6 +3895,10 @@ if (pcekglobal) {
     success: function(res) {
 
       console.log(res)
+      if (!res.length) {
+        alertify.warning('Data invoice tidak ditemukan, silahkan muat ulang tabel')
+        return
+      }
       dataTableAdd = res
 
       // if (dataTableAdd.)
@@ -3956,6 +4026,10 @@ function buttonOtorisasi (nobukti) {
     success: function(res) {
 
       console.log(res)
+      if (!res.length) {
+        alertify.warning('Data invoice tidak ditemukan, silahkan muat ulang tabel')
+        return
+      }
       // dataTableAdd = res
 
       let rowTable = ``
@@ -4042,6 +4116,10 @@ function buttonDetail (nobukti) {
     success: function(res) {
 
       console.log(res)
+      if (!res.length) {
+        alertify.warning('Data invoice tidak ditemukan, silahkan muat ulang tabel')
+        return
+      }
 
       let rowTable = ``
       res.forEach((item, i) => {
@@ -4115,9 +4193,9 @@ function buttonBatalOtorisasi (nobukti) {
     // alertify.success("You entered: " + value);
     let xpket = value;
 
-     if (xpket==''){
+     if (!String(xpket || '').trim()){
           alertify.warning('Keterangan harus diisi.');
-          $.abort();
+          return false;
         }
         let _token = $("#_token").val();
 
@@ -4139,6 +4217,10 @@ function buttonBatalOtorisasi (nobukti) {
 
             // lockFormAdd()
 
+            if (res && res.status === 0) {
+              alertify.warning(res.pesan)
+              return
+            }
             alertify.success('Berhasil Batal Otorisasi Invoice')
 
           },
@@ -4183,6 +4265,10 @@ function submitOtorisasi () {
       // lockFormAdd()
       // $("#formOtorisasi").modal('toggle')
       buttonCloseForm()
+      if (res && res.status === 0) {
+        alertify.warning(res.pesan)
+        return
+      }
       alertify.success('Berhasil Otorisasi')
 
     },
@@ -4276,6 +4362,10 @@ function buttonAddDelete (index) {
 
 
 
+            }
+
+            if (res == 3) {
+              alertify.warning('Invoice sudah diotorisasi, tidak bisa diubah')
             }
 
 

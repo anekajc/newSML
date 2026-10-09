@@ -1,15 +1,16 @@
 <?php
 
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Report;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
-use App\Model\VwPPL;
-use App\Model\DBFLMENU;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
+use App\Models\VwPPL;
+use App\Models\DBFLMENU;
 
 // use App\Model\NewMenu;
 // use App\Model\NewAksesMenu;

@@ -7,7 +7,7 @@ use App\Http\Controllers\GlobalController;
 use App\Http\Controllers\HeaderTableController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NewSetupPeriodeKerjaController;
-use App\Http\Controllers\MasterSatuanController;
+use App\Http\Controllers\Master\MasterSatuanController;
 
 // Auth::routes();
 

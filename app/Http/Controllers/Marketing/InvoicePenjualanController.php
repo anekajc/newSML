@@ -26,14 +26,34 @@ class InvoicePenjualanController extends Controller
 
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(4);
 
+    $tempOutstanding = $this->querySPBOutstanding($this->tglAkhirPeriode($periode));
 
-    $tempOutstanding = DB::connection("SML")->select("
+    return view('marketing.invoicepenjualan' , [
+      "menul0" => $menul0,
+      "periode" => $periode,
+      // "users"=> $users,
+      "tempOutstanding" => $tempOutstanding,
+      "akses" => $akses
+    ]);
 
-declare @Tahun int, @Bulan int, @Periode Varchar(30)
+  }
 
-select @Tahun= :tahun , @Bulan= :bulan
+  // Tanggal awal/akhir bulan periode aktif -- default filter tanggal kedua tab.
+  // Pakai tahun periode juga (dulu Carbon::now() + bulan periode saja, jadi
+  // periode Desember yang dibuka di bulan Januari jatuh ke tahun yang salah).
+  private function tglAwalPeriode ($periode) {
+    return \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+  }
 
-Set @Periode=CAST(@Tahun as varchar(4))+Case when @Bulan<10 then '0' else '' end+CAST(@Bulan as varchar(2))
+  private function tglAkhirPeriode ($periode) {
+    return \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
+  }
+
+  // Tab "Surat Pengiriman Barang": SPB yang sudah otorisasi, belum dibuatkan
+  // invoice dan masih ada sisa qty, dari awal sampai akhir bulan periode kerja
+  // aktif (bulan sesudahnya tidak tampil). Query dari programajcSML, tanpa filter tanggal.
+  private function querySPBOutstanding ($tglakhirperiode) {
+    return DB::connection("SML")->select("
 set nocount on
 Select distinct A.NoBukti,A.Tanggal,A.KodeCustSupp,
        D.NOBUKTI Noso, m1.PPN PPNCUST,
@@ -58,63 +78,26 @@ where Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                      Case when A.IsOtorisasi4=1 then 1 else 0 end+
                      Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
                 else 1
-           end As Bit)=0 and F.NoSPB is null and CAST(YEAR(A.Tanggal) as varchar(4))+Case when month(A.Tanggal)<10 then '0' else '' end+CAST(month(A.Tanggal) as varchar(2))<=@Periode
+           end As Bit)=0 and F.NoSPB is null
+and A.Tanggal < dateadd(day, 1, ?)
 and (B.Qntx>0 )
 order by A.NoBukti
-
-" , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-
-
-
-
-
-    $tglawal = \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
-    $tempOutstanding2 = $this->queryInvoicePenjualanOtorisasi($tglawal, $tglakhir, 0);
-
-    return view('marketing.invoicepenjualan' , [
-      "menul0" => $menul0,
-      "periode" => $periode,
-      // "users"=> $users,
-      "tempOutstanding" => $tempOutstanding,
-      "tempOutstanding2" => $tempOutstanding2,
-      "akses" => $akses
-    ]);
-
+    ", [$tglakhirperiode]);
   }
 
-  // Satu query dipakai bareng oleh index() dan loadAll() buat tabel "Invoice
-  // Otorisasi" -- dulu tabel2 (Belum, tombol Koreksi/Otorisasi/Print/Detail)
-  // dan tabel3 (Sudah, tombol Batal Otorisasi/Print/Detail) adalah 2 tab
-  // terpisah dengan query nyaris identik (cuma beda IsOtorisasi1=0/1).
-  // Digabung jadi satu dengan filterip yang menyaring di server, port 1:1
-  // dari pola queryOutstanding() milik PerintahReturJualController. Tabel
-  // "Surat Pengiriman Barang" (tabel, bukan konsep otorisasi) sengaja tidak
-  // disentuh.
-  //   0 = Semua, 1 = Belum Otorisasi, 2 = Sudah Otorisasi
-  private function queryInvoicePenjualanOtorisasi ($tglawal, $tglakhir, $filterip) {
-    return DB::connection("SML")->select("
-      select * from (
-        select  A.NoBukti, A.NoUrut, A.Tanggal,
-                A.KodeCustSupp, F.NAMACUSTSUPP NamaCustSupp, A.Consignee, A.NotifyParty,
-                A.ContractNo, A.PONo, A.PaymentTerm, A.DocCreditNo, A.PoL, A.PoD,
-                A.NameOfVessel, A.ShipOnBoardDate, A.Packing, A.Others, A.ISLOKAL,
+  // Tabel tab "Invoice" (gabungan dulu tab Belum + Sudah Diotorisasi) dengan
+  // filter otorisasi: 0 = Semua, 1 = Belum Otorisasi, 2 = Sudah Otorisasi.
+  // Hanya kolom yang dipakai tabel (kolom header + tombol aksi) yang diambil.
+  // Dikembalikan sebagai [sql, binding] tanpa ORDER BY supaya bisa dibungkus
+  // halamanDataTables() (server-side paging).
+  private function sqlInvoicePenjualan ($tglawal, $tglakhir, $filterip) {
+    return ["
+        select  A.NoBukti, A.Tanggal, F.NAMACUSTSUPP NamaCustSupp,
                 B.NoSPB, D.Tanggal TglSPB,
-                A.IsCetak, A.IDUser,
-                A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-                A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-                A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-                A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-                A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-                Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                             Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                             Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                             Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                             Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                        else 1
-                   end As Bit) NeedOtorisasi
-                ,Isnull(A.IsBatal,0) Isbatal,A.userBatal,A.tglBatal, A.NoPajak,E.NOBUKTI NOSO,E.TANGGAL TGLSO,E.NoPesanan,Isnull(A.CetakKe,0) CetakKe
-                ,G.totdpp,G.totppn,G.totnet
+                Isnull(A.IsOtorisasi1,0) IsOtorisasi1, A.OtoUser1, A.TglOto1,
+                Isnull(A.IsBatal,0) Isbatal, A.userBatal, A.tglBatal, A.NoPajak,
+                E.NOBUKTI NOSO, E.TANGGAL TGLSO, E.NoPesanan,
+                G.totdpp, G.totppn, G.totnet
         from	dbo.dbInvoicePL A WITH(NOLOCK)
         Left Outer join (Select x.NoBukti, x.NoSPB
                          from dbo.dbInvoicePLDet x  WITH(NOLOCK)
@@ -127,44 +110,17 @@ order by A.NoBukti
         where	A.Tanggal between ? and ?
         and isnull(A.FlagKasir,0)=0
         And Isnull(A.pJasa,0)=0
-      ) x
-      where (? = 0)
-         or (? = 1 and isnull(x.IsOtorisasi1,0) = 0)
-         or (? = 2 and isnull(x.IsOtorisasi1,0) <> 0)
-      order by x.NoBukti
-    ", [$tglawal, $tglakhir, $filterip, $filterip, $filterip]);
+        and ( (? = 0)
+           or (? = 1 and isnull(A.IsOtorisasi1,0) = 0)
+           or (? = 2 and isnull(A.IsOtorisasi1,0) <> 0) )
+    ", [$tglawal, $tglakhir, $filterip, $filterip, $filterip]];
   }
 
-  public function getListInvoiceCetak (Request $req) {
-
-    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-
-
-    $tempOutstanding = DB::connection("SML")->select("declare @Tahun int, @Bulan int
-
-    select @Tahun= :tahun , @Bulan= :bulan
-
-    set nocount on
-    select  A.NoBukti, A.NoUrut, A.Tanggal,
-            A.KodeCustSupp, F.NAMACUSTSUPP NamaCustSupp, A.Consignee, A.NotifyParty,
-            A.ContractNo, A.PONo, A.PaymentTerm, A.DocCreditNo, A.PoL, A.PoD,
-            A.NameOfVessel, A.ShipOnBoardDate, A.Packing, A.Others, A.ISLOKAL,
-            B.NoSPB, D.Tanggal TglSPB,
-            A.IsCetak, A.IDUser,
-            A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-            A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-            A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-            A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-            A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-            Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                         Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                         Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                         Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                         Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                    else 1
-               end As Bit) NeedOtorisasi
-            ,Isnull(A.IsBatal,0) Isbatal,A.userBatal,A.tglBatal, A.NoPajak,E.NOBUKTI NOSO,E.TANGGAL TGLSO,E.NoPesanan,Isnull(A.CetakKe,0) CetakKe
-             ,G.totdpp,G.totppn,G.totnet
+  // Daftar modal Checklist Print Invoice: kolom yang tampil di modal saja.
+  private function sqlChecklistInvoice ($tglawal, $tglakhir) {
+    return ["
+    select  A.NoBukti, A.Tanggal, F.NAMACUSTSUPP NamaCustSupp,
+            B.NoSPB, D.Tanggal TglSPB, E.NOBUKTI NOSO, E.TANGGAL TGLSO
     from	dbo.dbInvoicePL A WITH(NOLOCK)
     Left Outer join (Select x.NoBukti, x.NoSPB
                      from dbo.dbInvoicePLDet x  WITH(NOLOCK)
@@ -172,14 +128,103 @@ order by A.NoBukti
     LEFT OUTER JOIN (SELECT NOBUKTI,NoSO FROM dbo.dbSPBDet WITH(NOLOCK) GROUP BY NoBukti,NoSO) C ON B.NoSPB=c.NoBukti
     LEFT OUTER JOIN dbo.dbSPB D WITH(NOLOCK)ON C.NoBukti=D.NoBukti
     left Outer join dbo.dbSO E WITH(NOLOCK) on E.Nobukti=C.NoSO
-    --left outer join dbo.vwBrowsCustomer F WITH(NOLOCK) on F.KodeCust=A.KodeCustSupp and F.Sales=E.KODESLS
     left outer join dbo.DBCUSTSUPP F WITH(NOLOCK) on F.KODECUSTSUPP=A.KodeCustSupp
-    left outer join vwRpDetInvoicePL G on A.NoBukti=G.NoBukti
-    where	year(A.Tanggal)=@Tahun and month(A.Tanggal)=@Bulan
+    where	A.Tanggal between ? and ?
     and isnull(A.FlagKasir,0)=0
     And Isnull(A.pJasa,0)=0
-    order by A.NoBukti" , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-    return $tempOutstanding;
+    ", [$tglawal, $tglakhir]];
+  }
+
+  // Server-side paging DataTables (pola sama dengan ClosingPO/purchasing):
+  // hanya baris halaman yang tampil yang dikirim dari database. Database
+  // diakses lewat jaringan, jadi mengirim ribuan baris sekaligus (satu bulan
+  // ~1.300 baris) yang membuat tabel/checklist lambat 3-5 detik.
+  //   $kolomCari  = kolom yang dicari kotak search (LIKE)
+  //   $kolomUrut  = [indeks kolom DataTables => kolom SQL] yang boleh diurutkan
+  private function halamanDataTables (Request $req, $sqlBind, array $kolomCari, array $kolomUrut, $urutDefault) {
+    [$inner, $bind] = $sqlBind;
+    $start  = max(0, (int) $req->input('start', 0));
+    $length = (int) $req->input('length', 10);
+    $cari   = trim((string) data_get($req->input('search'), 'value', ''));
+
+    $urutan = $urutDefault;
+    $order = $req->input('order.0');
+    if ($order && isset($kolomUrut[(int) $order['column']])) {
+      $arah = strtolower($order['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+      $urutan = 'x.' . $kolomUrut[(int) $order['column']] . ' ' . $arah . ', ' . $urutDefault;
+    }
+
+    $where = '';
+    $bindCari = $bind;
+    if ($cari !== '') {
+      $where = 'where ' . implode(' or ', array_map(fn ($k) => "x.$k like ?", $kolomCari));
+      foreach ($kolomCari as $k) { $bindCari[] = '%' . $cari . '%'; }
+    }
+
+    $batas = $length > 0 ? 'where y.NoBaris between ' . ($start + 1) . ' and ' . ($start + $length) : '';
+
+    $rows = DB::connection('SML')->select("
+      set nocount on
+      select * from (
+        select ROW_NUMBER() over (order by $urutan) NoBaris, count(*) over () TotalBaris, x.*
+        from ($inner) x
+        $where
+      ) y
+      $batas
+      order by y.NoBaris
+    ", $bindCari);
+
+    // Halaman di luar jangkauan (mis. data berkurang setelah otorisasi) tetap
+    // butuh jumlah baris yang benar supaya DataTables bisa mundur halaman.
+    if ($rows) {
+      $filtered = (int) $rows[0]->TotalBaris;
+    } else {
+      $filtered = (int) DB::connection('SML')->select("select count(*) n from ($inner) x $where", $bindCari)[0]->n;
+    }
+    $total = $cari === ''
+      ? $filtered
+      : (int) DB::connection('SML')->select("select count(*) n from ($inner) x", $bind)[0]->n;
+
+    return [
+      "draw" => (int) $req->input('draw', 1),
+      "recordsTotal" => $total,
+      "recordsFiltered" => $filtered,
+      "data" => $rows,
+    ];
+  }
+
+  // Tabel tab "Invoice" (server-side). Default tanggal = bulan periode aktif.
+  public function getListInvoice (Request $req) {
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $tglawal = $req->tglawal ?: $this->tglAwalPeriode($periode);
+    $tglakhir = $req->tglakhir ?: $this->tglAkhirPeriode($periode);
+    $filterip = (int) ($req->filterip ?: 0);
+
+    return $this->halamanDataTables(
+      $req,
+      $this->sqlInvoicePenjualan($tglawal, $tglakhir, $filterip),
+      ['NoBukti', 'NamaCustSupp', 'NoSPB', 'NOSO', 'NoPajak', 'NoPesanan', 'OtoUser1', 'userBatal'],
+      [],
+      'x.NoBukti, x.NoSPB'
+    );
+  }
+
+  public function getListInvoiceCetak (Request $req) {
+
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+
+    // Daftar checklist mengikuti rentang tanggal filter tab Invoice
+    // (programajcSML: selalu bulan periode aktif -- jadi default-nya).
+    $tglawal = $req->tglawal ?: $this->tglAwalPeriode($periode);
+    $tglakhir = $req->tglakhir ?: $this->tglAkhirPeriode($periode);
+
+    return $this->halamanDataTables(
+      $req,
+      $this->sqlChecklistInvoice($tglawal, $tglakhir),
+      ['NoBukti', 'NamaCustSupp', 'NoSPB', 'NOSO'],
+      [1 => 'NoBukti', 2 => 'Tanggal', 3 => 'NamaCustSupp', 4 => 'NoSPB', 5 => 'TglSPB', 6 => 'NOSO', 7 => 'TGLSO'],
+      'x.NoBukti, x.NoSPB'
+    );
 
   }
 
@@ -485,6 +530,19 @@ order by A.NoBukti
     $finalData = [];
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+
+    // Cek periode di server seperti programajcSML (46 = "Periode tidak sesuai").
+    $cp = DB::connection("SML")->select("
+      declare @tgl datetime,@bln int,@thn int
+      select @tgl = :tanggal,@bln=:bulan,@thn=:tahun
+
+      select case when month(@tgl)=@bln and YEAR(@tgl)=@thn then 'ok' else 'no' end xket",
+      ["tanggal" => $req->inputDate, "bulan" => $periode->bulan , "tahun" =>$periode->tahun ]);
+
+    if ($cp[0]->xket == 'no') {
+      return 46;
+    }
+
     $ppncust = DB::connection("SML")->select("select PPN from dbcustsupp where kodecustsupp = :kodecustsupp" , ["kodecustsupp" => $listData[0]['KodeCUstSupp']]);
     // return $ppncust[0]->PPN;
     foreach ($listData as $d) {
@@ -798,59 +856,13 @@ array_push($tes123 , $response);
 
   public function loadAll (Request $req) {
 
-
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $tempOutstanding = DB::connection("SML")->select("
+    // Tab SPB: tanpa filter tanggal, dibatasi sampai akhir bulan periode aktif.
+    // Tab Invoice dimuat per halaman lewat getListInvoice (server-side).
+    $tempOutstanding = $this->querySPBOutstanding($this->tglAkhirPeriode($periode));
 
-
-  declare @Tahun int, @Bulan int, @Periode Varchar(30)
-
-  select @Tahun= :tahun , @Bulan= :bulan
-
-  Set @Periode=CAST(@Tahun as varchar(4))+Case when @Bulan<10 then '0' else '' end+CAST(@Bulan as varchar(2))
-  set nocount on
-  Select distinct A.NoBukti,A.Tanggal,A.KodeCustSupp,
-       D.NOBUKTI Noso,
-       D.Tanggal TglSO,m1.NamaCustSupp, A.IsClose
-  From dbo.DBSPB A  WITH(NOLOCK)
-     Left Outer Join (select NoBukti,NoSO from dbo.dbSPBDet WITH(NOLOCK) group by NoBukti,NoSO) C on A.NoBukti=C.NoBukti
-     left outer join dbo.DBSO D WITH(NOLOCK) on D.Nobukti=C.NoSO
-     left outer join dbo.vwBrowsCustomer E WITH(NOLOCK)on E.Kodecust=A.KodeCustSupp and E.Sales=D.KODESLS
-     left outer join dbo.dbInvoicePLDet F WITH(NOLOCK)on F.NoSPB=A.NoBukti
-     Left Outer Join dbo.DbCustSupp M1 WITH(NOLOCK)on A.KodeCustSupp=M1.KodeCustsupp
-      Left Outer join (Select x.NoBukti,x.NoSPP, Sum(x.QNT-ISNULL(y.qnt,0)) Qnt,
-                      Sum(x.QNT2-ISNULL(y.Qnt2,0)) Qnt2 ,
-                      SUM(case when x.NOSAT=1 then x.QNT-ISNULL(y.qnt,0) else x.QNT2-ISNULL(y.Qnt2,0) end)Qntx
-                      from dbo.dbSPBDet x  WITH(NOLOCK)
-                      left Outer join (Select x.NoSPB, x.UrutSPB, Sum(x.QNT) Qnt, Sum(x.QNT2) Qnt2
-                                       From dbo.DBRSPBDet x WITH(NOLOCK)
-                                       Group by x.NoSPB, x.UrutSPB) y on y.NoSPB=x.NoBukti and y.UrutSPB=x.Urut
-                      group by x.NoBukti, x.NoSPP, y.NoSPB) B on B.NoBukti=A.NoBukti
-
-  where Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                     Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                else 1
-           end As Bit)=0 and F.NoSPB is null and CAST(YEAR(A.Tanggal) as varchar(4))+Case when month(A.Tanggal)<10 then '0' else '' end+CAST(month(A.Tanggal) as varchar(2))<=@Periode
-  and (B.Qntx>0 )
-  order by A.NoBukti
-
-  " , [ "tahun" =>$periode->tahun , "bulan" => $periode->bulan]);
-
-
-
-
-
-  $tglawal = $req->tglawal ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-  $tglakhir = $req->tglakhir ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
-  $filterip = $req->filterip ?: 0;
-  $tempOutstanding2 = $this->queryInvoicePenjualanOtorisasi($tglawal, $tglakhir, $filterip);
-
-
-  return ["tempOutstanding" => $tempOutstanding , "tempOutstanding2" => $tempOutstanding2];
+    return ["tempOutstanding" => $tempOutstanding];
 
 
   }
@@ -910,7 +922,12 @@ Order by A.NoBukti
   public function spOtorisasi ( Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $res = DB::connection('SML')->update("update dbinvoicepl set IsOtorisasi1 = 1, OtoUser1 = :username , TglOto1 = getDate() , IsBatal = NULL, UserBatal = NULL , TglBatal = NULL , MaxOL = 1  where NoBukti = :nobukti", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    // Syarat "belum otorisasi" ikut di WHERE: klik ganda / dua user bersamaan
+    // tidak boleh menjalankan posting hutang-piutang & jurnal dua kali.
+    $res = DB::connection('SML')->update("update dbinvoicepl set IsOtorisasi1 = 1, OtoUser1 = :username , TglOto1 = getDate() , IsBatal = NULL, UserBatal = NULL , TglBatal = NULL , MaxOL = 1  where NoBukti = :nobukti and isnull(IsOtorisasi1,0) = 0", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    if (!$res) {
+      return ["status" => 0, "pesan" => "Invoice " . $req->nobukti . " sudah diotorisasi atau tidak ditemukan"];
+    }
      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'oto','INVC',$req->nobukti,'',0,'DBINVOICEPL');
 
     $values = [
@@ -930,7 +947,10 @@ Order by A.NoBukti
 
   public function spBatalOtorisasi ( Request $req) {
       $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $res = DB::connection('SML')->update("update dbinvoicepl set IsBatal = 1, UserBatal = :username , TglBatal = GETDATE() , IsOtorisasi1 = 0, OtoUser1 = '' , TglOto1 = NULL , maxol = -1 where NoBukti = :nobukti ", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    $res = DB::connection('SML')->update("update dbinvoicepl set IsBatal = 1, UserBatal = :username , TglBatal = GETDATE() , IsOtorisasi1 = 0, OtoUser1 = '' , TglOto1 = NULL , maxol = -1 where NoBukti = :nobukti and isnull(IsOtorisasi1,0) = 1", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    if (!$res) {
+      return ["status" => 0, "pesan" => "Invoice " . $req->nobukti . " belum diotorisasi atau tidak ditemukan"];
+    }
    $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','INVC',$req->nobukti,$req->pket,0,'DBINVOICEPL');
      $values = [
       '',
@@ -946,7 +966,12 @@ Order by A.NoBukti
     return 1;
   }
 
+  // Nama kolom datang dari browser dan disambung langsung ke SQL, jadi hanya
+  // kolom yang memang diedit form Koreksi yang diterima.
   public function onChangeHeader (Request $req) {
+    if (!in_array(strtolower((string) $req->field), ['kurs', 'nuangmuka', 'footnote'], true)) {
+      abort(422, 'Kolom tidak diizinkan');
+    }
     $query = 'update dbinvoicepl set ' . $req->field . ' = :value where nobukti = :nobukti';
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
     return $res;
@@ -954,6 +979,9 @@ Order by A.NoBukti
   }
 
   public function onChangeDetail (Request $req) {
+    if (!in_array(strtolower((string) $req->field), ['kurs'], true)) {
+      abort(422, 'Kolom tidak diizinkan');
+    }
     $query = 'update dbinvoicepldet set ' . $req->field . ' = :value where nobukti = :nobukti';
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
     return $res;

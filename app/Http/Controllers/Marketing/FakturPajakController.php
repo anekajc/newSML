@@ -10,7 +10,6 @@ use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Item;
 use ZipArchive;
 
@@ -36,45 +35,9 @@ class FakturPajakController extends Controller
 
 
 
-    $tempOutstanding = DB::connection("SML")->select("
-
-
-
-
-  select  A.NoBukti, A.NoUrut, A.Tanggal,
-          C.NoSPP, D.Tanggal TglSPP,D.NoSO,E.Tanggal TGLSO, A.KodeCustSupp, F.NAMACUSTSUPP NamaCustSupp, A.Consignee, A.NotifyParty,
-          A.ContractNo, A.PONo, A.PaymentTerm, A.DocCreditNo, A.PoL, A.PoD,
-          A.NameOfVessel, A.ShipOnBoardDate, A.Packing, A.Others, A.ISLOKAL,
-          B.NoSPB, C.Tanggal TglSPB,
-          A.IsCetak, A.IDUser,
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-          A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-          A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-          A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-          A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-          A.NoPajak,TglFPJ,E.NOpesanan,G.DPP,G.PPN,G.NNET
-  from	dbInvoicePL A
-  Left Outer join (Select x.NoBukti, x.NoSPB
-                   from dbInvoicePLDet x
-                   Group by x.NoBukti, x.NoSPB) B on B.NoBukti=A.NoBukti
-  Left Outer join (Select x.NoBukti, x.Tanggal, y.NoSPP
-                   from dbSPB x
-                        left Outer join dbSPBDet y on y.NoBukti=x.NoBukti
-                   group by x.NoBukti, x.Tanggal, y.NoSPP) C on C.nobukti=B.NoSPB
-  left Outer join (Select x.NoBukti, x.Tanggal, y.NoSO
-                   from dbSPP x
-                        left Outer join dbSPPDet y on y.NoBukti=x.NoBukti
-                   group by x.NoBukti, x.Tanggal, y.NoSO) D on D.NoBukti=C.NoSPP
-  left Outer join dbSO E on E.Nobukti=D.NoSO
-  --left outer join vwBrowsCustomer F on F.KodeCust=A.KodeCustSupp and F.Sales=E.KODESLS
-  left outer join DBCUSTSUPP F on F.KODECUSTSUPP=A.KodeCustSupp
-  Left Outer join (select nobukti,Sum(NDPP) DPP,Sum(Floor(NPPN)) PPN,Sum(NNET) NNET
-                  from dbinvoicepldet
-                  group by Nobukti) G on A.nobukti=g.Nobukti
+    $tempOutstanding = DB::connection("SML")->select($this->sqlDaftarInvoice("
   where month(A.tanggal) = :bulan and year(A.tanggal) = :tahun
-  order by A.NoBukti
-
-  " , [ "bulan" => $periode->bulan , "tahun" =>$periode->tahun ]);
+  ") , [ "bulan" => $periode->bulan , "tahun" =>$periode->tahun ]);
 
 
 
@@ -95,50 +58,37 @@ class FakturPajakController extends Controller
 
 
     $tempOutstanding = DB::connection("SML")->select("
-
-
     declare @tglawal datetime, @tglakhir datetime
 
   select @tglawal= :tglawal , @tglakhir= :tglakhir
-
-  select  A.NoBukti, A.NoUrut, A.Tanggal,
-          C.NoSPP, D.Tanggal TglSPP,D.NoSO,E.Tanggal TGLSO, A.KodeCustSupp, F.NAMACUSTSUPP NamaCustSupp, A.Consignee, A.NotifyParty,
-          A.ContractNo, A.PONo, A.PaymentTerm, A.DocCreditNo, A.PoL, A.PoD,
-          A.NameOfVessel, A.ShipOnBoardDate, A.Packing, A.Others, A.ISLOKAL,
-          B.NoSPB, C.Tanggal TglSPB,
-          A.IsCetak, A.IDUser,
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-          A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-          A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-          A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-          A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-          A.NoPajak,TglFPJ,E.NOpesanan,G.DPP,G.PPN,G.NNET
-  from	dbInvoicePL A
-  Left Outer join (Select x.NoBukti, x.NoSPB
-                   from dbInvoicePLDet x
-                   Group by x.NoBukti, x.NoSPB) B on B.NoBukti=A.NoBukti
-  Left Outer join (Select x.NoBukti, x.Tanggal, y.NoSPP
-                   from dbSPB x
-                        left Outer join dbSPBDet y on y.NoBukti=x.NoBukti
-                   group by x.NoBukti, x.Tanggal, y.NoSPP) C on C.nobukti=B.NoSPB
-  left Outer join (Select x.NoBukti, x.Tanggal, y.NoSO
-                   from dbSPP x
-                        left Outer join dbSPPDet y on y.NoBukti=x.NoBukti
-                   group by x.NoBukti, x.Tanggal, y.NoSO) D on D.NoBukti=C.NoSPP
-  left Outer join dbSO E on E.Nobukti=D.NoSO
-  --left outer join vwBrowsCustomer F on F.KodeCust=A.KodeCustSupp and F.Sales=E.KODESLS
-  left outer join DBCUSTSUPP F on F.KODECUSTSUPP=A.KodeCustSupp
-  Left Outer join (select nobukti,Sum(NDPP) DPP,Sum(Floor(NPPN)) PPN,Sum(NNET) NNET
-                  from dbinvoicepldet
-                  group by Nobukti) G on A.nobukti=g.Nobukti
+  " . $this->sqlDaftarInvoice("
   where A.tanggal between @tglawal and @tglakhir
-  order by A.NoBukti
-
-  " , [ "tglawal" => $req->tglawal ,"tglakhir" => $req->tglakhir ]);
+  ") , [ "tglawal" => $req->tglawal ,"tglakhir" => $req->tglakhir ]);
 
 
 
     return ["tempOutstanding" => $tempOutstanding];
+  }
+
+  // Daftar invoice untuk tabel fakturpajak (dipakai index & loadAll).
+  // - Satu baris per invoice: dulu ada join ke dbInvoicePLDet per NoSPB lalu dbSPB/dbSPP,
+  //   sehingga invoice gabungan beberapa Surat Jalan muncul berkali-kali dengan isi sama
+  //   (kolomnya tidak ada yang dipakai). Join itu dibuang.
+  // - No PO = No Pesanan SO (dbSO.NOpesanan lewat dbInvoicePL.NoSPP), sama seperti programajcSML.
+  // - Hanya kolom yang dipakai tabel/export modal, supaya periode panjang tidak berat.
+  private function sqlDaftarInvoice ($where) {
+    return "
+  select  A.NoBukti, A.Tanggal, F.NAMACUSTSUPP NamaCustSupp, E.NOpesanan PONo,
+          A.NoPajak, A.TglFPJ, G.DPP, G.PPN, G.NNET
+  from	dbInvoicePL A
+  left Outer join dbSO E on E.Nobukti=A.NoSPP
+  left outer join DBCUSTSUPP F on F.KODECUSTSUPP=A.KodeCustSupp
+  Left Outer join (select nobukti,Sum(NDPP) DPP,Sum(Floor(NPPN)) PPN,Sum(NNET) NNET
+                  from dbinvoicepldet
+                  group by Nobukti) G on A.nobukti=g.Nobukti
+  " . $where . "
+  order by A.NoBukti
+  ";
   }
 
 
@@ -156,54 +106,48 @@ class FakturPajakController extends Controller
   }
 
 
-public function importExcel(Request $request)
-    {
-
-    // return 1;
-
-    //  return('import Excel  ================');
-        $request->validate([
-            'import_file' => 'required'
-        ]);
-        // return('import Excel');
-        $path = $request->file('import_file')->getRealPath();
-        $data = Excel::load($path)->get();
-        //  dd($data);
-        // return $data;
- 
-        if($data->count()){
-            foreach ($data as $key => $value) {
-                $arr[] = ['title' => $value->title, 'description' => $value->description];
-                $npwp = $value['npwp_pembeli_identitas_lainnya'];
-                $nobukti = $value['referensi'];
-                $nopajak = $value['nomor_faktur_pajak'];
-                $tglfpj = $value['tanggal_faktur_pajak'];
-                  // dd($value, $npwp,'nopajak : ', $nopajak,'nobukti : ', @$nobukti,'tglfpj : ',  $tglfpj);
-
-
-                if ($nobukti != null) {
-                          DB::connection('SML')->update("update dbinvoicepl set nopajak = :nopajak,tglfpj = :tglfpj where nobukti = :nobukti",
-                              [
-                                  "nopajak" => $nopajak,
-                                  "tglfpj" => $tglfpj,
-                                  "nobukti" => $nobukti
-                              ]
-                          );
-                }
-
-            }
- 
-            // if(!empty($arr)){
-            //     Item::insert($arr);
-            // }
-        }
-
-        // return redirect()->route('faktur.index')->with('success', 'Data Faktur Pajak berhasil disimpan!');
-       
-        return back()->with('success', 'Insert Record successfully.ccccccccccccccccccccccc');
+  // Import file Coretax. newSML tidak punya paket maatwebsite/excel (Excel::load() di
+  // sini dulu selalu gagal "Class not found"), jadi file dibaca di browser dengan SheetJS
+  // dan yang dikirim hanya kolom yang dipakai: referensi, nomor_faktur_pajak,
+  // tanggal_faktur_pajak (nama kolom = judul kolom versi slug, sama seperti Excel::load()).
+  // Isi proses sama dengan programajcSML: nobukti = 19 karakter pertama referensi
+  // (referensi Coretax = NoBukti + ' ' + No Pesanan), lalu nomor pajak yang kehilangan
+  // angka 0 di depan (dibaca Excel sebagai angka) dikembalikan.
+  public function importExcel(Request $request)
+  {
+    $rows = json_decode($request->input('rows', '[]'), true);
+    if (!is_array($rows) || !count($rows)) {
+      return response()->json(['message' => 'File tidak berisi data faktur pajak'], 422);
     }
 
-    
+    $jumlah = 0;
+    DB::connection('SML')->transaction(function () use ($rows, &$jumlah) {
+      foreach ($rows as $value) {
+        $referensi = $value['referensi'] ?? null;
+        if ($referensi === null || $referensi === '') { continue; }
+
+        $result = DB::connection('SML')->select("select left(:noreferensi,19) nobukti",["noreferensi" => $referensi]);
+        $nobukti = $result[0]->nobukti ?? null;
+
+        if ($nobukti != null) {
+          $jumlah += DB::connection('SML')->update("update dbinvoicepl set nopajak =:nopajak,tglfpj = :tglfpj where nobukti = :nobukti",
+            [
+              "nopajak" => $value['nomor_faktur_pajak'] ?? null,
+              "tglfpj" => ($value['tanggal_faktur_pajak'] ?? '') !== '' ? $value['tanggal_faktur_pajak'] : null,
+              "nobukti" => $nobukti
+            ]
+          );
+        }
+      }
+
+      DB::connection('SML')->update("Update  dbinvoicepl set NoPajak=:nodepan + NoPajak where NoPajak like '4%'  and year(tanggal)>=2026 ",
+        ["nodepan" => '0']);
+    });
+
+    return ['jumlah' => $jumlah, 'baris' => count($rows)];
+  }
+
+
   public function spHeaderExport (Request $req) {
     // $tanggal = date('Y-m-d H:i:s');
     $res = DB::connection('SML')->select("exec SPHeadCortax :nobukti", [  "nobukti" => $req->nobukti ]);
@@ -217,33 +161,42 @@ public function importExcel(Request $request)
   }
 
 
-public function spExport(Request $req)
-{
-    $nobuktiList = $req->nobukti;
+  // Sama dengan programajcSML: invoice terpilih ditulis ke DBCUSTOMIZE (tipe '7777777')
+  // milik user, lalu SPHeadCortaxweb/SPDetailCortaxweb membaca semuanya sekaligus.
+  // (SPHeadCortax/SPDetailCortax di DBSMLBARU sekarang menerima @Iduser, bukan nobukti,
+  // jadi pemanggilan lama per nobukti menghasilkan data kosong/salah.)
+  public function spExport(Request $req)
+  {
+    $nobuktiList = $req->input('nobukti', []);
+    if (!is_array($nobuktiList) || !count($nobuktiList)) {
+      return response()->json(['message' => 'Pilih minimal satu data'], 422);
+    }
+    $iduser = \Auth::user()->username;
 
-    $allHeaders = [];
-    $allDetails = [];
+    DB::connection('SML')->update("
+      delete DBCUSTOMIZE where iduser=:iduser and tipe in ('tax','7777777')", [ "iduser" => $iduser ]);
 
     foreach ($nobuktiList as $nobukti) {
-        $header = DB::connection('SML')->select(
-            "exec SPHeadCortax :nobukti",
-            ["nobukti" => $nobukti]
-        );
-
-        $detail = DB::connection('SML')->select(
-            "exec SPDetailCortax :nobukti",
-            ["nobukti" => $nobukti]
-        );
-
-        $allHeaders = array_merge($allHeaders, $header);
-        $allDetails = array_merge($allDetails, $detail);
+      DB::connection('SML')->update(
+        "INSERT INTO DBCUSTOMIZE (id,iduser,tipe) values (:id,:iduser,:tipe)",
+        ["id" => $nobukti,"iduser" => $iduser,"tipe" => '7777777']
+      );
     }
 
+    $header = DB::connection('SML')->select(
+      "exec SPHeadCortaxweb :nobukti,:iduser",
+      ["nobukti" => $nobukti,"iduser" => $iduser]
+    );
+    $detail = DB::connection('SML')->select(
+      "exec SPDetailCortaxweb :nobukti,:iduser",
+      ["nobukti" => $nobukti,"iduser" => $iduser]
+    );
+
     return response()->json([
-        'header' => $allHeaders,
-        'detail' => $allDetails
+      'header' => $header,
+      'detail' => $detail
     ]);
-}
+  }
 
 
 
