@@ -127,50 +127,6 @@
 </style>
 
 <style>
-  .tb-pagination-outside {
-    overflow: hidden;
-    margin-top: 8px;
-    padding: 0 14px 10px;
-  }
-  .tb-pagination-outside .dataTables_paginate {
-    float: right;
-  }
-  .tb-pagination-outside .dataTables_info {
-    float: left;
-    padding-top: 0.5em;
-    font-size: 13px;
-    color: var(--sp-text-soft, #6b7280);
-  }
-  .tb-pagination-outside .paginate_button.disabled.ellipsis {
-    border: none;
-    background: transparent;
-    padding: 0.4em 0.3em;
-  }
-  .tb-pagination-outside .paginate_button {
-    box-sizing: border-box;
-    display: inline-block;
-    padding: 0.4em 0.9em;
-    margin-left: 4px;
-    border-radius: 6px;
-    border: 1px solid var(--sp-border, #e7e9ee);
-    color: var(--sp-text, #1f2430);
-    text-decoration: none !important;
-    cursor: pointer;
-  }
-  .tb-pagination-outside .paginate_button.current {
-    background: #0d9488;
-    border-color: #0d9488;
-    color: #fff;
-  }
-  .tb-pagination-outside .paginate_button.disabled {
-    cursor: default;
-    color: var(--sp-text-soft, #6b7280);
-    opacity: .6;
-  }
-  .tb-pagination-outside .paginate_button:hover:not(.disabled):not(.current) {
-    background: var(--sp-bg, #f4f5f7);
-  }
-
   /* "Surat Jalan Otorisasi" -- data selalu satu baris, tidak boleh terbungkus
      ke baris baru (beda dari kolom header yang sudah nowrap sejak awal). */
   #tabel6 tbody td {
@@ -209,13 +165,6 @@
     border-color: #D64550;
     background: #FEF2F2;
   }
-  /* Pager server-side milik tabel/tabel2 (SO Belum Siap Kirim/SO Siap
-     Kirim) -- keduanya tidak lagi dipaginate DataTables di
-     browser (satu halaman per request lewat suratjalanpaginate), tapi tetap
-     dibikin pakai markup+class .paginate_button/.dataTables_paginate yang
-     sama dengan pager DataTables asli (lihat .tb-pagination-outside di atas)
-     supaya tampilannya identik dengan tabel6 (yang masih pager DataTables
-     asli, periode-scoped). */
 </style>
 
   <style>
@@ -689,19 +638,15 @@
         </button>
         <div id="rtBarTabel"></div>
       </div>
-      <div class="po-table-wrap">
         <table id="tabel" class="tb data-table">
 
           <thead style="white-space:nowrap;"></thead>
           <tbody id="tabel_data" class="text-left"></tbody>
         </table>
-      </div>
-      <div class="tb-pagination-outside">
-        <div class="dataTables_info" id="tabelPagerInfo1"></div>
-        <div class="dataTables_paginate paging_simple_numbers">
-          <a class="paginate_button previous" id="tabelPagerPrev1" onclick="sjGotoPage('tabel', sjPageState.tabel.page - 1)">Previous</a>
-          <span id="tabelPagerNumbers1"></span>
-          <a class="paginate_button next" id="tabelPagerNext1" onclick="sjGotoPage('tabel', sjPageState.tabel.page + 1)">Next</a>
+      <div class="dataTables_wrapper dt-bootstrap4">
+        <div class="row">
+          <div class="col-sm-12 col-md-5"><div class="dataTables_info" id="tabelPagerInfo1"></div></div>
+          <div class="col-sm-12 col-md-7"><div class="dataTables_paginate paging_simple_numbers"><ul class="pagination" id="tabelPagerNumbers1"></ul></div></div>
         </div>
       </div>
       <div class="po-rt-hint">
@@ -775,18 +720,14 @@
         </button>
         <div id="rtBarTabel2"></div>
       </div>
-      <div class="po-table-wrap">
         <table id="tabel2" class="tb data-table">
           <thead style="white-space:nowrap;"></thead>
           <tbody id="tabel2_data" class="text-left"></tbody>
         </table>
-      </div>
-      <div class="tb-pagination-outside">
-        <div class="dataTables_info" id="tabelPagerInfo2"></div>
-        <div class="dataTables_paginate paging_simple_numbers">
-          <a class="paginate_button previous" id="tabelPagerPrev2" onclick="sjGotoPage('tabel2', sjPageState.tabel2.page - 1)">Previous</a>
-          <span id="tabelPagerNumbers2"></span>
-          <a class="paginate_button next" id="tabelPagerNext2" onclick="sjGotoPage('tabel2', sjPageState.tabel2.page + 1)">Next</a>
+      <div class="dataTables_wrapper dt-bootstrap4">
+        <div class="row">
+          <div class="col-sm-12 col-md-5"><div class="dataTables_info" id="tabelPagerInfo2"></div></div>
+          <div class="col-sm-12 col-md-7"><div class="dataTables_paginate paging_simple_numbers"><ul class="pagination" id="tabelPagerNumbers2"></ul></div></div>
         </div>
       </div>
       <div class="po-rt-hint">
@@ -3819,35 +3760,53 @@ var sjPageState = {
   tabel2: { page: 1, length: 10, search: '', prioritas: '', total: 0 }
 }
 var SJ_PAGE_INFO = {
-  tabel:  { rowsVar: 'lastTabelRows',  reinit: 'reinitTabel',  prevId: 'tabelPagerPrev1', numbersId: 'tabelPagerNumbers1', nextId: 'tabelPagerNext1', infoId: 'tabelPagerInfo1', searchInpId: 'tabelSearch1', lenSelId: 'tabelLen1', filterInpId: 'input_filterprioritas1', filterBadgeId: 'tabel1FilterBadge' },
-  tabel2: { rowsVar: 'lastTabel2Rows', reinit: 'reinitTabel2', prevId: 'tabelPagerPrev2', numbersId: 'tabelPagerNumbers2', nextId: 'tabelPagerNext2', infoId: 'tabelPagerInfo2', searchInpId: 'tabelSearch2', lenSelId: 'tabelLen2', filterInpId: 'input_filterprioritas2', filterBadgeId: 'tabel2FilterBadge' }
+  tabel:  { rowsVar: 'lastTabelRows',  reinit: 'reinitTabel',  numbersId: 'tabelPagerNumbers1', infoId: 'tabelPagerInfo1', searchInpId: 'tabelSearch1', lenSelId: 'tabelLen1', filterInpId: 'input_filterprioritas1', filterBadgeId: 'tabel1FilterBadge' },
+  tabel2: { rowsVar: 'lastTabel2Rows', reinit: 'reinitTabel2', numbersId: 'tabelPagerNumbers2', infoId: 'tabelPagerInfo2', searchInpId: 'tabelSearch2', lenSelId: 'tabelLen2', filterInpId: 'input_filterprioritas2', filterBadgeId: 'tabel2FilterBadge' }
 }
 
 // Bikin daftar tombol nomor halaman ala DataTables (1 ... 4 5 [6] 7 8 ... 20)
 // -- sebelumnya cuma satu tombol (halaman aktif) tanpa info total, jadi user
 // tidak tahu ada berapa halaman/data sebenarnya. Port pola windowing sederhana,
 // bukan API DataTables asli (datanya per-halaman dari server, bukan di browser).
+// Urutan nomornya disalin dari algoritma "simple_numbers" DataTables (7 tombol)
+// dan markup-nya persis renderer bootstrap4 DataTables (ul.pagination >
+// li.paginate_button.page-item > a.page-link) supaya tampilannya identik dengan
+// pager tabel5/tabel6 walau datanya diambil per-halaman dari server.
 function sjBuildPageButtons(key, page, totalPages) {
-  var windowSize = 2
-  var pages = [1]
-  if (page - windowSize > 2) { pages.push('...') }
-  for (var p = Math.max(2, page - windowSize); p <= Math.min(totalPages - 1, page + windowSize); p++) { pages.push(p) }
-  if (page + windowSize < totalPages - 1) { pages.push('...') }
-  if (totalPages > 1) { pages.push(totalPages) }
-  var html = ''
+  var buttons = 7
+  var half = Math.floor(buttons / 2)
+  var cur = page - 1 // 0-based seperti DataTables
+  var pages = []
+  var i
+  if (totalPages <= buttons) {
+    for (i = 0; i < totalPages; i++) { pages.push(i) }
+  } else if (cur <= half) {
+    for (i = 0; i < buttons - 2; i++) { pages.push(i) }
+    pages.push('...', totalPages - 1)
+  } else if (cur >= totalPages - 1 - half) {
+    pages.push(0, '...')
+    for (i = totalPages - (buttons - 2); i < totalPages; i++) { pages.push(i) }
+  } else {
+    pages.push(0, '...')
+    for (i = cur - half + 2; i < cur + half - 1; i++) { pages.push(i) }
+    pages.push('...', totalPages - 1)
+  }
+  var tombol = function (label, target, kelas, disabled) {
+    return '<li class="paginate_button page-item ' + kelas + (disabled ? ' disabled' : '') + '">'
+      + '<a href="#" class="page-link" onclick="sjGotoPage(\'' + key + '\', ' + target + '); return false;">' + label + '</a></li>'
+  }
+  var html = tombol('Previous', page - 1, 'previous', page <= 1)
   pages.forEach(function (p) {
     if (p === '...') {
-      html += '<span class="paginate_button disabled ellipsis">&hellip;</span>'
+      html += '<li class="paginate_button page-item disabled"><a href="#" class="page-link" onclick="return false;">&hellip;</a></li>'
     } else {
-      html += '<a class="paginate_button' + (p === page ? ' current' : '') + '" onclick="sjGotoPage(\'' + key + '\', ' + p + ')">' + p + '</a>'
+      html += tombol(p + 1, p + 1, p + 1 === page ? 'active' : '', false)
     }
   })
+  html += tombol('Next', page + 1, 'next', page >= totalPages)
   return html
 }
 
-// Markup+class-nya sengaja disamakan dengan pager DataTables asli
-// (.paginate_button/.disabled, lihat .tb-pagination-outside di atas) supaya
-// tampilannya identik dengan tabel6 walau datanya diambil per-halaman sendiri.
 function sjUpdatePagerUI(key) {
   var st = sjPageState[key]
   var info = SJ_PAGE_INFO[key]
@@ -3856,8 +3815,6 @@ function sjUpdatePagerUI(key) {
   var akhir = Math.min(st.page * st.length, st.total)
   $('#' + info.infoId).text('Showing ' + awal + ' to ' + akhir + ' of ' + st.total + ' entries')
   $('#' + info.numbersId).html(sjBuildPageButtons(key, st.page, totalPages))
-  $('#' + info.prevId).toggleClass('disabled', st.page <= 1)
-  $('#' + info.nextId).toggleClass('disabled', st.page >= totalPages)
 }
 
 function sjFetchPage(key) {
