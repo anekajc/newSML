@@ -87,8 +87,8 @@ class CetakTandaTerimaController extends Controller
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
     // Rentang Tgl Cetak tab "sudah cetak"; default sebulan periode aktif.
-    $tglawal = $req->input('tglawal') ?: date('Y-m-01', mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun));
-    $tglakhir = $req->input('tglakhir') ?: date('Y-m-t', strtotime($tglawal));
+    $tglawal = $this->tanggalFilter($req->input('tglawal')) ?: date('Y-m-01', mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun));
+    $tglakhir = $this->tanggalFilter($req->input('tglakhir')) ?: date('Y-m-t', strtotime($tglawal));
 
     $tempOutstanding = DB::connection("SML")->select("
     select A.nobukti,A.tanggal,A.kodecustsupp,C.namacustsupp,B.NOBUKTI nott,B.usercetak,B.TANGGAL tglcetak

@@ -65,7 +65,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Disamakan dengan programajcSML & jam server SQL (WIB). Dulu UTC: jam otorisasi/batal
+    // tercatat 7 jam lebih awal, dan date('Y-m-d') sebelum jam 07.00 WIB menghasilkan tanggal kemarin.
+    'timezone' => 'Asia/Jakarta',
 
     /*
     |--------------------------------------------------------------------------

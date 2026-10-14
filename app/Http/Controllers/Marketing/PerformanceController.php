@@ -119,8 +119,8 @@ order by A.NoBukti
   public function loadAll (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     [$defAwal, $defAkhir] = $this->rentangPeriode($periode);
-    $tglawal = $req->tglawal ?: $defAwal;
-    $tglakhir = $req->tglakhir ?: $defAkhir;
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: $defAwal;
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: $defAkhir;
     $filterperf = $req->filterperf !== null ? (int) $req->filterperf : 0;
 
     $tempOutstanding = $this->queryPerformance($tglawal, $tglakhir, $filterperf);

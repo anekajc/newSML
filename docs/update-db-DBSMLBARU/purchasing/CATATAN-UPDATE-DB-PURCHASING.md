@@ -151,3 +151,14 @@ Jalan keluarnya, pilih salah satu:
 - Jalankan `03_cek_hasil.sql`. Semua kolom dan tabel harus ada, dan jumlah barisnya tidak boleh 0.
 - Ada 5 menu web dan 5 menu laporan yang tidak punya pasangan di menu SML lama, misalnya Analisa Laba Kotor dan laporan Closing Opname. Belum ada user yang punya akses ke menu-menu itu. Kalau dibutuhkan, beri akses lewat **Berkas > Set Pemakai**.
 - Login ke newSML, cek sidebar terisi, lalu buka kelima menu di atas.
+
+---
+
+## 07 — Debet Note: akun posting BD (14 Oktober 2026)
+
+- Jurnal otomatis Debet Note (`vwPostJurnalOto`, Jenis `DN`) = Debet Hutang Usaha (`DBPOSTHUTPIUT` HT urut 2) / Lawan akun `DBPOSTHUTPIUT` Kode `'BD'`. Baris `BD` tidak ada (di DBSMLBARU maupun DBSMLNEW), sehingga akun lawan jurnal DN kosong.
+- Ditambah `BD` = **51300 Discount/Potongan Pembayaran**. Di data lama, akun ini yang dikreditkan untuk credit memo atau potongan dari supplier (146 jurnal, 2019–2026, mis. credit memo Kimberly Clark). 81300 Discount / Bonus Pembelian hanya pernah dipakai sekali. Akunnya dipilih dari data yang ada, atas permintaan user (14 Oktober 2026).
+- Pasangannya di sisi penjualan adalah Kode `BK` (Kredit Note) = 41200, lihat `../marketing/11_kreditnote_perkhp_dan_akun_bk.sql`.
+- Detail Debet Note tidak punya kolom `perkHP`, jadi tidak ada masalah simpan item seperti di Kredit Note.
+- Hanya **menambah** satu baris konfigurasi; aman dijalankan ulang.
+- Sudah dijalankan langsung di DBSMLBARU (server 36.88.190.218) pada 14 Oktober 2026 atas izin user.

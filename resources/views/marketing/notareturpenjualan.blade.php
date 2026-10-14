@@ -7,10 +7,6 @@
 
 @endsection
 
-{{-- Rerouted to match Purchase Order's UI 1:1 via so.blade.php's own pattern,
-     same as invoicejasa/fakturpajak/cetaktandaterima/perintahreturjual/
-     returpenjualangudang/kreditnote before it. Only layout/toolbar/column-header
-     interactivity changed -- business logic untouched. --}}
 @section('css')
 <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
 <style>
@@ -137,6 +133,7 @@
 .data-table td {
   white-space: nowrap;
 }
+
 </style>
 @include('marketing.partials.tampilan-purchasing-css')
 @endsection
@@ -184,7 +181,7 @@
       <div class="card-body">
         <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
           <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true">SPB Retur Gudang</a>
-          <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">Invoice Otorisasi</a>
+          <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">Invoice</a>
         </div>
       </div>
     </div>
@@ -416,7 +413,7 @@
                 </div>
               </div>
 
-              <div class="col-md-12" style="margin-top: -15px">
+              <div class="col-md-12" style="margin-top: -10px">
                 <div class="row">
                   <div class="col-4">
                     <div class="form-group">
@@ -453,7 +450,7 @@
                   </div>
                   <div class="col-8">
                     <div class="form-group">
-                      <input type="date" class="form-control text-center" id="input_add_tanggal" value="{!! date('Y-m-d') !!}"  >
+                      <input type="date" class="form-control text-center" id="input_add_tanggal" value="" disabled>
                     </div>
                   </div>
                 </div>
@@ -647,12 +644,6 @@
                   <td colspan=10 class="text-center">Belum ada data</td>
 
             </tr>
-            <tr style="background-color: ivory; font-weight: bold" >
-              <td colspan=8 class="text-right">Total</td>
-              <td colspan=1 class="text-right">123.456</td>
-              <td colspan=1 class="text-right">7777</td>
-              <td colspan=1 class="text-right"></td>
-            </tr>
 
             </tbody>
 
@@ -662,90 +653,79 @@
 
     </div>
     <hr/>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col" style="width:20%">
-          <div class="row">
-            <div class="col-3">
-              <div class="form-group">
-                <label>Disc %</label>
-              </div>
-            </div>
 
+    {{-- Footer disamakan dengan invoicepenjualan: Total di sebelah Disc % --}}
+    <div class="container-fluid" style="margin-left: 10px">
+    <div class="row" >
 
-            <div class="col-9" >
-              <div class="form-group">
-                <input type="text" class="form-control text-right" id="input_add_headerdiscp" value ="0.00" disabled>
-              </div>
-            </div>
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px; margin-left:-15px;">Total</label>
+          </div>
+          <div class="col-9" style="margin-left:-35px;">
+            <input type="text" class="form-control text-right" id="input_add_headertotal"  value="0.00" disabled>
           </div>
         </div>
-        <div class="col" style="width:20%">
-          <div class="row">
-            <div class="col-3">
-              <div class="form-group">
-                <label>Disc Rp</label>
-              </div>
-            </div>
-
-
-            <div class="col-9" >
-              <div class="form-group">
-                <input type="text" class="form-control text-right" id="input_add_headerdiscrp" value ="0.00" disabled>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col" style="width:20%">
-          <div class="row">
-            <div class="col-3">
-              <div class="form-group">
-                <label>DPP</label>
-              </div>
-            </div>
-
-
-            <div class="col-9" >
-              <div class="form-group">
-                <input type="text" class="form-control text-right" id="input_add_headerdpp" value ="0.00" disabled>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col" style="width:20%">
-          <div class="row">
-            <div class="col-3">
-              <div class="form-group">
-                <label>PPN</label>
-              </div>
-            </div>
-
-
-            <div class="col-9" >
-              <div class="form-group">
-                <input type="text" class="form-control text-right" id="input_add_headerppn" value ="0.00" disabled>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col" style="width:20%">
-          <div class="row">
-            <div class="col-3">
-              <div class="form-group">
-                <label>Grand Total</label>
-              </div>
-            </div>
-
-
-            <div class="col-9" >
-              <div class="form-group">
-                <input type="text" class="form-control text-right" id="input_add_headergrandtotal" value ="0.00" disabled>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px; margin-left:-15px;">Disc %</label>
+          </div>
+          <div class="col-9" style="margin-left:-35px;">
+            <input type="text" class="form-control text-right" id="input_add_headerdiscp"  value="0.00" disabled>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px;margin-left:-10px;">DiscRp</label>
+          </div>
+          <div class="col-9" style="margin-left:-35px;">
+            <input type="text" class="form-control text-right" id="input_add_headerdiscrp"  value ="0.00" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px; margin-left:-15px;">DPP</label>
+          </div>
+          <div class="col-9" style="margin-left:-65px;">
+            <input type="text" class="form-control text-right" id="input_add_headerdpp" value ="0.00" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px; margin-left:-45px;">PPN</label>
+          </div>
+          <div class="col-9" style="margin-left:-90px;">
+            <input type="text" class="form-control text-right" id="input_add_headerppn" value ="0.00" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px; margin-left:-70px;">GrandTotal</label>
+          </div>
+          <div class="col-9" style="margin-left:-50px;">
+            <input type="text" class="form-control text-right" id="input_add_headergrandtotal" value ="0.00" disabled>
+          </div>
+        </div>
+      </div>
+
+    </div>
 
     </div>
 
@@ -2773,6 +2753,11 @@ function nrpPickCI (row, key) {
   return undefined;
 }
 
+// Jawaban ditolak dari server berbentuk {status:0, pesan} (pengaman di controller).
+function nrpDitolak (res) {
+  return res && typeof res === 'object' && Number(res.status) === 0 && res.pesan
+}
+
 function nrpDefaultCart (urut) {
   if (urut === 1) {
     return [
@@ -3105,11 +3090,8 @@ function loadAll () {
     }})
 }
 
+// Konfirmasi sebelum otorisasi, sama seperti programajcSML.
 function buttonOtorisasi (nobukti) {
-
-  console.log(nobukti)
-
-
 
   let akses = $("#akses_isotorisasi1").val();
   if (!Number(akses)) {
@@ -3117,11 +3099,7 @@ function buttonOtorisasi (nobukti) {
     return
   }
 
-
-
-
-
-  alertify.confirm('Otorisasi', 'Otorisasi IVRJ ' + nobukti + ' ?',
+  alertify.confirm('Otorisasi', 'Otorisasi Nota Retur ' + nobukti + ' ?',
       function() {
         let _token = $("#_token").val();
 
@@ -3135,11 +3113,12 @@ function buttonOtorisasi (nobukti) {
 
           },
           success: function(res) {
-            alertify.success('Berhasil update otorisasi')
             loadAll()
-
-
-
+            if (nrpDitolak(res)) {
+              alertify.warning(res.pesan)
+              return
+            }
+            alertify.success('Berhasil update otorisasi')
           },
           error: function (err) {
             console.log(err)
@@ -3149,16 +3128,14 @@ function buttonOtorisasi (nobukti) {
         })
       }
     ,function(){
-      console.log('no')
     });
 
 }
 
+// Pola batal otorisasi menu lain (purchasing / SO / PRJ / Retur Gudang): prompt berjudul
+// "Batal Otorisasi", keterangan wajib diisi (prompt tetap terbuka bila kosong), dicatat ke
+// LoggingData('btloto') di controller. Dulu kosong tetap lolos ke $.abort() yang tidak ada.
 function buttonBatalOtorisasi (nobukti) {
-
-  console.log(nobukti)
-
-
 
   let akses = $("#akses_isotorisasi1").val();
   if (!Number(akses)) {
@@ -3166,19 +3143,14 @@ function buttonBatalOtorisasi (nobukti) {
     return
   }
 
-
-
-
-
-  alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+  alertify.prompt('Batal Otorisasi', "Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
   function(evt, value) {
-    // alertify.success("You entered: " + value);
-    let xpket = value;
+    let xpket = String(value || '').trim();
 
-     if (xpket==''){
-          alertify.warning('Keterangan harus diisi.');
-          $.abort();
-        }
+    if (!xpket) {
+      alertify.warning('Keterangan harus diisi.');
+      return false;
+    }
         let _token = $("#_token").val();
 
         $.ajax({
@@ -3188,15 +3160,16 @@ function buttonBatalOtorisasi (nobukti) {
           data: {
             _token,
             nobukti,
-          pket :value
+            pket : xpket
 
           },
           success: function(res) {
-            alertify.success('Berhasil update otorisasi')
             loadAll()
-
-
-
+            if (nrpDitolak(res)) {
+              alertify.warning(res.pesan)
+              return
+            }
+            alertify.success('Berhasil batal otorisasi')
           },
           error: function (err) {
             console.log(err)
@@ -3539,16 +3512,12 @@ function submitAddEdit () {
     let sat_1 = tempBarangAddEdit.SAT1
     let qnt = $("#AddEditInputQty").val()
     let nosat = tempBarangAddEdit.Nosat
-    let qnt1 = 0
-    let qnt2 = 0
+    // Qty tidak bisa diubah di Edit Item (input disabled), jadi Qnt/Qnt2 dikirim apa adanya.
+    // Dulu untuk satuan 2/3 Qnt dihitung ulang qnt * isi, padahal Qnt yang tampil sudah
+    // Qnt tersimpan -> tiap simpan Edit, qty melonjak isi kali (mis. 2 MTR isi 50 jadi 100).
+    let qnt1 = tempBarangAddEdit.Qnt
+    let qnt2 = tempBarangAddEdit.Qnt2
     let isi = tempBarangAddEdit.Isi
-    if (nosat == 1) {
-      qnt1 = qnt
-      qnt2 = qnt
-    } else {
-      qnt2 = qnt
-      qnt1 =  qnt * isi
-    }
     let harga = $("#AddEditInputHarga").val()
     let discp = $("#AddEditInputDiscPersen").val()
     let discrp = $("#AddEditInputDiscRp").val()
@@ -3563,7 +3532,11 @@ function submitAddEdit () {
     let kodesls = tempBarangAddEdit.KodeSls
     let catatan = $("#input_add_catatan").val()
 
-    if (qnt <= 0 || harga <= 0) {
+    if (Number(discrp) > Number(harga)) {
+      alertify.warning("Diskon melebihi harga")
+      return
+    }
+    if (Number(qnt) <= 0 || Number(harga) <= 0) {
 
 
       alertify.warning("Qnt dan harga <= 0")
@@ -3665,7 +3638,10 @@ function submitAddEdit () {
 
       },
       success: function(res) {
-        console.log('resspadd', res)
+        if (nrpDitolak(res)) {
+          alertify.warning(res.pesan)
+          return
+        }
         tipeform = 'edit'
         loadAll()
 
@@ -3736,16 +3712,12 @@ function submitAddAdd () {
     let sat_1 = tempBarangAddAdd.SAT1
     let qnt = $("#AddAddInputQty").val()
     let nosat = tempBarangAddAdd.NoSat
-    let qnt1 = 0
-    let qnt2 = 0
+    // Qty sisa SPR (QntSisa) sudah dalam satuan Qnt SPR, dan sisa SPR dihitung dari Qnt nota
+    // (vwOutSPBRJual). Jadi Qnt = Qnt2 = qty, sama seperti tombol Buat Nota (spAddAllNew).
+    // Dulu satuan 2/3 dikali isi -> sisa SPR terpotong isi kali.
+    let qnt1 = qnt
+    let qnt2 = qnt
     let isi = tempBarangAddAdd.Isi
-    if (nosat == 1) {
-      qnt1 = qnt
-      qnt2 = qnt
-    } else {
-      qnt2 = qnt
-      qnt1 =  qnt * isi
-    }
     let harga = $("#AddAddInputHarga").val()
     let discp = $("#AddAddInputDiscPersen").val()
     let discrp = $("#AddAddInputDiscRp").val()
@@ -3757,17 +3729,26 @@ function submitAddAdd () {
       flagtipe = 1
     }
     let tipeppn = ppn
-    let kodesls = dataTableAdd[0].kodeSls
+    // dataTableAdd (sisa SPR) bisa kosong; sales nota diambil dari header nota bila ada.
+    let kodesls = (dataTableKoreksi[0] && dataTableKoreksi[0].KodeSls) || (dataTableAdd[0] && dataTableAdd[0].kodeSls) || tempBarangAddAdd.kodeSls || null
     let catatan = $("#input_add_catatan").val()
 
-    if (qnt <= 0 || harga <= 0) {
+    if(!kodebrg) {
+      alertify.warning("Isi kodebarang")
+      return
+    }
+    if (Number(qnt) <= 0 || Number(harga) <= 0) {
 
 
       alertify.warning("Qnt dan harga <= 0")
       return
     }
-    if(!kodebrg) {
-      alertify.warning("Isi kodebarang")
+    if (Number(qnt) > Number(tempBarangAddAdd.QntSisa)) {
+      alertify.warning("Qty melebihi sisa SPR (" + formatAngkaX(tempBarangAddAdd.QntSisa) + ")")
+      return
+    }
+    if (Number(discrp) > Number(harga)) {
+      alertify.warning("Diskon melebihi harga")
       return
     }
 
@@ -3847,6 +3828,7 @@ function submitAddAdd () {
         qnt1 ,
         qnt2 ,
         isi ,
+        tipeform ,
 
         harga ,
         discp ,
@@ -3861,7 +3843,9 @@ function submitAddAdd () {
 
       },
       success: function(res) {
-        if (res == 2) {
+        if (nrpDitolak(res)) {
+          alertify.warning(res.pesan)
+        } else if (res == 2) {
           setNewNoBukti(xppn)
           alertify.warning('Nobukti telah direfresh silahkan submit ulang')
         } else {
@@ -3904,10 +3888,19 @@ function refreshDataTableKoreksi (nobukti , noretur) {
     },
     success: function(res) {
 
-      console.log(res)
-      dataTableAdd = res.detailAdd
+      dataTableAdd = res.detailAdd || []
 
-      dataTableKoreksi = res.detailEdit
+      dataTableKoreksi = res.detailEdit || []
+      if (!dataTableKoreksi.length) {
+        // Nota sudah dihapus (mis. oleh user lain) - dulu error JS di dataTableKoreksi[0].
+        alertify.warning('Nota ' + nobukti + ' tidak ditemukan, mungkin sudah dihapus')
+        document.getElementById("addTableData").innerHTML = `<tr><td colspan=10 class="text-center">Belum ada data</td></tr>`
+        return
+      }
+      // Tanggal & No Urut nota: dulu tidak diisi, jadi form Edit/Detail menampilkan tanggal
+      // hari ini dan cek periode Tambah Item memakai tanggal hari ini, bukan tanggal nota.
+      document.getElementById("input_add_tanggal").value = formatDate(dataTableKoreksi[0].Tanggal)
+      document.getElementById("input_add_nourut").value = dataTableKoreksi[0].NoUrut ? dataTableKoreksi[0].NoUrut : ''
       document.getElementById("input_add_customer").value = dataTableKoreksi[0].KODECUSTSUPP + ' - ' + dataTableKoreksi[0].NAMACUSTSUPP
       document.getElementById("input_add_alamatcustomer").value = dataTableKoreksi[0].Alamat
       document.getElementById("input_add_noinvoice").value = dataTableKoreksi[0].NoInvoice
@@ -3933,14 +3926,16 @@ function refreshDataTableKoreksi (nobukti , noretur) {
 
       document.getElementById("input_add_headerdiscp").value = '0.00'
       document.getElementById("input_add_headerdiscrp").value = '0.00'
-      document.getElementById("input_add_headerdpp").value =  formatAngka(parseFloat(dataTableKoreksi[0].NDPP).toFixed(2))
-      document.getElementById("input_add_headerppn").value = formatAngka(parseFloat(dataTableKoreksi[0].NPPN).toFixed(2))
-      document.getElementById("input_add_headergrandtotal").value = formatAngka(parseFloat(dataTableKoreksi[0].NNET).toFixed(2))
-      document.getElementById("input_add_catatan").value = dataTableKoreksi[0].Catatan
+      // Total seluruh item (xTotal* dari view), dalam Rp seperti kolom Sub Total & daftar nota.
+      // Dulu diambil dari NDPP/NPPN/NNET baris pertama saja, jadi salah kalau item > 1.
+      document.getElementById("input_add_headerdpp").value =  formatAngkaX(dataTableKoreksi[0].xTotalNDPPRp)
+      document.getElementById("input_add_headerppn").value = formatAngkaX(dataTableKoreksi[0].xTotalNPPNRp)
+      document.getElementById("input_add_headergrandtotal").value = formatAngkaX(dataTableKoreksi[0].xTotalNNETRp)
+      document.getElementById("input_add_catatan").value = dataTableKoreksi[0].Catatan ? dataTableKoreksi[0].Catatan : ''
 
 
-      document.getElementById("input_add_hari").value = dataTableKoreksi[0].HARI
-      document.getElementById("input_add_namasales").value = dataTableKoreksi[0].NamaSls
+      document.getElementById("input_add_hari").value = dataTableKoreksi[0].HARI ? dataTableKoreksi[0].HARI : 0
+      document.getElementById("input_add_namasales").value = dataTableKoreksi[0].NamaSls ? dataTableKoreksi[0].NamaSls : ''
       let isDetailView = tipeform === 'detail'
       $('#addTable .nrp-col-actions').toggle(!isDetailView)
 
@@ -3973,11 +3968,8 @@ function refreshDataTableKoreksi (nobukti , noretur) {
       });
       // <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonKoreksiDelete(${i})"><i class="bi bi-trash"></i></button>
 
-      rowTable += `<tr style="background-color: ivory; font-weight: bold" >
-        <td colspan=8 class="text-right">Total</td>
-        <td colspan=1 class="text-right">${formatAngka(parseFloat(xSubtotal).toFixed(2))}</td>
-        ${isDetailView ? '' : '<td colspan=1 class="text-right"></td>'}
-      </tr>`
+      // Total dipindah dari baris bawah tabel ke footer (sebelah Disc %), seperti menu lain.
+      document.getElementById("input_add_headertotal").value = formatAngka(parseFloat(xSubtotal).toFixed(2))
 
       document.getElementById("addTableData").innerHTML = rowTable
 
@@ -4095,14 +4087,15 @@ let pcekglobal = 0
 
   let _token = $("#_token").val();
 
+  dataTableKoreksi = []
   refreshDataTableKoreksi(nobukti, noretur)
 
-  console.log(dataTableKoreksi)
-  if (dataTableKoreksi.length) {
-    if (Number(dataTableKoreksi[0].IsOtorisasi1) == 1) {
-      alertify.warning("Nota sudah diotorisasi")
-      return
-    }
+  if (!dataTableKoreksi.length) {
+    return
+  }
+  if (Number(dataTableKoreksi[0].IsOtorisasi1) == 1) {
+    alertify.warning("Nota sudah diotorisasi")
+    return
   }
 
   document.getElementById("input_add_tipeppn").disabled = false
@@ -4128,35 +4121,15 @@ let pcekglobal = 0
 // tanpa cek "sudah diotorisasi" (di sinilah justru dokumen yang diotorisasi
 // dilihat), serta tombol Submit disembunyikan supaya form ini murni tempat
 // melihat isi nota, bukan mengedit.
+// Detail hanya melihat, jadi tidak dicek kunci periode (sama seperti menu marketing lain).
 function buttonDetail (nobukti, noretur) {
-
-let pcekglobal = 0
-  $.ajax({
-    url: "{!! url('ceklockperiode') !!}",
-    type: "get",
-    async: false,
-    data: {
-    },
-    success: function(res) {
-      if (res.length ) {
-        pcekglobal = 1
-      }
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
-  })
-
-  if (pcekglobal) {
-    alertify.warning("Periode sudah dikunci")
-    return
-  }
 
   tipeform = 'detail'
   cleanFormAdd()
   lockFormAdd()
+  // Catatan tidak ikut dikunci lockFormAdd (dipakai juga di Edit); kalau sebelumnya membuka
+  // Edit, catatan masih bisa diketik dan tersimpan saat blur.
+  document.getElementById("input_add_catatan").disabled = true
 
   refreshDataTableKoreksi(nobukti, noretur)
 
@@ -4178,12 +4151,8 @@ function cleanFormAdd () {
 
       <td colspan=10 class="text-center">Belum ada data</td>
 
-</tr><tr style="background-color: ivory; font-weight: bold" >
-  <td colspan=8 class="text-right">Total</td>
-  <td colspan=1 class="text-right">0.00</td>
-  <td colspan=1 class="text-right">0.00</td>
-  <td colspan=1 class="text-right"></td>
 </tr>`
+document.getElementById("input_add_headertotal").value = '0.00'
 document.getElementById("input_add_nobukti").value = ''
 document.getElementById("input_add_customer").value = ''
 document.getElementById("input_add_alamatcustomer").value = ''
@@ -4194,11 +4163,32 @@ document.getElementById("input_add_catatan").value = ''
 document.getElementById("input_add_kurs").value = '0.00'
 document.getElementById("input_add_tipeppn").value = 0
 document.getElementById("input_add_tipebayar").value = 0
-document.getElementById("input_add_namasales").value = 0
+document.getElementById("input_add_namasales").value = ''
 document.getElementById("input_add_hari").value = 0
-document.getElementById("input_add_tanggal").value = formatDate(new Date())
+document.getElementById("input_add_headerdpp").value = '0.00'
+document.getElementById("input_add_headerppn").value = '0.00'
+document.getElementById("input_add_headergrandtotal").value = '0.00'
+// Tanggal tidak lagi diisi dari jam komputer user: nota baru memakai tanggal server
+// (nrpIsiTanggalServer), nota lama memakai tanggal nota.
+document.getElementById("input_add_tanggal").value = ''
 
 
+}
+
+function nrpIsiTanggalServer () {
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    success: function(res) {
+      if (tipeform === 'add' && res && res[0]) {
+        document.getElementById("input_add_tanggal").value = res[0].tanggal
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil tanggal server, silahkan refresh browser')
+    }
+  })
 }
 
 function lockFormAdd () {
@@ -4215,7 +4205,8 @@ function unlockFormAdd () {
   document.getElementById("input_add_hari").disabled = false
   document.getElementById("input_add_tipebayar").disabled = false
   document.getElementById("input_add_tipeppn").disabled = false
-  document.getElementById("input_add_tanggal").disabled = false
+  // Tanggal tetap disabled (diisi dari server), user tidak bisa mengubahnya.
+  document.getElementById("input_add_tanggal").disabled = true
 
 }
 
@@ -4244,8 +4235,10 @@ function submitDeleteAll (nobukti) {
               },
               success: function(res) {
 
-                console.log(res)
-                if (res == 1) {
+                if (nrpDitolak(res)) {
+                  loadAll()
+                  alertify.warning(res.pesan)
+                } else if (res == 1) {
                   loadAll()
                   alertify.success("Berhasil menghapus nota retur penjualan")
                 }
@@ -4270,16 +4263,8 @@ function submitDeleteAll (nobukti) {
 function submitAddAllNew (nobukti) {
 
   let akses = $("#akses_istambah").val();
-  let checkDate = new Date()
-
-  let periode_bulan = document.getElementById("periode_bulan").value
-  let periode_tahun = document.getElementById("periode_tahun").value
-  console.log(periode_bulan , checkDate)
-  if ( checkDate.getFullYear()  !== Number(periode_tahun)  || (checkDate.getMonth() +1) !== Number(periode_bulan) ) {
-
-      alertify.warning("Tanggal tidak sesuai periode");
-      return
-  }
+  // Cek tanggal vs periode dilakukan di server memakai tanggal server (dulu memakai jam
+  // komputer user, jadi bisa lolos/ditolak keliru bila jam komputer salah).
   if (!Number(akses)) {
     alertify.warning('No access')
     return
@@ -4298,13 +4283,16 @@ function submitAddAllNew (nobukti) {
       },
       success: function(res) {
 
-        console.log(res)
-        if (res.status == 1) {
+        if (nrpDitolak(res)) {
           loadAll()
-          buttonKoreksi(res.nobukti)
+          alertify.warning(res.pesan)
+        } else if (res.status == 1) {
+          loadAll()
+          buttonKoreksi(res.nobukti, nobukti)
           alertify.success("Berhasil menambah nota retur penjualan")
         } else if (res.status ==2 ) {
-          alertify.warning("Data tidak ditemukkan")
+          loadAll()
+          alertify.warning("Data tidak ditemukkan, SPR mungkin sudah dibuatkan nota")
         }
       },
       error: function (err) {
@@ -4347,6 +4335,7 @@ if (pcekglobal) {
   $('#buttonSubmitAddAdd').show()
 
   tipeform = 'add'
+  nrpIsiTanggalServer()
 
   console.log('buttonAdd' , nobukti )
 
@@ -4364,12 +4353,8 @@ if (pcekglobal) {
 
       <td colspan=10 class="text-center">Belum ada data</td>
 
-</tr><tr style="background-color: ivory; font-weight: bold" >
-  <td colspan=8 class="text-right">Total</td>
-  <td colspan=1 class="text-right">0.00</td>
-  <td colspan=1 class="text-right">0.00</td>
-  <td colspan=1 class="text-right"></td>
 </tr>`
+  document.getElementById("input_add_headertotal").value = '0.00'
 
 
 
@@ -4639,7 +4624,11 @@ function onChangeHeader (field, value = '' , idvalue = '') {
       nobukti
     },
     success: function(res) {
-      alertify.success(`update ${field} berhasil`)
+      if (nrpDitolak(res)) {
+        alertify.warning(res.pesan)
+      } else {
+        alertify.success(`update ${field} berhasil`)
+      }
       refreshDataTableKoreksi(nobukti)
 
     },error: function (err) {
@@ -4742,7 +4731,10 @@ function formatAngkaX (angka) {
 }
 
 function formatAngka (angkaString) {
-  console.log('formatAngka' , angkaString);
+  angkaString = String(angkaString)
+  // Angka negatif: dulu jadi "-,123.00"; tanda minus dipisah dulu. NaN/kosong -> 0.00.
+  if (angkaString === 'NaN' || angkaString === '' || angkaString === 'undefined' || angkaString === 'null') { return '0.00' }
+  if (angkaString[0] === '-') { return '-' + formatAngka(angkaString.slice(1)) }
   let tempAngka = angkaString.split('.')
   let temp1 = ''
   for (let i = 0; i < tempAngka[0].length; i++) {
@@ -5404,7 +5396,10 @@ function formatDate (date , pemisah = '-') {
 }
 
 function formatAngka (angkaString) {
-  console.log('formatAngka' , angkaString);
+  angkaString = String(angkaString)
+  // Angka negatif: dulu jadi "-,123.00"; tanda minus dipisah dulu. NaN/kosong -> 0.00.
+  if (angkaString === 'NaN' || angkaString === '' || angkaString === 'undefined' || angkaString === 'null') { return '0.00' }
+  if (angkaString[0] === '-') { return '-' + formatAngka(angkaString.slice(1)) }
   let tempAngka = angkaString.split('.')
   let temp1 = ''
   for (let i = 0; i < tempAngka[0].length; i++) {

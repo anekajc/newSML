@@ -142,13 +142,13 @@ order by A.NoBukti" , ["tglawal" => $tglawal, "tglawal2" => $tglawal, "tglakhir"
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
     // Outstanding: tanggal kosong = semua (seperti programajcSML).
-    $tglawal1 = $req->tglawal1 ?: null;
-    $tglakhir1 = $req->tglakhir1 ?: null;
+    $tglawal1 = $this->tanggalFilter($req->tglawal1) ?: null;
+    $tglakhir1 = $this->tanggalFilter($req->tglakhir1) ?: null;
     $tempOutstanding = $this->queryOutstandingUM($tglawal1, $tglakhir1);
 
     [$defAwal, $defAkhir] = $this->rentangPeriode($periode);
-    $tglawal = $req->tglawal ?: $defAwal;
-    $tglakhir = $req->tglakhir ?: $defAkhir;
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: $defAwal;
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: $defAkhir;
     $filterumj = (int) ($req->filterumj ?: 0);
     $tempOutstanding2 = $this->queryUangMuka($tglawal, $tglakhir, $filterumj);
 

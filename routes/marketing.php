@@ -316,6 +316,7 @@ Route::get('/socheckhargaddd', [SOController::class, 'SOCheckHargaAdd']);
   Route::get('/notareturpenjualanloadall', [NotaReturPenjualanController::class, 'loadAll']);
   Route::post('/notareturpenjualanspotorisasi', [NotaReturPenjualanController::class, 'spOtorisasi']);
   Route::post('/notareturpenjualanspbatalotorisasi', [NotaReturPenjualanController::class, 'spBatalOtorisasi']);
+  Route::post('/notareturpenjualanonchangeheader', [NotaReturPenjualanController::class, 'onChangeHeader']);
 
   // KREDITNOTE
   Route::get('/kreditnote', [KreditNoteController::class, 'index']);

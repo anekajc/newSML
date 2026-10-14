@@ -899,8 +899,8 @@ and Isnull(B.PUrgent,0)=1
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $tglawalspb = $req->tglawalspb ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
-    $tglakhirspb = $req->tglakhirspb ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
+    $tglawalspb = $this->tanggalFilter($req->tglawalspb) ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $tglakhirspb = $this->tanggalFilter($req->tglakhirspb) ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
 
     // foreach ($outstanding as $p) {
     //   // code...

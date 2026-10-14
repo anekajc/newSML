@@ -165,35 +165,93 @@ order by A.TANGGAL, A.NoBUKTI"
 
   }
 
+  // Header nota (DBINVOICERPJ) untuk pengaman server; null kalau nota tidak ada.
+  private function headerNota ($nobukti) {
+    $header = DB::connection('SML')->select("select NoBukti, NoUrut, Tanggal, NORPJ, isnull(IsOtorisasi1,0) IsOtorisasi1 from DBINVOICERPJ where NoBukti = cast(? as varchar(100))", [(string) $nobukti]);
+    return $header ? $header[0] : null;
+  }
+
+  // Dulu route-nya tidak terdaftar (JS memanggil notareturpenjualanonchangeheader -> 404 ->
+  // "Terjadi kesalahan silahkan refresh browser" tiap ubah Tipe PPN/Pembayaran/Hari/Catatan/
+  // Valas) dan nama kolom diambil mentah dari request. Sekarang kolom dibatasi daftar ini.
+  // Jawaban ditolak berbentuk {status:0, pesan}.
   public function onChangeHeader (Request $req) {
-    $query = 'update dbinvoicerpj set ' . $req->field . ' = :value where nobukti = :nobukti';
-    $res = DB::connection('SML')->update($query, ["value" => $req->valuex , "nobukti" => $req->nobukti]);
-    if($req->field == 'PPN') {
-      DB::connection('SML')->update('update dbinvoicerpjdet set PPN = :value where nobukti = :nobukti',["value" => $req->valuex , "nobukti" => $req->nobukti] );
+    $kolom = [
+      'catatan'   => 'catatan',
+      'ppn'       => 'PPN',
+      'hari'      => 'HARI',
+      'tipebayar' => 'TIPEBAYAR',
+      'kodevls'   => 'KODEVLS',
+      'kurs'      => 'KURS',
+    ];
+    $field = $kolom[strtolower((string) $req->field)] ?? null;
+    if (!$field) {
+      return ["status" => 0, "pesan" => "Kolom " . $req->field . " tidak bisa diubah"];
+    }
+    $header = $this->headerNota($req->nobukti);
+    if (!$header) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " tidak ditemukan, mungkin sudah dihapus"];
+    }
+    if ((int) $header->IsOtorisasi1 === 1) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " sudah diotorisasi, tidak bisa diubah"];
+    }
+
+    $value = $req->valuex;
+    if (in_array($field, ['PPN', 'HARI', 'TIPEBAYAR'])) {
+      $value = (int) $value;
+    } else if ($field === 'KURS') {
+      $value = (float) $value;
+    } else if ($field === 'catatan') {
+      $value = mb_substr((string) $value, 0, 200);
+    } else {
+      $value = (string) $value;
+    }
+
+    $res = DB::connection('SML')->update('update dbinvoicerpj set ' . $field . ' = :value where nobukti = cast(:nobukti as varchar(100))', ["value" => $value , "nobukti" => $req->nobukti]);
+    if ($field == 'PPN') {
+      // TipePPN selalu sama dengan PPN saat nota dibuat (spAddAllNew), jadi ikut diubah.
+      DB::connection('SML')->update('update dbinvoicerpj set TipePPN = :value where nobukti = cast(:nobukti as varchar(100))', ["value" => $value , "nobukti" => $req->nobukti]);
+      DB::connection('SML')->update('update dbinvoicerpjdet set PPN = :value where nobukti = cast(:nobukti as varchar(100))',["value" => $value , "nobukti" => $req->nobukti] );
+    }
+    if ($field == 'KURS') {
+      // Nilai Rp di detail (SUBTOTALRp/NDPPRp/...) dihitung dari Kurs detail.
+      DB::connection('SML')->update('update dbinvoicerpjdet set Kurs = :value where nobukti = cast(:nobukti as varchar(100))',["value" => $value , "nobukti" => $req->nobukti] );
+    }
+    if ($field == 'HARI') {
+      // Jatuh tempo diisi Tanggal + Hari saat nota dibuat (sp_TransInvoiceRPJ).
+      DB::connection('SML')->update('update dbinvoicerpj set TglJatuhTempo = Tanggal + HARI where nobukti = cast(:nobukti as varchar(100))',["nobukti" => $req->nobukti] );
     }
     return $res;
 
   }
 
   public function getDetailPenerimaan (Request $req) {
+    // Dari tombol Edit sesudah "Buat Nota" (submitAddAllNew) dan dari onChangeHeader, No Retur
+    // tidak ikut dikirim -> daftar barang SPR kosong. Ambil dari header nota.
+    if (!$req->noretur && $req->nobukti) {
+      $header = $this->headerNota($req->nobukti);
+      if ($header) {
+        $req->merge(["noretur" => $header->NORPJ]);
+      }
+    }
     $detailAdd = DB::connection("SML")->select("
 
 
     select  *
     from vwBrowsOutSPBRJual A
-    where nobukti = :noretur
+    where nobukti = cast(:noretur as varchar(100))
 
 
 
-    " , [ "noretur" => $req->noretur]);
+    " , [ "noretur" => (string) $req->noretur]);
 
     $detailEdit = DB::connection("SML")->select("
 
     Select  A.*
     From vwTransINVOICERPJ A
-    where  a.nobukti = :nobukti
+    where  a.nobukti = cast(:nobukti as varchar(100))
     order By A.Urut
-    " , [ "nobukti" => $req->nobukti ]);
+    " , [ "nobukti" => (string) $req->nobukti ]);
 
         return [
           "detailAdd" => $detailAdd,
@@ -421,6 +479,27 @@ $tipeform = $req->tipeform;
 $nobukti = $req->nobukti;
 $xurut=0;
 
+// Pengaman server: nota yang sudah diotorisasi / sudah dihapus user lain tidak boleh diubah,
+// dan qty item baru tidak boleh melebihi sisa SPR (dulu tidak dicek sama sekali).
+// Jawaban ditolak berbentuk {status:0, pesan}.
+if (!($choice == 'I' && $tipeform == 'add')) {
+  $header = $this->headerNota($nobukti);
+  if (!$header) {
+    return ["status" => 0, "pesan" => "Nota " . $nobukti . " tidak ditemukan, mungkin sudah dihapus"];
+  }
+  if ((int) $header->IsOtorisasi1 === 1) {
+    return ["status" => 0, "pesan" => "Nota " . $nobukti . " sudah diotorisasi, tidak bisa diubah"];
+  }
+}
+if ($choice == 'I') {
+  $sisa = DB::connection('SML')->select("select QntSisa from vwBrowsOutSPBRJual where NOBUKTI = cast(? as varchar(100)) and URUT = ?", [(string) $req->norpj, (int) $req->urutrpj]);
+  if (!$sisa) {
+    return ["status" => 0, "pesan" => "Barang ini sudah tidak ada sisa di SPR " . $req->norpj];
+  }
+  if ((float) $req->qnt > (float) $sisa[0]->QntSisa + 0.0001) {
+    return ["status" => 0, "pesan" => "Qty melebihi sisa SPR (" . number_format((float) $sisa[0]->QntSisa, 2, '.', ',') . ")"];
+  }
+}
 
 
 
@@ -459,13 +538,25 @@ if ($choice == 'I' && $tipeform == 'add' ) {
   }
 }
 
+// Tanggal nota: nota baru selalu tanggal server SQL (input tanggal di form disabled), nota
+// yang sudah ada tetap memakai tanggalnya sendiri - bukan nilai yang dikirim browser.
+if ($choice == 'I' && $tipeform == 'add') {
+  $tanggalNota = DB::connection('SML')->select("select convert(varchar(10), getdate(), 23) tanggal")[0]->tanggal;
+  $periodeNota = app('App\Http\Controllers\GlobalController')->getPeriode();
+  if ((int) substr($tanggalNota, 0, 4) !== (int) $periodeNota->tahun || (int) substr($tanggalNota, 5, 2) !== (int) $periodeNota->bulan) {
+    return ["status" => 0, "pesan" => "Tanggal server (" . date('d/m/Y', strtotime($tanggalNota)) . ") tidak sesuai periode aktif"];
+  }
+} else {
+  $tanggalNota = date('Y-m-d', strtotime($header->Tanggal));
+}
+
 
 
 $values = [
   $req->choice,
   $req->nobukti,
   $req->nourut,
-  $req->tanggal,
+  $tanggalNota,
   $req->kodecustsupp,
   $req->noinvoice ? $req->noinvoice : '',
   $req->disc,
@@ -552,9 +643,23 @@ if ($detail) {
     "status" => 2
   ];
 }
+// listData memakai filter tahun > 2024; kalau kosong pakai baris detail (kolomnya sama).
+if (!$listData) {
+  $listData = $detail;
+}
 
 $username = \Auth::user()->username;
 $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+
+// Nota dibuat dengan tanggal server SQL hari ini (bukan jam komputer user / jam PHP), nomor
+// bukti dari periode aktif.
+$tglServer = DB::connection('SML')->select("select convert(varchar(10), getdate(), 23) tanggal")[0]->tanggal;
+if ((int) substr($tglServer, 0, 4) !== (int) $periode->tahun || (int) substr($tglServer, 5, 2) !== (int) $periode->bulan) {
+  return [
+    "status" => 0,
+    "pesan" => "Tanggal server (" . date('d/m/Y', strtotime($tglServer)) . ") tidak sesuai periode aktif"
+  ];
+}
 
     if ($xppn == 1) {
       $inisial = DB::connection("SML")->select('select TT from DBNOMOR');
@@ -603,7 +708,7 @@ $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
       $choice,
       $noBukti[0]->Nobukti,
       $noBukti[0]->Nourut,
-      date('Y-m-d'),
+      $tglServer,
       $listData[0]->KODECUSTSUPP,
       $listData[0]->Noinv ? $listData[0]->Noinv : '',
       0,
@@ -647,7 +752,15 @@ $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
   }
 
-
+    // sp_TransInvoiceRPJ rollback diam-diam kalau gagal (jawabannya tetap sukses), jadi
+    // dipastikan dulu notanya benar-benar ada.
+    if (!$this->headerNota($noBukti[0]->Nobukti)) {
+      return [
+        "status" => 0,
+        "pesan" => "Nota retur gagal disimpan, silakan coba lagi"
+      ];
+    }
+    app('App\Http\Controllers\GlobalController')->LoggingData('I','IVRJ',$noBukti[0]->Nobukti,'',0,'DBINVOICERPJ');
 
     return [
       "status" => 1 ,
@@ -658,10 +771,21 @@ $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
 }
 
+// Dulu nota yang sudah diotorisasi (sudah terposting ke piutang & jurnal) tetap bisa dihapus
+// lewat request langsung, dan tidak dicatat ke log. Jawaban ditolak berbentuk {status:0, pesan}.
 public function spDeleteAll (Request $req) {
+  $header = $this->headerNota($req->nobukti);
+  if (!$header) {
+    return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " tidak ditemukan, mungkin sudah dihapus"];
+  }
+  if ((int) $header->IsOtorisasi1 === 1) {
+    return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " sudah diotorisasi, batalkan otorisasi dulu sebelum menghapus"];
+  }
 
-  DB::connection('SML')->update("delete from DBINVOICERPJDet where NoBukti = :nobukti
-  delete from DBINVOICERPJ where NoBukti = :nobukti1
+  app('App\Http\Controllers\GlobalController')->LoggingData('D','IVRJ',$req->nobukti,'',0,'DBINVOICERPJ');
+
+  DB::connection('SML')->update("delete from DBINVOICERPJDet where NoBukti = cast(:nobukti as varchar(100))
+  delete from DBINVOICERPJ where NoBukti = cast(:nobukti1 as varchar(100)) and isnull(IsOtorisasi1,0) <> 1
 ",["nobukti" => $req->nobukti , "nobukti1" => $req->nobukti]);
   return 1;
 
@@ -684,13 +808,16 @@ public function spDeleteAll (Request $req) {
       }
     // }
 
+    // Nota baru selalu bertanggal server SQL, bukan tanggal kiriman browser.
+    $tanggalNota = DB::connection('SML')->select("select convert(varchar(10), getdate(), 23) tanggal")[0]->tanggal;
+
     foreach ($tempData as $d)  {
 
     $values = [
       $choice,
       $req->nobukti,
       $req->nourut,
-      $req->tanggal,
+      $tanggalNota,
       $req->kodecustsupp,
       $req->noinvoice ? $req->noinvoice : '',
       0,
@@ -847,8 +974,8 @@ public function spDeleteAll (Request $req) {
 " );
 
 
-    $tglawal = $req->tglawal ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
     $filternrp = $req->filternrp ?: 0;
     $tempOutstanding2 = $this->queryInvoiceOtorisasi($tglawal, $tglakhir, $filternrp);
 
@@ -910,10 +1037,27 @@ Order by A.NoBukti
   }
 
 
+  // Jawaban ditolak berbentuk {status:0, pesan} (dibaca nrpDitolak() di view); sukses tetap 1.
   public function spOtorisasi ( Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $res = DB::connection('SML')->update("update DBINVOICERPJ set IsOtorisasi1 = 1, OtoUser1 = :username , TglOto1 = getDate() , IsBatal = NULL, UserBatal = NULL , TglBatal = NULL , MaxOL = 1  where NoBukti = :nobukti", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    $header = $this->headerNota($req->nobukti);
+    if (!$header) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " tidak ditemukan, mungkin sudah dihapus"];
+    }
+    if ((int) $header->IsOtorisasi1 === 1) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " sudah diotorisasi"];
+    }
+    $jmlItem = DB::connection('SML')->select("select count(*) n from DBINVOICERPJDet where NoBukti = cast(? as varchar(100))", [(string) $req->nobukti]);
+    if (!(int) $jmlItem[0]->n) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " belum punya item"];
+    }
+
+    // isnull(IsOtorisasi1,0) <> 1: penjaga terakhir kalau dua user menekan Otorisasi bersamaan.
+    $res = DB::connection('SML')->update("update DBINVOICERPJ set IsOtorisasi1 = 1, OtoUser1 = :username , TglOto1 = getDate() , IsBatal = NULL, UserBatal = NULL , TglBatal = NULL , MaxOL = 1  where NoBukti = cast(:nobukti as varchar(100)) and isnull(IsOtorisasi1,0) <> 1", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    if (!$res) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " sudah diotorisasi"];
+    }
      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'oto','IVRJ',$req->nobukti,'',0,'DBINVOICERPJ');
     
     $values = [
@@ -930,10 +1074,26 @@ Order by A.NoBukti
     return 1;
   }
 
+  // Keterangan (alasan) batal otorisasi wajib, sama seperti menu lain; dicatat ke LoggingData('btloto').
   public function spBatalOtorisasi ( Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $res = DB::connection('SML')->update("update DBINVOICERPJ set IsBatal = 1, UserBatal = :username , TglBatal = GETDATE() , IsOtorisasi1 = 0, OtoUser1 = '' , TglOto1 = NULL , maxol = -1 where NoBukti = :nobukti ", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
-     $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','IVRJ',$req->nobukti,$req->pket,0,'DBINVOICERPJ');
+    $pket = trim((string) $req->pket);
+    if ($pket === '') {
+      return ["status" => 0, "pesan" => "Keterangan batal otorisasi harus diisi"];
+    }
+    $header = $this->headerNota($req->nobukti);
+    if (!$header) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " tidak ditemukan, mungkin sudah dihapus"];
+    }
+    if ((int) $header->IsOtorisasi1 !== 1) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " belum diotorisasi"];
+    }
+
+    $res = DB::connection('SML')->update("update DBINVOICERPJ set IsBatal = 1, UserBatal = :username , TglBatal = GETDATE() , IsOtorisasi1 = 0, OtoUser1 = '' , TglOto1 = NULL , maxol = -1 where NoBukti = cast(:nobukti as varchar(100)) and IsOtorisasi1 = 1", ["username" => \Auth::user()->username , "nobukti" => $req->nobukti ]);
+    if (!$res) {
+      return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " belum diotorisasi"];
+    }
+     $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','IVRJ',$req->nobukti,$pket,0,'DBINVOICERPJ');
     
     $values = [
       '',

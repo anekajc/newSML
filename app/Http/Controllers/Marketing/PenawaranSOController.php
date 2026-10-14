@@ -149,10 +149,10 @@ order by NoBukti" , ["bulan" => $periode->bulan , "tahun" =>$periode->tahun]);
     $periode = NewPeriode::where('user_id' , \Auth::User()->username)->first();
     //
 
-    $tglawal = $req->tglawal ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
-    $tglawal2 = $req->tglawal2 ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
-    $tglakhir2 = $req->tglakhir2 ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
+    $tglawal2 = $this->tanggalFilter($req->tglawal2) ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
+    $tglakhir2 = $this->tanggalFilter($req->tglakhir2) ?: \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
 
     // 0 = Semua (tanpa filter status), 1 = Belum Otorisasi, 2 = Sudah Otorisasi (default,
     // sama seperti perilaku lama sebelum filter ini ada).

@@ -456,8 +456,8 @@ if ($header) {
   public function loadAll (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $tglawal = $req->tglawal ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
-    $tglakhir = $req->tglakhir ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
     $filterrsj = $req->filterrsj ?: 0;
     $tempOutstanding = $this->queryReturSuratJalanOtorisasi($tglawal, $tglakhir, $filterrsj);
 
