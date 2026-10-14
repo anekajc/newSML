@@ -6,13 +6,29 @@
 
 @endsection
 
-{{-- Rerouted to match Purchase Order's UI 1:1 via so.blade.php's own pattern,
-     same as invoicejasa/fakturpajak/cetaktandaterima/perintahreturjual before it.
-     Only layout/toolbar/column-header interactivity changed -- business logic
-     untouched. --}}
 @section('css')
 <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
 <style>
+/* Lapisan "Memuat data..." di modal pemilih - chip & spinner yang sama dengan menu marketing
+   lain (.po-loading-chip dari partial tampilan-purchasing-css). */
+#form .modal-body { position: relative; }
+#form .modal-body.kn-sedang-memuat { min-height: 220px; }
+#form .modal-body.kn-sedang-memuat .dataTables_wrapper,
+#form .modal-body.kn-sedang-memuat table { visibility: hidden; }
+.kn-picker-memuat {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, .62);
+  animation: knMunculLoading .34s ease-out both;
+}
+@keyframes knMunculLoading {
+  0%, 45% { opacity: 0; }
+  100% { opacity: 1; }
+}
 .custom-tabs {
   display: inline-flex; justify-content: flex-start; align-items: center; gap: 2px;
   background-color: #f1f3f5; border-radius: 20px; padding: 3px;
@@ -207,6 +223,10 @@
         <button class="po-btn-filter" type="button" onclick="$('#modalFilterKN').modal('show')">
           <i class="bi bi-funnel"></i> Filter
         </button>
+        {{-- Tombol tambah KN (programajcSML: "+ KN") dulu hilang saat tampilan diganti. --}}
+        <div class="po-toolbar-act">
+          <button type="button" class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
+        </div>
       </div>
       <div id="rtBarTabel"></div>
       <table id="tabel" class="data-table">
@@ -216,13 +236,15 @@
       <div class="po-rt-hint"><i class="bi bi-info-circle"></i> Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom untuk menyembunyikan kolom atau mengatur jumlah desimal.</div>
     </div>
   </div>
+</div>{{-- /#contentContainer --}}
+</div>{{-- /#page1 --}}
 
 <div id="page2" style="display: none" class="mainpage container-fluid" >
 <div id="formBsGrid">
 
-  <div class="row" style="margin-top: -30px">
+  <div class="row">
     <div class="col-8 text-left">
-      <h2>Form Kredit Note</h2>
+      <h2></h2>
     </div>
     <div class="col-4 text-right">
       <button type="button" class="btn btn-danger btn-lg" style="
@@ -282,12 +304,12 @@
               <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-                <label>Tgl</label>
+                <label>Tanggal</label>
               </div>
             </div>
             <div class="col-md-8">
               <div class="form-group">
-                <input type="date" class="form-control text-center" id="input_add_tanggal" value="{!! date('Y-m-d') !!}"  >
+                <input type="date" class="form-control text-center" id="input_add_tanggal" value="" disabled>
               </div>
             </div>
           </div>
@@ -943,6 +965,7 @@
 
 
 
+  </div>{{-- /#modalAdd --}}
   </div>{{-- /#formBsGrid --}}
 </div>
 
@@ -1195,13 +1218,6 @@
 
 
 
-
-
-  </div>
-</div>
-
-
-
 <!--  -->
 
 <!-- start modal add -->
@@ -1227,7 +1243,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>Customer</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -1248,18 +1264,7 @@
               </thead>
 
 
-              <tbody id="tabel_data_add_list_customer" class="text-left" >
-
-                <tr class="pick-row">
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-
-
-
-              </tr>
-              </tbody>
+              <tbody id="tabel_data_add_list_customer" class="text-left" ></tbody>
 
 
             </table>
@@ -1282,7 +1287,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button id="" type="button" onclick="buttonAddListBatal()" class="btn btn-lg btn-batal-add" style="
+        <button id="" type="button" onclick="buttonAddListBatal()" class="btn btn-lg btn-batal-add picker-kas-batal" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -1712,6 +1717,43 @@ $(document).ready(function(){
   //   formAddListItem
 });
 
+// Jawaban server yang menolak aksi berbentuk {status:0, pesan} (KN sudah diotorisasi user
+// lain, sudah dihapus, tanggal server di luar periode, dll).
+function knDitolak (res) {
+  return res && typeof res === 'object' && !Array.isArray(res) && Number(res.status) === 0
+}
+
+// Tanggal KN baru diambil dari jam server SQL (getdate), sama seperti PRJ/purchasing, supaya
+// tidak bisa diubah user / mengikuti jam komputer user. Server juga memakai tanggal server saat simpan.
+function knIsiTanggalServer () {
+  document.getElementById("input_add_tanggal").value = ''
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    success: function(res) {
+      if (tipeform === 'add' && res && res[0]) {
+        document.getElementById("input_add_tanggal").value = res[0].tanggal
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil tanggal server, silahkan refresh browser')
+    }
+  })
+}
+
+// Escape untuk teks di dalam HTML (nama customer/keterangan bisa mengandung tanda kutip, < atau &).
+function knEsc (v) {
+  return String(v === undefined || v === null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+// Tanggal dari server (yyyy-mm-dd ...) diisi apa adanya ke input date. Dulu lewat
+// valueAsDate = new Date(...) yang memakai UTC, sehingga di WIB tanggal mundur 1 hari.
+function knTglInput (tgl) {
+  return tgl ? String(tgl).substring(0, 10) : ''
+}
+
 function setNewNoBukti (xval = 1) {
   console.log(xval)
   $.ajax({
@@ -1763,7 +1805,8 @@ function cleanFormAdd () {
   document.getElementById("input_add_namacustomer").value = ''
   document.getElementById("input_add_alamatcustomer").value = ''
   document.getElementById("input_add_nobukti").value = ''
-  document.getElementById("input_add_tanggal").valueAsDate = new Date()
+  document.getElementById("input_add_nourut").value = ''
+  document.getElementById("input_add_tanggal").value = ''
 
 
 
@@ -1806,6 +1849,15 @@ function submitAddEdit () {
     alertify.warning("Nilai < 0")
     return
   }
+  let saldoInv = Number(barang.kodeVls === 'IDR' || !barang.kodeVls ? barang.Saldo : barang.SaldoD) || 0
+  if (!(Number(nilai) > 0)) {
+    alertify.warning("Nilai KN harus lebih dari 0")
+    return
+  }
+  if (Number(nilai) > saldoInv + 0.005) {
+    alertify.warning("Nilai KN melebihi saldo invoice (" + formatAngka(saldoInv.toFixed(2)) + ")")
+    return
+  }
 
   console.log({
     choice,
@@ -1846,6 +1898,11 @@ function submitAddEdit () {
 
       console.log('resspadd', res)
       // return
+      if (knDitolak(res)) {
+        alertify.warning(res.pesan)
+        loadAll()
+        return
+      }
       if (res == 1) {
 
 
@@ -1894,11 +1951,13 @@ function buttonAddDelete (i) {
         let kodecustsupp = barang.KodeSupp
         let nobukti  = $("#input_add_nobukti").val()
         let tanggal  = $("#input_add_tanggal").val()
-        let noinvoice  = $("#AddEditNoInv").val()
-        let nilai  = $("#AddEditNilai").val()
-        let nilairp  = $("#AddEditNilaiRp").val()
-        let kodevls  = $("#AddEditValas").val()
-        let kurs  = $("#AddEditKurs").val()
+        // Data item yang dihapus diambil dari baris itu sendiri, bukan dari form Edit Item
+        // (dulu berisi item terakhir yang diedit / kosong).
+        let noinvoice  = barang.NoInv
+        let nilai  = barang.Nilai
+        let nilairp  = barang.NilaiRp
+        let kodevls  = barang.kodeVls
+        let kurs  = barang.Kurs
         console.log(nobukti, urut)
         $.ajax({
           url: "{!! url('kreditnotespkoreksi') !!}",
@@ -1924,6 +1983,11 @@ function buttonAddDelete (i) {
 
             console.log('resspadd', res)
             // return
+            if (knDitolak(res)) {
+              alertify.warning(res.pesan)
+              loadAll()
+              return
+            }
             if (res == 1) {
 
 
@@ -1964,6 +2028,15 @@ function buttonAddPickInvoice () {
   let tanggal = $("#input_add_tanggal").val();
     let kodecustsupp = $("#input_add_kodecustomer").val();
 
+  if (!tanggal) {
+    alertify.warning("Tanggal server belum terambil, silahkan tutup form lalu tekan Tambah lagi");
+    return
+  }
+  if (!kodecustsupp || !nobukti) {
+    alertify.warning("Pilih customer terlebih dahulu");
+    return
+  }
+
   if ( checkDate.getFullYear()  !== Number(periode_tahun)  || (checkDate.getMonth() +1) !== Number(periode_bulan) ) {
 
       alertify.warning("Tanggal tidak sesuai periode");
@@ -1975,6 +2048,7 @@ function buttonAddPickInvoice () {
   let tempData = []
   // let checkQnt = 0
   let checkMinus = 0
+  let checkPesan = ''
   console.log(listInvoice)
     listInvoice.forEach((item, i) => {
       console.log(document.getElementById(`add_checkbox${i}`).checked)
@@ -1990,6 +2064,13 @@ function buttonAddPickInvoice () {
         listInvoice[i].inputNilaiRp = checkNilaiRp
         if (Number(checkNilai) < 0 || Number(checkKurs) < 0 ) {
           checkMinus = 1
+        }
+        // Nilai harus > 0 dan tidak melebihi saldo invoice (IDR: Saldo, valas: SaldoD).
+        let saldoInv = Number(item.KodeVls === 'IDR' || !item.KodeVls ? item.Saldo : item.SaldoD) || 0
+        if (!checkPesan && !(Number(checkNilai) > 0)) {
+          checkPesan = 'Nilai KN invoice ' + item.NoFaktur + ' harus lebih dari 0'
+        } else if (!checkPesan && Number(checkNilai) > saldoInv + 0.005) {
+          checkPesan = 'Nilai KN invoice ' + item.NoFaktur + ' melebihi saldo invoice (' + formatAngka(saldoInv.toFixed(2)) + ')'
         }
 
         tempData.push(listInvoice[i])
@@ -2007,6 +2088,10 @@ function buttonAddPickInvoice () {
 
     if (checkMinus) {
       alertify.warning("Qnt < 0");
+      return
+    }
+    if (checkPesan) {
+      alertify.warning(checkPesan);
       return
     }
 
@@ -2027,6 +2112,10 @@ function buttonAddPickInvoice () {
         success: function(res) {
           console.log(res ,'!')
 
+          if (knDitolak(res)) {
+            alertify.warning(res.pesan)
+            return
+          }
           if (res == 1) {
             // $("#form").modal('toggle')
             alertify.success('KN telah ditambah');
@@ -2286,58 +2375,106 @@ function buttonAddListNoInvoice () {
 
 }
 
-function buttonAddListCustomer () {
-  console.log('buttonAddListCustomer')
-  $('#tabel_add_list_customer').DataTable().destroy();
-  $.ajax({
+// ---- Modal pemilih Customer ----
+// Disamakan dengan modal pemilih menu marketing lain (perintahreturjual / so): tampilan
+// picker-kas, DataTables "Tampilkan 10/25/50/100/Semua", data dimuat async dengan lapisan
+// "Memuat data...", tabel diisi lewat opsi data + deferRender, klik baris mengambil data
+// barisnya langsung (nama/alamat bertanda kutip tetap bisa dipilih). _pk: true supaya partial
+// tampilan-purchasing-js tidak membangun ulang tabel ini. Daftar customer dimuat sekali per halaman (mulai di latar saat Tambah ditekan) lalu dipakai ulang.
+let knCacheCustomer = null
+let knAjaxCustomer = null
+let knNomorBrowse = 0
+
+function knMuatCustomer () {
+  if (knCacheCustomer) { return $.Deferred().resolve(knCacheCustomer).promise() }
+  if (knAjaxCustomer) { return knAjaxCustomer }
+  knAjaxCustomer = $.ajax({
     url: "{!! url('kreditnotelistcustomer') !!}",
-    type: "get",
-    async: false,
-    data: {
-
-    },
-    success: function(res) {
-      console.log(res)
-      let rowTable = ``
-      res.forEach((item, i) => {
-        rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickCustomer('${item.KODECUSTSUPP}' , '${item.NAMACUSTSUPP}' , '${item.ALAMAT1}' , ${item.PPN ? item.PPN : 0})">
-
-        <td>${item.KODECUSTSUPP}</td>
-        <td>${item.NAMACUSTSUPP}</td>
-        <td>${item.ALAMAT}</td>
-        <td>${item.NamaKota}</td>
-
-        </tr>`
-      });
-
-
-
-
-      if(!res.length) {
-        rowTable= `<tr><td class="text-center" colspan=4>Tidak ada data</td></tr>`
-      }
-      document.getElementById("tabel_data_add_list_customer").innerHTML = rowTable
-      $("#tabel_add_list_customer").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          "order": [[0, 'asc']],
-    });
-      $('.showhidemodalbodyadd').hide();
-      $('#modalAddListCustomer').show();
-      $("#form").modal('toggle')
-
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
+    type: "get"
+  }).then(function (res) {
+    knCacheCustomer = res || []
+    return knCacheCustomer
+  }).always(function () {
+    knAjaxCustomer = null
   })
-
-
+  return knAjaxCustomer
 }
 
+function knModalMemuat (idBagian, tampil) {
+  let $body = $('#' + idBagian + ' .modal-body')
+  $body.children('.kn-picker-memuat').remove()
+  $body.toggleClass('kn-sedang-memuat', !!tampil)
+  if (!tampil) { return }
+  $body.append(
+    '<div class="kn-picker-memuat"><span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span></div>'
+  )
+}
+
+function knBukaPickerCustomer () {
+  $('.showhidemodalbodyadd').hide()
+  $('#modalAddListCustomer').show()
+  $('#form').modal('show')
+}
+
+function knIsiPickerCustomer (rows) {
+  let sel = '#tabel_add_list_customer'
+  if ($.fn.DataTable.isDataTable(sel)) { $(sel).DataTable().clear().destroy() }
+  $(sel + ' tbody').empty()
+
+  let kolom = function (field) {
+    return { data: field, defaultContent: '', render: function (v) { return knEsc(v) } }
+  }
+  let dt = pickerKasInit('tabel_add_list_customer', {
+    _pk: true,
+    data: rows || [],
+    columns: [kolom('KODECUSTSUPP'), kolom('NAMACUSTSUPP'), kolom('ALAMAT1'), kolom('NamaKota')],
+    deferRender: true,
+    order: [[0, 'asc']],
+    createdRow: function (tr) { tr.classList.add('pick-row') }
+  })
+
+  $(sel + ' tbody').off('click.kn').on('click.kn', 'tr.pick-row', function () {
+    let c = dt.row(this).data()
+    if (!c) { return }
+    buttonAddPickCustomer(c.KODECUSTSUPP, c.NAMACUSTSUPP, c.ALAMAT1 || '', c.PPN ? c.PPN : 0)
+  })
+}
+
+function buttonAddListCustomer () {
+  // Sudah ada di cache: modal langsung tampil berisi data, tanpa animasi memuat.
+  if (knCacheCustomer) {
+    knNomorBrowse++
+    knIsiPickerCustomer(knCacheCustomer)
+    knModalMemuat('modalAddListCustomer', false)
+    knBukaPickerCustomer()
+    return
+  }
+
+  let nomor = ++knNomorBrowse
+  knBukaPickerCustomer()
+  knModalMemuat('modalAddListCustomer', true)
+  knMuatCustomer().then(function (rows) {
+    if (nomor !== knNomorBrowse) { return }
+    knIsiPickerCustomer(rows)
+    knModalMemuat('modalAddListCustomer', false)
+  }, function (err) {
+    if (nomor !== knNomorBrowse) { return }
+    console.log(err)
+    knModalMemuat('modalAddListCustomer', false)
+    if ($('#modalAddListCustomer').is(':visible')) { buttonAddListBatal() }
+    alertify.warning('Terjadi kesalahan silahkan refresh browser')
+  })
+}
+
+// Modal ditutup (Batal / X / klik luar) = browse yang masih memuat dibatalkan.
+$(function () {
+  $('#form').on('hidden.bs.modal', function (e) {
+    if (e.target !== this) { return }
+    knNomorBrowse++
+    $('#form .kn-picker-memuat').remove()
+    $('#form .modal-body').removeClass('kn-sedang-memuat')
+  })
+})
 
 function buttonAddPickCustomer (kode, nama , alamat , ppn) {
   console.log('buttonAddPickCustomer')
@@ -2540,7 +2677,7 @@ function refreshDataTable (nobukti) {
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
                   <td class="text-right">${item.Nilai ? formatAngka(parseFloat(item.Nilai).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">0.00</td>
+                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
 
                   <td>${item.kodeVls}</td>
                   <td class="text-right">${item.Kurs ?  formatAngka(parseFloat(item.Kurs).toFixed(2)) : '0.00'}</td>
@@ -2564,7 +2701,7 @@ function refreshDataTable (nobukti) {
         document.getElementById("input_add_namacustomer").value = listData[0].NamaCustSupp
         document.getElementById("input_add_alamatcustomer").value = listData[0].Alamat1
         document.getElementById("input_add_nobukti").value = listData[0].NoBukti
-        document.getElementById("input_add_tanggal").valueAsDate = new Date(listData[0].tanggal)
+        document.getElementById("input_add_tanggal").value = knTglInput(listData[0].tanggal)
 
 
 
@@ -2585,7 +2722,11 @@ function refreshDataTable (nobukti) {
   })
 }
 
+let knSedangOto = false
 function submitOtorisasi () {
+  // Penjaga klik ganda: dulu dua klik = dua kali posting hutpiut/jurnal.
+  if (knSedangOto) { return }
+  knSedangOto = true
 
   let _token = $("#_token").val();
   let nobukti = $("#input_detail_nobukti").val();
@@ -2598,7 +2739,14 @@ function submitOtorisasi () {
       nobukti
 
     },
+    complete: function () { knSedangOto = false },
     success: function(res) {
+      if (knDitolak(res)) {
+        alertify.warning(res.pesan)
+        loadAll()
+        buttonCloseForm()
+        return
+      }
       alertify.success('Berhasil update otorisasi')
       loadAll()
       buttonCloseForm()
@@ -2669,7 +2817,7 @@ function buttonDetail (nobukti) {
         document.getElementById("input_detail_namacustomer").value = res[0].NamaCustSupp
         document.getElementById("input_detail_alamatcustomer").value = res[0].Alamat1
         document.getElementById("input_detail_nobukti").value = res[0].NoBukti
-        document.getElementById("input_detail_tanggal").valueAsDate = new Date(res[0].tanggal)
+        document.getElementById("input_detail_tanggal").value = knTglInput(res[0].tanggal)
 
         $('#modalDetail').show();
         $('.mainpage').hide();
@@ -2727,7 +2875,7 @@ function buttonOtorisasi (nobukti) {
               rowTable += `
                 <tr>
                   <td>${item.NoInv}</td>
-                  <td>${item.Keterangan}</td>
+                  <td>${item.Keterangan ? item.Keterangan : ''}</td>
                   <td class="text-right">${item.Nilai ? formatAngka(parseFloat(item.Nilai).toFixed(2)) : '0.00'}</td>
                   <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
 
@@ -2750,7 +2898,7 @@ function buttonOtorisasi (nobukti) {
         document.getElementById("input_detail_namacustomer").value = res[0].NamaCustSupp
         document.getElementById("input_detail_alamatcustomer").value = res[0].Alamat1
         document.getElementById("input_detail_nobukti").value = res[0].NoBukti
-        document.getElementById("input_detail_tanggal").valueAsDate = new Date(res[0].tanggal)
+        document.getElementById("input_detail_tanggal").value = knTglInput(res[0].tanggal)
 
         $('#modalDetail').show();
         $('.mainpage').hide();
@@ -2870,9 +3018,10 @@ if (pcekglobal) {
     alertify.warning('No access')
     return
   }
-  document.getElementById("input_add_tanggal").disabled = false
+  // Tanggal selalu disabled: KN baru memakai tanggal server.
+  document.getElementById("input_add_tanggal").disabled = true
   document.getElementById("buttonAddListCustomer").disabled = false
-  document.getElementById("addTableData").innerHTML = `<td colspan=9 class="text-center">Belum ada data</td>`
+  document.getElementById("addTableData").innerHTML = `<tr><td colspan=9 class="text-center">Belum ada data</td></tr>`
   tipeform = 'add'
   // unlockFormAdd()
   $('.showhideitem').hide();
@@ -2884,6 +3033,9 @@ if (pcekglobal) {
   // document.getElementById("input_add_nobukti").value = nobukti
 
   cleanFormAdd()
+  knIsiTanggalServer()
+  // Daftar customer mulai dimuat di latar supaya browse customer langsung tampil.
+  knMuatCustomer()
   // setNewNoBukti()
 
   $('.mainpage').hide();
@@ -2982,8 +3134,15 @@ function buttonBatalOtorisasi (nobukti) {
 
 
 
-  alertify.confirm('Batal Otorisasi', 'Batal Otorisasi KN ' + nobukti + ' ?',
-      function() {
+  // Batal otorisasi wajib isi keterangan (dicatat ke LoggingData 'btloto'), sama seperti menu lain.
+  alertify.prompt('Batal Otorisasi', "Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+      function(evt, value) {
+        let xpket = String(value || '').trim();
+
+        if (!xpket) {
+          alertify.warning('Keterangan harus diisi.');
+          return false;
+        }
         let _token = $("#_token").val();
 
         $.ajax({
@@ -2992,12 +3151,17 @@ function buttonBatalOtorisasi (nobukti) {
           async: false,
           data: {
             _token,
-            nobukti
+            nobukti,
+            pket : xpket
 
           },
           success: function(res) {
-            alertify.success('Berhasil batal otorisasi')
             loadAll()
+            if (knDitolak(res)) {
+              alertify.warning(res.pesan)
+              return
+            }
+            alertify.success('Berhasil batal otorisasi')
 
 
 
@@ -3010,7 +3174,7 @@ function buttonBatalOtorisasi (nobukti) {
         })
       }
     ,function(){
-      console.log('no')
+      alertify.error("Action cancelled");
     });
 
 }
@@ -3032,8 +3196,10 @@ function formatDate(date , pemisah = '-') {
     return [year, month, day].join(pemisah);
 }
 function formatAngka (angkaString) {
-  console.log('formatAngka' , angkaString);
-  let tempAngka = angkaString.split('.')
+  // Tanda minus dipisah dulu: dulu -123.00 tampil "-,123.00".
+  let minus = String(angkaString).charAt(0) === '-'
+  if (minus) { return '-' + formatAngka(String(angkaString).substring(1)) }
+  let tempAngka = String(angkaString).split('.')
   let temp1 = ''
   for (let i = 0; i < tempAngka[0].length; i++) {
     if (i != 0 && i % 3 == 0) {

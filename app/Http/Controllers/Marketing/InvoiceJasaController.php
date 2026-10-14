@@ -388,8 +388,8 @@ Order by B.Urut
   public function loadAll (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $tglawal = $req->tglawal ?: $this->tglAwalPeriode($periode);
-    $tglakhir = $req->tglakhir ?: $this->tglAkhirPeriode($periode);
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: $this->tglAwalPeriode($periode);
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: $this->tglAkhirPeriode($periode);
     $filterij = (int) ($req->filterij ?: 0);
     $tempOutstanding = $this->queryInvoiceJasaOtorisasi($tglawal, $tglakhir, $filterij);
 

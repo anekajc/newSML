@@ -275,6 +275,89 @@
 .data-table td {
   white-space: nowrap;
 }
+
+/* ---- Form Add/Edit/Detail (bsgrid seperti purchasing) ----
+   Disalin dari purchaseOrder.blade.php: textarea tetap setinggi atribut rows, tombol
+   browse (kaca pembesar) setinggi input dan menempel dengan sudut membulat. */
+#formBsGrid textarea.form-control,
+#formBsGrid table .form-control {
+  height: auto;
+}
+#formBsGrid .btn:has(> .bi-search) {
+  height: 38px !important;
+}
+#formBsGrid .input-group .btn:has(> .bi-search) {
+  height: auto !important;
+  align-self: stretch;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.btn-chip-biru:has(> .bi-search) {
+  border-radius: 6px !important;
+}
+.form-control:has(+ .btn > .bi-search) {
+  border-top-right-radius: 6px !important;
+  border-bottom-right-radius: 6px !important;
+}
+#formBsGrid .input-group { flex-wrap: nowrap; }
+
+/* Header PRJ: tiga pasang label | isian per baris (grid .bs-form newmaster.css).
+   Nama & alamat customer menempati kolom label+isian pertama tanpa label. Jarak antar
+   baris diatur gap grid - tidak ada lagi margin-top negatif yang membuat Catatan menempel. */
+#formBsGrid .bs-form.prj-bs-header {
+  grid-template-columns: 90px minmax(0, 1fr) 100px minmax(0, 1fr) 80px minmax(0, 1fr);
+  gap: 12px 14px;
+  max-width: 1250px;
+}
+#formBsGrid .bs-form.prj-bs-header .prj-span-awal { grid-column: 1 / 3; }
+#formBsGrid .bs-form .prj-label-atas { align-self: start; padding-top: 11px; }
+#formBsGrid .bs-form .prj-isian-atas { align-self: start; }
+
+/* Form Tambah/Edit Item: Kode Brg | No Beli, Nama Brg (membentang), Qty | Satuan,
+   Retur Supp | Keterangan - kolom label cukup lebar supaya "Retur Supp" tetap sebaris. */
+#formBsGrid .bs-form.prj-bs-item {
+  grid-template-columns: 100px minmax(0, 1fr) 100px minmax(0, 1fr);
+  gap: 12px 14px;
+  max-width: 860px;
+}
+#formBsGrid .bs-form.prj-bs-item .bs-full { grid-column: 2 / -1; }
+.prj-item-form h4 { margin: 4px 0 14px; }
+.prj-table-wrap { overflow-x: auto; margin-top: 14px; }
+
+/* Lapisan "Memuat data..." di modal pemilih - chip & spinner yang sama dengan tabel
+   purchasing / menu marketing lain (.po-loading-chip dari partial tampilan-purchasing-css).
+   Selama memuat, isi tabel lama disembunyikan dan badan modal diberi tinggi minimum. */
+#form .modal-body { position: relative; }
+#form .modal-body.prj-sedang-memuat { min-height: 220px; }
+#form .modal-body.prj-sedang-memuat .dataTables_wrapper,
+#form .modal-body.prj-sedang-memuat table { visibility: hidden; }
+.prj-memuat-awal {
+  position: relative;
+  min-height: 180px;
+}
+.prj-picker-memuat {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, .62);
+  animation: prjMunculLoading .34s ease-out both;
+}
+
+@media (max-width: 991.98px) {
+  #formBsGrid .bs-form.prj-bs-header {
+    grid-template-columns: 90px minmax(0, 1fr);
+  }
+  #formBsGrid .bs-form.prj-bs-header .prj-span-awal { grid-column: 1 / -1; }
+}
+@media (max-width: 575.98px) {
+  #formBsGrid .bs-form.prj-bs-header,
+  #formBsGrid .bs-form.prj-bs-item { grid-template-columns: 1fr; }
+  #formBsGrid .bs-form.prj-bs-item .bs-full { grid-column: 1 / -1; }
+  #formBsGrid .bs-form .prj-label-atas { padding-top: 0; }
+}
 </style>
 @include('marketing.partials.tampilan-purchasing-css')
 @endsection
@@ -365,9 +448,9 @@
       <div class="po-toolbar">
         <div class="po-filter-wrap">
           <label>Periode</label>
-          <input type="date" onchange="onChangePeriodePRJ()" class="po-filter-inp" id="input_tanggalawal" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
+          <input type="date" onchange="onChangePeriodePRJ()" class="po-filter-inp" id="input_tanggalawal" value="{!! $tglawalperiode !!}">
           <span class="po-filter-sep">s/d</span>
-          <input type="date" onchange="onChangePeriodePRJ()" class="po-filter-inp" id="input_tanggalakhir" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
+          <input type="date" onchange="onChangePeriodePRJ()" class="po-filter-inp" id="input_tanggalakhir" value="{!! $tglakhirperiode !!}">
         </div>
         <input type="search" id="prjSearch1" class="po-search-inp" placeholder="Cari data">
         <div class="po-len-wrap">
@@ -425,1245 +508,302 @@
     </div>
   </div>
 
-  <div id= "modalAdd" class="">
-
-
-
-  <div id="" class="">
-  <div class="">
-    <!-- <h1>Tes Modal</h1> -->
-
-    <div id="formBsGrid" class="container-fluid">
-      <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
-      <div class="row">
-
-        <div class="col-md-3">
-          <div class="row">
-
-            <div class="col-md-12">
-              <div class="row">
-
-
-          <div class="col-md-4">
-            <div class="form-group">
-              <label>Customer</label>
-            </div>
-          </div>
-          <!-- <div class="col-3 text-right">
-            <div class="form-group">
-          </div>
-        </div> -->
-          <div class="col-md-8">
-            <div class="form-group input-group">
-              <input type="text" class="form-control" id="input_add_kodecustomer" placeholder="" disabled>
-              <button class="btn btn-chip-biru btn-sm" id="buttonAddListCustomer" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
-            </div>
-          </div>
-          </div>
-          </div>
-
-
-          <div class="col-md-12" style="margin-top:-10px">
-            <div class="form-group">
-              <textarea  style="width: 100%; resize: none" rows=1  class="form-control" id="input_add_namacustomer"  disabled></textarea>
-            </div>
-          </div>
-          <div class="col-md-12 mb-3" style="margin-top:-10px">
-
-            <textarea  style="width: 100%; height: 75px !important; resize: none" rows=3  class="form-control" id="input_add_alamatcustomer"  disabled></textarea>
-          </div>
-
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="row">
-            <div class="col-md-12" >
-              <div class="row">
-
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>No Bukti</label>
-              </div>
-            </div>
-            <div class="col-md-8">
-              <div class="form-group">
-                <input type="text" class="form-control" id="input_add_nobukti" placeholder="No Bukti" disabled>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-12" style="margin-top:-10px">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>No Invoice</label>
-              </div>
-            </div>
-            <!-- <div class="col-3 text-right">
-              <div class="form-group">
-            </div>
-          </div> -->
-
-            <div class="col-md-8">
-              <div class="form-group input-group">
-                <input type="hidden" class="form-control" id="input_add_flagtipe" value="">
-                <input type="hidden" class="form-control" id="input_add_ppn" value="">
-                <input type="text" class="form-control" id="input_add_noinvoice" value="" disabled >
-                <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoInvoice" onclick="buttonAddListNoInvoice()"><i class="bi bi-search"></i></button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-12" style="margin-top:-19px">
-          <div class="row">
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>Catatan</label>
-              </div>
-            </div>
-
-            <div class="col-md-8">
-              <div class="form-group">
-                <textarea  style="width: 100%; resize: none; height: 75px !important;" rows=3  class="form-control" id="input_add_catatan"  ></textarea>
-              </div>
-            </div>
-
-          </div>
-        </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="row">
-
-            <div class="col-md-12" >
-              <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>Tgl</label>
-              </div>
-            </div>
-            <div class="col-md-8">
-              <div class="form-group">
-                <input type="date" class="form-control text-center" id="input_add_tanggal" value="{!! date('Y-m-d') !!}"  >
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-12" style="margin-top:-10px">
-          <div class="row">
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>No SO</label>
-              </div>
-            </div>
-
-
-            <div class="col-md-8">
-              <div class="form-group">
-                <input type="text" class="form-control text-left" id="input_add_noso" value=""  disabled>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-12" style="margin-top:-10px">
-          <div class="row">
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>Gudang</label>
-              </div>
-            </div>
-            <!-- <div class="col-md-3 text-right">
-              <div class="form-group">
-            </div>
-          </div> -->
-            <div class="col-md-8">
-              <div class="form-group input-group">
-                <input type="text" class="form-control" id="input_add_gudang" value="" disabled >
-                <!-- <button class="btn btn-chip-biru btn-sm" id="buttonAddListGudang" onclick="buttonAddListGudang()"><i class="bi bi-search"></i></button> -->
-                <!-- <input type="hidden" class="form-control text-center" id="input_add_kodesales" value="" disabled > -->
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-          </div>
-        </div>
-
-        <div class="col-3">
-          <div class="row">
-            <div class="col-12">
-
-            </div>
-
-          </div>
-
-
-        </div>
-        <div class="col-3">
-          <div class="row">
-
-          </div>
-        </div>
-
-        <div class="col-4">
-          <div class="row">
-            <div class="col-12">
-              <div class="row">
-
-              </div>
-            </div>
-
-
-
-            <div class="col-12">
-              <div class="row">
-
-
-
-              </div>
-
-            </div>
-
-
-
-
-          </div>
-
-        </div>
-
-        <div class="col-4">
-          <div class="row">
-            <div class="col-12">
-              <div class="row">
-
-              </div>
-            </div>
-
-
-            <div class="col-12">
-              <div class="row">
-
-
-              </div>
-            </div>
-
-
-
-          </div>
-
-        </div>
-
-
-
-
-
-
-
-
-
+  <div id="modalAdd" class="">
+    <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
+    <input type="hidden" id="input_add_flagtipe" value="">
+    <input type="hidden" id="input_add_ppn" value="">
+
+    {{-- Header PRJ: grid .bs-form tiga pasang label | isian per baris (lihat .prj-bs-header di
+         @section css). Nama & alamat customer ditaruh di bawah kode customer tanpa label,
+         sama seperti tampilan sebelumnya. --}}
+    <div class="bs-form prj-bs-header">
+      <label>Customer</label>
+      <div class="input-group">
+        <input type="text" class="form-control" id="input_add_kodecustomer" placeholder="" disabled>
+        <button type="button" class="btn btn-chip-biru btn-sm" id="buttonAddListCustomer" title="Cari" onclick="buttonAddListCustomer()"><i class="bi bi-search"></i></button>
       </div>
 
+      <label>No Bukti</label>
+      <input type="text" class="form-control" id="input_add_nobukti" placeholder="No Bukti" disabled>
 
+      <label>Tanggal</label>
+      <input type="date" class="form-control text-center" id="input_add_tanggal" value="" disabled>
 
+      <input type="text" class="form-control prj-span-awal" id="input_add_namacustomer" placeholder="Nama Customer" disabled>
 
-
-
-
-
-
-
+      <label>No Invoice</label>
+      <div class="input-group">
+        <input type="text" class="form-control" id="input_add_noinvoice" value="" disabled>
+        <button type="button" class="btn btn-chip-biru btn-sm" id="buttonAddListNoInvoice" title="Cari" onclick="buttonAddListNoInvoice()"><i class="bi bi-search"></i></button>
       </div>
 
+      <label>No SO</label>
+      <input type="text" class="form-control text-left" id="input_add_noso" value="" disabled>
 
+      <textarea style="resize: none" rows=3 class="form-control prj-span-awal" id="input_add_alamatcustomer" placeholder="Alamat Customer" disabled></textarea>
 
-<div class="container-fluid">
-  <hr/>
+      <label class="prj-label-atas">Catatan</label>
+      <textarea style="resize: none" rows=3 class="form-control" id="input_add_catatan"></textarea>
 
-</div>
+      <label class="prj-label-atas">Gudang</label>
+      <input type="text" class="form-control prj-isian-atas" id="input_add_gudang" value="" disabled>
+    </div>
 
+    <hr/>
 
-
-  <div class="container-fluid mt-4" style="overflow-x: auto; padding:0; margin:0;">
-
-        <table id="addTable" class="data-table">
-          <thead class="text-center">
-            <tr>
-              <!-- <th style="padding: 4px 12px;" scope="col">Gudang</th> -->
-              <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
-              <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
-              <th style="padding: 4px 12px;" scope="col">Nama Produk</th>
-              <th style="padding: 4px 12px;" scope="col">Sat Produk</th>
-              <th style="padding: 4px 12px;" scope="col">Qty</th>
-              <th style="padding: 4px 12px;" scope="col">Sat</th>
-              <!-- <th style="padding: 4px 12px;" scope="col">Qty1</th>
-              <th style="padding: 4px 12px;" scope="col">Sat1</th>
-              <th style="padding: 4px 12px;" scope="col">Qty2</th>
-              <th style="padding: 4px 12px;" scope="col">Sat2</th> -->
-
-              <th style="padding: 4px 12px;" scope="col">Actions</th>
-
-            </tr>
-          </thead>
-
-
-          <tbody id="addTableData" class="" >
-            <tr >
-
-                <td colspan=7 class="text-center">Belum ada data</td>
-
+    <div class="prj-table-wrap">
+      <table id="addTable" class="data-table">
+        <thead class="text-center">
+          <tr>
+            <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
+            <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
+            <th style="padding: 4px 12px;" scope="col">Nama Produk</th>
+            <th style="padding: 4px 12px;" scope="col">Sat Produk</th>
+            <th style="padding: 4px 12px;" scope="col">Qty</th>
+            <th style="padding: 4px 12px;" scope="col">Sat</th>
+            <th style="padding: 4px 12px;" scope="col">Actions</th>
           </tr>
+        </thead>
+        <tbody id="addTableData" class="" >
+          <tr>
+            <td colspan=7 class="text-center">Belum ada data</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-          </tbody>
-
-
-        </table>
-  </div>
-
-
-  <div class="col-md-12 mt-2 text-right">
-  <button type="button" class="btn btn-lg btn-chip-biru" onclick="buttonAddAddItem()" style="
+    <div class="text-right mt-2">
+      <button type="button" class="btn btn-lg btn-chip-biru" onclick="buttonAddAddItem()" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
               font-size: 0.75rem;
               font-weight: 600;
               transition: background-color 0.3s, box-shadow 0.3s;" >Tambah Item</button>
-</div>
-
-
-  <div id="formAddAdd" class="container-fluid showhideitem">
-    <div id="formBsGrid">
-    <!-- <div class="line"></div> -->
-    <!-- <div class="row"> -->
-
-    <div class="col-12">
-
-
-    <hr/>
-    <div class="row">
-      <div class="col-md-12">
-        <h4>Add Item</h4>
-      </div>
     </div>
-    <div class="row">
 
-      <div class="col-md-12">
+    {{-- Form Tambah Item --}}
+    <div id="formAddAdd" class="showhideitem prj-item-form">
+      <hr/>
+      <h4>Tambah Item</h4>
 
-      <div class="row">
-
-      <div class="col-md-3">
-
-
-
-
-    <div class="row">
-
-
-
-
-
-
-      <div class="col-md-4">
-        <div class="form-group">
+      <div class="bs-form prj-bs-item">
         <label>Kode Brg</label>
-      </div>
-      </div>
-      <!-- <div class="col-4 text-right">
-
-        </div> -->
-      <div class="col-md-8">
-        <div class="input-group form-group">
+        <div class="input-group">
           <input id="AddAddKodeBrg" type="text" class="form-control" disabled>
-          <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
-
+          <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" id="buttonAddListBarang" title="Cari"><i class="bi bi-search"></i></button>
         </div>
-      </div>
 
-    </div>
-
-  </div>
-  <div class="col-md-3">
-    <div class="row">
-      <div class="col-md-4">
-        <div class="form-group">
-          <label>No Beli</label>
-        </div>
-      </div>
-      <!-- <div class="col-3 text-right">
-        <div class="form-group">
-      </div>
-    </div> -->
-      <div class="col-md-8">
-        <div class="input-group form-group">
+        <label>No Beli</label>
+        <div class="input-group">
           <input id="AddAddUrutBeli" type="hidden" class="form-control" >
           <input id="AddAddNoBeli" type="text" class="form-control" disabled>
-          <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-search"></i></button>
-
+          <button type="button" class="btn btn-chip-biru btn-sm" id="buttonAddListNoBeli" title="Cari" onclick="buttonAddListNoBeli()"><i class="bi bi-search"></i></button>
         </div>
-        <!-- <input id="AddAddKodeGudang" type="hidden" class="form-control" disabled> -->
-      </div>
 
-
-    </div>
-
-  </div>
-</div>
-</div>
-
-</div>
-</div>
-
-
-
-
-
-
-
-  <div class="col-md-6">
-    <div class="row">
-      <div class="col-md-12" style="margin-top: -10px">
-
-      <div class="row">
-      <div class="col-md-2">
-        <div class="form-group">
         <label>Nama Brg</label>
-      </div>
-      </div>
-      <div class="col-md-6">
-        <input id="AddAddNamaBrg" type="text" class="form-control" disabled>
-      </div>
-      <div class="col-md-4">
+        <input id="AddAddNamaBrg" type="text" class="form-control bs-full" disabled>
 
-      </div>
-    </div>
-  </div>
-
-
-  <div class="col-md-12" style="margin-top: -10px">
-
-  <div class="row">
-
-      <div class="col-md-2">
-        <div class="form-group">
         <label>Qty</label>
-      </div>
-      </div>
-
-      <div class="col-md-4">
         <input id="AddAddInputQty" type="number" value='0.00' class="form-control text-right" onchange="onChangeQty()">
-      </div>
 
-      <div class="col-md-2">
-        <div class="form-group">
         <label>Satuan</label>
-      </div>
-      </div>
+        <div>
+          <input id="AddAddInputIsi" type="hidden" class="form-control" disabled>
+          <select id="AddAddInputNosat" class="form-control" onchange="onChangeQty()">
+            <option value=0 selected></option>
+          </select>
+        </div>
 
-      <div class="col-md-4">
-        <input id="AddAddInputIsi" type="hidden"  class="form-control  " disabled>
-        <select id="AddAddInputNosat" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example" onchange="onChangeQty()">
-          <option value=0 selected></option>
-        </select>
-      </div>
-    </div>
-  </div>
-  <!-- <div class="col-md-12" style="margin-top: -10px"> -->
-    <input id="AddAddInputQty1" type="hidden" value='0.00' class="form-control text-right" disabled style="width: 75%">
-
-    <input id="AddAddInputSat1" type="hidden" value='PCS' class="form-control text-center" disabled style="width: 25%">
-
-
-  <!-- <div class="row">
-
-      <div class="col-md-2">
-        <div class="form-group">
-        <label>Qty 1</label>
-      </div>
-      </div>
-
-      <div class="input-group col-md-4">
-
-
-      </div>
-
-      <div class="col-md-2">
-        <div class="form-group">
-        <label>Qty 2</label>
-      </div>
-      </div>
-
-      <div class="input-group col-md-4">
-
-
-
-      </div>
-</div> -->
-<input id="AddAddInputQty2" type="hidden" value='0.00' class="form-control text-right" disabled style="width: 75%">
-
-<input id="AddAddInputSat2" type="hidden" value='BOX' class="form-control text-center" disabled style="width: 25%">
-
-<!-- </div> -->
-
-
-
-
-      <!-- <input type="text" class="form-control" placeholder="Email" id="demo" name="email">
-  <div class="input-group-append">
-    <span class="input-group-text">@example.com</span>
-  </div> -->
-  <div class="col-md-12" style="margin-top: -10px">
-    <div class="row">
-
-
-
-      <div class="col-md-2">
-        <div class="form-group">
         <label>Retur Supp</label>
-      </div>
-      </div>
-      <!-- <div class="col-4 text-right">
-
-          <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary" >+</button>
-        </div> -->
-      <div class="col-md-4">
-        <select id="AddAddReturSupp" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example" onchange="onChangePPN('ppn' , 'input_add_tipeppn')">
+        <select id="AddAddReturSupp" class="form-control">
           <option value=0 selected>Tidak</option>
           <option value=1 >Ya</option>
         </select>
-        <!-- <input id="AddAddKodeGdg" type="hidden" class="form-control" disabled> -->
-      </div><div class="col-md-2">
-        <div class="form-group">
+
         <label>Keterangan</label>
-      </div>
-      </div>
-      <!-- <div class="col-4 text-right">
-
-          <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary" >+</button>
-        </div> -->
-      <div class="col-md-4">
-        <input id="AddAddKeterangan" type="text" class="form-control" >
-        <!-- <input id="AddAddKodeGdg" type="hidden" class="form-control" disabled> -->
+        <input id="AddAddKeterangan" type="text" class="form-control" maxlength="100">
       </div>
 
+      <input id="AddAddInputQty1" type="hidden" value='0.00'>
+      <input id="AddAddInputSat1" type="hidden" value='PCS'>
+      <input id="AddAddInputQty2" type="hidden" value='0.00'>
+      <input id="AddAddInputSat2" type="hidden" value='BOX'>
 
-      <!-- <div class="col-md-6">
+      <div class="text-right mt-4">
+        <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
+                height: 30px;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                transition: background-color 0.3s, box-shadow 0.3s;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
 
-      </div> -->
-    </div>
-  </div>
-  <div class="col-md-12" style="margin-top: -10px">
-    <div class="row">
-
-
-
-    </div>
-  </div>
-    </div>
-  </div>
-
-
-  <!-- <div class="col-6 ">
-    <div class="row">
-
-
-
-    </div> -->
-  <!-- </div> -->
-
-
-
-
-  <div class="row mt-2" style="margin-top: 0">
-    <div class="col-md-12 text-right mt-4">
-      <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
-              height: 30px;
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 0.75rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              transition: background-color 0.3s, box-shadow 0.3s;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
-
-      <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-lg btn-chip-biru" style="
-              height: 30px;
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 0.75rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              transition: background-color 0.3s, box-shadow 0.3s;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
-      <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
+        <button id="buttonSubmitAddAdd" type="button" onclick="submitAddAdd()" class="btn btn-lg btn-chip-biru" style="
+                height: 30px;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                transition: background-color 0.3s, box-shadow 0.3s;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
+      </div>
     </div>
 
-  </div>
-
-</div>
-
-
-
-
-    <!-- <div class="line"></div> -->
-    <!-- <hr/> -->
-    </div>
-  </div>
-</div>
-<!-- </div> -->
-
-
-<!-- ADD EDIT -->
-
-<div id="formAddEdit" class="container-fluid showhideitem">
-  <!-- <div class="line"></div> -->
-  <!-- <div class="row"> -->
-
-  <div class="col-12">
-
-
-  <hr/>
-  <div class="row">
-    <div class="col-12">
+    {{-- Form Edit Item --}}
+    <div id="formAddEdit" class="showhideitem prj-item-form">
+      <hr/>
       <h4>Edit Item</h4>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-12">
-      <div class="row">
 
-    <div class="col-md-3">
-
-
-
-
-  <div class="row">
-
-
-
-
-    <div class="col-md-4">
-      <div class="form-group">
-      <label>Kode Brg</label>
-    </div>
-    </div>
-    <!-- <div class="col-4 text-right">
-
-      </div> -->
-    <div class="col-md-8">
-      <div class="input-group form-group">
+      <div class="bs-form prj-bs-item">
+        <label>Kode Brg</label>
         <input id="AddEditKodeBrg" type="text" class="form-control" disabled>
-        <!-- <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" ><i class="bi bi-search"></i></button> -->
-      </div>
-    </div>
 
-  </div>
-
-</div>
-<div class="col-md-3">
-  <div class="row">
-    <div class="col-md-4">
-      <div class="form-group">
         <label>No Beli</label>
+        <div>
+          <input id="AddEditUrutBeli" type="hidden" class="form-control" >
+          <input id="AddEditNoBeli" type="text" class="form-control" disabled>
+        </div>
+
+        <label>Nama Brg</label>
+        <input id="AddEditNamaBrg" type="text" class="form-control bs-full" disabled>
+
+        <label>Qty</label>
+        <input id="AddEditInputQty" type="number" value='0.00' class="form-control text-right" onchange="onChangeQtyEdit()">
+
+        <label>Satuan</label>
+        <div>
+          <input id="AddEditInputIsi" type="hidden" class="form-control" disabled>
+          <select id="AddEditInputNosat" class="form-control" onchange="onChangeQtyEdit()">
+            <option value=0 selected></option>
+          </select>
+        </div>
+
+        <label>Retur Supp</label>
+        <select id="AddEditReturSupp" class="form-control">
+          <option value=0 selected>Tidak</option>
+          <option value=1 >Ya</option>
+        </select>
+
+        <label>Keterangan</label>
+        <input id="AddEditKeterangan" type="text" class="form-control" maxlength="100">
+      </div>
+
+      <input id="AddEditInputQty1" type="hidden" value='0.00'>
+      <input id="AddEditInputSat1" type="hidden" value='PCS'>
+      <input id="AddEditInputQty2" type="hidden" value='0.00'>
+      <input id="AddEditInputSat2" type="hidden" value='BOX'>
+
+      <div class="text-right mt-4">
+        <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
+                height: 30px;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                transition: background-color 0.3s, box-shadow 0.3s;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
+
+        <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-lg btn-chip-biru" style="
+                height: 30px;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                transition: background-color 0.3s, box-shadow 0.3s;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
       </div>
     </div>
-    <!-- <div class="col-3 text-right">
-      <div class="form-group">
-    </div>
-  </div> -->
-    <div class="col-md-8">
-      <div class="input-group form-group">
-        <input id="AddEditUrutBeli" type="hidden" class="form-control" >
-        <input id="AddEditNoBeli" type="text" class="form-control" disabled>
-        <!-- <button class="btn btn-chip-biru btn-sm" id="buttonAddListNoBeli" onclick="buttonAddListNoBeli()"><i class="bi bi-search"></i></button> -->
-
-      </div>
-      <!-- <input id="AddEditKodeGudang" type="hidden" class="form-control" disabled> -->
-    </div>
-
 
   </div>
-
-</div>
-
-</div>
+</div>{{-- /#formBsGrid --}}
 </div>
 
 
-
-<div class="col-md-6">
-  <div class="row">
-    <div class="col-md-12" style="margin-top: -10px">
-      <div class="row">
-
-
-
-    <div class="col-md-2">
-      <div class="form-group">
-      <label>Nama Brg</label>
-    </div>
-    </div>
-    <div class="col-md-6">
-      <input id="AddEditNamaBrg" type="text" class="form-control" disabled>
-    </div>
-
-  </div>
-</div>
-
-
-<div class="col-md-12" style="margin-top: -10px">
-<div class="row">
-
-
-    <div class="col-md-2">
-      <div class="form-group">
-      <label>Qty</label>
-    </div>
-    </div>
-
-    <div class="col-md-4">
-      <input id="AddEditInputQty" type="number" value='0.00' class="form-control text-right" onchange="onChangeQtyEdit()">
-    </div>
-
-    <div class="col-md-2">
-      <div class="form-group">
-      <label>Satuan</label>
-    </div>
-    </div>
-
-    <div class="col-md-4">
-      <input id="AddEditInputIsi" type="hidden"  class="form-control  " disabled>
-      <select id="AddEditInputNosat" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example" onchange="onChangeQtyEdit()">
-        <option value=0 selected></option>
-      </select>
-    </div>
-  </div>
-</div>
-
-<input id="AddEditInputQty1" type="hidden" value='0.00' class="form-control text-right" disabled style="width: 75%">
-
-<input id="AddEditInputSat1" type="hidden" value='PCS' class="form-control text-center" disabled style="width: 25%">
-
-
-
-<!-- <div class="col-md-12" style="margin-top: -10px"> -->
-<!-- <div class="row">
-    <div class="col-md-2">
-      <div class="form-group">
-      <label>Qty 1</label>
-    </div>
-    </div>
-
-    <div class="input-group col-md-4">
-
-
-    </div>
-
-    <div class="col-md-2">
-      <div class="form-group">
-      <label>Qty 2</label>
-    </div>
-    </div>
-
-    <div class="input-group col-md-4">
-
-
-    </div>
-  </div> -->
-<!-- </div> -->
-
-<input id="AddEditInputQty2" type="hidden" value='0.00' class="form-control text-right" disabled style="width: 75%">
-
-<input id="AddEditInputSat2" type="hidden" value='BOX' class="form-control text-center" disabled style="width: 25%">
-
-
-
-
-
-    <!-- <input type="text" class="form-control" placeholder="Email" id="demo" name="email">
-<div class="input-group-append">
-  <span class="input-group-text">@example.com</span>
-</div> -->
-
-<div class="col-md-12" style="margin-top: -10px">
-<div class="row">
-
-    <div class="col-md-2">
-      <div class="form-group">
-      <label>Retur Supp</label>
-    </div>
-    </div>
-    <!-- <div class="col-4 text-right">
-
-        <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary" >+</button>
-      </div> -->
-    <div class="col-md-4">
-      <select id="AddEditReturSupp" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example" onchange="onChangePPN('ppn' , 'input_add_tipeppn')">
-        <option value=0 selected>Tidak</option>
-        <option value=1 >Ya</option>
-      </select>
-      <!-- <input id="AddEditKodeGdg" type="hidden" class="form-control" disabled> -->
-    </div>
-
-
-
-  </div>
-</div>
-<div class="col-md-12" style="margin-top: -10px">
-<div class="row">
-
-    <div class="col-md-2">
-      <div class="form-group">
-      <label>Keterangan</label>
-    </div>
-    </div>
-    <!-- <div class="col-4 text-right">
-
-        <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary" >+</button>
-      </div> -->
-    <div class="col-md-6">
-      <input id="AddEditKeterangan" type="text" class="form-control" >
-      <!-- <input id="AddEditKodeGdg" type="hidden" class="form-control" disabled> -->
-    </div>
-  </div>
-</div>
-  </div>
-</div>
-
-
-<!-- <div class="col-6 ">
-  <div class="row">
-
-
-
-  </div> -->
-<!-- </div> -->
-
-
-
-
-
-<div class="col-6 mt-2">
-  <div class="row">
-
-
-  </div>
-</div>
-</div>
-
-
-
-  <div class="row mt-2">
-    <div class="col-md-12 text-right mt-4">
-      <button type="button" class="btn btn-lg btn-batal-add" onclick="buttonAddBatal()" style="
-              height: 30px;
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 0.75rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              transition: background-color 0.3s, box-shadow 0.3s;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
-
-      <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-lg btn-chip-biru" style="
-              height: 30px;
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 0.75rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              transition: background-color 0.3s, box-shadow 0.3s;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
-      <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
-    </div>
-
-  </div>
-  <!-- <div class="line"></div> -->
-  <!-- <hr/> -->
-</div>
-</div>
-<!-- </div> -->
-
-
-
-    </div>
-
-    <!-- <div class="row "> -->
-
-<!-- </div> -->
-
-
-
-
-
-
-
-
-
-  </div>{{-- /#formBsGrid --}}
-</div>
-
-
-  <div id="page3" style="display: none" class="mainpage container-fluid" >
+<div id="page3" style="display: none" class="mainpage container-fluid" >
 <div id="formBsGrid">
 
-    <div class="row">
-      <div class="col-8 text-left">
-        {{-- <h2>Detail PRJ</h2> --}}
-      </div>
-      <div class="col-4 text-right">
-        <button type="button" class="btn btn-danger btn-lg" style="
-              height: 30px;
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 0.75rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              transition: background-color 0.3s, box-shadow 0.3s;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
-        Close
-      </button>
-      </div>
+  <div class="row">
+    <div class="col-8 text-left">
+      {{-- <h2>Detail PRJ</h2> --}}
+    </div>
+    <div class="col-4 text-right">
+      <button type="button" class="btn btn-danger btn-lg" style="
+            height: 30px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()"  >
+      Close
+    </button>
+    </div>
+  </div>
+
+  <div id="modalDetail" class="">
+    <input type="hidden" name="noUrut" id="input_detail_nourut" value="" />
+    <input type="hidden" id="input_detail_flagtipe" value="">
+    <input type="hidden" id="input_detail_ppn" value="">
+
+    <div class="bs-form prj-bs-header">
+      <label>Customer</label>
+      <input type="text" class="form-control" id="input_detail_kodecustomer" placeholder="" disabled>
+
+      <label>No Bukti</label>
+      <input type="text" class="form-control" id="input_detail_nobukti" placeholder="No Bukti" disabled>
+
+      <label>Tanggal</label>
+      <input type="date" class="form-control text-center" id="input_detail_tanggal" value="" disabled>
+
+      <input type="text" class="form-control prj-span-awal" id="input_detail_namacustomer" placeholder="Nama Customer" disabled>
+
+      <label>No Invoice</label>
+      <input type="text" class="form-control" id="input_detail_noinvoice" value="" disabled>
+
+      <label>No SO</label>
+      <input type="text" class="form-control text-left" id="input_detail_noso" value="" disabled>
+
+      <textarea style="resize: none" rows=3 class="form-control prj-span-awal" id="input_detail_alamatcustomer" placeholder="Alamat Customer" disabled></textarea>
+
+      <label class="prj-label-atas">Catatan</label>
+      <textarea style="resize: none" rows=3 class="form-control" id="input_detail_catatan" disabled></textarea>
+
+      <label class="prj-label-atas">Gudang</label>
+      <input type="text" class="form-control prj-isian-atas" id="input_detail_gudang" value="" disabled>
     </div>
 
-    <div id= "modalDetail" class="">
-
-    <div id="" class="">
-    <div class="">
-      <!-- <h1>Tes Modal</h1> -->
-
-      <div class="container-fluid">
-        <input type="hidden" name="noUrut" id="input_detail_nourut" value="" />
-        <div class="row">
-
-          <div class="col-md-3">
-            <div class="row">
-
-              <div class="col-md-12">
-                <div class="row">
-
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>Customer</label>
-              </div>
-            </div>
-            <!-- <div class="col-3 text-right">
-              <div class="form-group">
-            </div>
-          </div> -->
-            <div class="col-md-8">
-              <div class="form-group input-group">
-                <input type="text" class="form-control" id="input_detail_kodecustomer" placeholder="" disabled>
-              </div>
-            </div>
-            </div>
-            </div>
-
-
-            <div class="col-md-12" style="margin-top:-10px">
-              <div class="form-group">
-                <textarea  style="width: 100%; resize: none" rows=1  class="form-control" id="input_detail_namacustomer"  disabled></textarea>
-              </div>
-            </div>
-            <div class="col-md-12 mb-3" style="margin-top:-10px">
-
-              <textarea  style="width: 100%; resize: none" rows=3  class="form-control" id="input_detail_alamatcustomer"  disabled></textarea>
-            </div>
-
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="row">
-              <div class="col-md-12" >
-                <div class="row">
-
-
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>No Bukti</label>
-                </div>
-              </div>
-              <div class="col-md-8">
-                <div class="form-group">
-                  <input type="text" class="form-control" id="input_detail_nobukti" placeholder="No Bukti" disabled>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-12" style="margin-top:-10px">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>No Invoice</label>
-                </div>
-              </div>
-              <!-- <div class="col-3 text-right">
-                <div class="form-group">
-              </div>
-            </div> -->
-
-
-              <div class="col-md-8">
-                <div class="form-group input-group">
-                  <input type="hidden" class="form-control" id="input_detail_flagtipe" value=""  >
-                  <input type="hidden" class="form-control" id="input_detail_ppn" value=""  >
-                  <input type="text" class="form-control" id="input_detail_noinvoice" value="" disabled >
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-12" style="margin-top:-19px">
-            <div class="row">
-
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Catatan</label>
-                </div>
-              </div>
-
-              <div class="col-md-8">
-                <div class="form-group">
-                  <textarea  style="width: 100%; resize: none" rows=3  class="form-control" id="input_detail_catatan"  disabled></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-            </div>
-          </div>
-
-          <div class="col-md-3">
-            <div class="row">
-
-              <div class="col-md-12" >
-                <div class="row">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Tgl</label>
-                </div>
-              </div>
-              <div class="col-md-8">
-                <div class="form-group">
-                  <input type="date" class="form-control text-center" id="input_detail_tanggal" value="{!! date('Y-m-d') !!}"  disabled>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-12" style="margin-top:-10px">
-            <div class="row">
-
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>No SO</label>
-                </div>
-              </div>
-
-
-              <div class="col-md-8">
-                <div class="form-group">
-                  <input type="text" class="form-control text-left" id="input_detail_noso" value=""  disabled>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-12" style="margin-top:-10px">
-            <div class="row">
-
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Gudang</label>
-                </div>
-              </div>
-
-              <div class="col-md-8">
-                <div class="form-group input-group">
-                  <input type="text" class="form-control" id="input_detail_gudang" value="" disabled >
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-            </div>
-          </div>
-
-          <div class="col-3">
-            <div class="row">
-              <div class="col-12">
-
-              </div>
-
-            </div>
-
-
-          </div>
-          <div class="col-3">
-            <div class="row">
-
-            </div>
-          </div>
-
-          <div class="col-4">
-            <div class="row">
-              <div class="col-12">
-                <div class="row">
-
-                </div>
-              </div>
-
-
-
-              <div class="col-12">
-                <div class="row">
-
-
-
-                </div>
-
-              </div>
-
-
-
-
-            </div>
-
-          </div>
-
-          <div class="col-4">
-            <div class="row">
-              <div class="col-12">
-                <div class="row">
-
-                </div>
-              </div>
-
-
-              <div class="col-12">
-                <div class="row">
-
-
-                </div>
-              </div>
-
-
-
-            </div>
-
-          </div>
-
-
-
-
-
-
-
-
-
-        </div>
-
-
-
-
-
-
-
-
-
-
-        </div>
-
-
-
-  <div class="container-fluid">
     <hr/>
 
-  </div>
-
-
-
-    <div class="container-fluid mt-4" style="overflow-x: auto; padding:0; margin:0;">
-
-          <table id="detailTable" class="data-table">
-            <thead class="text-center">
-              <tr>
-                <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
-                <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
-                <th style="padding: 4px 12px;" scope="col">Nama Produk</th>
-                <th style="padding: 4px 12px;" scope="col">Sat Produk</th>
-                <th style="padding: 4px 12px;" scope="col">Qty</th>
-                <th style="padding: 4px 12px;" scope="col">Sat</th>
-
-
-              </tr>
-            </thead>
-
-
-            <tbody id="detailTableData" class="" >
-              <tr >
-
-                  <td colspan=6 class="text-center">Belum ada data</td>
-
-            </tr>
-
-            </tbody>
-
-
-          </table>
-    </div>
-
-
-
-
-
-
-
-
-
-
-      <!-- <div class="line"></div> -->
-      <!-- <hr/> -->
+    <div class="prj-table-wrap">
+      <table id="detailTable" class="data-table">
+        <thead class="text-center">
+          <tr>
+            <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
+            <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
+            <th style="padding: 4px 12px;" scope="col">Nama Produk</th>
+            <th style="padding: 4px 12px;" scope="col">Sat Produk</th>
+            <th style="padding: 4px 12px;" scope="col">Qty</th>
+            <th style="padding: 4px 12px;" scope="col">Sat</th>
+          </tr>
+        </thead>
+        <tbody id="detailTableData" class="" >
+          <tr>
+            <td colspan=6 class="text-center">Belum ada data</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
-  <!-- </div> -->
 
-
-  <!-- ADD EDIT -->
-
-
-  <!-- </div> -->
-
-
-
-      </div>
-
-      <!-- <div class="row "> -->
-
-  <!-- </div> -->
-
-
-
-
-
-
-
-
-
-    </div>{{-- /#formBsGrid --}}
+</div>{{-- /#formBsGrid --}}
 </div>
-
-
-
-  </div>
-</div>
-
 
 
 <!--  -->
@@ -1673,17 +813,14 @@
   <div class="modal-dialog modal-xl modal-dialo g-centered"  role="document">
     <div id="" class="modal-content ">
 
-
       <div id= "modalAddListCustomer" class="showhidemodalbodyadd">
       <div class="modal-header">
-
 
           <h5 class="modal-title" id="">Customer</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-
 
       <div id="" class="">
       <div class="modal-body">
@@ -1699,7 +836,6 @@
             <div class="col-12" style="overflow:auto; margin-top:-60px; ">
             <!-- <div class="container-fluid"> -->
 
-
             <table id="tabel_add_list_customer" class="data-table" style="overflow:auto; " >
               <thead class="text-center">
                 <tr>
@@ -1710,17 +846,7 @@
                 </tr>
               </thead>
 
-
-              <tbody id="tabel_data_add_list_customer" class="text-left" >
-
-                <tr class="pick-row">
-
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-              </tr>
-              </tbody>
-
+              <tbody id="tabel_data_add_list_customer" class="text-left" ></tbody>
 
             </table>
           <!-- </div> -->
@@ -1729,17 +855,9 @@
             </div>
             </div>
 
-
-
-
         </div>
 
-
-
-
-
       </div>
-
 
       <div id="" class="modal-footer ">
         <button type="button" class="btn btn-lg btn-batal-add" data-dismiss="modal" style="
@@ -1751,19 +869,17 @@
               text-transform: uppercase;
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
-      </div>
+        </div>
       </div>
 
       <div id= "modalAddListNoInvoice" class="showhidemodalbodyadd">
       <div class="modal-header">
-
 
           <h5 class="modal-title" id="">No Invoice</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-
 
       <div id="" class="">
       <div class="modal-body">
@@ -1792,16 +908,7 @@
               </thead>
 
 
-              <tbody id="tabel_data_add_list_noinvoice" class="text-left" >
-
-                <tr class="pick-row">
-
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-              </tr>
-              </tbody>
+              <tbody id="tabel_data_add_list_noinvoice" class="text-left" ></tbody>
 
 
             </table>
@@ -1856,13 +963,7 @@
               </thead>
 
 
-              <tbody id="tabel_data_add_list_nobeli" class="text-left" >
-
-                <tr class="pick-row">
-
-                  <td>-</td>
-              </tr>
-              </tbody>
+              <tbody id="tabel_data_add_list_nobeli" class="text-left" ></tbody>
 
 
             </table>
@@ -1987,7 +1088,7 @@
 @section('js')
 @include('marketing.partials.tampilan-purchasing-js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
-<script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+{{-- picker-kas.js sudah dimuat oleh partial tampilan-purchasing-js di atas. --}}
 {{-- Modal pemilih bersama (#form) disamakan persis dengan modal pemilih menu Kas.
      Class picker-kas dipasang dari sini (bukan di markup modalnya) - lihat pola yang sama
      di purchaseOrder.blade.php / marketing/so.blade.php / retursuratjalan.blade.php. --}}
@@ -2086,10 +1187,12 @@ window.doSimpanHeader = function () {
     desimal.push(Number(c[5]) || 0)
   });
 
-  $.ajax({
+  // Async: dulu async:false - browser terkunci total selama menunggu server, dan saat
+  // server lambat Chrome memunculkan "Page Unresponsive". Simpan pengaturan kolom tidak
+  // perlu ditunggu; tampilan sudah memakai prjCart yang baru.
+  return $.ajax({
     url   : "{!! url('saveheadertable') !!}",
     type  : "post",
-    async : false,
     data  : {
       _token   : $("#_token").val(),
       header   : JSON.stringify(header),
@@ -2107,11 +1210,21 @@ window.doSimpanHeader = function () {
   })
 }
 
-window.doSetHeader = function (mode, reset) {
+// Async (dulu async:false, penyebab "Page Unresponsive" saat halaman dibuka).
+// - Muat biasa: pengaturan kolom tersimpan diambil, lalu onSelesai() dipanggil untuk
+//   menggambar tabel.
+// - Reset kolom (dipanggil ReportTable/buttonHeaderTable yang langsung menggambar ulang
+//   setelahnya): kolom default dipasang SEKETIKA, penghapusan pengaturan lama + simpan
+//   default berjalan di latar (berurutan: hapus dulu, baru simpan).
+window.doSetHeader = function (mode, reset, onSelesai) {
+  if (reset) {
+    prjCart = prjDefaultCart()
+    window.gcart_header = prjCart
+  }
+
   $.ajax({
     url   : "{!! url('getheadertable') !!}",
     type  : "post",
-    async : false,
     data  : {
       _token : $("#_token").val(),
       href   : PRJ_HREF,
@@ -2133,6 +1246,9 @@ window.doSetHeader = function (mode, reset) {
       alertify.warning(reset ? 'Gagal mengembalikan kolom ke tampilan default' : 'Gagal memuat pengaturan kolom')
       prjCart = prjDefaultCart()
       window.gcart_header = prjCart
+    },
+    complete : function () {
+      if (typeof onSelesai === 'function') { onSelesai() }
     }
   })
 }
@@ -2186,33 +1302,33 @@ function prjValueCell (row, col) {
 
   if (col[0] === 'xstatus') {
     let kelas = PRJ_BADGE_STATUS[raw] || '';
-    return '<td><span class="sp-badge ' + kelas + '">' + (raw || '') + '</span></td>';
+    return { html: '<span class="sp-badge ' + kelas + '">' + prjEsc(raw || '') + '</span>', cls: '' };
   }
 
   if (type === 'date') {
-    if (!raw) { return '<td></td>'; }
-    return '<td>' + formatDate(raw, '/').split('/').reverse().join('/') + '</td>';
+    if (!raw) { return { html: '', cls: '' }; }
+    return { html: formatDate(raw, '/').split('/').reverse().join('/'), cls: '' };
   }
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    return { html: n.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }), cls: 'text-right' };
   }
   if (type === 'bool') {
     return Number(raw)
-      ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
-      : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
+      ? { html: '<i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i>', cls: 'text-success text-center' }
+      : { html: '<i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i>', cls: 'text-danger text-center' };
   }
-  return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
+  return { html: prjEsc(raw !== undefined && raw !== null ? raw : ''), cls: '' };
 }
 
 // Actions gabungan Belum/Sudah Otorisasi (dulu tabelActionsCell vs
 // tabel2ActionsCell terpisah per tab) -- cetak nota/berita acara cuma relevan
-// setelah otorisasi, sama seperti tabel2ActionsCell dulu.
+// setelah otorisasi, sama seperti tabel2ActionsCell dulu. Mengembalikan isi sel saja.
 function tabelActionsCell (row) {
   let nobukti = prjPickCI(row, 'NOBUKTI');
   let isOto = Number(prjPickCI(row, 'IsOtorisasi1'));
-  let html = '<td class="text-center"><div class="action-buttons-wrap">';
+  let html = '<div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
     html += '<button class="btn btn-danger btn-sm" type="button" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
@@ -2222,20 +1338,53 @@ function tabelActionsCell (row) {
     html += '<button class="btn btn-success btn-sm" type="button" title="Edit" onclick="buttonEdit(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-pen"></i></button>';
     html += '<button class="btn btn-info btn-sm" type="button" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\' , \'add\')"><i class="bi bi-key"></i></button>';
   }
-  html += '</div></td>';
+  html += '</div>';
   return html;
 }
 
+// Kolom DataTables untuk tabel daftar. Baris dibuat dari data (deferRender): hanya baris di
+// halaman yang tampil yang dibuat elemennya - dulu semua baris ditulis ke <tbody> sekaligus,
+// sehingga rentang tanggal lebar / "Semua" membuat browser terkunci beberapa detik.
+function prjKolomTabel (cols) {
+  let kolom = [{
+    data: null,
+    orderable: false,
+    className: 'text-center',
+    render: function (v, type, row) { return type === 'display' ? tabelActionsCell(row) : '' }
+  }]
+  cols.forEach(function (col) {
+    kolom.push({
+      data: null,
+      render: function (v, type, row) { return prjValueCell(row, col).html },
+      createdCell: function (td, v, row) {
+        let cls = prjValueCell(row, col).cls
+        if (cls) { td.className = cls }
+      }
+    })
+  })
+  return kolom
+}
+
+// Tooltip tombol aksi (dipasang partial tampilan-purchasing-js di <body>) bisa nyangkut:
+// tombol diklik -> #page1 disembunyikan / dialog terbuka, jadi mouseleave tidak pernah
+// terjadi; atau baris digambar ulang dan tombolnya hilang tanpa tooltip-nya ditutup.
+// Pola yang sama dengan invoicepenjualan / cetaktandaterima.
+function prjTutupTooltip () {
+  if ($.fn.tooltip) { $('#page1 [data-toggle="tooltip"]').tooltip('hide') }
+  $('body > .tooltip').remove()
+}
+$(document).on('click', '#page1 .action-buttons-wrap .btn', function () {
+  prjTutupTooltip()
+  this.blur()
+})
+$(document).on('preDraw.dt', '#tabel', prjTutupTooltip)
+
 function renderTabelRows (rows) {
   let cols = (prjCart.length ? prjCart : gcart_header).filter(function (c) { return c[2] === 1; });
-  let html = "";
-  (rows || []).forEach(function (row) {
-    html += '<tr>' + tabelActionsCell(row);
-    cols.forEach(function (col) { html += prjValueCell(row, col); });
-    html += '</tr>';
-  });
-  document.getElementById('tabel_data').innerHTML = html;
+  prjTutupTooltip();
+  document.getElementById('tabel_data').innerHTML = '';
   tulisTheadHeaderPRJ(cols);
+  return cols;
 }
 
 let lastTabelRows = []
@@ -2277,15 +1426,20 @@ const PRJ_DOM_STRING = "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-
 
 function reinitTabel () {
   try {
-    if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().destroy(); }
-    renderTabelRows(lastTabelRows);
+    // Kata pencarian yang sedang aktif dipertahankan setelah tabel dibangun ulang.
+    let cari = $('#prjSearch1').val() || ''
+    if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().clear().destroy(); }
+    let cols = renderTabelRows(lastTabelRows);
     $('#tabel').DataTable({
       dom: PRJ_DOM_STRING,
+      data: lastTabelRows || [],
+      columns: prjKolomTabel(cols),
+      deferRender: true,
       lengthChange: false,
       pageLength: prjPanjangHalaman,
       paging: true,
-      order: [[1, 'asc']],
       ordering: false,
+      search: { search: cari },
     });
     prjIkatSearch();
     prjIkatPanjangHalaman();
@@ -2319,34 +1473,18 @@ function prjUpdateFilterBadge () {
 }
 
 function buttonFilterPRJ () {
-  let _token = $("#_token").val()
-  let tglawal = $("#input_tanggalawal").val()
-  let tglakhir = $("#input_tanggalakhir").val()
-  let filterstatus = $("#input_filterstatus").val()
-  let filteroto = $("#input_filteroto").val()
-
   prjUpdateFilterBadge()
-
-  $.ajax({
-    url: "{!! url('perintahreturjualloadall') !!}",
-    type: "get",
-    async: false,
-    data: { _token, tglawal, tglakhir, filterstatus, filteroto },
-    success: function (res) {
-      lastTabelRows = res.tempOutstanding;
-      reinitTabel();
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-  })
+  // Endpoint & parameter sama; loadAll() async supaya layar tidak membeku saat memuat.
+  loadAll()
 }
 
 function onChangePeriodePRJ () {
   let awal = $("#input_tanggalawal").val()
   let akhir = $("#input_tanggalakhir").val()
   if (!awal || !akhir) { return }
+  // Tahun belum lengkap (mis. "0202" waktu mengetik 2025) - tunggu sampai tahunnya wajar,
+  // jangan muat dulu (SQL Server datetime hanya menerima tahun >= 1753).
+  if (awal.slice(0, 4) < '1900' || akhir.slice(0, 4) < '1900') { return }
   if (awal > akhir) {
     alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
     return
@@ -2356,34 +1494,19 @@ function onChangePeriodePRJ () {
 
 $(document).ready(function(){
 
-      window.doSetHeader(1, false);
       lastTabelRows = @json($tempOutstanding);
-      reinitTabel();
 
-      prjInitReportTableSekali();
-
-        $("#tabel_add_list_customer").DataTable({
-          "lengthChange": false,
-            "paging": false ,
-        });
-        $("#tabel_add_list_noinvoice").DataTable({
-          "lengthChange": false,
-            "paging": false ,
-        });
-        $("#tabel_add_list_barang").DataTable({
-          "lengthChange": false,
-            "paging": false ,
+      // Pengaturan kolom dimuat async; selama menunggu tampil "Memuat data..." (gaya
+      // .po-loading-chip purchasing), tabel digambar begitu jawabannya tiba.
+      $('#tabel').before('<div id="prjMemuatAwal" class="prj-memuat-awal"><span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span></div>')
+      window.doSetHeader(1, false, function () {
+        $('#prjMemuatAwal').remove()
+        reinitTabel();
+        prjInitReportTableSekali();
       });
 
-      $("#tabel_add_list_nobeli").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-    });
-
-
-
-
-  //   formAddListItem
+      // Tabel modal pemilih (customer/no invoice/barang/no beli) tidak diinisialisasi di sini
+      // lagi: diisi saat tombol browse ditekan lewat prjIsiPicker().
 });
 
 
@@ -2413,20 +1536,29 @@ function formatAngka (angkaString) {
   return temp1
 }
 
+// Async: No Bukti dikosongkan dulu, submitAddAdd() menolak simpan selama masih kosong.
+// prjUrutNoBukti memastikan hanya jawaban permintaan terakhir yang dipakai (customer
+// diganti-ganti cepat).
+let prjUrutNoBukti = 0
 function setNewNoBukti (xval = 1) {
+  let urutIni = ++prjUrutNoBukti
+  document.getElementById("input_add_nobukti").value = ''
+  document.getElementById("input_add_nourut").value = ''
   $.ajax({
     url: "{!! url('perintahreturjualspnobukti') !!}",
     type: "get",
-    async: false,
     data: {
       ppn: xval
     },
     success: function(res) {
-
-      console.log(res)
+      if (urutIni !== prjUrutNoBukti || !res || !res[0]) { return }
       document.getElementById("input_add_nobukti").value = res[0].Nobukti
       document.getElementById("input_add_nourut").value = res[0].Nourut
 
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil No Bukti, silahkan pilih customer lagi')
     }})
 }
 
@@ -2437,6 +1569,8 @@ function cleanFormAddAdd () {
   document.getElementById("AddAddNoBeli").value = ''
   document.getElementById("AddAddUrutBeli").value = 0
   document.getElementById("AddAddInputQty").value = '0.00'
+  // Pilihan satuan dikosongkan lagi supaya satuan barang sebelumnya tidak ikut terkirim.
+  document.getElementById("AddAddInputNosat").innerHTML = '<option value=0 selected></option>'
   document.getElementById("AddAddInputNosat").value = 0
 
   document.getElementById("AddAddInputIsi").value = 0
@@ -2464,9 +1598,16 @@ function cleanFormAdd () {
   document.getElementById("input_add_nobukti").value = ''
   document.getElementById("input_add_noinvoice").value = ''
   document.getElementById("input_add_catatan").value = ''
-  document.getElementById("input_add_tanggal").valueAsDate = new Date()
+  // Tanggal diisi dari server di buttonAdd() (prjIsiTanggalServer), bukan dari jam komputer user.
+  document.getElementById("input_add_tanggal").value = ''
   document.getElementById("input_add_noso").value = ''
   document.getElementById("input_add_gudang").value = ''
+  document.getElementById("input_add_flagtipe").value = ''
+  document.getElementById("input_add_ppn").value = ''
+  document.getElementById("input_add_nourut").value = ''
+  dataBarang = []
+  tempBarangAddEdit = {}
+  cleanFormAddAdd()
 
 
 
@@ -2538,8 +1679,32 @@ function submitAdd () {
 }
 
 
+// Penjaga klik ganda: selama satu simpan/hapus berjalan, klik berikutnya diabaikan (dulu
+// klik dua kali pada Simpan bisa menyimpan item dua kali).
+let prjSedangSimpan = false
+
+// Daftar di halaman utama cukup dimuat ulang saat form ditutup (buttonCloseForm), tidak
+// setiap kali item disimpan/dihapus - menghemat satu request per simpan.
+let prjDaftarPerluMuat = false
+
+function prjKunciSimpan (kunci) {
+  prjSedangSimpan = kunci
+  $('#buttonSubmitAddAdd, #buttonSubmitAddEdit').prop('disabled', kunci)
+}
+
+// Jawaban server {status: 0, pesan} = ditolak (mis. PRJ sudah diotorisasi user lain).
+function prjDitolak (res) {
+  return !!res && typeof res === 'object' && Number(res.status) === 0
+}
+
 function submitAddEdit () {
+  if (prjSedangSimpan) { return }
   let barang = tempBarangAddEdit
+
+  if (jQuery.isEmptyObject(barang)) {
+    alertify.warning("Pilih item yang akan diedit")
+    return
+  }
 
   let _token  = $("#_token").val()
 
@@ -2551,8 +1716,6 @@ function submitAddEdit () {
   let nobukti  = $("#input_add_nobukti").val()
   let nourut = $("#input_add_nourut").val()
   let kodecustsupp = $("#input_add_kodecustomer").val()
-  let namacustsupp = $("#input_add_namacustomer").val()
-  let alamatcustsupp = $("#input_add_alamatcustomer").val()
   let kodegdg = $("#input_add_gudang").val()
   let noinvoice = $("#input_add_noinvoice").val()
   let flagtipe = $("#input_add_flagtipe").val()
@@ -2561,7 +1724,6 @@ function submitAddEdit () {
   let retursupp = $("#AddEditReturSupp").val()
   let tanggal = $("#input_add_tanggal").val()
   let noso = $("#input_add_noso").val()
-  let gudang = $("#input_add_gudang").val()
 
   let nobeli = $("#AddEditNoBeli").val()
   let urutbeli = $("#AddEditUrutBeli").val()
@@ -2583,21 +1745,28 @@ function submitAddEdit () {
   let sat2 = $("#AddEditInputSat2").val();
   let ketdet = $("#AddEditKeterangan").val();
 
-  console.log(namabrg, kodebrg, qnt)
+  if (!Number(nosat)) {
+    alertify.warning("Satuan belum dipilih")
+    return
+  }
   if (Number(qnt) <= 0) {
     alertify.warning("qnt <= 0")
     return
   }
-  if (Number(qnt) * Number(isi) > Number(barang.IsiSisaView) * (Number(barang.QntSisaView) + Number(barang.QNT)) ) {
+  // Baris invoice yang sisanya sudah habis (seluruhnya diretur oleh item ini) tidak muncul lagi
+  // di vwBrowsOutPLPR, sehingga QntSisaView/IsiSisaView kosong. Dulu batasnya jadi 0 dan item
+  // itu tidak bisa diedit sama sekali; sekarang batasnya qty item ini sendiri (sisa 0).
+  let isiSisa = (barang.IsiSisaView !== null && barang.IsiSisaView !== undefined) ? barang.IsiSisaView : barang.ISI
+  let qntSisa = (barang.QntSisaView !== null && barang.QntSisaView !== undefined) ? barang.QntSisaView : 0
+  if (Number(qnt) * Number(isi) > Number(isiSisa) * (Number(qntSisa) + Number(barang.QNT)) ) {
     alertify.warning("Melebihi qnt sisa")
     return
   }
 
-  // return
+  prjKunciSimpan(true)
   $.ajax({
     url: "{!! url('perintahreturjualspadd') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       choice,
@@ -2627,56 +1796,30 @@ function submitAddEdit () {
       ketdet,
       nobeli,
       urutbeli
-
-
     },
     success: function(res) {
-
-
-      console.log('resspadd', res)
-      // return
-      if (res == 1) {
-
-
-
-        // tipeform = 'edit'
-        // lockFormAdd()
-        $('.showhideitem').hide();
-        // $('.showhideform').hide();
-        // $('#modalAdd').show();
-        loadAll()
+      if (prjDitolak(res)) {
+        alertify.warning(res.pesan)
+        prjDaftarPerluMuat = true
         refreshDataTableAdd(nobukti)
-
-
-
-        // lockFormAdd()
-        // $('.showhide').hide();
-        // $('#buttonSubmitSaveHeader').show();
-        // unlockFormAdd()
-        // tipeform = 'edit'
-        // document.getElementById("buttonAddListCustomer").disabled = true
-        // document.getElementById("buttonAddListNoInvoice").disabled = true
-        // $('.showhideitem').hide();
-        // // $('#divhargaterakhir').hide();
-        // cleanFormAddAdd()
-        //
-        // refreshDataTableAdd(nobukti)
-
-        alertify.success('Berhasil menambah item')
+        return
       }
-
-
+      if (res == 1) {
+        $('.showhideitem').hide();
+        prjDaftarPerluMuat = true
+        refreshDataTableAdd(nobukti)
+        alertify.success('Berhasil mengubah item')
+      }
     },
     error: function (err) {
       console.log(err)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
+    },
+    complete: function () { prjKunciSimpan(false) }
   })
 }
 
 function buttonAddDeleteItem (i) {
-  console.log(i)
 
   let akses = $("#akses_ishapus").val();
 
@@ -2685,19 +1828,20 @@ function buttonAddDeleteItem (i) {
     return
   }
   let barang = dataBarang[i]
+  if (!barang) { return }
 
-  alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + barang.NAMABRG + ' ?',
+  alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + prjEsc(barang.NAMABRG) + ' ?',
       function() {
+        if (prjSedangSimpan) { return }
         let _token = $("#_token").val();
         let choice = "D"
 
         let nobukti = barang.NOBUKTI
         let urut = barang.URUT
-        console.log(nobukti, urut)
+        prjKunciSimpan(true)
         $.ajax({
           url: "{!! url('perintahreturjualspadd') !!}",
           type: "post",
-          async: false,
           data: {
             _token,
             choice,
@@ -2730,11 +1874,15 @@ function buttonAddDeleteItem (i) {
 
           },
           success: function(res) {
-            loadAll()
-
-            // lockFormAdd()
-            $('.showhide').hide();
-            loadAll()
+            prjDaftarPerluMuat = true
+            if (prjDitolak(res)) {
+              alertify.warning(res.pesan)
+              refreshDataTableAdd(nobukti)
+              return
+            }
+            $('.showhideitem').hide();
+            // Item terakhir terhapus = PRJ ikut terhapus (sp_TransPRRJUAL); refreshDataTableAdd
+            // akan menutup form dan kembali ke daftar.
             refreshDataTableAdd(nobukti)
 
             alertify.success('Berhasil menghapus item')
@@ -2743,33 +1891,22 @@ function buttonAddDeleteItem (i) {
           error: function (err) {
             console.log(err)
             alertify.warning('Terjadi kesalahan silahkan refresh browser')
-          }
+          },
+          complete: function () { prjKunciSimpan(false) }
 
         })
       }
     ,function(){
-      console.log('no')
     });
 }
 
 function submitAddAdd () {
+  if (prjSedangSimpan) { return }
 
-  let checkDate = new Date($("#input_add_tanggal").val())
   let periode_bulan = document.getElementById("periode_bulan").value
   let periode_tahun = document.getElementById("periode_tahun").value
 
   let barang = tempBarangAddAdd
-
-  if ( checkDate.getFullYear()  !== Number(periode_tahun)  || (checkDate.getMonth() +1) !== Number(periode_bulan) ) {
-
-      alertify.warning("Tanggal tidak sesuai periode");
-      return
-  }
-
-  let _token  = $("#_token").val()
-
-  let choice = "I"
-  let urut = 0
 
   let jmlrecord = 0
 
@@ -2777,11 +1914,29 @@ function submitAddAdd () {
     jmlrecord = 1
   }
 
+  // Cek periode hanya untuk PRJ baru (tanggal = tanggal server). Menambah item ke PRJ yang
+  // sudah ada tidak mengubah tanggalnya, dan aksi Edit tidak dibatasi periode.
+  if (jmlrecord == 0) {
+    let tglInput = $("#input_add_tanggal").val()
+    if (!tglInput) {
+      alertify.warning("Tanggal server belum terambil, silahkan tutup form lalu tekan Tambah lagi");
+      return
+    }
+    let checkDate = new Date(tglInput)
+    if ( checkDate.getFullYear()  !== Number(periode_tahun)  || (checkDate.getMonth() +1) !== Number(periode_bulan) ) {
+        alertify.warning("Tanggal tidak sesuai periode");
+        return
+    }
+  }
+
+  let _token  = $("#_token").val()
+
+  let choice = "I"
+  let urut = 0
+
   let nobukti  = $("#input_add_nobukti").val()
   let nourut = $("#input_add_nourut").val()
   let kodecustsupp = $("#input_add_kodecustomer").val()
-  let namacustsupp = $("#input_add_namacustomer").val()
-  let alamatcustsupp = $("#input_add_alamatcustomer").val()
   let kodegdg = $("#input_add_gudang").val()
   let noinvoice = $("#input_add_noinvoice").val()
   let flagtipe = $("#input_add_flagtipe").val()
@@ -2790,7 +1945,6 @@ function submitAddAdd () {
   let retursupp = $("#AddAddReturSupp").val()
   let tanggal = $("#input_add_tanggal").val()
   let noso = $("#input_add_noso").val()
-  let gudang = $("#input_add_gudang").val()
 
   let nobeli = $("#AddAddNoBeli").val()
   let urutbeli = $("#AddAddUrutBeli").val()
@@ -2812,9 +1966,12 @@ function submitAddAdd () {
   let sat2 = $("#AddAddInputSat2").val();
 
   let ketdet = $("#AddAddKeterangan").val();
-  console.log(kodebrg, kodecustsupp, noinvoice , nosat)
-  if (!kodebrg || !kodecustsupp || !noinvoice || !nosat) {
+  if (!kodebrg || !kodecustsupp || !noinvoice || !Number(nosat)) {
     alertify.warning("Data tidak lengkap")
+    return
+  }
+  if (!nobukti) {
+    alertify.warning("No Bukti belum terisi, silahkan pilih customer lagi")
     return
   }
   if (Number(qnt) <= 0) {
@@ -2826,44 +1983,11 @@ function submitAddAdd () {
     alertify.warning("Melebihi qnt sisa")
     return
   }
-  console.log('y')
 
-  console.log({
-    choice,
-    nobukti,
-    nourut,
-    tanggal,
-    noinvoice,
-    kodecustsupp,
-    catatan,
-    urut,
-    urutinvoice,
-    kodebrg,
-    qnt,
-    qnt1,
-    qnt2,
-    sat1,
-    nosat,
-    isi,
-    jmlrecord,
-    namabrg,
-    kodegdg,
-    flagtipe,
-    ppn,
-    noso,
-    retursupp,
-    sat2,
-    ketdet,
-    nobeli,
-    urutbeli
-
-
-  })
-
+  prjKunciSimpan(true)
   $.ajax({
     url: "{!! url('perintahreturjualspadd') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       choice,
@@ -2893,29 +2017,22 @@ function submitAddAdd () {
       ketdet,
       nobeli,
       urutbeli
-
-
     },
     success: function(res) {
-
-
-      console.log('resspadd', res)
-      // return
+      if (prjDitolak(res)) {
+        alertify.warning(res.pesan)
+        if (jmlrecord == 1) {
+          prjDaftarPerluMuat = true
+          refreshDataTableAdd(nobukti)
+        }
+        return
+      }
       if (res == 1) {
-
-
-
         tipeform = 'edit'
         lockFormAdd()
         $('.showhideitem').hide();
-        // $('.showhideform').hide();
-        // $('#modalAdd').show();
-        loadAll()
+        prjDaftarPerluMuat = true
         refreshDataTableAdd(nobukti)
-
-
-
-
 
         alertify.success('Berhasil menambah item')
       }
@@ -2928,84 +2045,156 @@ function submitAddAdd () {
     error: function (err) {
       console.log(err)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
+    },
+    complete: function () { prjKunciSimpan(false) }
   })
 
 
 }
 
+// ---- Modal pemilih (browse) ----
+// Data dimuat async (layar tidak membeku), tabel diisi lewat opsi data + deferRender
+// sehingga hanya baris di halaman yang tampil yang dibuat (customer besar bisa ribuan
+// invoice). Klik baris mengambil data barisnya langsung - tidak lewat onclick berisi teks,
+// jadi nama/alamat yang mengandung tanda kutip tetap bisa dipilih. _pk: true supaya partial
+// tampilan-purchasing-js tidak membangun ulang tabel ini.
+function prjEsc (v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+function prjKolomTeks (field, kelas) {
+  return {
+    data: field,
+    defaultContent: '',
+    className: kelas || '',
+    render: function (v) { return prjEsc(v) }
+  }
+}
+
+function prjIsiPicker (idTabel, rows, columns, onPilih, opsi) {
+  let sel = '#' + idTabel
+  if ($.fn.DataTable.isDataTable(sel)) { $(sel).DataTable().clear().destroy() }
+  $(sel + ' tbody').empty()
+
+  let dt = pickerKasInit(idTabel, $.extend({
+    _pk: true,
+    data: rows || [],
+    columns: columns,
+    deferRender: true,
+    order: [[0, 'asc']],
+    createdRow: function (tr) { tr.classList.add('pick-row') }
+  }, opsi || {}))
+
+  $(sel + ' tbody').off('click.prj').on('click.prj', 'tr.pick-row', function () {
+    let data = dt.row(this).data()
+    if (data) { onPilih(data) }
+  })
+  return dt
+}
+
+function prjBukaPicker (idBagian) {
+  $('.showhidemodalbodyadd').hide()
+  $('#' + idBagian).show()
+  $('#form').modal('show')
+}
+
+// Modal pemilih dibuka lebih dulu, lalu lapisan "Memuat data..." (gaya .po-loading-chip
+// purchasing / menu marketing lain) tampil di badan modal selama data diambil. Isi tabel
+// lama disembunyikan supaya tidak terlihat data customer/invoice sebelumnya.
+function prjModalMemuat (idBagian, tampil) {
+  let $body = $('#' + idBagian + ' .modal-body')
+  $body.children('.prj-picker-memuat').remove()
+  $body.toggleClass('prj-sedang-memuat', !!tampil)
+  if (!tampil) { return }
+  $body.append(
+    '<div class="prj-picker-memuat"><span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span></div>'
+  )
+}
+
+// Penanda permintaan browse terakhir: jawaban dari browse sebelumnya (modal sudah ditutup
+// atau sudah membuka browse lain) tidak dipakai.
+let prjNomorBrowse = 0
+
+function prjMulaiBrowse (idBagian) {
+  let nomor = ++prjNomorBrowse
+  prjBukaPicker(idBagian)
+  prjModalMemuat(idBagian, true)
+  return nomor
+}
+
+function prjBrowseMasihAktif (nomor) {
+  return nomor === prjNomorBrowse
+}
+
+// Modal ditutup (Batal / X / klik luar) = browse yang masih memuat dibatalkan.
+$(function () {
+  $('#form').on('hidden.bs.modal', function (e) {
+    if (e.target !== this) { return }
+    prjNomorBrowse++
+    $('#form .prj-picker-memuat').remove()
+    $('#form .modal-body').removeClass('prj-sedang-memuat')
+  })
+})
+
+function prjSelesaiBrowse (idBagian) {
+  prjModalMemuat(idBagian, false)
+}
+
+// Browse gagal: tutup modal yang masih menampilkan "Memuat data...".
+function prjGagalBrowse (idBagian, err) {
+  console.log(err)
+  prjModalMemuat(idBagian, false)
+  if ($('#' + idBagian).is(':visible')) { buttonAddListBatal() }
+  alertify.warning('Terjadi kesalahan silahkan refresh browser')
+}
+
 function buttonAddListBarang () {
-
-  console.log('buttonAddListBarang')
-
 
   let _token = $("#_token").val();
   let kodecustsupp = $("#input_add_kodecustomer").val();
   let noinvoice = $("#input_add_noinvoice").val();
-  let noso = $("#input_add_noso").val();
 
   if (!kodecustsupp || !noinvoice ) {
     alertify.warning("Pilih customer & invoice terlebih dahulu")
     return
   }
 
-  if ($.fn.DataTable.isDataTable('#tabel_add_list_barang')) { $('#tabel_add_list_barang').DataTable().destroy() }
+  let nomor = prjMulaiBrowse('modalAddListBarang')
   $.ajax({
     url: "{!! url('perintahreturjuallistbarang') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       kodecustsupp,
       noinvoice
     },
     success: function(res) {
+      if (!prjBrowseMasihAktif(nomor)) { return }
+      listBarang = res || []
+      listBarang.forEach(function (item, i) { item._i = i })
 
-      listBarang = res
-      let rowTable = ``
-      res.forEach((item, i) => {
-        rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickBarang(${i})">
-
-        <td>${item.KodeBrg}</td>
-        <td>${item.NamaBrg ? item.NamaBrg : item.NamaBrgx }</td>
-        <td class="text-right">${parseFloat(item.QntSisa).toFixed(2)}</td>
-        <td>${item.Satuan ?  item.Satuan : ''}</td>
-
-        </tr>`
-      });
-
-
-
-
-
-
-      document.getElementById("tabel_data_add_list_barang").innerHTML = rowTable
-      pickerKasInit('tabel_add_list_barang', { order: [[0, 'asc']] })
-      $('.showhidemodalbodyadd').hide();
-      $('#modalAddListBarang').show();
-      $("#form").modal('toggle')
-
+      prjIsiPicker('tabel_add_list_barang', listBarang, [
+        prjKolomTeks('KodeBrg'),
+        { data: null, render: function (v, t, item) { return prjEsc(item.NamaBrg ? item.NamaBrg : item.NamaBrgx) } },
+        { data: 'QntSisa', className: 'text-right', render: function (v) { return parseFloat(v || 0).toFixed(2) } },
+        prjKolomTeks('Satuan')
+      ], function (item) { buttonAddPickBarang(item._i) })
+      prjSelesaiBrowse('modalAddListBarang')
     },
     error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      if (!prjBrowseMasihAktif(nomor)) { return }
+      prjGagalBrowse('modalAddListBarang', err)
     }
-
   })
-
-
 }
 
 
 
 function buttonAddListNoBeli () {
 
-
   let _token = $("#_token").val();
-  let kodecustsupp = $("#input_add_kodecustomer").val();
-  let noinvoice = $("#input_add_noinvoice").val();
   let noso = $("#input_add_noso").val();
   let kodebrg = $("#AddAddKodeBrg").val();
 
@@ -3014,54 +2203,32 @@ function buttonAddListNoBeli () {
     return
   }
 
-  if ($.fn.DataTable.isDataTable('#tabel_add_list_nobeli')) { $('#tabel_add_list_nobeli').DataTable().destroy() }
+  let nomor = prjMulaiBrowse('modalAddListNoBeli')
   $.ajax({
     url: "{!! url('perintahreturjuallistnobeli') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       kodebrg,
       noso
     },
     success: function(res) {
-      let rowTable = ``
-      rowTable += `<tr class="pick-row" onclick="buttonAddPickNoBeli('-' , 0)">
-
-      <td>-</td>
-
-      </tr>`
-      res.forEach((item, i) => {
-        rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickNoBeli('${item.NOBUKTI}' ,${item.urut} )">
-        <td>${item.NOBUKTI}</td>
-
-        </tr>`
-      });
-
-
-
-
-
-      document.getElementById("tabel_data_add_list_nobeli").innerHTML = rowTable
-      pickerKasInit('tabel_add_list_nobeli', { order: [[0, 'asc']] })
-      $('.showhidemodalbodyadd').hide();
-      $('#modalAddListNoBeli').show();
-      $("#form").modal('toggle')
-
+      if (!prjBrowseMasihAktif(nomor)) { return }
+      // Baris "-" pertama = tanpa No Beli, sama seperti programajcSML.
+      let rows = [{ NOBUKTI: '-', urut: 0 }].concat(res || [])
+      prjIsiPicker('tabel_add_list_nobeli', rows, [
+        prjKolomTeks('NOBUKTI')
+      ], function (item) { buttonAddPickNoBeli(item.NOBUKTI, item.urut) })
+      prjSelesaiBrowse('modalAddListNoBeli')
     },
     error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      if (!prjBrowseMasihAktif(nomor)) { return }
+      prjGagalBrowse('modalAddListNoBeli', err)
     }
-
   })
-
-
 }
 
 function buttonAddListNoInvoice () {
-
 
   let _token = $("#_token").val();
   let kodecustsupp = $("#input_add_kodecustomer").val();
@@ -3071,112 +2238,103 @@ function buttonAddListNoInvoice () {
     return
   }
 
-  if ($.fn.DataTable.isDataTable('#tabel_add_list_noinvoice')) { $('#tabel_add_list_noinvoice').DataTable().destroy() }
+  let nomor = prjMulaiBrowse('modalAddListNoInvoice')
   $.ajax({
     url: "{!! url('perintahreturjuallistnoinvoice') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       kodecustsupp
     },
     success: function(res) {
-      let rowTable = ``
-      res.forEach((item, i) => {
-        rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickNoInvoice('${item.NOBUKTI}' , '${item.NoSO}' , '${item.KODEGDG}', ${item.flagtipe}, ${item.ppn})">
-
-        <td>${item.NOBUKTI}</td>
-        <td>${formatDate(item.TANGGAL)}</td>
-        <td>${item.NoSO}</td>
-        <td>${item.NAMAGDG ? item.NAMAGDG : '' }</td>
-
-        </tr>`
-      });
-
-
-
-
-      document.getElementById("tabel_data_add_list_noinvoice").innerHTML = rowTable
-      pickerKasInit('tabel_add_list_noinvoice', { order: [[0, 'asc']] })
-      $('.showhidemodalbodyadd').hide();
-      $('#modalAddListNoInvoice').show();
-      $("#form").modal('toggle')
- 
+      if (!prjBrowseMasihAktif(nomor)) { return }
+      prjIsiPicker('tabel_add_list_noinvoice', res || [], [
+        prjKolomTeks('NOBUKTI'),
+        { data: 'TANGGAL', render: function (v, type) {
+            let tgl = v ? formatDate(v) : ''
+            return type === 'display' ? prjEsc(tgl) : tgl
+          } },
+        prjKolomTeks('NoSO'),
+        prjKolomTeks('NAMAGDG')
+      ], function (item) {
+        buttonAddPickNoInvoice(item.NOBUKTI, item.NoSO, item.KODEGDG, item.flagtipe, item.ppn)
+      })
+      prjSelesaiBrowse('modalAddListNoInvoice')
     },
     error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      if (!prjBrowseMasihAktif(nomor)) { return }
+      prjGagalBrowse('modalAddListNoInvoice', err)
     }
-
   })
+}
 
+// Daftar customer jarang berubah: dimuat sekali per halaman (mulai dimuat di latar saat
+// tombol Tambah ditekan) lalu dipakai ulang, jadi browse customer berikutnya langsung tampil.
+let prjCacheCustomer = null
+let prjAjaxCustomer = null
 
+function prjMuatCustomer () {
+  if (prjCacheCustomer) { return $.Deferred().resolve(prjCacheCustomer).promise() }
+  if (prjAjaxCustomer) { return prjAjaxCustomer }
+  prjAjaxCustomer = $.ajax({
+    url: "{!! url('perintahreturjuallistcustomer') !!}",
+    type: "get"
+  }).then(function (res) {
+    prjCacheCustomer = res || []
+    return prjCacheCustomer
+  }).always(function () {
+    prjAjaxCustomer = null
+  })
+  return prjAjaxCustomer
+}
+
+function prjIsiPickerCustomer (rows) {
+  prjIsiPicker('tabel_add_list_customer', rows, [
+    prjKolomTeks('KODECUSTSUPP'),
+    prjKolomTeks('NAMACUSTSUPP'),
+    prjKolomTeks('NamaKota')
+  ], function (item) {
+    buttonAddPickCustomer(item.KODECUSTSUPP, item.NAMACUSTSUPP, item.ALAMAT1, item.PPN)
+  })
 }
 
 function buttonAddListCustomer () {
-  if ($.fn.DataTable.isDataTable('#tabel_add_list_customer')) { $('#tabel_add_list_customer').DataTable().destroy() }
-  $.ajax({
-    url: "{!! url('perintahreturjuallistcustomer') !!}",
-    type: "get",
-    async: false,
-    data: {
+  // Sudah ada di cache: modal langsung tampil berisi data, tanpa animasi memuat.
+  if (prjCacheCustomer) {
+    prjNomorBrowse++
+    prjIsiPickerCustomer(prjCacheCustomer)
+    prjModalMemuat('modalAddListCustomer', false)
+    prjBukaPicker('modalAddListCustomer')
+    return
+  }
 
-    },
-    success: function(res) {
-      console.log(res)
-      let rowTable = ``
-      res.forEach((item, i) => {
-        rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickCustomer('${item.KODECUSTSUPP}' , '${item.NAMACUSTSUPP}' , '${item.ALAMAT1}' , ${item.PPN})">
-
-        <td>${item.KODECUSTSUPP}</td>
-        <td>${item.NAMACUSTSUPP}</td>
-        <td>${item.NamaKota}</td>
-
-        </tr>`
-      });
-
-
-
-
-      document.getElementById("tabel_data_add_list_customer").innerHTML = rowTable
-      pickerKasInit('tabel_add_list_customer', { order: [[0, 'asc']] })
-      $('.showhidemodalbodyadd').hide();
-      $('#modalAddListCustomer').show();
-      $("#form").modal('toggle')
-
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
+  let nomor = prjMulaiBrowse('modalAddListCustomer')
+  prjMuatCustomer().then(function (rows) {
+    if (!prjBrowseMasihAktif(nomor)) { return }
+    prjIsiPickerCustomer(rows)
+    prjSelesaiBrowse('modalAddListCustomer')
+  }, function (err) {
+    if (!prjBrowseMasihAktif(nomor)) { return }
+    prjGagalBrowse('modalAddListCustomer', err)
   })
-
-
 }
 
 
 function buttonAddPickNoBeli (nobeli, urutbeli) {
-  console.log('buttonAddPickNoBeli')
-  console.log(nobeli)
   document.getElementById("AddAddNoBeli").value = nobeli
   document.getElementById("AddAddUrutBeli").value = urutbeli
-  // $('.showhideitem').hide();
   buttonAddListBatal()
-  // $("#form").modal('toggle')
 }
 
 function buttonAddPickCustomer (kode, nama , alamat,ppn) {
-  console.log('buttonAddPickCustomer')
-  console.log(kode,nama,alamat,ppn)
   document.getElementById("input_add_kodecustomer").value = kode
-  document.getElementById("input_add_namacustomer").value = nama
-  document.getElementById("input_add_alamatcustomer").value = alamat
+  document.getElementById("input_add_namacustomer").value = nama || ''
+  document.getElementById("input_add_alamatcustomer").value = alamat || ''
   document.getElementById("input_add_noinvoice").value = ''
   document.getElementById("input_add_noso").value = ''
   document.getElementById("input_add_gudang").value = ''
+  document.getElementById("input_add_flagtipe").value = ''
+  document.getElementById("input_add_ppn").value = ''
   $('.showhideitem').hide();
 
   if (ppn && Number(ppn) == 1) {
@@ -3189,7 +2347,6 @@ function buttonAddPickCustomer (kode, nama , alamat,ppn) {
 
   }
   buttonAddListBatal()
-  // $("#form").modal('toggle')
 }
 function onChangeQtyEdit () {
 
@@ -3294,18 +2451,9 @@ function buttonAddBatal () {
 
 function buttonAddListBatal () {
   $('.showhidemodalbodyadd').hide();
-  // $('#modalBodyAddMain').show();
-
-  $("#form").modal('toggle')
+  // 'hide', bukan 'toggle': toggle bisa membuka modal lagi kalau modal sudah tertutup.
+  $("#form").modal('hide')
 }
-
-// function buttonAddListCustomer () {
-//
-//   $('.showhidemodalbodyadd').hide();
-//   $('#modalBodyAddListValas').show();
-//
-//   $("#form").modal('toggle')
-// }
 
 
 function closeShowHideItem () {
@@ -3313,10 +2461,10 @@ function closeShowHideItem () {
 
 }
 
+// Tanggal selalu disabled (diisi dari server saat Tambah, dari data saat Edit), jadi tidak
+// ikut dibuka/dikunci di sini.
 function unlockFormAdd () {
   document.getElementById("input_add_catatan").disabled = false
-  document.getElementById("input_add_tanggal").disabled = false
-
 
   document.getElementById("buttonAddListCustomer").disabled = false
   document.getElementById("buttonAddListNoInvoice").disabled = false
@@ -3325,206 +2473,151 @@ function unlockFormAdd () {
 
 function lockFormAdd () {
   document.getElementById("input_add_catatan").disabled = true
-  document.getElementById("input_add_tanggal").disabled = true
-
 
   document.getElementById("buttonAddListCustomer").disabled = true
   document.getElementById("buttonAddListNoInvoice").disabled = true
 
 }
 
+// Tanggal PRJ baru diambil dari jam server SQL (getdate), sama seperti purchasing
+// (purchaseOrder / pembelianpermintaanagen), supaya tidak bisa diakali lewat jam komputer user.
+function prjIsiTanggalServer () {
+  document.getElementById("input_add_tanggal").value = ''
+  $.ajax({
+    url: "{!! url('gettanggalserver') !!}",
+    type: "get",
+    success: function(res) {
+      if (tipeform === 'add' && res && res[0]) {
+        document.getElementById("input_add_tanggal").value = res[0].tanggal
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mengambil tanggal server, silahkan refresh browser')
+    }
+  })
+}
+
+function prjIsiTabelItem (res) {
+  let rowTable = ""
+  res.forEach((item, i) => {
+    rowTable += `<tr>
+    <td>${prjEsc(item.KODEBRG)}</td>
+    <td>${prjEsc(item.NAMABRG)}</td>
+    <td>${prjEsc(item.NAMAPRODUK)}</td>
+    <td>${prjEsc(item.SATX ? item.SATX : item.SAT)}</td>
+    <td class="text-right">${item.QNT ? formatAngkaX(item.QNT) : '0.00'}</td>
+    <td>${prjEsc(item.SAT)}</td>
+    <td class="text-center">
+    <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
+     <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
+    </tr>`
+  });
+  document.getElementById("addTableData").innerHTML = rowTable
+}
+
+// Muat ulang item & header PRJ di form Add/Edit. Mengembalikan promise berisi data (array);
+// array kosong = PRJ sudah tidak ada (item terakhir dihapus) -> form ditutup.
 function refreshDataTableAdd (NOBUKTI = "") {
 
-    console.log('refreshDataTableAdd' , NOBUKTI)
+  if (!NOBUKTI) {
+    return $.Deferred().resolve([]).promise()
+  }
 
-    if (!NOBUKTI) {
-
-    } else {
-      let _token  = $("#_token").val()
-      $.ajax({
-        url: "{!! url('perintahreturjualgetdetail') !!}",
-        type: "post",
-        async: false,
-        data: {
-          _token,
-          nobukti: NOBUKTI
-        },
-        success: function(res) {
-          console.log('aaa')
-          console.log('res' , res)
-
-          // res.header.forEach((item, i) => {
-          //   console.log('a' , i)
-          // });
-          if (res.length == 0) {
-            alertify.warning("Data habis")
-            // $("#form").modal('toggle')
-            buttonCloseForm()
-          } else {
-            dataBarang = res
-
-            let rowTable = ""
-            res.forEach((item, i) => {
-
-              // <td>${item.KodeGdg}</td>
-              rowTable += `<tr>
-              <td>${item.KODEBRG}</td>
-              <td>${item.NAMABRG}</td>
-
-              <td>${item.NAMAPRODUK}</td>
-              <td>${item.SATX ? item.SATX : item.SAT}</td>
-              <td class="text-right">${item.QNT ? formatAngkaX(item.QNT) : '0.00'}</td>
-              <td>${item.SAT}</td>
-
-              <td class="text-center">
-              <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
-               <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})"><i class="bi bi-trash"></i></button></td>
-              </tr>`
-            });
-
-            // <td class="text-right">${item.QNT1 ? formatAngkaX(item.QNT1) : '0.00'}</td>
-            // <td>${item.SAT_1}</td>
-            //
-            // <td class="text-right">${item.QNT2 ? formatAngkaX(item.QNT2) : '0.00'}</td>
-            // <td>${item.SAT_2}</td>
-
-            // if(!dataTableAdd.length) {
-            //   rowTable = `<tr>
-            //   <td class="text-center" colspan="8">Belum ada barang</td>
-            //   </tr>`
-            // }
-            document.getElementById("addTableData").innerHTML = rowTable
-
-            document.getElementById("input_add_kodecustomer").value = dataBarang[0].KodeCustSupp
-            document.getElementById("input_add_namacustomer").value = dataBarang[0].NAMACUSTSUPP
-            document.getElementById("input_add_alamatcustomer").value = dataBarang[0].ALAMAT1
-            document.getElementById("input_add_noinvoice").value = dataBarang[0].NoRPJ
-            document.getElementById("input_add_noso").value = dataBarang[0].NOSO
-            document.getElementById("input_add_gudang").value = dataBarang[0].KodeGdg
-            document.getElementById("input_add_catatan").value = dataBarang[0].Catatan
-            document.getElementById("input_add_flagtipe").value = dataBarang[0].FlagTipe
-            document.getElementById("input_add_ppn").value = dataBarang[0].TipePPN
-
-            document.getElementById("input_add_nobukti").value = dataBarang[0].NOBUKTI
-            document.getElementById("input_add_nourut").value = dataBarang[0].NOURUT
-            //
-            // document.getElementById("input_add_nobukti").value = dataHeaderAdd.NoBukti
-            // document.getElementById("input_add_namapelanggan").value = dataHeaderAdd.NamaCust
-            // document.getElementById("input_add_kodepelanggan").value = dataHeaderAdd.KodeCUST
-            // document.getElementById("input_add_alamatpelanggan").value = dataHeaderAdd.ALAMAT
-            // document.getElementById("input_add_kodesales").value = dataHeaderAdd.kodesls
-            // document.getElementById("input_add_namasales").value = dataHeaderAdd.NamaSls
-            // document.getElementById("input_add_kodepic").value = dataHeaderAdd.kodePF
-            // document.getElementById("input_add_namapic").value = dataHeaderAdd.NamaPF
-            // document.getElementById("input_add_valas").value = dataHeaderAdd.KodeVls
-            // document.getElementById("input_add_kurs").value = dataHeaderAdd.Kurs
-            //
-          }
-
-
-
-          // res.list.forEach((item, i) => {
-          //   console.log('b' , i)
-          // });
-
-
-
-        },
-        error: function (err) {
-          console.log(err)
-          console.log(err.status)
-          console.log(err.statusText)
-          alertify.warning('Terjadi kesalahan silahkan refresh browser')
-        }
-
-      })
+  let _token  = $("#_token").val()
+  return $.ajax({
+    url: "{!! url('perintahreturjualgetdetail') !!}",
+    type: "post",
+    data: {
+      _token,
+      nobukti: NOBUKTI
     }
+  }).then(function(res) {
+    res = res || []
+    if (res.length == 0) {
+      alertify.warning("Data habis")
+      dataBarang = []
+      prjDaftarPerluMuat = true
+      buttonCloseForm()
+      return res
+    }
+
+    dataBarang = res
+    prjIsiTabelItem(res)
+
+    document.getElementById("input_add_kodecustomer").value = dataBarang[0].KodeCustSupp
+    document.getElementById("input_add_namacustomer").value = dataBarang[0].NAMACUSTSUPP || ''
+    document.getElementById("input_add_alamatcustomer").value = dataBarang[0].ALAMAT1 || ''
+    document.getElementById("input_add_noinvoice").value = dataBarang[0].NoRPJ
+    document.getElementById("input_add_noso").value = dataBarang[0].NOSO
+    document.getElementById("input_add_gudang").value = dataBarang[0].KodeGdg || ''
+    document.getElementById("input_add_catatan").value = dataBarang[0].Catatan || ''
+    document.getElementById("input_add_flagtipe").value = dataBarang[0].FlagTipe
+    document.getElementById("input_add_ppn").value = dataBarang[0].TipePPN
+    // Tanggal PRJ yang sedang diedit (dulu tidak diisi, sehingga form edit menampilkan
+    // tanggal hari ini).
+    document.getElementById("input_add_tanggal").value = dataBarang[0].Tanggal ? formatDate(dataBarang[0].Tanggal) : ''
+
+    document.getElementById("input_add_nobukti").value = dataBarang[0].NOBUKTI
+    document.getElementById("input_add_nourut").value = dataBarang[0].NOURUT
+    return res
+  }, function (err) {
+    console.log(err)
+    alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    return $.Deferred().reject(err).promise()
+  })
 }
 
 function buttonDetail (nobukti) {
 
-  console.log('buttonDetail' , nobukti)
+  let _token  = $("#_token").val()
 
-    let _token  = $("#_token").val()
-
-    let rowTable = ""
-    $.ajax({
-      url: "{!! url('perintahreturjualgetdetail') !!}",
-      type: "post",
-      async: false,
-      data: {
-        _token,
-        nobukti: nobukti
-      },
-      success: function(res) {
-        console.log('aaa')
-        console.log('res' , res)
-
-          if(res.length) {
-            let rowTable = ""
-            res.forEach((item, i) => {
-
-              rowTable += `<tr>
-              <td>${item.KODEBRG}</td>
-              <td>${item.NAMABRG}</td>
-
-              <td>${item.NAMAPRODUK}</td>
-              <td>${item.SATX ? item.SATX : item.SAT}</td>
-              <td class="text-right">${item.QNT ? parseFloat(item.QNT).toFixed(2) : '0.00'}</td>
-              <td>${item.SAT}</td>
-              </tr>`
-            });
-
-            // if(!dataTableAdd.length) {
-            //   rowTable = `<tr>
-            //   <td class="text-center" colspan="8">Belum ada barang</td>
-            //   </tr>`
-            // }
-            document.getElementById("detailTableData").innerHTML = rowTable
-
-            document.getElementById("input_detail_kodecustomer").value = res[0].KodeCustSupp
-            document.getElementById("input_detail_namacustomer").value = res[0].NAMACUSTSUPP
-            document.getElementById("input_detail_alamatcustomer").value = res[0].ALAMAT1
-            document.getElementById("input_detail_noinvoice").value = res[0].NoRPJ
-            document.getElementById("input_detail_noso").value = res[0].NOSO
-            document.getElementById("input_detail_gudang").value = res[0].KodeGdg
-            document.getElementById("input_detail_catatan").value = res[0].Catatan
-            document.getElementById("input_detail_flagtipe").value = res[0].FlagTipe
-            document.getElementById("input_detail_ppn").value = res[0].TipePPN
-
-            document.getElementById("input_detail_nobukti").value = res[0].NOBUKTI
-            document.getElementById("input_detail_nourut").value = res[0].NOURUT
-
-          } else {
-            alertify.warning("Data tidak ditemukan")
-          }
-
-      },
-      error: function (err) {
-        console.log(err)
-        console.log(err.status)
-        console.log(err.statusText)
-        alertify.warning('Terjadi kesalahan silahkan refresh browser')
-      }
-
-    })
-
-  $('.mainpage').hide();
-  $('#page3').show();
-}
-function buttonEdit (nobukti) {
-
-let pcekglobal = 0
   $.ajax({
-    url: "{!! url('ceklockperiode') !!}",
-    type: "get",
-    async: false,
+    url: "{!! url('perintahreturjualgetdetail') !!}",
+    type: "post",
     data: {
+      _token,
+      nobukti: nobukti
     },
     success: function(res) {
-      if (res.length ) {
-        pcekglobal = 1
+      if (!res || !res.length) {
+        alertify.warning("Data tidak ditemukan")
+        loadAll()
+        return
       }
+
+      let rowTable = ""
+      res.forEach((item, i) => {
+
+        rowTable += `<tr>
+        <td>${prjEsc(item.KODEBRG)}</td>
+        <td>${prjEsc(item.NAMABRG)}</td>
+        <td>${prjEsc(item.NAMAPRODUK)}</td>
+        <td>${prjEsc(item.SATX ? item.SATX : item.SAT)}</td>
+        <td class="text-right">${item.QNT ? formatAngkaX(item.QNT) : '0.00'}</td>
+        <td>${prjEsc(item.SAT)}</td>
+        </tr>`
+      });
+
+      document.getElementById("detailTableData").innerHTML = rowTable
+
+      document.getElementById("input_detail_kodecustomer").value = res[0].KodeCustSupp
+      document.getElementById("input_detail_namacustomer").value = res[0].NAMACUSTSUPP || ''
+      document.getElementById("input_detail_alamatcustomer").value = res[0].ALAMAT1 || ''
+      document.getElementById("input_detail_noinvoice").value = res[0].NoRPJ
+      document.getElementById("input_detail_noso").value = res[0].NOSO
+      document.getElementById("input_detail_gudang").value = res[0].KodeGdg || ''
+      document.getElementById("input_detail_catatan").value = res[0].Catatan || ''
+      document.getElementById("input_detail_flagtipe").value = res[0].FlagTipe
+      document.getElementById("input_detail_ppn").value = res[0].TipePPN
+      // Dulu tanggal detail tidak diisi (selalu tampil tanggal hari ini).
+      document.getElementById("input_detail_tanggal").value = res[0].Tanggal ? formatDate(res[0].Tanggal) : ''
+
+      document.getElementById("input_detail_nobukti").value = res[0].NOBUKTI
+      document.getElementById("input_detail_nourut").value = res[0].NOURUT
+
+      $('.mainpage').hide();
+      $('#page3').show();
     },
     error: function (err) {
       console.log(err)
@@ -3532,11 +2625,33 @@ let pcekglobal = 0
     }
 
   })
-
-if (pcekglobal) {
-  alertify.warning("Periode sudah dikunci")
-  return
 }
+
+// Cek kunci periode (ceklockperiode) - dipakai Tambah & Edit, sama seperti sebelumnya.
+function prjCekKunciPeriode () {
+  return $.ajax({
+    url: "{!! url('ceklockperiode') !!}",
+    type: "get"
+  }).then(function (res) {
+    if (res && res.length) {
+      alertify.warning("Periode sudah dikunci")
+      return $.Deferred().reject('kunci').promise()
+    }
+  }, function (err) {
+    console.log(err)
+    alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    return $.Deferred().reject(err).promise()
+  })
+}
+
+function prjCariBaris (nobukti) {
+  return (lastTabelRows || []).find(function (r) { return prjPickCI(r, 'NOBUKTI') === nobukti })
+}
+
+let prjSedangBuka = false
+
+function buttonEdit (nobukti) {
+  if (prjSedangBuka) { return }
 
   let akses = $("#akses_iskoreksi").val();
 
@@ -3545,49 +2660,35 @@ if (pcekglobal) {
     return
   }
 
-  tipeform = 'edit'
-  lockFormAdd()
-  $('.showhideitem').hide();
-  // $('.showhideform').hide();
-  // $('#modalAdd').show();
-  refreshDataTableAdd(nobukti)
+  prjSedangBuka = true
+  prjCekKunciPeriode().then(function () {
+    tipeform = 'edit'
+    cleanFormAdd()
+    lockFormAdd()
+    $('.showhideitem').hide();
+    return refreshDataTableAdd(nobukti)
+  }).then(function (res) {
+    if (!res || !res.length) { return }
 
-  if (dataBarang[0].IsOtorisasi1 == 1) {
-    alertify.warning("Sudah diotorisasi")
-    return
-  }
+    if (dataBarang[0].IsOtorisasi1 == 1) {
+      alertify.warning("Sudah diotorisasi")
+      loadAll()
+      return
+    }
+    if (Number(dataBarang[0].IsProses) === 1) {
+      alertify.warning("PRJ " + nobukti + " sudah diproses Retur Penjualan Gudang, tidak bisa diedit")
+      return
+    }
 
-  $('.mainpage').hide();
-  $('#page2').show();
+    $('.mainpage').hide();
+    $('#page2').show();
+  }).always(function () {
+    prjSedangBuka = false
+  })
 }
 
 function buttonAdd (nobukti) {
-
-let pcekglobal = 0
-  $.ajax({
-    url: "{!! url('ceklockperiode') !!}",
-    type: "get",
-    async: false,
-    data: {
-    },
-    success: function(res) {
-      if (res.length ) {
-        pcekglobal = 1
-      }
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
-    }
-
-  })
-
-if (pcekglobal) {
-  alertify.warning("Periode sudah dikunci")
-  return
-}
-
-  console.log('buttonAdd' , nobukti)
+  if (prjSedangBuka) { return }
 
   let akses = $("#akses_istambah").val();
 
@@ -3596,72 +2697,64 @@ if (pcekglobal) {
     return
   }
 
-  document.getElementById("addTableData").innerHTML = `<td colspan=7 class="text-center">Belum ada data</td>`
-  tipeform = 'add'
-  unlockFormAdd()
-  $('.showhideitem').hide();
-  $('.showhideform').hide();
-  $('#modalAdd').show();
-  // $("#form").modal('toggle')
+  prjSedangBuka = true
+  prjCekKunciPeriode().then(function () {
+    tipeform = 'add'
+    cleanFormAdd()
+    document.getElementById("addTableData").innerHTML = `<tr><td colspan=7 class="text-center">Belum ada data</td></tr>`
+    unlockFormAdd()
+    $('.showhideitem').hide();
+    $('.showhideform').hide();
+    $('#modalAdd').show();
 
-  // input_add_nobukti
-  // document.getElementById("input_add_nobukti").value = nobukti
+    prjIsiTanggalServer()
+    // Daftar customer mulai dimuat di latar supaya browse customer langsung tampil.
+    prjMuatCustomer()
 
-  cleanFormAdd()
-  // setNewNoBukti()
-
-  $('.mainpage').hide();
-  $('#page2').show();
+    $('.mainpage').hide();
+    $('#page2').show();
+  }).always(function () {
+    prjSedangBuka = false
+  })
 
 }
 
 function buttonAddAddItem () {
 
-    $('.showhideitem').hide();
-    cleanFormAddAdd()
-    $('#formAddAdd').show();
+  if (!$("#input_add_kodecustomer").val() || !$("#input_add_noinvoice").val()) {
+    alertify.warning("Pilih customer & invoice terlebih dahulu")
+    return
+  }
+  $('.showhideitem').hide();
+  cleanFormAddAdd()
+  $('#formAddAdd').show();
 
 }
 
 function buttonAddEditItem (i) {
   tempBarangAddEdit = dataBarang[i]
-  console.log(tempBarangAddEdit)
+  if (!tempBarangAddEdit) { return }
   document.getElementById("AddEditKodeBrg").value = tempBarangAddEdit.KODEBRG
-  document.getElementById("AddEditReturSupp").value = tempBarangAddEdit.FlagKembali
-  document.getElementById("AddEditNoBeli").value = tempBarangAddEdit.nobeli
-  document.getElementById("AddEditUrutBeli").value = tempBarangAddEdit.urutbeli
-  document.getElementById("AddEditNamaBrg").value = tempBarangAddEdit.NAMABRG
+  document.getElementById("AddEditReturSupp").value = Number(tempBarangAddEdit.FlagKembali) === 1 ? 1 : 0
+  document.getElementById("AddEditNoBeli").value = tempBarangAddEdit.nobeli || ''
+  document.getElementById("AddEditUrutBeli").value = tempBarangAddEdit.urutbeli || 0
+  document.getElementById("AddEditNamaBrg").value = tempBarangAddEdit.NAMABRG || ''
   document.getElementById("AddEditInputQty").value = parseFloat(tempBarangAddEdit.QNT).toFixed(2)
   document.getElementById("AddEditInputQty1").value = parseFloat(tempBarangAddEdit.QNT1).toFixed(2)
   document.getElementById("AddEditInputQty2").value = parseFloat(tempBarangAddEdit.QNT2).toFixed(2)
   document.getElementById("AddEditInputSat1").value = tempBarangAddEdit.SAT_1
   document.getElementById("AddEditInputSat2").value = tempBarangAddEdit.SAT_2
 
-  document.getElementById("AddEditKeterangan").value = tempBarangAddEdit.KetDetail
+  document.getElementById("AddEditKeterangan").value = tempBarangAddEdit.KetDetail || ''
 
   let selectOption = ''
   if (tempBarangAddEdit.SAT_1) {
-    selectOption += `<option value=1 ${tempBarangAddEdit.NoSat == 1 ? 'selected' : ''}>SAT1 - ${tempBarangAddEdit.SAT_1}</option>`
+    selectOption += `<option value=1 ${tempBarangAddEdit.NoSat == 1 ? 'selected' : ''}>SAT1 - ${prjEsc(tempBarangAddEdit.SAT_1)}</option>`
   }
   if (tempBarangAddEdit.SAT_2) {
-    selectOption += `<option value=2 ${tempBarangAddEdit.NoSat == 2 ? 'selected' : ''}>SAT2 - ${tempBarangAddEdit.SAT_2}</option>`
+    selectOption += `<option value=2 ${tempBarangAddEdit.NoSat == 2 ? 'selected' : ''}>SAT2 - ${prjEsc(tempBarangAddEdit.SAT_2)}</option>`
   }
   document.getElementById("AddEditInputNosat").innerHTML = selectOption
-
-  // let retursupp = $("#AddEditReturSupp").val()
-  // let nobeli = $("#AddEditNoBeli").val()
-  // let urutbeli = $("#AddEditUrutBeli").val()
-  // let namabrg = $("#AddEditNamaBrg").val();
-  // let kodebrg = $("#AddEditKodeBrg").val();
-  // let qnt = $("#AddEditInputQty").val();
-  // // isi
-  // let qnt1 = $("#AddEditInputQty1").val();
-  // let sat1 = $("#AddEditInputSat1").val();
-  // let qnt2 = $("#AddEditInputQty2").val();
-  // let sat2 = $("#AddEditInputSat2").val();
-  // let ketdet = $("#AddEditKeterangan").val();
-  //
-  // let nosat = $("#AddEditInputNosat").val();
 
   $('.showhideitem').hide();
   $('#formAddEdit').show();
@@ -3670,10 +2763,15 @@ function buttonAddEditItem (i) {
 
 function buttonCloseForm () {
   $('.mainpage').hide();
-  // $('#page2').hide();
   $('#page1').show();
 
+  if (prjDaftarPerluMuat) {
+    prjDaftarPerluMuat = false
+    loadAll()
+  }
 }
+
+let prjAjaxLoadAll = null
 
 function loadAll () {
 
@@ -3683,21 +2781,28 @@ function loadAll () {
   let filterstatus = $("#input_filterstatus").val()
   let filteroto = $("#input_filteroto").val()
 
-  $.ajax({
+  // Permintaan lama dibatalkan supaya hasil yang lebih lama tidak menimpa yang terbaru.
+  if (prjAjaxLoadAll) { prjAjaxLoadAll.abort() }
+  prjAjaxLoadAll = $.ajax({
     url: "{!! url('perintahreturjualloadall') !!}",
     type: "get",
-    async: false,
     data: { _token, tglawal, tglakhir, filterstatus, filteroto },
     success: function(res) {
-
       lastTabelRows = res.tempOutstanding;
       reinitTabel();
-
-    }})
+    },
+    error: function (err) {
+      if (err && err.statusText === 'abort') { return }
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    },
+    complete: function () { prjAjaxLoadAll = null }
+  })
 
 }
 
-
+// Pola batal otorisasi yang disepakati (purchasing / SO): prompt berjudul "Batal Otorisasi",
+// keterangan wajib diisi (prompt tetap terbuka bila kosong), dicatat ke LoggingData('btloto').
 function buttonBatalOtorisasi (nobukti) {
   let akses = $("#akses_isotorisasi1").val();
   if (!Number(akses)) {
@@ -3705,77 +2810,37 @@ function buttonBatalOtorisasi (nobukti) {
     return
   }
 
-
-
-
-  alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
-  function(evt, value) {
-    // alertify.success("You entered: " + value);
-    let xpket = value;
-
-     if (xpket==''){
-          alertify.warning('Keterangan harus diisi.');
-          $.abort();
-        }
-        let _token = $("#_token").val();
-
-        $.ajax({
-          url: "{!! url('perintahreturjualspbatalotorisasi') !!}",
-          type: "post",
-          async: false,
-          data: {
-            _token,
-            nobukti,
-          pket :value
-
-          },
-          success: function(res) {
-            console.log(res)
-            alertify.success('Berhasil batal otorisasi')
-            loadAll()
-
-
-
-          },
-          error: function (err) {
-            console.log(err)
-            alertify.warning('Terjadi kesalahan silahkan refresh browser')
-          }
-
-        })
-      }
-    ,function(){
-      console.log('no')
-      alertify.error("Action cancelled");
-    });
-
-}
-
-function buttonOtorisasi (nobukti) {
-  let akses = $("#akses_isotorisasi1").val();
-  if (!Number(akses)) {
-    alertify.warning('No access')
+  let baris = prjCariBaris(nobukti)
+  if (baris && prjPickCI(baris, 'xstatus') && prjPickCI(baris, 'xstatus') !== 'Belum') {
+    alertify.warning("PRJ " + nobukti + " sudah diproses Retur Penjualan Gudang, tidak bisa batal otorisasi")
     return
   }
 
+  alertify.prompt('Batal Otorisasi', "Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+  function(evt, value) {
+    let xpket = String(value || '').trim();
+
+    if (!xpket) {
+      alertify.warning('Keterangan harus diisi.');
+      return false;
+    }
     let _token = $("#_token").val();
 
     $.ajax({
-      url: "{!! url('perintahreturjualspotorisasi') !!}",
+      url: "{!! url('perintahreturjualspbatalotorisasi') !!}",
       type: "post",
-      async: false,
       data: {
         _token,
-        nobukti
-
+        nobukti,
+        pket : xpket
       },
       success: function(res) {
-        console.log(res)
-        alertify.success('Berhasil update otorisasi')
         loadAll()
-
-
-
+        if (prjDitolak(res)) {
+          alertify.warning(res.pesan)
+          return
+        }
+        alertify.success('Berhasil batal otorisasi')
       },
       error: function (err) {
         console.log(err)
@@ -3783,12 +2848,49 @@ function buttonOtorisasi (nobukti) {
       }
 
     })
-  // alertify.confirm('Otorisasi', 'Otorisasi PRJ ' + nobukti + ' ?',
-  //     function() {
-  //     }
-  //   ,function(){
-  //     console.log('no')
-  //   });
+  }
+  ,function(){
+    alertify.error("Action cancelled");
+  });
+
+}
+
+// Konfirmasi sebelum otorisasi, sama seperti programajcSML.
+function buttonOtorisasi (nobukti) {
+  let akses = $("#akses_isotorisasi1").val();
+  if (!Number(akses)) {
+    alertify.warning('No access')
+    return
+  }
+
+  alertify.confirm('Otorisasi', 'Otorisasi PRJ ' + nobukti + ' ?',
+    function() {
+      let _token = $("#_token").val();
+
+      $.ajax({
+        url: "{!! url('perintahreturjualspotorisasi') !!}",
+        type: "post",
+        data: {
+          _token,
+          nobukti
+        },
+        success: function(res) {
+          loadAll()
+          if (prjDitolak(res)) {
+            alertify.warning(res.pesan)
+            return
+          }
+          alertify.success('Berhasil update otorisasi')
+        },
+        error: function (err) {
+          console.log(err)
+          alertify.warning('Terjadi kesalahan silahkan refresh browser')
+        }
+
+      })
+    }
+    ,function(){
+    });
 }
 
 function formatDate(date , pemisah = '-') {
@@ -4373,7 +3475,7 @@ item.forEach((itemSub, j) => {
   z++;
 });
 
-// Fill remaining empty rows ï¿½ table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows � table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {
@@ -5038,7 +4140,7 @@ item.forEach((itemSub, j) => {
   z++;
 });
 
-// Fill remaining empty rows ï¿½ table is 225px, each row ~24px, header ~24px = ~8 total slots
+// Fill remaining empty rows � table is 225px, each row ~24px, header ~24px = ~8 total slots
 const maxRows = 7;
 const fillerCount = Math.max(0, maxRows - item.length);
 for (let f = 0; f < fillerCount; f++) {

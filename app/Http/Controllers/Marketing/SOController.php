@@ -308,7 +308,7 @@ foreach ($collection4 as $p) {
       $queryTipeBayar = ' and a.TIPEBAYAR = ' . $req->tipebayar;
     }
     // return $queryTipeBayar;
-    // return ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir , $queryTipeBayar , $req->tipefilter, $req->needoto];
+    // return ["tglawal" => $this->tanggalFilter($req->tglawal), "tglakhir" =>$this->tanggalFilter($req->tglakhir) , $queryTipeBayar , $req->tipefilter, $req->needoto];
 
     if ($req->tipefilter == 1) {
       $tempOutstanding = DB::connection("SML")->select("
@@ -345,7 +345,7 @@ foreach ($collection4 as $p) {
   Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
   left outer join [user] Mx on a.boffice=Mx.keynik
   where
-  a.TANGGAL between @bulan and @tahun " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir ] );
+  a.TANGGAL between @bulan and @tahun " . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal), "tglakhir" =>$this->tanggalFilter($req->tglakhir) ] );
   $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
@@ -390,7 +390,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                     Case when A.IsOtorisasi4=1 then 1 else 0 end+
                     Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
                else 1
-          end As Bit) = :needoto" . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "needoto" => $req->needoto] );
+          end As Bit) = :needoto" . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal) , "tglakhir" =>$this->tanggalFilter($req->tglakhir) , "needoto" => $req->needoto] );
           $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
@@ -436,7 +436,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
   and case when b.QNT = ISNULL(z.Qntspb,0) then 'F'
          when b.QNT - ISNULL(z.Qntspb,0) > 0 and ISNULL(z.Qntspb,0)<>0   then 'S'
          when  ISNULL(z.Qntspb,0)=0 then 'B'
-          end  = :ketproses " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketproses" => $req->ketproses] );
+          end  = :ketproses " . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal) , "tglakhir" =>$this->tanggalFilter($req->tglakhir) , "ketproses" => $req->ketproses] );
               $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
@@ -479,7 +479,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
             					group by NoSo,UrutSo)
             					 Z on b.nobukti=z.NoSo and b.urut=z.UrutSo
   where a.TANGGAL between @bulan and @tahun
- and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketclose" => $req->ketclose] );
+ and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal) , "tglakhir" =>$this->tanggalFilter($req->tglakhir) , "ketclose" => $req->ketclose] );
               $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
@@ -524,7 +524,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
    // Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
    // left outer join [user] Mx on a.boffice=Mx.keynik
    // where
-   // a.TANGGAL between @bulan and @tahun " , ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir ] );
+   // a.TANGGAL between @bulan and @tahun " , ["tglawal" => $this->tanggalFilter($req->tglawal), "tglakhir" =>$this->tanggalFilter($req->tglakhir) ] );
    // $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
    //
    //             return $tempOutstanding1;
@@ -570,7 +570,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
    //                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
    //                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
    //                  else 1
-   //             end As Bit) = :needoto" , ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "cbdneedopen" => $req->cbdneedopen , "needoto" => $req->needoto] );
+   //             end As Bit) = :needoto" , ["tglawal" => $this->tanggalFilter($req->tglawal) , "tglakhir" =>$this->tanggalFilter($req->tglakhir) , "cbdneedopen" => $req->cbdneedopen , "needoto" => $req->needoto] );
    //             $tempOutstanding1 = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
    //
    //             return $tempOutstanding1;
@@ -641,7 +641,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
         Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
         left outer join [user] Mx on a.boffice=Mx.keynik
         where
-        a.TANGGAL between @bulan and @tahun " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal, "tglakhir" =>$req->tglakhir ] );
+        a.TANGGAL between @bulan and @tahun " . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal), "tglakhir" =>$this->tanggalFilter($req->tglakhir) ] );
   $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
@@ -688,7 +688,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                         Case when A.IsOtorisasi4=1 then 1 else 0 end+
                         Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
                    else 1
-              end As Bit) = :needoto" . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "needoto" => $req->needoto] );
+              end As Bit) = :needoto" . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal) , "tglakhir" =>$this->tanggalFilter($req->tglakhir) , "needoto" => $req->needoto] );
               $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
@@ -734,7 +734,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
   and case when b.QNT = ISNULL(z.Qntspb,0) then 'F'
          when b.QNT - ISNULL(z.Qntspb,0) > 0 and ISNULL(z.Qntspb,0)<>0   then 'S'
          when  ISNULL(z.Qntspb,0)=0 then 'B'
-          end  = :ketproses " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketproses" => $req->ketproses] );
+          end  = :ketproses " . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal) , "tglakhir" =>$this->tanggalFilter($req->tglakhir) , "ketproses" => $req->ketproses] );
               $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 
@@ -773,7 +773,7 @@ Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
   Left Outer Join DBPICCUSTSUPP M3 on A.KodePF=M3.KODEPIC and A.KODECUST=m3.KODECUSTSUPP
   left outer join [user] Mx on a.boffice=Mx.keynik
   where a.TANGGAL between @bulan and @tahun
- and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar . " option (recompile)", ["tglawal" => $req->tglawal , "tglakhir" =>$req->tglakhir , "ketclose" => $req->ketclose] );
+ and case when ISNULL(B.QNTBATAL,0)>0 then 1 else 0 end = :ketclose " . $queryTipeBayar . " option (recompile)", ["tglawal" => $this->tanggalFilter($req->tglawal) , "tglakhir" =>$this->tanggalFilter($req->tglakhir) , "ketclose" => $req->ketclose] );
               $tempOutstanding1 = $this->soRingkas($tempOutstanding, $this->statusSOBaris($tempOutstanding));
 
 

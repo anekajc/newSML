@@ -33,10 +33,9 @@ class ClosingSOController extends Controller
     // Periode filter di toolbar (po-filter-wrap, sama seperti so.blade.php) mengirim
     // tglawal/tglakhir sebagai date-range bebas -- kalau tidak dikirim (initial load),
     // jatuh ke default bulan/tahun periode yang sedang aktif.
-    if ($req->tglawal && $req->tglakhir) {
-      $tglawal = $req->tglawal;
-      $tglakhir = $req->tglakhir;
-    } else {
+    $tglawal = $this->tanggalFilter($req->tglawal);
+    $tglakhir = $this->tanggalFilter($req->tglakhir);
+    if (!$tglawal || !$tglakhir) {
       $tglawal = \Carbon\Carbon::now()->year((int) $periode->tahun)->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
       $tglakhir = \Carbon\Carbon::now()->year((int) $periode->tahun)->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
     }
@@ -200,10 +199,9 @@ order by A.NOBUKTI,B.Urut
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    if ($req->tglawal && $req->tglakhir) {
-      $tglawal = $req->tglawal;
-      $tglakhir = $req->tglakhir;
-    } else {
+    $tglawal = $this->tanggalFilter($req->tglawal);
+    $tglakhir = $this->tanggalFilter($req->tglakhir);
+    if (!$tglawal || !$tglakhir) {
       $tglawal = \Carbon\Carbon::now()->year((int) $periode->tahun)->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d');
       $tglakhir = \Carbon\Carbon::now()->year((int) $periode->tahun)->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d');
     }

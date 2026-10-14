@@ -340,6 +340,17 @@
   to { transform: rotate(360deg); }
 }
 
+/* Lapisan "sedang diproses" (ipMulaiProses) di atas seluruh halaman & modal. */
+.ip-proses-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, .35);
+  z-index: 2000;
+  cursor: progress;
+  animation: poMunculLoading .34s ease-out both;
+}
+
 .tab-card {
   display: block !important;
   align-items: flex-start !important;
@@ -938,7 +949,7 @@
           <table id="addTable" class="data-table"  >
             <thead id="addTable_data_header" class="text-center">
               <tr>
-                <th style="padding: 4px 12px;" scope="col">v</th>
+                <th class="text-center" style="padding: 4px 12px; text-align: center !important;" scope="col">v</th>
                 <th style="padding: 4px 12px;" scope="col">No SPB</th>
                 <th style="padding: 4px 12px;" scope="col">Tgl SPB</th>
                 <th style="padding: 4px 12px;" scope="col">No PO</th>
@@ -1340,10 +1351,21 @@
       <div class="col">
         <div class="row">
           <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px; margin-left:-15px;">Total</label>
+          </div>
+          <div class="col-9" style="margin-left:-35px;">
+            <input type="text" class="form-control text-right" id="input_addx_total"  value="0.00" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
             <label style="margin-top:6px; margin-left:-15px;">Disc %</label>
           </div>
           <div class="col-9" style="margin-left:-35px;">
-            <input type="number" class="form-control text-right" id="input_addx_disc"  value="0.00" disabled>
+            <input type="text" class="form-control text-right" id="input_addx_disc"  value="0.00" disabled>
           </div>
         </div>
       </div>
@@ -1355,7 +1377,7 @@
             <label style="margin-top:6px;margin-left:-10px;">DiscRp</label>
           </div>
           <div class="col-9" style="margin-left:-35px;">
-            <input type="number" class="form-control text-right" id="input_addx_discrp"  value ="0.00" disabled>
+            <input type="text" class="form-control text-right" id="input_addx_discrp"  value ="0.00" disabled>
           </div>
         </div>
       </div>
@@ -1748,10 +1770,21 @@
       <div class="col">
         <div class="row">
           <div class="col-4 d-flex align-items-center">
+            <label style="margin-top:6px; margin-left:-15px;">Total</label>
+          </div>
+          <div class="col-9" style="margin-left:-35px;">
+            <input type="text" class="form-control text-right" id="input_detailx_total"  value="0.00" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="row">
+          <div class="col-4 d-flex align-items-center">
             <label style="margin-top:6px; margin-left:-15px;">Disc %</label>
           </div>
           <div class="col-9" style="margin-left:-35px;">
-            <input type="number" class="form-control text-right" id="input_detailx_disc"  value="0.00" disabled>
+            <input type="text" class="form-control text-right" id="input_detailx_disc"  value="0.00" disabled>
           </div>
         </div>
       </div>
@@ -1762,7 +1795,7 @@
             <label style="margin-top:6px;margin-left:-10px;">DiscRp</label>
           </div>
           <div class="col-9" style="margin-left:-35px;">
-            <input type="number" class="form-control text-right" id="input_detailx_discrp"  value ="0.00" disabled>
+            <input type="text" class="form-control text-right" id="input_detailx_discrp"  value ="0.00" disabled>
           </div>
         </div>
       </div>
@@ -2418,7 +2451,7 @@
             <label style="margin-top:6px; margin-left:-15px;">Disc %</label>
           </div>
           <div class="col-9" style="margin-left:-35px;">
-            <input type="number" class="form-control text-right" id="input_otorisasix_disc"  value="0.00" disabled>
+            <input type="text" class="form-control text-right" id="input_otorisasix_disc"  value="0.00" disabled>
           </div>
         </div>
       </div>
@@ -2430,7 +2463,7 @@
             <label style="margin-top:6px;margin-left:-10px;">DiscRp</label>
           </div>
           <div class="col-9" style="margin-left:-35px;">
-            <input type="number" class="form-control text-right" id="input_otorisasix_discrp"  value ="0.00" disabled>
+            <input type="text" class="form-control text-right" id="input_otorisasix_discrp"  value ="0.00" disabled>
           </div>
         </div>
       </div>
@@ -3153,8 +3186,8 @@ function ipKelasSel (col) {
 function tabelActionsCell (row) {
   let nobukti = ipPickCI(row, 'NoBukti');
   let html = '<div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonAddDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-success btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd(\'' + ipPickCI(row, 'Noso') + '\' , \'' + ipPickCI(row, 'NamaCustSupp') + '\' , \'' + ipPickCI(row, 'KodeCustSupp') + '\' , \'' + ipPickCI(row, 'TglSO') + '\' , \'' + ipPickCI(row, 'PPNCUST') + '\')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button data-trigger="hover" class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonAddDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button data-trigger="hover" class="btn btn-success btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd(\'' + ipPickCI(row, 'Noso') + '\' , \'' + ipPickCI(row, 'NamaCustSupp') + '\' , \'' + ipPickCI(row, 'KodeCustSupp') + '\' , \'' + ipPickCI(row, 'TglSO') + '\' , \'' + ipPickCI(row, 'PPNCUST') + '\')"><i class="bi bi-plus-lg"></i></button>';
   html += '</div>';
   return html;
 }
@@ -3166,14 +3199,14 @@ function tabel2ActionsCell (row) {
   let nobukti = ipPickCI(row, 'NoBukti');
   let isOto = Number(ipPickCI(row, 'IsOtorisasi1'));
   let html = '<div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button data-trigger="hover" class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
   if (isOto) {
-    html += '<button title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button data-trigger="hover" title="Batal Otorisasi" class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   } else {
-    html += '<button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + ipPickCI(row, 'IsOtorisasi1') + '\')"><i class="bi bi-pen"></i></button>';
-    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="submitOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button data-trigger="hover" title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'' + ipPickCI(row, 'IsOtorisasi1') + '\')"><i class="bi bi-pen"></i></button>';
+    html += '<button data-trigger="hover" title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="submitOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   }
-  html += '<button class="btn btn-primary btn-sm" title="Print" onclick="openPrintModal(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+  html += '<button data-trigger="hover" class="btn btn-primary btn-sm" title="Print" onclick="openPrintModal(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
   html += '</div>';
   return html;
 }
@@ -3572,6 +3605,58 @@ function choosePrint (type) {
 }
 
 
+// Lapisan "sedang diproses" selama menunggu server. Dulu request dikirim dengan
+// async:false sehingga seluruh browser beku sampai server menjawab; sekarang
+// async, dan lapisan ini mencegah tombol diklik dua kali selama menunggu.
+// paksa = true dipakai pemanggil di dalam proses lain (mis. muat form Edit
+// sesudah simpan Add) supaya tidak ditolak karena masih sibuk.
+let ipSibuk = 0
+function ipMulaiProses (teks, paksa) {
+  if (ipSibuk && !paksa) { return false }
+  ipSibuk++
+  let lapisan = document.getElementById('ipProsesOverlay')
+  if (!lapisan) {
+    lapisan = document.createElement('div')
+    lapisan.id = 'ipProsesOverlay'
+    lapisan.className = 'ip-proses-overlay'
+    lapisan.innerHTML = '<span class="po-loading-chip"><span class="po-loading-spin"></span><span class="ip-proses-teks"></span></span>'
+    document.body.appendChild(lapisan)
+  }
+  lapisan.querySelector('.ip-proses-teks').textContent = teks || 'Memproses...'
+  lapisan.style.display = 'block'
+  ipTutupTooltip()
+  return true
+}
+
+function ipSelesaiProses () {
+  ipSibuk = Math.max(0, ipSibuk - 1)
+  if (ipSibuk) { return }
+  let lapisan = document.getElementById('ipProsesOverlay')
+  if (lapisan) { lapisan.style.display = 'none' }
+}
+
+// Otorisasi / batal otorisasi hanya mengubah status invoice, tidak mengubah
+// daftar SPB outstanding -- cukup muat ulang tab Invoice (tetap di halaman
+// yang sama), tidak perlu query SPB outstanding yang berat lewat loadAll().
+function ipMuatUlangInvoice () {
+  if ($.fn.DataTable.isDataTable('#tabel2')) {
+    $('#tabel2').DataTable().ajax.reload(null, false)
+  } else {
+    reinitTabel2()
+  }
+}
+
+// Tooltip tombol aksi tertinggal di layar: tombol diklik -> #page1 langsung
+// disembunyikan, jadi mouseleave tidak pernah terjadi dan tooltip (dipasang di
+// <body>) tidak pernah ditutup. Tutup semua tooltip saat tombol diklik dan
+// sebelum tabel digambar ulang (baris lama beserta tombolnya dibuang).
+function ipTutupTooltip () {
+  if ($.fn.tooltip) { $('#page1 [data-toggle="tooltip"]').tooltip('hide') }
+  $('body > .tooltip').remove()
+}
+$(document).on('click', '#page1 .action-buttons-wrap .btn', ipTutupTooltip)
+$(document).on('preDraw.dt', '#tabel, #tabel2', ipTutupTooltip)
+
 function buttonCloseForm () {
   $('.mainpage').hide();
   // $('#page2').hide();
@@ -3634,11 +3719,11 @@ function submitAdd () {
     console.log(checkDate)
     console.log(tempData)
 
+    if (!ipMulaiProses('Menyimpan...')) { return }
 
     $.ajax({
       url: "{!! url('invoicepenjualanspadd') !!}",
       type: "post",
-      async: false,
       data: {
         _token,
         tempData,
@@ -3668,7 +3753,7 @@ function submitAdd () {
           console.log('error kode :',res)
           alertify.warning('Periode tidak sesuai')
         return
-       
+
 
 
         }
@@ -3678,6 +3763,9 @@ function submitAdd () {
       error: function (err) {
         console.log(err)
         alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      },
+      complete: function () {
+        ipSelesaiProses()
       }
 
     })
@@ -3702,11 +3790,11 @@ function buttonAdd (noso , namacust, kodecust, tglso , ppncust) {
 
   let _token = $("#_token").val();
 
+  if (!ipMulaiProses('Memuat data...')) { return }
 
   $.ajax({
     url: "{!! url('invoicepenjualanlistso') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       noso
@@ -3728,7 +3816,7 @@ function buttonAdd (noso , namacust, kodecust, tglso , ppncust) {
       dataTableAdd.forEach((item, i) => {
           rowTable += `
             <tr>
-              <td>
+              <td class="text-center">
                 <div class="form-check text-center">
                   <input id="addChecklist${i}" class="form-check-input" type="checkbox" value="" >
                 </div>
@@ -3759,6 +3847,9 @@ function buttonAdd (noso , namacust, kodecust, tglso , ppncust) {
     error: function (err) {
       console.log(err)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    },
+    complete: function () {
+      ipSelesaiProses()
     }
 
   })
@@ -3784,11 +3875,11 @@ function buttonBatalOtorisasi (nobukti) {
           return
         }
         let _token = $("#_token").val();
+        if (!ipMulaiProses('Memproses batal otorisasi...')) { return }
 
         $.ajax({
           url: "{!! url('invoicepenjualanspbatalotorisasi') !!}",
           type: "post",
-          async: false,
           data: {
             _token,
             nobukti,
@@ -3797,7 +3888,7 @@ function buttonBatalOtorisasi (nobukti) {
           },
           success: function(res) {
             console.log('!', res)
-            loadAll()
+            ipMuatUlangInvoice()
 
             if (res && res.status === 0) {
               alertify.warning(res.pesan)
@@ -3813,8 +3904,11 @@ function buttonBatalOtorisasi (nobukti) {
             // sendiri bisa saja sudah kepakai duluan di database sebelum proses
             // posting susulan gagal, jadi refresh otomatis + pesan yang lebih
             // jelas daripada cuma bilang "terjadi kesalahan" tanpa konteks.
-            loadAll()
+            ipMuatUlangInvoice()
             alertify.error('Batal otorisasi kemungkinan sudah tersimpan, namun proses lanjutan (posting hutang-piutang/jurnal) gagal. Data telah dimuat ulang -- silahkan periksa status terbaru pada tabel, dan hubungi admin jika perlu diproses ulang.')
+          },
+          complete: function () {
+            ipSelesaiProses()
           }
 
         })
@@ -3842,10 +3936,11 @@ function submitOtorisasi (nobukti) {
   }
 
 
+  if (!ipMulaiProses('Memproses otorisasi...')) { return }
+
   $.ajax({
     url: "{!! url('invoicepenjualanspotorisasi') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       nobukti
@@ -3853,7 +3948,7 @@ function submitOtorisasi (nobukti) {
     },
     success: function(res) {
       console.log('!', res)
-      loadAll()
+      ipMuatUlangInvoice()
 
       // $("#formOtorisasi").modal('toggle')
       buttonCloseForm()
@@ -3871,10 +3966,13 @@ function submitOtorisasi (nobukti) {
       // itu yang gagal, otorisasinya sendiri sudah kepakai duluan di database
       // walau request ini balik sebagai error. loadAll() supaya tabel langsung
       // menampilkan status yang sebenarnya tanpa user harus refresh manual.
-      loadAll()
+      ipMuatUlangInvoice()
       buttonCloseForm()
       alertify.error('Otorisasi kemungkinan sudah tersimpan, namun proses lanjutan (posting hutang-piutang/jurnal) gagal. Data telah dimuat ulang -- silahkan periksa status terbaru pada tabel, dan hubungi admin jika perlu diproses ulang.')
-	}
+	},
+    complete: function () {
+      ipSelesaiProses()
+    }
     });
 
 }
@@ -3889,11 +3987,11 @@ function buttonOtorisasi (nobukti) {
 
   console.log('buttonOtorisasi' , nobukti)
   let _token = $("#_token").val();
+  if (!ipMulaiProses('Memuat data...')) { return }
 
   $.ajax({
     url: "{!! url('invoicepenjualanspdetailkoreksi') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       nobukti
@@ -3961,21 +4059,26 @@ function buttonOtorisasi (nobukti) {
     error: function (err) {
       console.log(err)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    },
+    complete: function () {
+      ipSelesaiProses()
     }
 
   })
 
 }
 
-function refreshDataTableKoreksi (nobukti , tipeRefresh = '') {
+// Async (dulu async:false membekukan halaman selama menunggu server). Hasil
+// (1 = data ada / 0 = tidak) diteruskan ke callback selesai(resRefresh).
+function refreshDataTableKoreksi (nobukti , tipeRefresh = '', selesai) {
   console.log('refreshDataTableKoreksi')
   let _token = $("#_token").val();
 
   let resRefresh = 0
+  ipMulaiProses('Memuat data...', true)
   $.ajax({
     url: "{!! url('invoicepenjualanspdetailkoreksi') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       nobukti
@@ -4037,6 +4140,8 @@ function refreshDataTableKoreksi (nobukti , tipeRefresh = '') {
         document.getElementById("input_koreksi_sales").value = dataTableKoreksi[0].NamaSls
         document.getElementById("input_koreksi_uangmuka").value = parseFloat(dataTableKoreksi[0].nUangMuka).toFixed(2)
 
+        // Total = jumlah kolom Sub Total (sebelum diskon header), sama seperti SO.
+        document.getElementById("input_addx_total").value = formatAngka(dataTableKoreksi.reduce((jml, item) => jml + (parseFloat(item.SubTotal) || 0), 0))
         document.getElementById("input_addx_disc").value = formatAngkaX(dataTableKoreksi[0].DISC)
         document.getElementById("input_addx_discrp").value = formatAngkaX(dataTableKoreksi[0].DiscRp)
         document.getElementById("input_addx_ppn").value = formatAngkaX(dataTableKoreksi[0].TotalPPn)
@@ -4057,10 +4162,13 @@ function refreshDataTableKoreksi (nobukti , tipeRefresh = '') {
       console.log(err)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
       resRefresh = 0;
+    },
+    complete: function () {
+      ipSelesaiProses()
+      if (typeof selesai === 'function') { selesai(resRefresh) }
     }
 
   })
-  return resRefresh
 
 }
 
@@ -4311,16 +4419,18 @@ function buttonKoreksi (nobukti , isoto) {
   let _token = $("#_token").val();
   dataTableKoreksi = []
 
-  let resRefresh = refreshDataTableKoreksi(nobukti)
-  console.log('resRefresh' , resRefresh)
+  if (ipSibuk) { return }
+  refreshDataTableKoreksi(nobukti, '', function (resRefresh) {
+    console.log('resRefresh' , resRefresh)
 
-  if (resRefresh) {
-    $('.showhideform').hide();
-    $('#modalKoreksi').show();
+    if (resRefresh) {
+      $('.showhideform').hide();
+      $('#modalKoreksi').show();
 
-    $('#page2').show();
-    $('#page1').hide();
-  }
+      $('#page2').show();
+      $('#page1').hide();
+    }
+  })
 
 }
 
@@ -4343,16 +4453,17 @@ function buttonKoreksifirstadd (nobukti , isoto) {
   let _token = $("#_token").val();
   dataTableKoreksi = []
 
-  let resRefresh = refreshDataTableKoreksifirstadd(nobukti)
-  console.log('resRefresh' , resRefresh)
+  refreshDataTableKoreksifirstadd(nobukti, '', function (resRefresh) {
+    console.log('resRefresh' , resRefresh)
 
-  if (resRefresh) {
-    $('.showhideform').hide();
-    $('#modalKoreksi').show();
+    if (resRefresh) {
+      $('.showhideform').hide();
+      $('#modalKoreksi').show();
 
-    $('#page2').show();
-    $('#page1').hide();
-  }
+      $('#page2').show();
+      $('#page1').hide();
+    }
+  })
 
 }
 
@@ -4411,15 +4522,15 @@ function buttonKoreksiDeletefirstadd (index, nobukti, urut) {
 
 
 
-function refreshDataTableKoreksifirstadd (nobukti , tipeRefresh = '') {
+function refreshDataTableKoreksifirstadd (nobukti , tipeRefresh = '', selesai) {
   console.log('refreshDataTableKoreksi')
   let _token = $("#_token").val();
 
   let resRefresh = 0
+  ipMulaiProses('Memuat data...', true)
   $.ajax({
     url: "{!! url('invoicepenjualanspdetailkoreksi') !!}",
     type: "post",
-    async: false,
     data: {
       _token,
       nobukti
@@ -4481,6 +4592,8 @@ function refreshDataTableKoreksifirstadd (nobukti , tipeRefresh = '') {
         document.getElementById("input_koreksi_sales").value = dataTableKoreksi[0].NamaSls
         document.getElementById("input_koreksi_uangmuka").value = parseFloat(dataTableKoreksi[0].nUangMuka).toFixed(2)
 
+        // Total = jumlah kolom Sub Total (sebelum diskon header), sama seperti SO.
+        document.getElementById("input_addx_total").value = formatAngka(dataTableKoreksi.reduce((jml, item) => jml + (parseFloat(item.SubTotal) || 0), 0))
         document.getElementById("input_addx_disc").value = formatAngkaX(dataTableKoreksi[0].DISC)
         document.getElementById("input_addx_discrp").value = formatAngkaX(dataTableKoreksi[0].DiscRp)
         document.getElementById("input_addx_ppn").value = formatAngkaX(dataTableKoreksi[0].TotalPPn)
@@ -4501,16 +4614,20 @@ function refreshDataTableKoreksifirstadd (nobukti , tipeRefresh = '') {
       console.log(err)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
       resRefresh = 0;
+    },
+    complete: function () {
+      ipSelesaiProses()
+      if (typeof selesai === 'function') { selesai(resRefresh) }
     }
 
   })
-  return resRefresh
 
 }
 
 function buttonDetail (nobukti) {
 
   let _token = $("#_token").val()
+  if (!ipMulaiProses('Memuat data...')) { return }
 
   $('#detailTableData').html(`
     <tr>
@@ -4581,8 +4698,11 @@ function buttonDetail (nobukti) {
 
       $('#detailTableData').html(html)
 
-      $('#input_detailx_disc').val(formatAngka(header.Diskon))
-      $('#input_detailx_discrp').val(formatAngka(header.Diskon))
+      // Total = jumlah kolom Sub Total (sebelum diskon header), sama seperti SO.
+      let totalDetail = res.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0)
+      $('#input_detailx_total').val(formatAngka(totalDetail))
+      $('#input_detailx_disc').val(formatAngkaX(header.DISC))
+      $('#input_detailx_discrp').val(formatAngkaX(header.DiscRp))
       $('#input_detailx_dpp').val(formatAngka(header.TotalDPP))
       $('#input_detailx_ppn').val(formatAngka(header.TotalPPn))
       $('#input_detailx_grandtotal').val(formatAngka(header.TotalNetto))
@@ -4594,6 +4714,9 @@ function buttonDetail (nobukti) {
     error: function(err) {
       console.log(err)
       alertify.error('Gagal load detail')
+    },
+    complete: function () {
+      ipSelesaiProses()
     }
   })
 }
@@ -4603,6 +4726,7 @@ function buttonAddDetail (nobukti) {
 
   let _token = $("#_token").val()
   let userid = $("#userid").val()
+  if (!ipMulaiProses('Memuat data...')) { return }
 
   $('#detailAddTableData').html(`
     <tr>
@@ -4665,6 +4789,9 @@ function buttonAddDetail (nobukti) {
     error: function(err) {
       console.log(err)
       alertify.error('Gagal load detail')
+    },
+    complete: function () {
+      ipSelesaiProses()
     }
   })
 }

@@ -196,8 +196,8 @@ order by A.NoBukti
   // Tabel tab "Invoice" (server-side). Default tanggal = bulan periode aktif.
   public function getListInvoice (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
-    $tglawal = $req->tglawal ?: $this->tglAwalPeriode($periode);
-    $tglakhir = $req->tglakhir ?: $this->tglAkhirPeriode($periode);
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: $this->tglAwalPeriode($periode);
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: $this->tglAkhirPeriode($periode);
     $filterip = (int) ($req->filterip ?: 0);
 
     return $this->halamanDataTables(
@@ -215,8 +215,8 @@ order by A.NoBukti
 
     // Daftar checklist mengikuti rentang tanggal filter tab Invoice
     // (programajcSML: selalu bulan periode aktif -- jadi default-nya).
-    $tglawal = $req->tglawal ?: $this->tglAwalPeriode($periode);
-    $tglakhir = $req->tglakhir ?: $this->tglAkhirPeriode($periode);
+    $tglawal = $this->tanggalFilter($req->tglawal) ?: $this->tglAwalPeriode($periode);
+    $tglakhir = $this->tanggalFilter($req->tglakhir) ?: $this->tglAkhirPeriode($periode);
 
     return $this->halamanDataTables(
       $req,

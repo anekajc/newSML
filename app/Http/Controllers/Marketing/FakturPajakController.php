@@ -63,7 +63,7 @@ class FakturPajakController extends Controller
   select @tglawal= :tglawal , @tglakhir= :tglakhir
   " . $this->sqlDaftarInvoice("
   where A.tanggal between @tglawal and @tglakhir
-  ") , [ "tglawal" => $req->tglawal ,"tglakhir" => $req->tglakhir ]);
+  ") , [ "tglawal" => $this->tanggalFilter($req->tglawal) ,"tglakhir" => $this->tanggalFilter($req->tglakhir) ]);
 
 
 

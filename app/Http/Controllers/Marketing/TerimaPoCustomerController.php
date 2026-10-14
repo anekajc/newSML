@@ -47,8 +47,10 @@ class TerimaPoCustomerController extends Controller
   // (initial load) jatuh ke bulan/tahun periode aktif -- sama dengan programajcSML
   // yang memfilter MONTH/YEAR(TglInput) = periode.
   private function rangePeriode (Request $req, $periode) {
-    if ($req->tglawal && $req->tglakhir) {
-      return [$req->tglawal, $req->tglakhir];
+    $tglawal = $this->tanggalFilter($req->tglawal);
+    $tglakhir = $this->tanggalFilter($req->tglakhir);
+    if ($tglawal && $tglakhir) {
+      return [$tglawal, $tglakhir];
     }
     $awal = \Carbon\Carbon::create((int) $periode->tahun, (int) $periode->bulan, 1);
     return [$awal->copy()->startOfMonth()->format('Y-m-d'), $awal->copy()->endOfMonth()->format('Y-m-d')];
