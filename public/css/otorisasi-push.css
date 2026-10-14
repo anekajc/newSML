@@ -1,0 +1,163 @@
+/*
+ * Notifikasi permintaan otorisasi - dipakai layout newmaster & newmasterTest.
+ * .oto-bell  : lonceng + tombol aktifkan notifikasi di header (semua ukuran layar).
+ * .oto-home  : panel ringkasan di halaman Beranda, HANYA layar < 768px (mobile).
+ * Datanya diisi public/js/otorisasi-push.js (event otopush:count / otopush:status).
+ */
+
+/* ---------- Header ---------- */
+.oto-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #4b5563;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+  flex-shrink: 0; /* tanpa ini lonceng jadi lonjong saat header sempit */
+}
+
+.oto-bell:hover { color: var(--blue); border-color: #bfdbfe; }
+
+.oto-bell-count {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+}
+
+/* ---------- Panel Beranda (mobile) ---------- */
+.oto-home {
+  width: 100%;
+  margin: 0 0 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+}
+
+@media (min-width: 768px) {
+  .oto-home { display: none !important; }
+}
+
+.oto-home a { color: inherit; text-decoration: none; }
+
+.oto-home-main { display: block; padding: 14px 16px 12px; }
+
+.oto-home-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.oto-home-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.oto-home-label i { color: var(--blue, #1A73E8); margin-right: 4px; }
+
+.oto-home-time { font-size: 11px; color: #9ca3af; }
+
+.oto-home-stats { display: flex; }
+
+.oto-home-stat { flex: 1; min-width: 0; }
+
+.oto-home-stat + .oto-home-stat {
+  border-left: 1px solid #f0f1f4;
+  padding-left: 14px;
+}
+
+.oto-home-stat b {
+  display: block;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #d1d5db;
+  font-variant-numeric: tabular-nums;
+}
+
+.oto-home-stat span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: #6b7280;
+}
+
+.oto-home-stat.is-pending.has b { color: #d97706; }
+.oto-home-stat.is-hasil.has b { color: #16a34a; }
+.oto-home-stat.has span { color: #374151; font-weight: 600; }
+
+.oto-home-clear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.oto-home-clear i { font-size: 20px; color: #16a34a; }
+.oto-home-clear small { display: block; font-size: 12px; font-weight: 400; color: #6b7280; }
+
+.oto-home-enable {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.oto-home-enable i { font-size: 16px; }
+.oto-home-enable span { flex: 1; }
+
+.oto-home-enable button {
+  border: none;
+  border-radius: 8px;
+  background: var(--blue, #1A73E8);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.oto-home-cta {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #f0f1f4;
+  background: #fafbfc;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--blue, #1A73E8) !important;
+}
+
+.oto-home-cta:active, .oto-home-main:active { background: #f3f4f6; }

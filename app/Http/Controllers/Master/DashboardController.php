@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
+use App\Models\Menu;
 use App\Model\Merk;
 use App\Model\Sales;
 use App\Model\AksesMenu;

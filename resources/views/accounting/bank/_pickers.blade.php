@@ -22,8 +22,9 @@
                 <div class="modal-header">
 
                     <h5 class="modal-title" id="">Akumulasi / Biaya</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div id="" class="">
@@ -82,8 +83,9 @@
             <div id= "modalAddListAktivaDetailX" class="showhidemodalbodyadd">
                 <div class="modal-header">
                     <h5 class="modal-title" id="">Aktiva</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div id="formBsGrid" class="" style="margin-top: 1rem;">
@@ -357,8 +359,9 @@
             <div id= "modalAddListValas" class="showhidemodalbodyadd">
                 <div class="modal-header">
                     <h5 class="modal-title" id="">Valas</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -415,8 +418,9 @@
             <div id= "modalAddListCustsupp" class="showhidemodalbodyadd">
                 <div class="modal-header">
                     <h5 class="modal-title" id="">CustSupp</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div id="" class="">
@@ -463,13 +467,63 @@
                         onclick="buttonAddListKembali()">Kembali</button>
                 </div>
             </div>
+
+            {{-- No Titipan (BBK + Lawan 113400). Baris diisi bukaListTitipan() di bank.js; klik
+                 baris = buttonAddPickTitipan(index). Data: BankController::getNoTitipan(). --}}
+            <div id= "modalAddListTitipan" class="showhidemodalbodyadd">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="">No Titipan</h5>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div id="" class="">
+                    <div class="modal-body">
+                        <div class="container-fluid mt-4">
+                            <div class="row">
+                                <div class="col-12" style="overflow:auto; margin-top:0px; ">
+                                    <table id="tabel_add_list_titipan" class="dph-tb">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">No Bukti</th>
+                                                <th scope="col">Tanggal</th>
+                                                <th scope="col">Customer</th>
+                                                <th scope="col">Keterangan</th>
+                                                <th scope="col">JumlahRp</th>
+                                                <th scope="col">Sisa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabel_data_add_list_titipan" class="text-left">
+                                            <tr>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="contentContainer" class="modal-footer ">
+                    <button type="button" class="btn btn-secondary btn-pill-secondary"
+                        onclick="buttonAddListKembali()">Kembali</button>
+                </div>
+            </div>
             <div id= "modalAddListAktiva" class="showhidemodalbodyadd">
                 <div class="modal-header">
 
 
                     <h5 class="modal-title" id="">Aktiva</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -539,8 +593,9 @@
             <div id= "modalAddListAktivaDetail" class="showhidemodalbodyadd">
                 <div class="modal-header">
                     <h5 class="modal-title" id="">Aktiva</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div id="formBsGrid" class="" style="margin-top: 1rem;">
@@ -805,8 +860,9 @@
 
 
                     <h5 class="modal-title" id="">DPP</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -875,8 +931,9 @@
 
 
                     <h5 class="modal-title" id="">DPH</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -947,8 +1004,9 @@
 
 
                     <h5 class="modal-title" id="">DPH</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -1019,8 +1077,9 @@
 
 
                     <h5 class="modal-title" id="">Proses - Retur Uang Muka</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -1145,8 +1204,9 @@
             <div id= "modalAddListDevisi" class="showhidemodalbodyadd">
                 <div class="modal-header">
                     <h5 class="modal-title" id="">Devisi</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div id="" class="">
@@ -1207,8 +1267,9 @@
 
 
                     <h5 class="modal-title" id="">Perkiraan</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -1275,8 +1336,9 @@
             <div id= "modalAddListPerkiraan" class="showhidemodalbodyadd">
                 <div class="modal-header">
                     <h5 class="modal-title" id="">Perkiraan</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div id="" class="">
@@ -1336,8 +1398,9 @@
 
 
                     <h5 class="modal-title" id="">Departemen</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -1397,8 +1460,9 @@
             <div id= "modalAddListLawan" class="showhidemodalbodyadd">
                 <div class="modal-header">
                     <h5 class="modal-title" id="">Lawan</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div id="" class="">
@@ -1457,8 +1521,9 @@
 
 
                     <h5 class="modal-title" id="">Costing</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -1518,8 +1583,9 @@
 
 
                     <h5 class="modal-title" id="">SubCosting</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -1581,9 +1647,10 @@
                 <div class="modal-header">
 
 
-                    <h5 class="modal-title" id="">Customer</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <h5 class="modal-title" id="">Supplier</h5>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 
@@ -1649,8 +1716,9 @@
 
 
                     <h5 class="modal-title" id="">Invoice</h5>
-                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary"
-                        onclick="buttonAddListTutup()">Close</button>
+                    <button type="button" class="close" onclick="buttonAddListTutup()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
 

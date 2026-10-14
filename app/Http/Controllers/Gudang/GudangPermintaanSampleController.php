@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Model\DBFLMENU;
+use App\Models\DBFLMENU;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -30,18 +30,21 @@ class GudangPermintaanSampleController extends Controller
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(6);
 
+    $date1 = \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $date2 = \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
+
     // Data belum otorisasi
     $tempOutstanding = DB::connection("SML")->select("
-        select 
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
+        select
+          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
-          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
+          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI,
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp, 
-          A.KODESLS, G.Nama NAMASLS, 
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
+          A.KODECUSTSUPP, F.NamaCustSupp,
+          A.KODESLS, G.Nama NAMASLS,
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
           H.Nama NamaLokasi
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
@@ -51,30 +54,29 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where 
-          year(A.TANGGAL) = :tahun and 
-          month(A.TANGGAL) = :bulan and 
-          A.NOBUKTI <> '' 
+        where
+          CAST(A.TANGGAL as date) between :date1 and :date2 and
+          A.NOBUKTI <> ''
           and A.IsOtorisasi1 = 0
           and ISNULL(A.pKonsi, 0) = 0
         order by B.URUT
     ", [
-        "tahun" => $periode->tahun, 
-        "bulan" => $periode->bulan
+        "date1" => $date1,
+        "date2" => $date2
     ]);
 
     // Data sudah otorisasi
     $tempOutstanding3 = DB::connection("SML")->select("
-        select 
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
+        select
+          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
-          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
+          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI,
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp, 
-          A.KODESLS, G.Nama NAMASLS, 
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
+          A.KODECUSTSUPP, F.NamaCustSupp,
+          A.KODESLS, G.Nama NAMASLS,
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
           H.Nama NamaLokasi
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
@@ -84,16 +86,15 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where 
-          year(A.TANGGAL) = :tahun and 
-          month(A.TANGGAL) = :bulan and 
-          A.NOBUKTI <> '' 
+        where
+          CAST(A.TANGGAL as date) between :date1 and :date2 and
+          A.NOBUKTI <> ''
           and A.IsOtorisasi1 = 1
           and ISNULL(A.pKonsi, 0) = 0
         order by B.URUT
     ", [
-        "tahun" => $periode->tahun, 
-        "bulan" => $periode->bulan
+        "date1" => $date1,
+        "date2" => $date2
     ]);
 
     // Data outstanding (tetap seperti sebelumnya)
@@ -137,8 +138,8 @@ class GudangPermintaanSampleController extends Controller
     " , ["tahun" =>$periode->tahun , "bulan" => $periode->bulan ]);
 
     // Grouping pakai Collection
-    $listData = collect($tempOutstanding)->groupBy('NOBUKTI');
-    $listData3 = collect($tempOutstanding3)->groupBy('NOBUKTI');
+    $listData = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+    $listData3 = collect($tempOutstanding3)->groupBy('NOBUKTI')->values();
 
     return view('gudang.gudangpermintaansample' , [
       "menul0" => $menul0,
@@ -150,22 +151,25 @@ class GudangPermintaanSampleController extends Controller
     ]);
 }
 
-  public function loadAll()
+  public function loadAll(Request $req)
 {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
+    $date1 = $req->date1 ?: \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $date2 = $req->date2 ?: \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
+
     // Data belum otorisasi
     $tempOutstanding = DB::connection("SML")->select("
-        select 
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
+        select
+          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
-          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
+          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI,
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp, 
-          A.KODESLS, G.Nama NAMASLS, 
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
+          A.KODECUSTSUPP, F.NamaCustSupp,
+          A.KODESLS, G.Nama NAMASLS,
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
           H.Nama NamaLokasi
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
@@ -175,30 +179,29 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where 
-          year(A.TANGGAL) = :tahun and 
-          month(A.TANGGAL) = :bulan and 
-          A.NOBUKTI <> '' 
+        where
+          CAST(A.TANGGAL as date) between :date1 and :date2 and
+          A.NOBUKTI <> ''
           and ISNULL(A.IsOtorisasi1, 0) = 0
           and ISNULL(A.pKonsi, 0) = 0
         order by B.URUT
     ", [
-        "tahun" => $periode->tahun,
-        "bulan" => $periode->bulan
+        "date1" => $date1,
+        "date2" => $date2
     ]);
 
     // Data sudah otorisasi
     $tempOutstanding3 = DB::connection("SML")->select("
-        select 
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
+        select
+          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
-          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
+          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI,
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp, 
-          A.KODESLS, G.Nama NAMASLS, 
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
+          A.KODECUSTSUPP, F.NamaCustSupp,
+          A.KODESLS, G.Nama NAMASLS,
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
           H.Nama NamaLokasi
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
@@ -208,16 +211,15 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where 
-          year(A.TANGGAL) = :tahun and 
-          month(A.TANGGAL) = :bulan and 
-          A.NOBUKTI <> '' 
+        where
+          CAST(A.TANGGAL as date) between :date1 and :date2 and
+          A.NOBUKTI <> ''
           and ISNULL(A.IsOtorisasi1, 0) = 1
           and ISNULL(A.pKonsi, 0) = 0
         order by B.URUT
     ", [
-        "tahun" => $periode->tahun,
-        "bulan" => $periode->bulan
+        "date1" => $date1,
+        "date2" => $date2
     ]);
 
     // Data outstanding

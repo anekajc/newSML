@@ -19,7 +19,7 @@ class LaporanGudangOutstandingSoPoController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportgudangoutstandingsopo' , [
+      return view('report.reportgudangoutstandingsopo' , [
         "akses" => $akses
       ]);
     } else {

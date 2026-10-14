@@ -19,7 +19,7 @@ class LaporanOutstandingPermintaanSampleController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportoutstandingpermintaansample' , [
+      return view('report.reportoutstandingpermintaansample' , [
         "akses" => $akses
       ]);
     } else {

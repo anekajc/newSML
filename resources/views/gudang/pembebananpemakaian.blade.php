@@ -1,7 +1,7 @@
 @extends('newmasterTest')
 @section('buttons')
 @endsection
-@section('page-title', 'Pembebanan Pemakaian')
+@section('page-title', 'Biaya Pemakaian')
 
 @section('css')
     {{-- Layout newmasterTest (sama seperti gudang/ubahkemasanbarang.blade.php) sudah memuat
@@ -54,9 +54,9 @@
         <div class="po-toolbar">
           <div class="po-filter-wrap">
             <label>Periode</label>
-            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}">
+            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}" autocomplete="off">
             <span class="po-filter-sep">s/d</span>
-            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}">
+            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}" autocomplete="off">
           </div>
 
           <input class="po-search-inp" type="search" id="searchBox2" placeholder="Cari data">
@@ -246,7 +246,7 @@
 
 
 <div id="page3" style="display: none;" class="mainpage container-fluid po-form-page">
-  <div class="row">
+  <div class="row" style="padding: 1rem 0">
     <div class="col-6 text-left">
       {{-- Judul dikosongkan, disamakan dengan #pageForm di gudang/ubahkemasanbarang.blade.php. --}}
     </div>
@@ -266,6 +266,24 @@
                 <label class="col-sm-4 col-form-label" style="margin-top:-5px;">No Bukti</label>
                 <div class="col-sm-8">
                     <input type="text" class="form-control text-left" id="input_koreksi_nobukti" placeholder="No Bukti" disabled>
+                </div>
+            </div>
+        </div>
+        {{-- Tanggal --}}
+        <div class="col-md-4">
+            <div class="mb-2 row">
+                <label class="col-sm-4 col-form-label" style="margin-top:-5px;">Tanggal</label>
+                <div class="col-sm-8">
+                    <input type="date" class="form-control text-center" id="input_koreksi_tanggal" disabled>
+                </div>
+            </div>
+        </div>
+        {{-- Gudang --}}
+        <div class="col-md-4">
+            <div class="mb-2 row">
+                <label class="col-sm-4 col-form-label" style="margin-top:-5px;">Gudang</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control text-left" id="input_koreksi_gudang" placeholder="Gudang" disabled>
                 </div>
             </div>
         </div>
@@ -436,7 +454,7 @@
 {{-- End Modal List subcosting --}}
 
 <div id="page4" style="display: none;" class="mainpage container-fluid po-form-page">
-  <div class="row">
+  <div class="row" style="padding: 1rem 0">
     <div class="col-6 text-left">
       {{-- Judul dikosongkan, disamakan dengan #pageForm di gudang/ubahkemasanbarang.blade.php. --}}
     </div>
@@ -455,6 +473,24 @@
                 <label class="col-sm-4 col-form-label">No Bukti</label>
                 <div class="col-sm-8">
                     <input type="text" class="form-control text-left" id="input_detailkoreksi_nobukti" placeholder="No Bukti" disabled>
+                </div>
+            </div>
+        </div>
+        {{-- Tanggal --}}
+        <div class="col-md-4">
+            <div class="mb-2 row">
+                <label class="col-sm-4 col-form-label">Tanggal</label>
+                <div class="col-sm-8">
+                    <input type="date" class="form-control text-center" id="input_detailkoreksi_tanggal" disabled>
+                </div>
+            </div>
+        </div>
+        {{-- Gudang --}}
+        <div class="col-md-4">
+            <div class="mb-2 row">
+                <label class="col-sm-4 col-form-label">Gudang</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control text-left" id="input_detailkoreksi_gudang" placeholder="Gudang" disabled>
                 </div>
             </div>
         </div>
@@ -724,7 +760,7 @@ function aksiButtonsHtml(r) {
       '<button type="button" class="btn btn-primary btn-sm" title="Otorisasi" onclick="buttonOtorisasi(\'' +
       nobukti + '\', \'' + r.IsOtorisasi1 + '\')"><i class="bi bi-key"></i></button>' +
       '<button type="button" class="btn btn-success btn-sm" title="Edit" onclick="buttonKoreksi(\'' +
-      nobukti + '\')"><i class="bi bi-pencil-fill"></i></button>';
+      nobukti + '\')"><i class="bi bi-pen"></i></button>';
   }
 
   return '<div class="po-aksi-wrap">' + tombolAksi + '</div>';
@@ -788,6 +824,12 @@ function ikatPeriode() {
     return;
   }
   awal.dataset.rtBound = '1';
+
+  // Refresh biasa (F5) membuat browser mengembalikan tanggal terakhir yang dipilih tanpa
+  // memicu change, padahal data awal dirender server untuk rentang bawaan (atribut value) —
+  // kembalikan ke nilai bawaan supaya filter dan isi tabel selalu cocok.
+  awal.value = awal.defaultValue;
+  akhir.value = akhir.defaultValue;
 
   let onUbah = function() {
     if (!awal.value || !akhir.value) {
@@ -1342,6 +1384,8 @@ function refreshDataTableKoreksi (nobukti) {
       let header = res[0];
 
       $("#input_koreksi_nobukti").val(header.NoBukti || header.NOBUKTI);
+      $("#input_koreksi_tanggal").val(String(header.Tanggal || '').substring(0, 10));
+      $("#input_koreksi_gudang").val(header.gudang || '');
 
       buttonKoreksiItemBatal();
     },
@@ -1583,8 +1627,10 @@ function buttonKoreksi (nobukti) {
       // Isi Form Header
       $("#input_koreksi_nobukti").val(data.NoBukti);
 
-      const tanggal = data.TANGGAL;
-      $("#input_koreksi_tanggal").val(tanggal);
+      // Tanggal dari SQL Server berbentuk 'YYYY-MM-DD HH:MM:SS.mmm' — input type="date" hanya
+      // menerima 'YYYY-MM-DD'.
+      $("#input_koreksi_tanggal").val(String(data.Tanggal || '').substring(0, 10));
+      $("#input_koreksi_gudang").val(data.gudang || '');
 
       $('.mainpage').hide();
       $('#page3').show();
@@ -1638,6 +1684,8 @@ function buttonDetailKoreksi (nobukti) {
       const data = res[0];
 
       $("#input_detailkoreksi_nobukti").val(data.NoBukti);
+      $("#input_detailkoreksi_tanggal").val(String(data.Tanggal || '').substring(0, 10));
+      $("#input_detailkoreksi_gudang").val(data.gudang || '');
 
       $('.mainpage').hide();
       $('#page4').show();

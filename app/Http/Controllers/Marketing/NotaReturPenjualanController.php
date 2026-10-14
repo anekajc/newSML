@@ -171,6 +171,20 @@ order by A.TANGGAL, A.NoBUKTI"
     return $header ? $header[0] : null;
   }
 
+  // sp_TransInvoiceRPJ tidak mengisi NilaiPPN detail, jadi selalu default tabel (10%) dan NPPN
+  // salah hitung. Diisi dari tarif invoice asal (seperti SP_InsertINVRPJ), kalau tidak ada dari
+  // dbnilaippn sesuai tanggal nota. Nota yang sudah diotorisasi tidak diubah.
+  private function isiNilaiPPN ($nobukti) {
+    DB::connection('SML')->update("update d set NilaiPPN = coalesce(nullif(p.NilaiPPN,0),
+        (select top 1 n.NilaiPPN from dbnilaippn n where h.Tanggal between n.TglAwal and n.TglAkhir order by n.TglAwal desc),
+        d.NilaiPPN)
+      from DBINVOICERPJDet d
+      join DBINVOICERPJ h on h.NoBukti = d.NoBukti
+      left outer join dbSPBRJualDET s on s.NoBukti = d.NOSPR and s.Urut = d.UrutSPR
+      left outer join dbInvoicePLDet p on p.NoBukti = s.Noinv and p.Urut = s.UrutInv
+      where d.NoBukti = cast(? as varchar(100)) and isnull(h.IsOtorisasi1,0) <> 1", [(string) $nobukti]);
+  }
+
   // Dulu route-nya tidak terdaftar (JS memanggil notareturpenjualanonchangeheader -> 404 ->
   // "Terjadi kesalahan silahkan refresh browser" tiap ubah Tipe PPN/Pembayaran/Hari/Catatan/
   // Valas) dan nama kolom diambil mentah dari request. Sekarang kolom dibatasi daftar ini.
@@ -596,6 +610,7 @@ $values = [
 $res = DB::connection('SML')->statement('exec sp_TransInvoiceRPJ ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?' ,$values);
 
 if ($choice !='D'){
+    $this->isiNilaiPPN($nobukti);
 
   //  return [$req->choice,'IVR',$nobukti,'',$xurut,'DBINVOICERPJ'];
     $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($req->choice,'IVR',$nobukti,'',$xurut,'DBINVOICERPJDET');
@@ -760,6 +775,7 @@ if ((int) substr($tglServer, 0, 4) !== (int) $periode->tahun || (int) substr($tg
         "pesan" => "Nota retur gagal disimpan, silakan coba lagi"
       ];
     }
+    $this->isiNilaiPPN($noBukti[0]->Nobukti);
     app('App\Http\Controllers\GlobalController')->LoggingData('I','IVRJ',$noBukti[0]->Nobukti,'',0,'DBINVOICERPJ');
 
     return [
@@ -861,7 +877,7 @@ public function spDeleteAll (Request $req) {
 
   }
 
-
+    $this->isiNilaiPPN($nobukti);
 
     return 1;
 

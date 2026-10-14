@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\DBFLMENU;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\DBFLMENU;
 use App\Models\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Model\VwPPL;
+use App\Models\VwPPL;
 use Illuminate\Auth;
 
 
@@ -88,7 +88,9 @@ class TransferBarangController extends Controller
                       else 1
                 end As Bit)=0
     AND B.NoBukti IS not NULL
-    and C.pSampit = 0");
+    ORDER BY A.Tanggal DESC
+  --  and A.nobukti='SML/PRT/00001/1026'
+   -- and C.pSampit = 0");
   }
 
   // Query header gabungan: Non-Otorisasi + Otorisasi + Belum/Sudah Diterima.
@@ -117,21 +119,30 @@ class TransferBarangController extends Controller
               THEN 0 ELSE 1
             END AS BIT
           ) AS NeedOtorisasi,
-          COUNT(*) AS JmlItem
+          COUNT(*) AS JmlItem,
+          CASE
+              WHEN COUNT(*) = SUM(CASE WHEN ISNULL(B.isbatal, 0) = 1 THEN 1 ELSE 0 END) THEN 'Batal'
+              WHEN ISNULL(X.IsOtorisasi1, 0) = 1 THEN 'Sudah'
+              ELSE 'Belum'
+          END AS Status
       FROM dbTransferDet B
       LEFT JOIN dbBarang C ON C.KodeBrg = B.KodeBrg
       LEFT JOIN dbGudang D ON D.Kodegdg = B.GdgAsal
       LEFT JOIN dbGudang E ON E.Kodegdg = B.GdgTujuan
       LEFT JOIN DBTRANSFER X ON B.NOBUKTI = X.NOBUKTI
       WHERE
-          ISNULL(B.isbatal, 0) = 0
-          AND CAST(X.TANGGAL AS DATE) BETWEEN :date1 AND :date2
+          CAST(X.TANGGAL AS DATE) BETWEEN :date1 AND :date2
       GROUP BY
           B.NOBUKTI, X.TANGGAL, X.NOTE, X.pTERIMA,
           X.IsOtorisasi1, X.OtoUser1, X.TglOto1,
           X.IsOtorisasi2, X.IsOtorisasi3, X.IsOtorisasi4, X.IsOtorisasi5, X.MaxOL
       ORDER BY X.TANGGAL DESC, B.NOBUKTI DESC
     ";
+    // ISNULL(B.isbatal, 0) = 0 dihapus dari WHERE -- transaksi yang SEMUA itemnya batal
+    // sekarang tetap muncul (ditandai Status='Batal'), bukan hilang sama sekali seperti
+    // sebelumnya. Status dihitung per-header: 'Batal' kalau seluruh baris item-nya batal,
+    // kalau tidak baru dibedakan Sudah/Belum lewat IsOtorisasi1 -- sama polanya dengan
+    // kolom Status di perintahopname.blade.php/beritaacaraopname.blade.php.
 
     return DB::connection("SML")->select($query, ["date1" => $date1, "date2" => $date2]);
   }
@@ -748,9 +759,15 @@ class TransferBarangController extends Controller
                 END AS BIT
             ) = 0
             AND B.NoBukti IS NOT NULL
-            AND C.pSampit = 0 
             AND A.nobukti = :nobukti
     ", ['nobukti' => $nobukti]);
+    // AND C.pSampit = 0 dihapus -- fetchPermintaanList() (query tab "Outstanding
+    // Permintaan Transfer" yang menampilkan tombol Tambah ini) TIDAK memfilter
+    // pSampit (baris itu sendiri dikomentari di sana), jadi baris yang ditampilkan
+    // di tab tersebut belum tentu lolos filter ini -- getDetail() lalu
+    // mengembalikan listHeader kosong dan JS (refreshDataTableAdd()) crash di
+    // dataHeaderAdd[0].Keterangan karena dataHeaderAdd[0] undefined. Disamakan
+    // supaya setiap baris yang muncul di tab itu selalu bisa diklik Tambah.
 
     return [
         "list" => $list,

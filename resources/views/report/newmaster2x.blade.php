@@ -567,6 +567,17 @@ $iconMap = [
 </head>
 
 <body>
+    {{-- Logo & nama perusahaan, sama seperti newmasterTest.blade.php: ikon memakai Logo NPWP 1
+         dari menu Set Nomor Transaksi (resources/views/berkas/img/logoperusahaan/npwp1.*),
+         nama memakai Inisial Perusahaan (DBNOMOR.ALIAS). Dipakai di loader & sidebar di bawah. --}}
+    @php
+      $fileLogoSidebar = collect(glob(resource_path('views/berkas/img/logoperusahaan/npwp1.*')) ?: [])->first();
+      try {
+        $inisialPerusahaan = trim((string) (\DB::connection('SML')->select('select top 1 ALIAS from DBNOMOR')[0]->ALIAS ?? ''));
+      } catch (\Throwable $e) {
+        $inisialPerusahaan = '';
+      }
+    @endphp
     {{-- Layar loading halaman. HARUS berupa markup statis paling atas di <body>,
          bukan dibuat lewat JavaScript: XHR `async: false` di $(document).ready
          (doLoadHeader/doSimpanHeader + dropdown loader tiap halaman) mengunci main
@@ -576,7 +587,13 @@ $iconMap = [
         <div class="app-loader-box">
             <div class="app-loader-mark">
                 <span class="app-loader-ring" aria-hidden="true"></span>
-                <span class="app-loader-logo">AJC</span>
+                @if ($fileLogoSidebar)
+                    <span class="app-loader-logo" style="background:#fff; overflow:hidden;">
+                        <img src="{{ url('setnomortransaksilogo') }}?v={{ @filemtime($fileLogoSidebar) }}" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
+                    </span>
+                @else
+                    <span class="app-loader-logo">SPL</span>
+                @endif
             </div>
             <div class="app-loader-title">Memuat halaman&hellip;</div>
             <div class="app-loader-sub">Mengambil data dari server, mohon tunggu.</div>
@@ -621,8 +638,14 @@ $iconMap = [
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo" style="cursor: pointer" onclick="window.location.href='{{ url('home') }}'">
-            <div class="logo-icon">AJC</div>
-            <span class="logo-text">{{ $akses['program'] ?? 'Report' }}</span>
+            @if ($fileLogoSidebar)
+                <div class="logo-icon" style="background:#fff; overflow:hidden;">
+                    <img src="{{ url('setnomortransaksilogo') }}?v={{ @filemtime($fileLogoSidebar) }}" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
+                </div>
+            @else
+                <div class="logo-icon">SPL</div>
+            @endif
+            <span class="logo-text">{{ $inisialPerusahaan !== '' ? $inisialPerusahaan : 'PT. SPL' }}</span>
         </div>
         <nav class="sidebar-nav" id="nav">
             @foreach ($akses['menul0'] as $menu0)

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\Menu;
-use App\Model\User;
-use App\Model\Periode;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
+use App\Models\Menu;
+use App\Models\User;
+use App\Models\Periode;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
 use App\Traits\AksesTrait;
 
 class HomeController extends Controller {
@@ -38,7 +38,7 @@ class HomeController extends Controller {
         $menu = Menu::join('akses_menu', 'menu.id', '=', 'akses_menu.id_menu')->where('akses_menu.tampil', 1)->where('menu.grup','>', 0)->where('menu.show_acc', 1)->where('akses_menu.id_user', \Auth::id())->select('menu.*')->get();
       }
       $periode = Periode::where('id_user', \Auth::id())->first();
-      return view("dashboard")->with('menu', $menu)->with('periode', $periode);
+      return view("report.dashboard")->with('menu', $menu)->with('periode', $periode);
 
     }
 
@@ -88,7 +88,7 @@ class HomeController extends Controller {
       $akses = $this->cekAkses("Home");
       if ($akses['userLoggedOut']) { return redirect('/'); }
 
-      return view('mastercore' , [
+      return view('report.mastercore' , [
         "akses" => $akses
       ]);
     }

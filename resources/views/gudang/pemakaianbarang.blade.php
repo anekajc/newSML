@@ -216,14 +216,16 @@
                 <div class="card-body" style="padding:0;">
 
                     <div class="po-toolbar">
-                        {{-- Rentang tanggal — berlaku untuk kedua tab sekaligus (lihat ikatPeriode()).
-                             Server tetap tahu periode aktif lewat #periode_bulan/#periode_tahun untuk
-                             validasi tanggal saat Add/Koreksi. --}}
-                        <div class="po-filter-wrap">
+                        {{-- Rentang tanggal — hanya untuk tab "Pemakaian Barang" (lihat ikatPeriode());
+                             tab Outstanding selalu menampilkan semua tanggal (lihat
+                             PemakaianBarangController::fetchOutstanding()), jadi disembunyikan saat tab
+                             Outstanding aktif, lihat shown.bs.tab. Server tetap tahu periode aktif lewat
+                             #periode_bulan/#periode_tahun untuk validasi tanggal saat Add/Koreksi. --}}
+                        <div class="po-filter-wrap" id="filterPeriode" style="display:none">
                             <label>Periode</label>
-                            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}">
+                            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}" autocomplete="off">
                             <span class="po-filter-sep">s/d</span>
-                            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}">
+                            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}" autocomplete="off">
                         </div>
 
                         <input class="po-search-inp" type="search" id="searchBox" placeholder="Cari data"
@@ -450,8 +452,8 @@
                     </div>
                 </div>
                 <div class="modal-footer" id="contentContainer">
-                    <button type="button" class="btn btn-outline-danger btn-lg" data-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary btn-lg" onclick="submitAdd()">Submit</button>
+                    <button type="button" class="btn btn-danger btn-action-danger btn-pill-primary" data-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-action-primary btn-primary btn-pill-primary" onclick="submitAdd()">Simpan</button>
                 </div>
             </div>
         </div>
@@ -690,8 +692,9 @@
                                                         <label for="koreksiAddInputQty" class="form-label">Qty</label>
                                                     </div>
                                                     <div class="col-md-8">
-                                                        <input id="koreksiAddInputQty" type="number" value="0.00"
-                                                            class="form-control text-right">
+                                                        <input id="koreksiAddInputQty" type="text" value="0.00"
+                                                            class="form-control text-right" oninput="formatAngkaKetik(this)"
+                                                            onblur="formatAngkaInput(this)">
                                                     </div>
                                                 </div>
                                             </div>
@@ -825,8 +828,9 @@
                                                         <label for="koreksiEditInputQty" class="form-label">Qty</label>
                                                     </div>
                                                     <div class="col-md-8">
-                                                        <input id="koreksiEditInputQty" type="number" value="0.00"
-                                                            class="form-control text-right">
+                                                        <input id="koreksiEditInputQty" type="text" value="0.00"
+                                                            class="form-control text-right" oninput="formatAngkaKetik(this)"
+                                                            onblur="formatAngkaInput(this)">
                                                     </div>
                                                 </div>
                                             </div>
@@ -1113,6 +1117,12 @@
             }
             awal.dataset.rtBound = '1';
 
+            // Refresh biasa (F5) membuat browser mengembalikan tanggal terakhir yang dipilih tanpa
+            // memicu change, padahal data awal dirender server untuk rentang bawaan (atribut value) —
+            // kembalikan ke nilai bawaan supaya filter dan isi tabel selalu cocok.
+            awal.value = awal.defaultValue;
+            akhir.value = akhir.defaultValue;
+
             let onUbah = function() {
                 if (!awal.value || !akhir.value) {
                     return;
@@ -1204,6 +1214,7 @@
                 activeTable().search($('#searchBox').val() || '').draw();
                 $('#tabelLen').val(String(panjangHalaman[activeTableId()]));
                 $('#btnFilter').toggle(targetId === '#profile');
+                $('#filterPeriode').toggle(targetId === '#profile');
                 aturTinggiTabel();
             });
 
@@ -1225,7 +1236,7 @@
             }
             let dataOut = koreksiDataAddList[check]
             // console.log(dataOut)
-            let qntTerima = $("#koreksiAddInputQty").val()
+            let qntTerima = unformatAngka($("#koreksiAddInputQty").val())
             if (Number(qntTerima) > Number(dataOut.QntOS)) {
                 alertify.warning("Qty tidak bisa lebih besar dari Qty OS");
                 return
@@ -1335,7 +1346,7 @@
 
             let _token = $("#_token").val();
 
-            let qntTerima = $("#koreksiEditInputQty").val()
+            let qntTerima = unformatAngka($("#koreksiEditInputQty").val())
             console.log('============')
             console.log(qntTerima)
             // console.log(dataPBG)
@@ -1465,7 +1476,7 @@
             document.getElementById("koreksiEditKodeBrg").value = koreksiDataEdit.KODEBRG
             document.getElementById("koreksiEditNamaBrg").value = koreksiDataEdit.NAMABRG
             // document.getElementById("koreksiEditQtyOS").value = koreksiDataEdit.QntOS
-            document.getElementById("koreksiEditInputQty").value = qnt
+            document.getElementById("koreksiEditInputQty").value = formatAngka((parseFloat(qnt) || 0).toFixed(2))
             document.getElementById("koreksiEditSatuan").value = koreksiDataEdit.Satuan
             $('#formKoreksiEdit').show();
             document.getElementById('formKoreksiEdit').scrollIntoView();
@@ -1511,7 +1522,7 @@
 
             addDataArray.forEach((item, i) => {
                 if (document.getElementById(`add_checkbox${i}`).checked) {
-                    addDataArray[i].inputQntTerima = $(`#input_add_qntTerima${i}`).val();
+                    addDataArray[i].inputQntTerima = unformatAngka($(`#input_add_qntTerima${i}`).val());
                     tempData.push(addDataArray[i])
                 }
             });
@@ -1681,7 +1692,7 @@
     <td>${item.NAMABRG}</td>
     <td class="text-right">${qnt}</td>
     <td class="text-center">${item.Satuan}</td>
-    <td class="text-center"><input onchange="" id="input_add_qntTerima${i}" style="width: 100px;" class="text-right" type="number" min=0 value=0.00></td></tr>`
+    <td class="text-center"><input id="input_add_qntTerima${i}" style="width: 100px;" class="text-right" type="text" value="0.00" oninput="formatAngkaKetik(this)" onblur="formatAngkaInput(this)"></td></tr>`
             });
             document.getElementById("addTableData").innerHTML = rowTable
 
@@ -2947,6 +2958,75 @@
             w.document.write($(`#printContainer`).html());
             w.print();
             w.close();
+        }
+
+        function formatAngka(angkaString) {
+            let tempAngka = angkaString.split('.')
+
+            if (tempAngka[0][0] == '-') {
+                let temp2 = ''
+
+                let tempAngka1 = tempAngka[0].split('-')
+                for (let i = 0; i < tempAngka1[1].length; i++) {
+                    if (i != 0 && i % 3 == 0) {
+                        temp2 = ',' + temp2
+                    }
+                    temp2 = tempAngka1[1][tempAngka1[1].length - i - 1] + temp2
+                }
+                temp2 += '.' + tempAngka[1]
+                temp2 = '-' + temp2
+
+                return temp2
+            }
+            let temp1 = ''
+            for (let i = 0; i < tempAngka[0].length; i++) {
+                if (i != 0 && i % 3 == 0) {
+                    temp1 = ',' + temp1
+                }
+                temp1 = tempAngka[0][tempAngka[0].length - i - 1] + temp1
+            }
+            temp1 += '.' + tempAngka[1]
+            return temp1
+        }
+
+        function unformatAngka(angka) {
+            if (!angka) return 0
+            return parseFloat(String(angka).replace(/,/g, '')) || 0
+        }
+
+        function formatAngkaInput(el) {
+            el.value = formatAngka(unformatAngka(el.value).toFixed(2))
+        }
+
+        // Dipasang di oninput supaya separator ribuan langsung muncul sambil mengetik, tidak
+        // menunggu pindah fokus (onblur formatAngkaInput() tetap jalan untuk menormalkan ke 2
+        // desimal). Sama seperti formatAngkaKetik() di accounting/memorialkoreksi.blade.php.
+        function formatAngkaKetik(el) {
+            let posDariKanan = el.value.length - el.selectionStart
+            let minus = el.value.trim().startsWith('-') ? '-' : ''
+            let raw = el.value.replace(/[^0-9.]/g, '')
+
+            let titikIndex = raw.indexOf('.')
+            let bulat = titikIndex === -1 ? raw : raw.slice(0, titikIndex)
+            let desimal = titikIndex === -1 ? '' : raw.slice(titikIndex + 1).replace(/\./g, '').slice(0, 2)
+
+            bulat = bulat.replace(/^0+(?=\d)/, '')
+            if (bulat === '') {
+                bulat = '0'
+            }
+
+            let bulatFormatted = ''
+            for (let i = 0; i < bulat.length; i++) {
+                if (i != 0 && (bulat.length - i) % 3 == 0) {
+                    bulatFormatted += ','
+                }
+                bulatFormatted += bulat[i]
+            }
+
+            el.value = minus + bulatFormatted + (titikIndex !== -1 ? '.' + desimal : '')
+
+            let posBaru = Math.max(0, el.value.length - posDariKanan)
+            el.setSelectionRange(posBaru, posBaru)
         }
     </script>
 

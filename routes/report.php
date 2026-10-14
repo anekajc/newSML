@@ -418,11 +418,10 @@ Route::get('/laporanperintahopname_doFilter', [LaporanPerintahOpnameController::
 Route::get('/laporanperintahopname_doReportFilter', [LaporanPerintahOpnameController::class, 'doReportFilter']);
 
 // CLOSING PERINTAH OPNAME
-// Dinonaktifkan: LaporanClosingPerintahOpnameController (dan view-nya) belum ada, route ini membuat php artisan route:list error.
-// Route::get('/laporanclosingperintahopname', [LaporanClosingPerintahOpnameController::class, 'index']);
-// Route::get('/laporanclosingperintahopname_doReport', [LaporanClosingPerintahOpnameController::class, 'doReport']);
-// Route::get('/laporanclosingperintahopname_doFilter', [LaporanClosingPerintahOpnameController::class, 'doFilter']);
-// Route::get('/laporanclosingperintahopname_doReportFilter', [LaporanClosingPerintahOpnameController::class, 'doReportFilter']);
+Route::get('/laporanclosingperintahopname', [LaporanClosingPerintahOpnameController::class, 'index']);
+Route::get('/laporanclosingperintahopname_doReport', [LaporanClosingPerintahOpnameController::class, 'doReport']);
+Route::get('/laporanclosingperintahopname_doFilter', [LaporanClosingPerintahOpnameController::class, 'doFilter']);
+Route::get('/laporanclosingperintahopname_doReportFilter', [LaporanClosingPerintahOpnameController::class, 'doReportFilter']);
 
 // OPNAME
 Route::get('/laporanopname', [LaporanOpnameController::class, 'index']);
@@ -651,6 +650,7 @@ Route::get('/reportaccountinghutanglph_doKasharian', [LaporanAccountingHutangLPH
 Route::get('/reportaccountinghutanglph_doInvoice', [LaporanAccountingHutangLPHController::class, 'doInvoice']);
 Route::get('/reportaccountinghutanglph_doLpb', [LaporanAccountingHutangLPHController::class, 'doLpb']);
 Route::get('/reportaccountinghutanglph_doBp', [LaporanAccountingHutangLPHController::class, 'doBp']);
+Route::get('/reportaccountinghutanglph_doKartu', [LaporanAccountingHutangLPHController::class, 'doKartu']);
 
 // Hutang - UMUR
 Route::get('/reportaccountinghutangumur', [LaporanAccountingHutangUmurController::class, 'index']);
@@ -915,7 +915,7 @@ Route::get('/laporanaccountinglabarugi_loaddivisi',[LaporanAccountingLabaRugiCon
 Route::get('/laporanaccountinglabarugi_doKasharian', [LaporanAccountingLabaRugiController::class, 'doKasharian']);
 Route::get('/laporanaccountinglabarugi_doInvoice', [LaporanAccountingLabaRugiController::class, 'doInvoice']);
 Route::get('/laporanaccountinglabarugi_doLpb', [LaporanAccountingLabaRugiController::class, 'doLpb']);
-Route::get('/laporanaccountinglabarugi_doBp', [LaporanAccountingLabaRugiController::class, 'doBp']);
+Route::get('/laporanaccountinglabarugi_doBp', [laporanaccountinglabarugiLaporanAccountingLabaRugiController::class, 'doBp']);
 
 // LABA RUGI TAHUNAN
 Route::get('/laporanaccountinglabarugitahunan', [LaporanAccountingLabaRugiTahunanController::class, 'index']);

@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Model\DBFLMENU;
+use App\Models\DBFLMENU;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -141,8 +141,12 @@ class GudangPermintaanKonsinyasiController extends Controller
     " , ["tahun" =>$periode->tahun , "bulan" => $periode->bulan ]);
 
       // Grouping pakai Collection
-    $listData = collect($tempOutstanding)->groupBy('NOBUKTI');
-    $listData3 = collect($tempOutstanding3)->groupBy('NOBUKTI');
+    // ->values() dibutuhkan supaya @json() di Blade (lastTabelRows seeding) menyerialisasi
+    // ini sebagai array JS, bukan object -- tanpa ini key-nya NOBUKTI (string) bikin
+    // @json() keluar objek dan .forEach() di JS gagal diam-diam (sama seperti bug yang
+    // ditemukan di GudangPermintaanSampleController sebelumnya).
+    $listData = collect($tempOutstanding)->groupBy('NOBUKTI')->values();
+    $listData3 = collect($tempOutstanding3)->groupBy('NOBUKTI')->values();
 
     // $outstanding = VwPPL::all()->where('Bulan',$periode->bulan )->where('Tahun', $periode->tahun)->where('IsJasa', 0)->where('pAgen', 0)->groupBy('NoBukti');
     // $tempOutstanding = [];

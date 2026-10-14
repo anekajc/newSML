@@ -1,4 +1,4 @@
-@extends('masterreport2')
+@extends('report.masterreport2')
 
 <!-- Warna centang -->
   <style>

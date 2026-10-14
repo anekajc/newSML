@@ -1,5 +1,8 @@
-@extends('gudang.newmaster')
+@extends('newmasterTest')
 @section('buttons')
+
+@section('page-title', 'Perintah Opname')
+@section('title', 'SML - Perintah Opname')
 
 @endsection
 
@@ -92,63 +95,272 @@
     font-size: 0.65rem;
   }
 
-  #tabel_filter {
-      display: flex;
-      align-items: flex-end;
-      margin-top: 8px;
-      margin-right: 10px;
-      margin-bottom: -10px;
-    }
-
-
-  #tabel_filter label input {
-      width: 150px;
-      padding: 5px 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      box-shadow: none;
-      font-size: 0.65rem;
-    }
-
-  #tabel_filter label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #333;
-    }
   </style>
 {{-- end tampilan search bar 1 --}}
 
-{{-- tampilan search bar 2 --}}
-  <style>
-  #tabel2_filter {
-      display: flex;
-      align-items: flex-end;
-      margin-top: 8px;
-      margin-right: 10px;
-      margin-bottom: -10px;
-    }
+<link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
+<link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
 
-  #tabel2_filter label input {
-      width: 150px;
-      padding: 5px 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      box-shadow: none;
-      font-size: 0.65rem;
-    }
+{{-- Blok CSS lokal halaman ini -- disalin verbatim dari @section('css') transferbarang.blade.php
+     (custom-tabs/tab-card, #page1 .card override layout .card global, po-len-wrap/
+     po-len-inp, tombol aksi bulat kecil pastel + action-buttons-wrap hover-reveal di
+     kolom pertama, header/row tabel), hanya untuk #tabel/#tabel2 (halaman ini cuma 2
+     tab, tidak ada #tabel3). Halaman ini memakai layout newmasterTest (bukan lagi
+     gudang.newmaster) -- po-table-header.css di-link manual di atas dan report-table.js
+     di-load di @section('js') karena newmasterTest tidak memuat keduanya secara
+     otomatis seperti gudang.newmaster. --}}
+<style>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-  #tabel2_filter label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #333;
-    }
+.custom-tabs {
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 2px;
+  background-color: #f1f3f5;
+  border-radius: 20px;
+  padding: 3px;
+}
 
-  #tabel2_filter input:focus {
-      border-color: #007bff;
-      outline: none;
-    }
-  </style>
-{{-- end tampilan search bar 2 --}}
+.custom-tabs .nav-link {
+  display: inline-block !important;
+  padding: 5px 16px !important;
+  font-size: 0.75rem !important;
+  border: none;
+  border-radius: 17px;
+  color: #495057;
+  background: transparent;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-tabs .nav-link:hover {
+  background: transparent;
+  color: #007bff;
+}
+
+.custom-tabs .nav-link.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
+}
+
+.tab-card {
+  display: block !important;
+  align-items: flex-start !important;
+  padding: 0 !important;
+  border: none !important;
+  margin-bottom: 6px !important;
+}
+
+.tab-card .card-body {
+  padding: 5px 10px !important;
+}
+
+/* Layout newmasterTest punya rule .card global (align-items:center, text-align:center,
+   cursor:pointer, dan :hover-nya translateY+box-shadow buat kartu menu dashboard) yang
+   bikin tab-bar & kartu toolbar/tabel ikut rata tengah dan "terangkat" saat di-hover
+   kalau tidak ditimpa -- port 1:1 dari #page1 .card milik transferbarang.blade.php/
+   so.blade.php. */
+#page1 .card {
+  display: block !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  text-align: left !important;
+  cursor: default !important;
+}
+
+#page1 .card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--border) !important;
+}
+
+#page1 .tab-content .col-md-12 {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.po-len-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rt-card);
+  border: 1.5px solid var(--rt-border);
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
+.po-len-wrap label {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--rt-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+.po-len-inp {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rt-ink);
+  outline: none;
+  cursor: pointer;
+  padding: 2px 20px 2px 0;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+}
+
+#tabel tbody td:first-child:not(.dataTables_empty),
+#tabel2 tbody td:first-child:not(.dataTables_empty) {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  font-size: 0;
+}
+
+#tabel td:first-child .btn,
+#tabel2 td:first-child .btn,
+#addTable td:last-child .btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: all .12s ease;
+}
+
+#tabel td:first-child .btn:hover,
+#tabel2 td:first-child .btn:hover,
+#addTable td:last-child .btn:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+#tabel td:first-child .btn-success,
+#tabel2 td:first-child .btn-success,
+#addTable td:last-child .btn-success {
+  color: #16a34a; border-color: #cdebd7; background: #e7f7ed;
+}
+
+#tabel td:first-child .btn-warning,
+#tabel2 td:first-child .btn-warning,
+#addTable td:last-child .btn-warning {
+  color: #b45309; border-color: #fbe3bd; background: #fef3e0;
+}
+
+#tabel td:first-child .btn-primary,
+#tabel2 td:first-child .btn-primary,
+#addTable td:last-child .btn-primary {
+  color: #2563eb; border-color: #cfdcff; background: #e8edff;
+}
+
+#tabel td:first-child .btn-danger,
+#tabel2 td:first-child .btn-danger,
+#addTable td:last-child .btn-danger {
+  color: #dc2626; border-color: #f7cfcf; background: #fdeaea;
+}
+
+#tabel td:first-child .btn-info,
+#tabel2 td:first-child .btn-info,
+#addTable td:last-child .btn-info {
+  color: #0891b2; border-color: #a5f3fc; background: #ecfeff;
+}
+
+{{-- Tabel statis (bukan #tabel/#tabel2) yang dulu pakai thead bg-primary text-white --
+     diganti abu-abu + teks gelap, disamakan dengan thead th di atas, sesuai UI baru
+     yang sama di semua halaman. --}}
+#addTable thead th,
+#detailTable thead th,
+#tabel_add_list_gudang thead th,
+#tabel_add_list_merk thead th,
+#tabel_add_list_modal thead th,
+#tabel thead th,
+#tabel2 thead th {
+  background: #f8f9fb !important;
+  color: #6b7280 !important;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+  border-bottom: 1px solid #e7e9ee;
+  border-top: none;
+}
+
+#tabel tbody tr:nth-of-type(odd),
+#tabel2 tbody tr:nth-of-type(odd) {
+  background-color: #fbfbfc;
+}
+
+#tabel tbody tr:hover,
+#tabel2 tbody tr:hover {
+  background-color: #f5f3ff;
+}
+
+.data-table th,
+.data-table td {
+  white-space: nowrap;
+}
+
+#tabel_wrapper,
+#tabel2_wrapper {
+  position: relative;
+}
+
+#tabel_wrapper > .dataTables_processing,
+#tabel2_wrapper > .dataTables_processing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(255, 255, 255, .62);
+  z-index: 40;
+  animation: opMunculLoading .34s ease-out both;
+}
+
+@keyframes opMunculLoading {
+  0%, 45% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+#tabel tbody .action-buttons-wrap,
+#tabel2 tbody .action-buttons-wrap {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-6px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+}
+#tabel tbody tr:hover .action-buttons-wrap,
+#tabel2 tbody tr:hover .action-buttons-wrap,
+#tabel tbody tr:focus-within .action-buttons-wrap,
+#tabel2 tbody tr:focus-within .action-buttons-wrap {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+</style>
 @endsection
 
 
@@ -159,33 +371,6 @@
 </div>
 
 <div id="page1" class="container-fluid mainpage">
-<div class="container-fluid" >
-
-
-
-  <!-- <div id="qrcode"></div> -->
-  <div class="row" style="margin-top: -80px">
-    <div class="col-6 text-left">
-      <h2>Perintah Opname</h2>
-    </div>
-    <div class="col-6 text-right">
-      <button type="button" class="btn btn-primary btn-lg " style="
-      height: 30px; 
-      margin-top: 20px; 
-      padding: 4px 12px; 
-      border-radius: 20px; 
-      font-size: 0.75rem; 
-      font-weight: 600; 
-      text-transform: uppercase; 
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonAdd()">Add Perintah Opname</button>
-    </div>
-  </div>
-<!-- <button onclick="loadAll()">tes</button> -->
-
-<!-- <button onclick="setNewNoBukti()">tes</button> -->
-<!-- <button onclick="buttonAdd('nobukti')">Add Tes</button> -->
-</div>
 
 <div id="printContainer" style="display:none">
 
@@ -204,140 +389,99 @@
   <input type="hidden" id="akses_isbatal" value="{!! $akses->IsBatal !!}" />
 
   <input type="hidden" name="_token" id="_token" value="{!! csrf_token() !!}" />
+  {{-- Tab Belum/Sudah Otorisasi digabung jadi satu tabel, dengan filter Status +
+       Periode di toolbar (client-side, lastTabelRows sudah berisi gabungan
+       tempOutstanding+tempPenerimaan dari periode berjalan). --}}
   <div class="card">
-<div class="card-header">
-<div class="row">
-  <nav style="width: 100%;">
-    <div class="nav nav-tabs col-12" id="nav-tab" role="tablist" style="border-bottom: 0;">
-      <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true" style="color: #fff; background-color: #007bff; border-radius: 20px; padding: 4px 12px; margin: 0 10px; font-weight: 600; font-size: 0.75rem; text-align: left;">POP Belum Otorisasi</a>
-      <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab"
-      aria-controls="nav-profile" aria-selected="false"
-      style="color: #007bff; background-color: #f8f9fa; border-radius: 20px; padding: 4px 12px; margin: 0 10px; font-weight: 600; font-size: 0.75rem; border: 2px solid #007bff;">
-      POP Sudah Otorisasi
-      </a>
-    </div>
-  </nav>
-</div>
-</div>
-<div class="card-body" style="padding:0;">
-<div class="tab-content" id="myTabContent">
-  {{-- Utama --}}
-  <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-    <div class="row">
-      <div class="col-12" style="overflow:auto; padding:0; margin:0; width:100%;">
-        <div class="container-fluid">
-              <table id="tabel" class="table table-bordered table-striped"  >
-                <thead class="text-center bg-primary text-white">
-                  <tr>
-                    <th style="padding: 4px 12px;"  scope="col">Actions</th>
-                    <th style="padding: 4px 12px;"  scope="col">No. Bukti</th>
-                    <th style="padding: 4px 12px;"  scope="col">Tanggal</th>
-                    <th style="padding: 4px 12px;"  scope="col">Keterangan</th>
-                    <th style="padding: 4px 12px;"  scope="col">Gudang</th>
-                    <th style="padding: 4px 12px;"  scope="col">Kode Hdgrp</th>
-                    <th style="padding: 4px 12px;"  scope="col">Nama Hdgrp</th>
-                    <th style="padding: 4px 12px;"  scope="col">Kode Subgrp</th>
-                    <th style="padding: 4px 12px;"  scope="col">Nama Subgrp</th>
-                    <th style="padding: 4px 12px;"  scope="col">Kode Merk</th>
-                    <th style="padding: 4px 12px;"  scope="col">Merk</th>
-                  </tr>
-                </thead>
+    <div class="card-body" style="padding:0;">
+      <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
+        <div class="po-toolbar">
+          <div class="po-filter-wrap">
+            <label>Periode</label>
+            <input type="date" onchange="opFilterChanged()" class="po-filter-inp" id="opTanggalAwal" value="{!! \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d') !!}">
+            <span class="po-filter-sep">s/d</span>
+            <input type="date" onchange="opFilterChanged()" class="po-filter-inp" id="opTanggalAkhir" value="{!! \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d') !!}">
+          </div>
+          <input type="search" id="opSearch1" class="po-search-inp" placeholder="Cari data">
+          <div class="po-len-wrap">
+            <label for="opLen1">Tampilkan</label>
+            <select id="opLen1" class="po-len-inp">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="-1">Semua</option>
+            </select>
+          </div>
+          <button class="po-btn-filter" type="button" onclick="$('#modalFilterOP').modal('show')">
+            <i class="bi bi-funnel"></i> Filter
+          </button>
+          @if ((int) ($akses->ISTAMBAH ?? 0) === 1)
+            <div class="po-toolbar-act">
+              <button class="btn btn-chip-biru" type="button" onclick="buttonAdd()">Tambah</button>
+            </div>
+          @endif
+        </div>
 
-                <tbody id="tabel_data" class="text-left" >
-                  @for ($i = 0; $i < count($tempOutstanding); $i++)
-                <tr>
-                  <td class='text-center'>
-                    <button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail('{{ $tempOutstanding[$i][0]->NoBukti }}' , 'detail')"><i class="bi bi-info"></i></button>
-                    <button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi('{{ $tempOutstanding[$i][0]->NoBukti }}' , 'edit')"><i class="bi bi-pen"></i></button>
-                    @if ($tempOutstanding[$i][0]->IsOtorisasi1 == 1)
-                    <button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi('{{ $tempOutstanding[$i][0]->NoBukti }}' , 'edit')"><i class="bi bi-key"></i></button>
-                    @else
-                    <button class="btn btn-primary btn-sm" type="button" onclick="submitOtorisasi('{{ $tempOutstanding[$i][0]->NoBukti }}' , 'otorisasi')"><i class="bi bi-key"></i></button>
+        <div class="modal fade rt-filter" id="modalFilterOP">
+          <div class="modal-dialog modal-md">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">
+                  <i class="bi bi-funnel"></i>
+                  Filter Data
+                  <span class="rt-active-badge" id="opFilterBadge">0 aktif</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterOP').modal('hide')"><span aria-hidden="true">&times;</span></button>
+              </div>
+              <div class="modal-body">
+                <div class="rt-section">
+                  <div class="rt-group-label">Status</div>
+                  <div class="rt-grid-2">
+                    <div>
+                      <label class="rt-field-label" for="opStatus">Status Otorisasi</label>
+                      <select class="rt-native" id="opStatus">
+                        <option value="" selected>Semua Status</option>
+                        <option value="0">Belum Otorisasi</option>
+                        <option value="1">Sudah Otorisasi</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="rt-field-label" for="opStatusOpname">Status Opname</label>
+                      <select class="rt-native" id="opStatusOpname">
+                        <option value="" selected>Semua Status</option>
+                        <option value="Belum">Belum</option>
+                        <option value="Sudah">Sudah</option>
+                        <option value="Batal">Batal</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="rt-reset-link" onclick="$('#opStatus').val(''); $('#opStatusOpname').val('');">Reset semua</button>
+                <div class="rt-footer-buttons">
+                  <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal" onclick="$('#modalFilterOP').modal('hide')">Batal</button>
+                  <button type="button" class="rt-btn rt-btn-primary" onclick="opFilterChanged(); $('#modalFilterOP').modal('hide');">Terapkan</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                    @endif
-                    <!-- <button class="btn btn-info btn-sm" type="button" onclick="buttonPrint('{{ $tempOutstanding[$i][0]->NoBukti }}' )"><i class="bi bi-printer"></i></button> -->
-                  </td>
-                  <td>{{ $tempOutstanding[$i][0]->NoBukti }}</td>
-                  <td>{!! date("Y/m/d", strtotime($tempOutstanding[$i][0]->Tanggal)) !!}</td>
-                  <td>{{ $tempOutstanding[$i][0]->Keterangan }}</td>
-                  <td>{{ $tempOutstanding[$i][0]->KodeGdg }}</td>
-                  <td>{{ $tempOutstanding[$i][0]->KodeHdGrp }}</td>
-                  <td>{{ $tempOutstanding[$i][0]->NAMAHDGRP }}</td>
-                  <td>{{ $tempOutstanding[$i][0]->KodeSubGrp }}</td>
-                  <td>{{ $tempOutstanding[$i][0]->NamaSubGrp }}</td>
-                  <td>{{ $tempOutstanding[$i][0]->KodeMerk }}</td>
-                  <td>{{ $tempOutstanding[$i][0]->NAMAMERK }}</td>
-                </tr>
-                  @endfor
-                </tbody>
-              </table>
+        <div id="rtBarTabel"></div>
+        <table id="tabel" class="data-table">
+          <thead style="white-space:nowrap;"></thead>
+          <tbody id="tabel_data" class="text-left"></tbody>
+        </table>
+        <div class="po-rt-hint">
+          <i class="bi bi-info-circle"></i>
+          Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
+          untuk menyembunyikan kolom atau mengatur jumlah desimal.
         </div>
       </div>
     </div>
   </div>
-  {{-- sudah otorisasi --}}
-        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-          <div class="row">
-            <div class="col-12" style="overflow:auto; padding:0; margin:0; width:100%;">
-              <div class="container-fluid">
-                <table id="tabel2" class="table table-bordered table-striped">
-                  <thead class="text-center bg-primary text-white">
-                    <tr>
-                      <th style="padding: 4px 12px;"  scope="col">Actions</th>
-                      <th style="padding: 4px 12px;"  scope="col">No. Bukti</th>
-                      <th style="padding: 4px 12px;"  scope="col">Tanggal</th>
-                      <th style="padding: 4px 12px;"  scope="col">Keterangan</th>
-                      <th style="padding: 4px 12px;"  scope="col">Gudang</th>
-                      <th style="padding: 4px 12px;"  scope="col">Kode Hdgrp</th>
-                      <th style="padding: 4px 12px;"  scope="col">Nama Hdgrp</th>
-                      <th style="padding: 4px 12px;"  scope="col">Kode Subgrp</th>
-                      <th style="padding: 4px 12px;"  scope="col">Nama Subgrp</th>
-                      <th style="padding: 4px 12px;"  scope="col">Kode Merk</th>
-                      <th style="padding: 4px 12px;"  scope="col">Merk</th>
-                      <th style="padding: 4px 12px;"  scope="col">OtoUser</th>
-                      <th style="padding: 4px 12px;"  scope="col">TglOto</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tabel2_data" class="text-left">
-                    @for ($i = 0; $i < count($tempPenerimaan); $i++)
-                      <tr>
-                        <td class='text-center'>
-                          <button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail('{{ $tempPenerimaan[$i][0]->NoBukti }}' , 'detail')"><i class="bi bi-info"></i></button>
-                          @if ($tempPenerimaan[$i][0]->IsOtorisasi1 == 1)
-                          <button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi('{{ $tempPenerimaan[$i][0]->NoBukti }}' , 'edit')"><i class="bi bi-key"></i></button>
-                          @else
-                          <button class="btn btn-primary btn-sm" type="button" onclick="buttonDetail('{{ $tempPenerimaan[$i][0]->NoBukti }}' , 'otorisasi')"><i class="bi bi-key"></i></button>
-
-                          @endif
-                          <!-- <button class="btn btn-info btn-sm" type="button" onclick="buttonPrint('{{ $tempPenerimaan[$i][0]->NoBukti }}' )"><i class="bi bi-printer"></i></button> -->
-			  <button style="" class="btn btn-primary btn-sm" type="button"   onclick="submitPrint('{{$tempPenerimaan[$i][0]->NoBukti}}')" ><i class="bi bi-printer"></i></button>
-                        </td>
-                        <td>{{ $tempPenerimaan[$i][0]->NoBukti }}</td>
-                        <td>{!! date("Y/m/d", strtotime($tempPenerimaan[$i][0]->Tanggal)) !!}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->Keterangan }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->KodeGdg }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->KodeHdGrp }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->NAMAHDGRP }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->KodeSubGrp }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->NamaSubGrp }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->KodeMerk }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->NAMAMERK }}</td>
-                        <td>{{ $tempPenerimaan[$i][0]->OtoUser1 }}</td>
-                        <td>{!! $tempPenerimaan[$i][0]->TglOto1 ? date("Y/m/d", strtotime($tempPenerimaan[$i][0]->TglOto1)) : '' !!}</td>
-                      </tr>
-                    @endfor
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div> {{-- End Sudah Otorisasi --}}
-
-
-
-</div>
-</div>
-</div>
 
 
 </div>
@@ -345,9 +489,9 @@
 
 <div id="page2" style="display: none" class="mainpage container-fluid" >
 
-  <div class="row" style="margin-top: -80px">
+  <div class="row">
     <div class="col-8 text-left">
-      <h2>Perintah Opname</h2>
+      <h2></h2>
     </div>
     <div class="col-4 text-right">
       <button type="button" class="btn btn-danger btn-lg " style="
@@ -365,9 +509,7 @@
 
   <div id= "formAdd" class="">
 
-
-
-  <div id="" class="">
+  <div id="formBsGrid" class="">
   <div class="">
     <!-- <h1>Tes Modal</h1> -->
 
@@ -377,7 +519,6 @@
       <div class="row">
         <div class="col-md-3">
           <div class="row">
-
 
         <div class="col-md-4">
           <div class="form-group">
@@ -413,25 +554,23 @@
 
         <div class="col-md-3">
           <div class="row">
-
-
-        <div class="col-md-4">
-          <div class="form-group">
-            <label>Tgl Plk.</label>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label>Tgl Plk.</label>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div class="form-group">
+              <input type="date" class="form-control text-left" id="input_add_tanggalpelaksanaan" placeholder="" disabled>
+            </div>
           </div>
         </div>
-        <div class="col-md-8">
-          <div class="form-group">
-            <input type="date" class="form-control text-left" id="input_add_tanggalpelaksanaan" placeholder="" disabled>
-          </div>
-        </div>
-      </div>
 
         </div>
 
       </div>
 
-      <div class="row" style="margin-top: -10px">
+      <div class="row" style="margin-top: -5px">
         <div class="col-md-6">
           <div class="row">
             <div class="col-md-2">
@@ -473,13 +612,9 @@
         </div>
 
 
-
-
       </div>
 
       <div class="row" style="margin-top: -10px">
-
-
 
 
         <div class="col-md-3">
@@ -496,7 +631,7 @@
               <div class="input-group form-group">
                 <input id="input_add_kodehdgrp" type="text" class="form-control" disabled>
 
-                <button id="buttonAddListHeadGroup" type="button" onclick="buttonAddListHeadGroup()" class="btn btn-primary"  >+</button>
+                <button id="buttonAddListHeadGroup" type="button" onclick="buttonAddListHeadGroup()" class="btn btn-chip-biru"><i class="bi bi-search"></i></button>
 
               </div>
             </div>
@@ -517,7 +652,7 @@
               <div class="input-group form-group">
                 <input id="input_add_kodekategori" type="text" class="form-control" disabled>
 
-                <button id="buttonAddListKategori" type="button" onclick="buttonAddListKategori()" class="btn btn-primary"  >+</button>
+                <button id="buttonAddListKategori" type="button" onclick="buttonAddListKategori()" class="btn btn-chip-biru"><i class="bi bi-search"></i></button>
 
               </div>
             </div>
@@ -539,7 +674,7 @@
               <div class="input-group form-group">
                 <input id="input_add_kodesubkategori" type="text" class="form-control" disabled>
 
-                <button id="buttonAddListSubKategori" type="button" onclick="buttonAddListSubKategori()" class="btn btn-primary">+</button>
+                <button id="buttonAddListSubKategori" type="button" onclick="buttonAddListSubKategori()" class="btn btn-chip-biru"><i class="bi bi-search"></i></button>
 
               </div>
             </div>
@@ -565,11 +700,9 @@
               </div> -->
             <div class="col-md-8">
               <div class="input-group form-group">
-                <input id="input_add_gudang" type="text" class="form-control" disabled>
-                <button id="buttonAddListGudang" type="button" onclick="buttonAddListGudang()" class="btn btn-primary"  >+</button>
-
-                <!-- <button id="buttonAddListValas" type="button" onclick="buttonAddListValas()" class="btn btn-primary" disabled >+</button> -->
-
+                <select id="input_add_gudang" class="form-control" disabled>
+                  <option value="">- Pilih Gudang -</option>
+                </select>
               </div>
             </div>
           </div>
@@ -589,7 +722,7 @@
               <div class="input-group form-group">
                 <input id="input_add_kodemerk" type="text" class="form-control" disabled>
 
-                <button id="buttonAddListMerk" type="button" onclick="buttonAddListMerk()" class="btn btn-primary"  >+</button>
+                <button id="buttonAddListMerk" type="button" onclick="buttonAddListMerk()" class="btn btn-chip-biru"><i class="bi bi-search"></i></button>
 
               </div>
             </div>
@@ -615,9 +748,8 @@
   <div class="container-fluid mt-4" style="overflow-x: auto; padding:0; margin:0;">
 
         <table id="addTable" class="table table-bordered table-striped"  >
-          <thead class="text-center bg-primary text-white">
+          <thead class="text-center">
             <tr>
-              <th style="padding: 4px 12px;" scope="col">Urut</th>
               <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
               <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
               <th style="padding: 4px 12px;" scope="col">Satuan</th>
@@ -644,11 +776,11 @@
 
 
   <div class="col-md-12 mt-2 text-right">
-  <button id="buttonAddItem" type="button" class="btn btn-primary" onclick="buttonAddItem()" class="btn btn-secondary" style="height: 30px;
+  <button id="buttonAddItem" type="button" class="btn btn-chip-biru" onclick="buttonAddItem()" class="btn btn-secondary" style="height: 30px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;">+ Tambah</button>
+  text-transform: uppercase;">Tambah Item</button>
 </div>
 
 
@@ -656,12 +788,6 @@
 </div>
 
     </div>
-
-
-
-
-
-
 
 
   </div>
@@ -669,12 +795,12 @@
 
   <div id="page3" style="display: none" class="mainpage container-fluid" >
 
-    <div class="row" style="margin-top: -80px">
+    <div class="row">
       <div class="col-8 text-left">
-        <h2>Perintah Opname</h2>
+        <h2></h2>
       </div>
       <div class="col-4 text-right">
-        <button type="button" class="btn btn-danger btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
+        <button type="button" class="btn btn-danger btn-lg " style="height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
       </div>
     </div>
 
@@ -682,7 +808,7 @@
 
 
 
-    <div id="" class="">
+    <div id="formBsGrid" class="">
     <div class="">
       <!-- <h1>Tes Modal</h1> -->
 
@@ -746,7 +872,7 @@
 
         </div>
 
-        <div class="row" style="margin-top: -10px">
+        <div class="row" style="margin-top: -5px">
           <div class="col-md-6">
             <div class="row">
               <div class="col-md-2">
@@ -936,7 +1062,7 @@
     <div class="container-fluid mt-4" style="overflow-x: auto; padding:0; margin:0;">
 
           <table id="detailTable" class="table table-bordered table-striped"  >
-            <thead class="text-center bg-primary text-white">
+            <thead class="text-center">
               <tr>
                 <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                 <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
@@ -981,17 +1107,7 @@
       </div>
 
 
-
-
-
-
-
-
     </div>
-
-
-
-
 
 
 
@@ -1025,47 +1141,27 @@
 
         <div class="container-fluid mt-4" >
           <div class="row">
-            <div class="col-12">
-              <h3></h3>
-            </div>
-          </div>
-          <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
-          <div class="row">
-            <div class="col-12" style="overflow:auto; margin-top:-60px; ">
-            <!-- <div class="container-fluid"> -->
-
+            <div class="col-12" style="overflow:auto; margin-top:-30px;">
 
             <table id="tabel_add_list_gudang" class="table table-bordered table-striped" style="overflow:auto; " >
-              <thead class="text-center bg-primary text-white">
+              <thead class="text-center">
                 <tr>
-                  <th style="padding: 4px 12px;" scope="col">Actions</th>
                   <th style="padding: 4px 12px;" scope="col">Kode</th>
                   <th style="padding: 4px 12px;" scope="col">Nama</th>
-                  
-
                 </tr>
               </thead>
 
 
               <tbody id="tabel_data_add_list_gudang" class="text-left" >
 
-                <tr >
-                  <td class="text-center">
-                      <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                      <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                    </td>
+                <tr class="pick-row">
                   <td>-</td>
                   <td>-</td>
-
-
-                    
               </tr>
               </tbody>
 
 
             </table>
-          <!-- </div> -->
-            <!-- <button onclick="buttonSubKategori()">tes</button> -->
           </div>
             </div>
             </div>
@@ -1102,45 +1198,27 @@
 
         <div class="container-fluid mt-4">
           <div class="row">
-            <div class="col-12">
-              <h3>Merk</h3>
-            </div>
-          </div>
-          <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
-          <div class="row">
-            <div class="col-12" style="overflow:auto; margin-top:-60px; ">
-            <!-- <div class="container-fluid"> -->
-
+            <div class="col-12" style="overflow:auto;">
 
             <table id="tabel_add_list_merk" class="table table-bordered table-striped" style="overflow:auto; " >
-              <thead class="text-center bg-primary text-white">
+              <thead class="text-center">
                 <tr>
-                  <th style="padding: 4px 12px;" scope="col">Actions</th>
                   <th style="padding: 4px 12px;" scope="col">Kode</th>
                   <th style="padding: 4px 12px;" scope="col">Nama</th>
-                  
-
                 </tr>
               </thead>
 
 
               <tbody id="tabel_data_add_list_merk" class="text-left" >
 
-                <tr >
-                  <td class="text-center">
-                    <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                    <button class="btn btn-primary btn-sm" type="button" ><i class="bi bi-plus"></i></button>
-                  </td>
+                <tr class="pick-row">
                   <td>-</td>
                   <td>-</td>
-                    
               </tr>
               </tbody>
 
 
             </table>
-          <!-- </div> -->
-            <!-- <button onclick="buttonSubKategori()">tes</button> -->
           </div>
             </div>
             </div>
@@ -1192,7 +1270,7 @@
       </div>
 
 
-      <div id="" class="">
+      <div id="formBsGrid" style='margin-top:-25px;'>
       <div class="modal-body">
 
         <div class="container-fluid" >
@@ -1201,12 +1279,10 @@
               <h3></h3>
             </div>
 
-
           </div>
           <div class="row ">
             <div class="col-md-3">
               <div class="row">
-
 
             <div class="col-md-4">
               <div class="form-group">
@@ -1362,11 +1438,11 @@
 
 
             <table id="tabel_add_list_modal" class="table table-bordered table-striped" style="overflow:auto; " >
-              <thead class="text-center bg-primary text-white" style="position: sticky;
+              <thead class="text-center" style="position: sticky;
             top: 0;
             z-index: 1;">
                 <tr>
-                  <th style="padding: 4px 12px;" scope="col" class="text-center">v</th>
+                  <th style="padding: 4px 12px;" scope="col" class="text-center">Pilih</th>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Satuan</th>
@@ -1409,7 +1485,7 @@
 
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" style="
+        <button type="button" class="btn btn-danger" style="
                 height: 30px; 
                 padding: 4px 12px; 
                 border-radius: 20px; 
@@ -1418,7 +1494,7 @@
                 text-transform: uppercase; 
                 transition: background-color 0.3s, box-shadow 0.3s;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" data-dismiss="modal" >Batal</button>
-        <button type="button" class="btn btn-primary" style="
+        <button type="button" class="btn btn-chip-biru" style="
                 height: 30px; 
                 padding: 4px 12px; 
                 border-radius: 20px; 
@@ -1426,7 +1502,7 @@
                 font-weight: 600; 
                 text-transform: uppercase; 
                 transition: background-color 0.3s, box-shadow 0.3s;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddItem()">Submit</button>
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddItem()">Simpan</button>
       </div>
       </div>
 
@@ -1441,19 +1517,19 @@
   </div>
 
 
-
-
-
-
-
-
-
-
-
-
 @endsection
 
 @section('js')
+<script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
+<script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  jQuery('#form').addClass('picker-kas')
+  jQuery('#form .modal-footer .btn').filter(function () {
+    return jQuery.trim(jQuery(this).text()) === 'Batal'
+  }).addClass('picker-kas-batal')
+})
+</script>
 <script type="text/javascript">
 
 let tipeform = ''
@@ -1461,32 +1537,337 @@ let listData = []
 let listDataAdd = []
 let tempDataAdd = []
 
+/* ============ Header tabel interaktif (window.ReportTable) ============
+ * Port 1:1 dari pola ctCart/ctAktifkanTabel/ctInitReportTableSekali milik
+ * cetaktandaterima.blade.php (dan transferbarang.blade.php), diterapkan ke
+ * #tabel/#tabel2 halaman ini. Endpoint persistensinya saveheadertable/
+ * getheadertable (HeaderTableController), generik untuk semua halaman --
+ * halaman ini tidak punya endpoint sendiri sebelumnya, jadi tidak ada kontrak
+ * lama yang perlu dipertahankan.
+ *
+ * Catatan bentuk data: baris tabel/tabel2 di halaman ini bukan objek datar --
+ * setiap baris adalah array dan field aslinya ada di row[0] (mis. row[0].NoBukti),
+ * baik dari render Blade awal ($tempOutstanding[$i][0]->...) maupun dari
+ * loadAll() (res.tempOutstanding[i][0].NoBukti). opPickCI() karena itu selalu
+ * dipanggil dengan row[0], bukan row.
+ */
+
+let opCart = []
+const OP_HREF = 'perintahopname'
+const OP_TIPE_NAMA = { 0 : 'varchar', 1 : 'float', 2 : 'date', 3 : 'bool' }
+const OP_TIPE_KODE = { varchar : 0, float : 1, date : 2, bool : 3 }
+
+function opPickCI (row, key) {
+  if (!row) { return undefined; }
+  if (row[key] !== undefined) { return row[key]; }
+  let lower = key.toLowerCase();
+  for (let k in row) {
+    if (k.toLowerCase() === lower) { return row[k]; }
+  }
+  return undefined;
+}
+
+function opDefaultCart () {
+  return [
+    ['NoBukti',      'No. Bukti',   1, 'varchar', 0, 0],
+    ['Tanggal',      'Tanggal',     1, 'date',    0, 0],
+    ['Status',       'Status',      1, 'varchar', 0, 0],
+    ['Keterangan',   'Keterangan',  1, 'varchar', 0, 0],
+    ['KodeGdg',      'Gudang',      1, 'varchar', 0, 0],
+    ['KodeHdGrp',    'Kode Hdgrp',  1, 'varchar', 0, 0],
+    ['NAMAHDGRP',    'Nama Hdgrp',  1, 'varchar', 0, 0],
+    ['KodeSubGrp',   'Kode Subgrp', 1, 'varchar', 0, 0],
+    ['NamaSubGrp',   'Nama Subgrp', 1, 'varchar', 0, 0],
+    ['KodeMerk',     'Kode Merk',   1, 'varchar', 0, 0],
+    ['NAMAMERK',     'Merk',        1, 'varchar', 0, 0],
+    ['IsOtorisasi1', 'Otorisasi',   1, 'bool',    0, 0],
+    ['OtoUser1',     'OtoUser',     1, 'varchar', 0, 0],
+    ['TglOto1',      'TglOto',      1, 'date',    0, 0]
+  ]
+}
+
+function opBuatCart (headers, values, isnumerics, isshowns, desimals) {
+  headers = headers || []
+  let cart = []
+  headers.forEach((h, i) => {
+    let tipe = Number(isnumerics[i]) || 0
+    let des = (desimals && desimals[i] !== undefined && desimals[i] !== null && desimals[i] !== '')
+      ? Number(desimals[i])
+      : (tipe === 1 ? 2 : 0)
+    cart.push([
+      values[i],
+      h,
+      Number(isshowns[i]) === 1 ? 1 : 0,
+      OP_TIPE_NAMA[tipe] || 'varchar',
+      0,
+      isNaN(des) ? 0 : des,
+    ])
+  });
+  return cart
+}
+
+window.g_href = OP_HREF
+window.g_modeReport = 1
+window.gcart_header = []
+
+window.doSimpanHeader = function (href, mode) {
+  let header = [], value = [], isnumber = [], isshown = [], desimal = []
+  opCart.forEach((c) => {
+    header.push(c[1])
+    value.push(c[0])
+    isnumber.push(OP_TIPE_KODE[c[3]] ?? 0)
+    isshown.push(Number(c[2]) === 1 ? 1 : 0)
+    desimal.push(Number(c[5]) || 0)
+  });
+
+  $.ajax({
+    url   : "{!! url('saveheadertable') !!}",
+    type  : "post",
+    async : false,
+    data  : {
+      _token   : $("#_token").val(),
+      header   : JSON.stringify(header),
+      isnumber : JSON.stringify(isnumber),
+      tipe     : JSON.stringify(desimal),
+      value    : JSON.stringify(value),
+      isshown  : JSON.stringify(isshown),
+      href     : OP_HREF,
+      urut     : 1
+    },
+    error : function (err) {
+      console.log(err)
+      alertify.warning('Gagal menyimpan pengaturan kolom')
+    }
+  })
+}
+
+window.doSetHeader = function (mode, reset) {
+  $.ajax({
+    url   : "{!! url('getheadertable') !!}",
+    type  : "post",
+    async : false,
+    data  : {
+      _token : $("#_token").val(),
+      href   : OP_HREF,
+      urut   : 1,
+      reset  : reset ? 1 : 0
+    },
+    success : function (res) {
+      if (!reset && res && res.headertableheader && res.headertableheader.length) {
+        opCart = opBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal || [])
+      } else {
+        opCart = opDefaultCart()
+        window.gcart_header = opCart
+        window.doSimpanHeader(OP_HREF, 1)
+      }
+      window.gcart_header = opCart
+    },
+    error : function (err) {
+      console.log(err)
+      alertify.warning(reset ? 'Gagal mengembalikan kolom ke tampilan default' : 'Gagal memuat pengaturan kolom')
+      opCart = opDefaultCart()
+      window.gcart_header = opCart
+    }
+  })
+}
+
+let opRtSudahInit = false
+function opInitReportTableSekali () {
+  if (opRtSudahInit || typeof ReportTable === 'undefined') { return }
+  opRtSudahInit = true
+
+  ReportTable.init({ table : '#tabel', bar : '#rtBarTabel', onChange : reinitTabel })
+
+  let opGuardUlangKlik = false;
+  let thead = document.querySelector('#tabel thead')
+  if (thead) {
+    thead.addEventListener('click', function (e) {
+      if (opGuardUlangKlik) { return }
+      let interaktif = e.target && e.target.closest && e.target.closest('.th-gear, .th-grip')
+      if (!interaktif) { return }
+      e.stopPropagation()
+      e.preventDefault()
+      opGuardUlangKlik = true
+      let ulang = new MouseEvent('click', { bubbles: false, cancelable: true, view: window })
+      Object.defineProperty(ulang, 'target', { value: interaktif, configurable: true })
+      thead.dispatchEvent(ulang)
+      opGuardUlangKlik = false
+    }, true)
+  }
+}
+
+function tulisTheadHeaderOP (tableSel, cols) {
+  let thead = document.querySelector(tableSel + ' thead')
+  if (!thead || !window.ReportTable) { return; }
+  let headRowHtml = ReportTable.headHtml(cols)
+    .replace('<tr>', '<tr><th style="padding: 4px 12px;">Actions</th>');
+  thead.setAttribute('style', 'white-space:nowrap;');
+  thead.innerHTML = headRowHtml;
+}
+
+function opValueCell (row, col) {
+  let raw = opPickCI(row, col[0]);
+  let type = col[3];
+
+  {{-- Status (varchar "Belum"/"Batal"/"Sudah") -- badge titik+pill .sp-badge, sama
+       seperti kolom Status di permintaanpemakaian.blade.php (hijau untuk Sudah, merah
+       untuk Belum/Batal). Label aslinya dipertahankan (bukan di-hardcode "Sudah"/
+       "Belum") supaya "Batal" tetap tampil apa adanya. --}}
+  if (col[0] === 'Status') {
+    let label = (raw !== undefined && raw !== null) ? raw : '';
+    let sudah = String(raw).trim().toLowerCase() === 'sudah';
+    return '<td><span class="sp-badge ' + (sudah ? 'is-active' : 'is-inactive') + '">' + label + '</span></td>';
+  }
+  if (type === 'date') {
+    if (!raw) { return '<td></td>'; }
+    return '<td>' + formatDate(raw, '/') + '</td>';
+  }
+  if (type === 'float') {
+    let dp = Number(col[5]) || 0;
+    let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
+    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+  }
+  if (type === 'bool') {
+    return Number(raw)
+      ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
+      : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
+  }
+  return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
+}
+
+function opTabelActionsCell (row) {
+  let r = row[0];
+  let nobukti = opPickCI(r, 'NoBukti');
+  let sudah = Number(opPickCI(r, 'IsOtorisasi1')) === 1;
+  let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
+  html += '<button class="btn btn-warning btn-sm" title="Detail" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'detail\')"><i class="bi bi-info"></i></button>';
+  if (sudah) {
+    html += '<button class="btn btn-danger btn-sm" title="Batal Otorisasi" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-key"></i></button>';
+    html += '<button class="btn btn-primary btn-sm" title="Print" type="button" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+  } else {
+    html += '<button class="btn btn-success btn-sm" title="Edit" type="button" onclick="buttonKoreksi(\'' + nobukti + '\' , \'edit\')"><i class="bi bi-pen"></i></button>';
+    html += '<button class="btn btn-primary btn-sm" title="Otorisasi" type="button" onclick="submitOtorisasi(\'' + nobukti + '\' , \'otorisasi\')"><i class="bi bi-key"></i></button>';
+  }
+  html += '</div></td>';
+  return html;
+}
+
+function opFilterRows (rows) {
+  let oto = $('#opStatus').val()
+  let statusOpname = $('#opStatusOpname').val()
+  let awal = $('#opTanggalAwal').val()
+  let akhir = $('#opTanggalAkhir').val()
+  return (rows || []).filter(function (row) {
+    let r = row[0]
+    {{-- Status Otorisasi (IsOtorisasi1 bool) dan Status Opname (varchar
+         "Belum"/"Sudah"/"Batal", mencerminkan progres di Opname Barang) adalah dua
+         konsep berbeda -- SPK bisa saja sudah diotorisasi tapi belum "di-opname",
+         atau sebaliknya -- jadi disaring independen, bukan AND dipaksa cocok. --}}
+    if (oto !== '' && String(Number(opPickCI(r, 'IsOtorisasi1'))) !== oto) { return false }
+    if (statusOpname !== '') {
+      let statusText = String(opPickCI(r, 'Status') ?? '').trim().toLowerCase()
+      if (statusText !== statusOpname.toLowerCase()) { return false }
+    }
+    if (awal || akhir) {
+      let tgl = opPickCI(r, 'Tanggal')
+      if (!tgl) { return false }
+      let t = String(tgl).slice(0, 10)
+      if (awal && t < awal) { return false }
+      if (akhir && t > akhir) { return false }
+    }
+    return true
+  })
+}
+
+function opFilterChanged () {
+  loadAll()
+}
+
+function renderTabelRows (rows) {
+  window.gcart_header = opCart
+  let cols = (opCart.length ? opCart : gcart_header).filter(function (c) { return c[2] === 1; });
+  let html = "";
+  (rows || []).forEach(function (row) {
+    html += '<tr>' + opTabelActionsCell(row);
+    cols.forEach(function (col) { html += opValueCell(row[0], col); });
+    html += '</tr>';
+  });
+  document.getElementById('tabel_data').innerHTML = html;
+  tulisTheadHeaderOP('#tabel', cols);
+}
+
+let lastTabelRows = []
+let opPanjangHalaman = 10
+
+function opIkatSearch () {
+  let input = document.getElementById('opSearch1')
+  if (!input || input.dataset.rtBound) { return }
+  input.dataset.rtBound = '1'
+
+  let timer = null
+  input.addEventListener('input', function () {
+    let nilai = input.value
+    if (timer) { clearTimeout(timer) }
+    timer = setTimeout(function () {
+      if ($.fn.DataTable.isDataTable('#tabel')) {
+        $('#tabel').DataTable().search(nilai).draw()
+      }
+    }, 400)
+  })
+}
+
+function opIkatPanjangHalaman () {
+  let sel = document.getElementById('opLen1')
+  if (!sel || sel.dataset.rtBound) { return }
+  sel.dataset.rtBound = '1'
+  sel.value = String(opPanjangHalaman)
+
+  sel.addEventListener('change', function () {
+    let n = Number(sel.value)
+    opPanjangHalaman = (n === -1 || n > 0) ? n : 10
+    if ($.fn.DataTable.isDataTable('#tabel')) {
+      $('#tabel').DataTable().page.len(opPanjangHalaman).draw()
+    }
+  })
+}
+
+const OP_DOM_STRING = "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+
+function reinitTabel () {
+  try {
+    if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().destroy(); }
+    renderTabelRows(opFilterRows(lastTabelRows));
+    $('#tabel').DataTable({
+      dom: OP_DOM_STRING,
+      lengthChange: false,
+      pageLength: opPanjangHalaman,
+      paging: true,
+      ordering: false,
+    });
+    opIkatSearch();
+    opIkatPanjangHalaman();
+  } catch (e) {
+    console.error('reinitTabel failed:', e);
+    alertify.error('Gagal memperbarui tabel: ' + e.message);
+  }
+}
+
+function buttonHeaderTable () {
+  alertify.confirm('Reset Kolom', 'Kembalikan kolom tabel ke tampilan default?', function () {
+    window.doSetHeader(1, true)
+    reinitTabel()
+    alertify.success('Kolom telah direset ke tampilan default')
+  }, function () {})
+}
+
 $(document).ready(function(){
-      $("#tabel").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          // "searching": false,
-          "columnDefs": [
-          // { "type": "date", "targets": [3] },
-          // {  "className": "text-right", "targets": [5] },
-          // "columns" : [{"width" : "20px"}]
+      window.doSetHeader(1, false);
+      lastTabelRows = [].concat(@json($tempOutstanding), @json($tempPenerimaan));
+      reinitTabel();
 
+      opInitReportTableSekali();
 
-        ]
-        });
-
-        $("#tabel2").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          // "searching": false,
-          "columnDefs": [
-          // { "type": "date", "targets": [3] },
-          // {  "className": "text-right", "targets": [5] },
-          // "columns" : [{"width" : "20px"}]
-
-
-        ]
-        });
+      loadGudangOptions();
 
         // $('.mainpage').hide()
         // $('#page2').show()
@@ -1523,84 +1904,21 @@ function buttonAddListBatal () {
 
 function loadAll () {
   console.log('loadall')
+  let awal = $('#opTanggalAwal').val()
+  let akhir = $('#opTanggalAkhir').val()
   $.ajax({
     url: "{!! url('perintahopnameloadall') !!}",
     type: "get",
     async: false,
+    data: {
+      date1: awal,
+      date2: akhir
+    },
     success: function(res) {
       console.log(res)
 
-      // TAB 1
-      let rowTable1 = ""
-      res.tempOutstanding.forEach((item) => {
-        rowTable1 += `
-          <tr>
-            <td class='text-center'>
-              <button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail('${item[0].NoBukti}' , 'detail')"><i class="bi bi-info"></i></button>
-              <button class="btn btn-success btn-sm" type="button" onclick="buttonKoreksi('${item[0].NoBukti}' , 'edit')"><i class="bi bi-pen"></i></button>
-              ${item[0].IsOtorisasi1 == 1 ?
-                `<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi('${item[0].NoBukti}' , 'edit')"><i class="bi bi-key"></i></button>` :
-                `<button class="btn btn-primary btn-sm" type="button" onclick="submitOtorisasi('${item[0].NoBukti}' , 'otorisasi')"><i class="bi bi-key"></i></button>`
-              }
-            </td>
-            <td>${item[0].NoBukti}</td>
-            <td>${formatDate(item[0].Tanggal)}</td>
-            <td>${item[0].Keterangan}</td>
-            <td>${item[0].KodeGdg}</td>
-            <td>${item[0].KodeHdGrp}</td>
-            <td>${item[0].NAMAHDGRP}</td>
-            <td>${item[0].KodeSubGrp || '-'}</td>
-            <td>${item[0].NamaSubGrp || '-'}</td>
-            <td>${item[0].KodeMerk || '-'}</td>
-            <td>${item[0].NAMAMERK || '-'}</td>
-          </tr>
-        `
-      });
-
-      $('#tabel').DataTable().destroy();
-      document.getElementById("tabel_data").innerHTML = rowTable1
-      $("#tabel").DataTable({
-        "lengthChange": false,
-        "paging": false
-      });
-
-      // TAB 2 
-      let rowTable2 = ""
-      res.tempPenerimaan.forEach((item) => {
-        rowTable2 += `
-          <tr>
-            <td class='text-center'>
-              <button class="btn btn-warning btn-sm" type="button" onclick="buttonDetail('${item[0].NoBukti}' , 'detail')"><i class="bi bi-info"></i></button>
-              ${item[0].IsOtorisasi1 == 1 ?
-                `<button class="btn btn-danger btn-sm" type="button" onclick="buttonBatalOtorisasi('${item[0].NoBukti}' , 'edit')"><i class="bi bi-key"></i></button>` :
-                `<button class="btn btn-primary btn-sm" type="button" onclick="buttonDetail('${item[0].NoBukti}' , 'otorisasi')"><i class="bi bi-key"></i></button>`
-              }
-	      <button class="btn btn-primary btn-sm" title="Print" onclick="submitPrint('${item[0].NoBukti}')">
-                <i class="bi bi-printer"></i>
-              </button>
-            </td>
-            <td>${item[0].NoBukti}</td>
-            <td>${formatDate(item[0].Tanggal)}</td>
-            <td>${item[0].Keterangan}</td>
-            <td>${item[0].KodeGdg}</td>
-            <td>${item[0].KodeHdGrp}</td>
-            <td>${item[0].NAMAHDGRP}</td>
-            <td>${item[0].KodeSubGrp || '-'}</td>
-            <td>${item[0].NamaSubGrp || '-'}</td>
-            <td>${item[0].KodeMerk || '-'}</td>
-            <td>${item[0].NAMAMERK || '-'}</td>
-            <td>${item[0].OtoUser1 || ''}</td>
-            <td>${item[0].TglOto1 ? formatDate(item[0].TglOto1) : ''}</td>
-          </tr>
-        `
-      });
-
-      $('#tabel2').DataTable().destroy();
-      document.getElementById("tabel2_data").innerHTML = rowTable2
-      $("#tabel2").DataTable({
-        "lengthChange": false,
-        "paging": false
-      });
+      lastTabelRows = [].concat(res.tempOutstanding, res.tempPenerimaan)
+      reinitTabel()
     }
   })
 }
@@ -2369,10 +2687,9 @@ function buttonAddItem () {
           <td>${item.KodeBrg}</td>
           <td>${item.NamaBrg}</td>
           <td class="text-center">${item.Satuan}</td>
-          <td class="text-right">${item.Qnt1 ? parseFloat(item.Qnt1).toFixed(2) : ''}</td>
+          <td class="text-right">${item.Qnt1 ? parseFloat(item.Qnt1).toFixed(2) : '0'}</td>
           </tr>`
         });
-
 
         $('#tabel_add_list_modal').DataTable().destroy();
         document.getElementById("tabel_data_add_list_modal").innerHTML = rowTable
@@ -2385,7 +2702,6 @@ function buttonAddItem () {
       });
 
       $("#formAddItem").modal('toggle');
-
 
 
       },
@@ -2645,9 +2961,6 @@ function submitOtorisasi (nobukti) {
 //       loadAll()
 //       buttonCloseForm()
 
-
-
-
 //     },
 //     error: function (err) {
 //       console.log(err)
@@ -2656,14 +2969,12 @@ function submitOtorisasi (nobukti) {
 
 //   })
 
-
 // }
 
 function submitAddItem () {
   let checkDate = new Date($("#input_add_tanggal").val())
   let periode_bulan = document.getElementById("periode_bulan").value
   let periode_tahun = document.getElementById("periode_tahun").value
-
 
   if ( checkDate.getFullYear()  !== Number(periode_tahun)  || (checkDate.getMonth() +1) !== Number(periode_bulan) ) {
 
@@ -2691,7 +3002,6 @@ function submitAddItem () {
   let tanggalpelaksanaan = $("#input_add_tanggalpelaksanaan").val();
   let tanggalcutoff = $("#input_add_tanggalcutoff").val();
   let jmlrecord = tipeform == 'add' ? 0 : 1
-
 
   console.log({
     _token,
@@ -2876,14 +3186,6 @@ function buttonDeleteItem (index) {
 }
 
 
-function buttonAddPickGudang (index, kode,nama) {
-
-
-  document.getElementById("input_add_gudang").value = kode
-          $("#form").modal('toggle')
-
-}
-
 function buttonAddPickKategori (index, kode,nama) {
 
   document.getElementById("input_add_kodesubkategori").value = '-'
@@ -2932,22 +3234,16 @@ function buttonAddListMerk () {
       console.log(res)
       // listLawan  = res
       let rowTable = `
-      <tr class="text-center">
-        <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickMerk('-','-' , '-'  )" type="button" ><i class="bi bi-plus"></i></button></td>
-      <td >-</td>
+      <tr class="pick-row" onclick="buttonAddPickMerk('-','-' , '-'  )">
       <td>-</td>
-      
-
+      <td>-</td>
       </tr>
       `
       res.forEach((item, i) => {
         rowTable += `
-        <tr>
-          <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickMerk(${i},'${item.KODEMERK}' , '${item.NAMAMERK}'  )" type="button" ><i class="bi bi-plus"></i></button></td>
+        <tr class="pick-row" onclick="buttonAddPickMerk(${i},'${item.KODEMERK}' , '${item.NAMAMERK}'  )">
         <td>${item.KODEMERK}</td>
         <td>${item.NAMAMERK}</td>
-        
-
         </tr>`
       });
 
@@ -2959,19 +3255,8 @@ function buttonAddListMerk () {
       // if(!res.length) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
-      $('#tabel_add_list_merk').DataTable().destroy();
       document.getElementById("tabel_data_add_list_merk").innerHTML = rowTable
-
-      $("#tabel_add_list_merk").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-          // 'order': [[1, 'asc']],
-          // "searching" : false,
-          "columnDefs": [
-        // {"targets" :[0] , 'orderable' : false}
-       // {  "className": "text-center", "targets": [4] },
-     ]
-    });
+      pickerKasInit('tabel_add_list_merk', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -3025,21 +3310,16 @@ function buttonAddListSubKategori () {
       console.log(res)
       // listLawan  = res
       let rowTable = `
-      <tr class="text-center">
-        <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickSubKategori('-','-' , '-'  )" type="button" ><i class="bi bi-plus"></i></button></td>
-      <td >-</td>
+      <tr class="pick-row" onclick="buttonAddPickSubKategori('-','-' , '-'  )">
       <td>-</td>
-      
-
+      <td>-</td>
       </tr>
       `
       res.forEach((item, i) => {
         rowTable += `
-        <tr>
-          <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickSubKategori(${i},'${item.Urut}' , '${item.Keterangan}'  )" type="button" ><i class="bi bi-plus"></i></button></td>
+        <tr class="pick-row" onclick="buttonAddPickSubKategori(${i},'${item.Urut}' , '${item.Keterangan}'  )">
         <td>${item.Urut}</td>
         <td>${item.Keterangan}</td>
-        
         </tr>`
       });
 
@@ -3051,6 +3331,7 @@ function buttonAddListSubKategori () {
 
 
       document.getElementById("tabel_data_add_list_gudang").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_gudang', { order: [[0, 'asc']] })
       document.getElementById("modalAddListGudangTitle").innerHTML= 'Sub Kategori'
 
       if (res.length) {
@@ -3097,21 +3378,16 @@ function buttonAddListKategori () {
       console.log(res)
       // listLawan  = res
       let rowTable = `
-      <tr class="text-center">
-        <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickKategori('-','-' , '-'  )" type="button" ><i class="bi bi-plus"></i></button></td>
-      <td >-</td>
+      <tr class="pick-row" onclick="buttonAddPickKategori('-','-' , '-'  )">
       <td>-</td>
-      
-
+      <td>-</td>
       </tr>
       `
       res.forEach((item, i) => {
         rowTable += `
-        <tr>
-          <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickKategori(${i},'${item.KodeSubGrp}' , '${item.NamaSubGrp}'  )" type="button" ><i class="bi bi-plus"></i></button></td>
+        <tr class="pick-row" onclick="buttonAddPickKategori(${i},'${item.KodeSubGrp}' , '${item.NamaSubGrp}'  )">
         <td>${item.KodeSubGrp}</td>
         <td>${item.NamaSubGrp}</td>
-        
         </tr>`
       });
 
@@ -3123,6 +3399,7 @@ function buttonAddListKategori () {
 
 
       document.getElementById("tabel_data_add_list_gudang").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_gudang', { order: [[0, 'asc']] })
       document.getElementById("modalAddListGudangTitle").innerHTML= 'Kategori'
 
       if (res.length) {
@@ -3159,21 +3436,16 @@ function buttonAddListHeadGroup () {
       console.log(res)
       // listLawan  = res
       let rowTable = `
-      <tr class="text-center">
-         <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickHeadGroup('-','-' , '-'  )" type="button" ><i class="bi bi-plus"></i></button></td>
-      <td >-</td>
+      <tr class="pick-row" onclick="buttonAddPickHeadGroup('-','-' , '-'  )">
       <td>-</td>
-     
-
+      <td>-</td>
       </tr>
       `
       res.forEach((item, i) => {
         rowTable += `
-        <tr>
-          <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickHeadGroup(${i},'${item.KodeHDGrp}' , '${item.NamaHDGRP}'  )" type="button" ><i class="bi bi-plus"></i></button></td>
+        <tr class="pick-row" onclick="buttonAddPickHeadGroup(${i},'${item.KodeHDGrp}' , '${item.NamaHDGRP}'  )">
         <td>${item.KodeHDGrp}</td>
         <td>${item.NamaHDGRP}</td>
-        
         </tr>`
       });
 
@@ -3187,6 +3459,7 @@ function buttonAddListHeadGroup () {
       // }
 
       document.getElementById("tabel_data_add_list_gudang").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_gudang', { order: [[0, 'asc']] })
       document.getElementById("modalAddListGudangTitle").innerHTML= 'Headgroup'
 
       if (res.length) {
@@ -3209,7 +3482,7 @@ function buttonAddListHeadGroup () {
 
 }
 
-function buttonAddListGudang () {
+function loadGudangOptions () {
   let _token = $("#_token").val();
 
   $.ajax({
@@ -3220,57 +3493,17 @@ function buttonAddListGudang () {
       _token,
     },
     success: function(res) {
-      console.log(res)
-      // listLawan  = res
-      let rowTable = `
-      <tr class="text-center">
-        <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickGudang('-','-' , '-'  )" type="button" ><i class="bi bi-plus"></i></button></td>
-      <td >-</td>
-      <td>-</td>
-      
-
-      </tr>
-      `
-      res.forEach((item, i) => {
-        rowTable += `
-        <tr>
-          <td class="text-center"><button class="btn btn-primary btn-sm" onclick="buttonAddPickGudang(${i},'${item.KodeGdg}' , '${item.Nama}'  )" type="button" ><i class="bi bi-plus"></i></button></td>
-        <td>${item.KodeGdg}</td>
-        <td>${item.Nama}</td>
-        
-
-        </tr>`
+      let options = '<option value="">- Pilih Gudang -</option>'
+      res.forEach((item) => {
+        options += `<option value="${item.KodeGdg}">${item.KodeGdg} - ${item.Nama}</option>`
       });
-
-
-
-
-
-
-      // if(!res.length) {
-      //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
-      // }
-      document.getElementById("tabel_data_add_list_gudang").innerHTML = rowTable
-
-      document.getElementById("modalAddListGudangTitle").innerHTML= 'Gudang'
-      if (res.length) {
-
-        $('.showhidemodalbodyadd').hide();
-        $('#modalAddListGudang').show();
-        $("#form").modal('toggle')
-      } else {
-        alertify.warning("Gudang tidak ditemukkan")
-      }
-
-
+      document.getElementById("input_add_gudang").innerHTML = options
     },
     error: function (err) {
       console.log(err)
       alertify.warning('Terjadi kesalahan silahkan refresh browser')
     }
-
   })
-
 }
 
 function lockForm (value = false) {
@@ -3279,7 +3512,7 @@ function lockForm (value = false) {
   document.getElementById("input_add_tanggalcutoff").disabled = value
   document.getElementById("input_add_keterangan").disabled = value
   document.getElementById("buttonAddListHeadGroup").disabled = value
-  document.getElementById("buttonAddListGudang").disabled = value
+  document.getElementById("input_add_gudang").disabled = value
   document.getElementById("buttonAddListMerk").disabled = value
   document.getElementById("buttonAddListKategori").disabled = value
   document.getElementById("buttonAddListSubKategori").disabled = value
@@ -3292,7 +3525,7 @@ function cleanFormAdd () {
   document.getElementById("input_add_tanggalcutoff").value = ''
   document.getElementById("input_add_keterangan").value = ''
   document.getElementById("input_add_kodehdgrp").value = '-'
-  document.getElementById("input_add_gudang").value = '-'
+  document.getElementById("input_add_gudang").value = ''
   document.getElementById("input_add_kodemerk").value = '-'
   document.getElementById("input_add_kodesubkategori").value = '-'
   document.getElementById("input_add_kodekategori").value = '-'
@@ -3338,7 +3571,6 @@ function refreshDataTable (nobukti) {
 
                 rowTable += `
                   <tr>
-                    <td class="text-right">${item.Urut}</td>
 
                     <td>${item.KodeBrg}</td>
                     <td>${item.NamaBrg}</td>
@@ -3520,38 +3752,5 @@ function formatAngka (angkaString) {
 
 
 </script>
-
-{{-- script buat hover belum otorisasi dan sudah otorisasi --}}
-  <script>
-    const tabHome = document.getElementById('nav-home-tab');
-    const tabProfile = document.getElementById('nav-profile-tab');
-
-    function setActiveTab(homeActive) {
-      if (homeActive) {
-        tabHome.style.backgroundColor = '#007bff';
-        tabHome.style.color = '#fff';
-        tabProfile.style.backgroundColor = '#f8f9fa';
-        tabProfile.style.color = '#007bff';
-      } else {
-        tabProfile.style.backgroundColor = '#007bff';
-        tabProfile.style.color = '#fff';
-        tabHome.style.backgroundColor = '#f8f9fa';
-        tabHome.style.color = '#007bff';
-      }
-    }
-
-    // Default warna tab
-    setActiveTab(true);
-
-    // buat ganti tab
-    tabHome.addEventListener('click', function () {
-      setActiveTab(true);
-    });
-
-    tabProfile.addEventListener('click', function () {
-      setActiveTab(false);
-    });
-  </script>
-
 
 @endsection

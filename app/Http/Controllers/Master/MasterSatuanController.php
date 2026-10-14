@@ -9,7 +9,7 @@ use App\Models\NewAksesMenu;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
-// use App\Model\VWPerkiraan;
+// use App\Models\VWPerkiraan;
 
 // use App\Http\Controllers\NewMenuController;
 

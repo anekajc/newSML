@@ -1,9 +1,59 @@
-@extends('gudang.newmaster')
+@extends('newmasterTest')
 @section('buttons')
+
+@section('page-title', 'Pembebanan Sample')
+@section('title', 'SML - Pembebanan Sample')
 
 @endsection
 
 @section('css')
+
+<link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
+
+{{-- Port 1:1 ke UI SO -- @extends newmasterTest (bukan lagi gudang.newmaster). BBS
+     Belum Otorisasi + Sudah Otorisasi digabung jadi satu tabel (#tabel) dengan kolom
+     Status dan filter Status di toolbar, sama seperti merge di
+     gudangreturpenyerahansample.blade.php/gudangpermintaansample.blade.php. #pageHome
+     diberi class "po-list-page" supaya .data-table/#tabel dapat width:100% + warna
+     tombol Aksi dari CSS terpusat. #pageForm diberi class "po-form-page" (lihat
+     po-table-header.css) supaya tombol Close/Batal/Submit bergaya pil pastel, sama
+     seperti ubahkemasanbarang.blade.php/permintaantransferbarang.blade.php -- JS
+     doBrowseMaster/ajc-func-core.js milik halaman ini tidak diubah sama sekali, murni
+     port tampilan. --}}
+<style>
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.status-badge-sudah { color: #16a34a; border: 1px solid #cdebd7; background: #e7f7ed; }
+.status-badge-belum { color: #b45309; border: 1px solid #fbe3bd; background: #fef3e0; }
+
+{{-- Tabel item form Add/Edit/Detail (#tabelitem) -- bungkus kartu berbingkai + thead
+     abu-abu, sama seperti #tabelitem di ubahkemasanbarang.blade.php. --}}
+#pageForm .po-item-card {
+  background: var(--white, #fff);
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: var(--radius, 12px);
+  overflow: hidden;
+}
+
+#tabelitem thead th {
+  background: #f8f9fb !important;
+  color: #6b7280 !important;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+  border-bottom: 1px solid #e7e9ee;
+  border-top: none;
+}
+</style>
 @endsection
 
 @section('content')
@@ -12,18 +62,7 @@
   <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
 </div>
 
-<div id="pageHome" class="container-fluid">
-    	<div class="">
-    	  <div class="row">
-    	    <div class="col-6 text-left">
-    	      <h2 style="margin-top:-85px;">Pembebanan Sample</h2>
-    	    </div>
-    	    <div class="col-6 text-right">
-    	      <button type="button" class="btn btn-primary btn-lg button-action" style="margin-top: -150px;" onclick="buttonAdd()">Add BBS</button>
-    	    </div>
-    	  </div>
-    	</div>
-
+<div id="pageHome" class="container-fluid po-list-page">
     	<div id="contentContainer" class="" >
     		<input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
         <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
@@ -37,157 +76,83 @@
 
         <input type="hidden" name="_token" id="_token" value="{!! csrf_token() !!}" />
 
+        {{-- BBS Belum Otorisasi + Sudah Otorisasi digabung jadi satu tabel, dengan kolom
+             Status dan filter Status di toolbar (client-side), sama seperti merge di
+             gudangreturpenyerahansample.blade.php/gudangpermintaansample.blade.php. --}}
         <div class="card">
-          <div class="card-header" style="margin-top:-55px;">
-            <div class="row">
-              <div class="nav nav-tabs col-12" id="nav-tab" role="tablist" style="border-bottom: 0;">
-                <a class="nav-item nav-link active buttonnav-active" id="nav-home-tab" href="#tabhome" role="tab" aria-controls="nav-home" aria-selected="true" onclick="doSetActiveNavTab('home')">
-                  Pembebanan Sample
-                </a>
-                <a class="nav-item nav-link buttonnav-inactive" id="nav-listsdhoto-tab" href="#tablistsdhoto" role="tab" aria-controls="nav-listsdhoto" aria-selected="false" onclick="doSetActiveNavTab('listsdhoto')">
-                  Sudah Otorisasi
-                </a>
+          <div class="card-body" style="padding:0;">
+            <div class="po-toolbar">
+              <input type="search" id="bbsSearch1" class="po-search-inp" placeholder="Cari data">
+              <div class="po-len-wrap">
+                <label for="bbsLen1">Tampilkan</label>
+                <select id="bbsLen1" class="po-len-inp">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="-1">Semua</option>
+                </select>
+              </div>
+              <button class="po-btn-filter" type="button" onclick="$('#modalFilterBBS').modal('show')">
+                <i class="bi bi-funnel"></i> Filter
+              </button>
+              <div class="po-toolbar-act">
+                <button id="AddVisibility" class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
               </div>
             </div>
-          </div>
 
-          <div class="card-body" style="padding:0;">
-            <div class="tab-content" id="myTabContent">
-              <div class="tab-pane fade show active" id="tabhome" role="tabpanel" aria-labelledby="home-tab">
-                <div class="row">
-                  <div class="col-md-12">
-                    <div class="container-fluid col-sm-12 customTable" style="padding:0; margin:0; width:100%;">
-                      <table id="tabelhome" class="table table-bordered table-hover table-striped table-responsive-lg">
-                        <thead class="text-center bg-primary text-white">
-                          <tr>
-                            <th style="padding: 4px 12px;" scope="col">Actions</th>
-                            <th style="padding: 4px 12px;" scope="col">No. Bukti</th>
-                            <th style="padding: 4px 12px;" scope="col">Tanggal</th>
-                            <th style="padding: 4px 12px;" scope="col">Kode Cust</th>
-                            <th style="padding: 4px 12px;" scope="col">Nama Customer</th>
-                            <th style="padding: 4px 12px;" scope="col">User</th>
-                            {{-- <th style="padding: 4px 12px;" scope="col">Oto</th> --}}
-                          </tr>
-                        </thead>
-                        <tbody id="tabelhome_data" class="text-left">
-                          @if (count($listBBS) > 0)
-                            @for ($i = 0; $i < count($listBBS); $i++)
-                              <tr>
-                                <td class="text-center">
-                                  <button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail('{{ $listBBS[$i]->NoBukti }}')">
-                                    <i class="bi bi-info"></i>
-                                  </button>
-                                  <button class="btn btn-success btn-sm" type="button" title="Edit" onclick="buttonEdit('{{ $listBBS[$i]->NoBukti }}')">
-                                    <i class="bi bi-pencil-fill"></i>
-                                  </button>
-                                  <button class="btn btn-primary btn-sm" type="button" title="Otorisasi" onclick="buttonOtorisasi('{{ $listBBS[$i]->NoBukti }}')">
-                                    <i class="bi bi-key-fill"></i>
-                                  </button>
-                                </td>
-
-                                <td>{{ $listBBS[$i]->NoBukti }}</td>
-                                <td>{!! date("Y/m/d", strtotime($listBBS[$i]->Tanggal)) !!}</td>
-                                <td>{{ $listBBS[$i]->KodeCustSupp }}</td>
-                                <td>{{ $listBBS[$i]->NAMACUSTSUPP }}</td>
-                                <td>{{ $listBBS[$i]->IDUSER }}</td>
-
-                                {{-- <td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td> --}}
-                              </tr>
-                            @endfor
-                          @else
-                            <tr>
-                              <td colspan="6" class="text-center text-muted">Tidak ada transaksi</td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              {{-- <td style="display: none;"></td> --}}
-                            </tr>
-                          @endif
-                        </tbody>
-                      </table>
+            <div class="modal fade rt-filter" id="modalFilterBBS">
+              <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-funnel"></i> Filter Data</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterBBS').modal('hide')"><span aria-hidden="true">&times;</span></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="rt-section">
+                      <div class="rt-group-label">Status</div>
+                      <div>
+                        <label class="rt-field-label" for="bbsStatus">Status Otorisasi</label>
+                        <select class="rt-native" id="bbsStatus">
+                          <option value="" selected>Semua Status</option>
+                          <option value="0">Belum Otorisasi</option>
+                          <option value="1">Sudah Otorisasi</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="rt-reset-link" onclick="$('#bbsStatus').val('')">Reset semua</button>
+                    <div class="rt-footer-buttons">
+                      <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal" onclick="$('#modalFilterBBS').modal('hide')">Batal</button>
+                      <button type="button" class="rt-btn rt-btn-primary" onclick="bbsFilterChanged(); $('#modalFilterBBS').modal('hide');">Terapkan</button>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div class="tab-pane fade" id="tablistsdhoto" role="tabpanel" aria-labelledby="listsdhoto-tab">
-                <div class="row">
-                  <div class="col-md-12">
-                    <div class="container-fluid col-sm-12 customTable" style="padding:0; margin:0; width:100%;">
-                      <table id="tabellistsdhoto" class="table table-bordered table-hover table-striped table-responsive-lg">
-                        <thead class="text-center bg-primary text-white">
-                          <tr>
-                            <th style="padding: 4px 12px;" scope="col">Actions</th>
-                            <th style="padding: 4px 12px;" scope="col">No. Bukti</th>
-                            <th style="padding: 4px 12px;" scope="col">Tanggal</th>
-                            <th style="padding: 4px 12px;" scope="col">Kode Cust</th>
-                            <th style="padding: 4px 12px;" scope="col">Nama Customer</th>
-                            <th style="padding: 4px 12px;" scope="col">User</th>
-                            {{-- <th style="padding: 4px 12px;" scope="col">Oto</th> --}}
-                            <th style="padding: 4px 12px;" scope="col">User Oto</th>
-                            <th style="padding: 4px 12px;" scope="col">Tgl Oto</th>
-                          </tr>
-                        </thead>
-                        <tbody id="tabellistsdhoto_data" class="text-left">
-                          @if (count($listSdhOto) > 0)
-                            @for ($i = 0; $i < count($listSdhOto); $i++)
-                              <tr>
-                                <td class="text-center">
-                                  <button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail('{{ $listSdhOto[$i]->NoBukti }}')">
-                                    <i class="bi bi-info"></i>
-                                  </button>
-                                  <button class="btn btn-danger btn-sm" type="button" title="Otorisasi" onclick="buttonBatalOtorisasi('{{ $listSdhOto[$i]->NoBukti }}')">
-                                    <i class="bi bi-key-fill"></i>
-                                  </button>
-				  <button style="" class="btn btn-primary btn-sm" type="button"   onclick="submitPrint('{{ $listSdhOto[$i]->NoBukti }}')" ><i class="bi bi-printer"></i>
-                                  </button>
-                                </td>
-
-                                <td>{{ $listSdhOto[$i]->NoBukti }}</td>
-                                <td>{!! date("Y/m/d", strtotime($listSdhOto[$i]->Tanggal)) !!}</td>
-                                <td>{{ $listSdhOto[$i]->KodeCustSupp }}</td>
-                                <td>{{ $listSdhOto[$i]->NAMACUSTSUPP }}</td>
-                                <td>{{ $listSdhOto[$i]->IDUSER }}</td>
-
-                                {{-- <td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td> --}}
-                                <td>{{ $listSdhOto[$i]->OtoUser1 }}</td>
-                                <td>{!! date("Y/m/d", strtotime($listSdhOto[$i]->TglOto1)) !!}</td>
-                              </tr>
-                            @endfor
-                          @else
-                            <tr>
-                              <td colspan="8" class="text-center text-muted">Tidak ada transaksi</td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              <td style="display: none;"></td>
-                              {{-- <td style="display: none;"></td> --}}
-                            </tr>
-                          @endif
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div id="rtBarTabel"></div>
+            <table id="tabel" class="data-table">
+              <thead style="white-space:nowrap;"></thead>
+              <tbody id="tabel_data" class="text-left"></tbody>
+            </table>
+            <div class="po-rt-hint">
+              <i class="bi bi-info-circle"></i>
+              Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
+              untuk menyembunyikan kolom atau mengatur jumlah desimal.
             </div>
           </div>
         </div>
     	</div>
 </div>
 
-<div id="pageForm" class="container-fluid" style="display: none" >
+<div id="pageForm" class="container-fluid po-form-page" style="display: none" >
       <div class="row">
         <div class="col-6 text-left">
-          <h2 style="margin-top: -80px;">Form Pembebanan Sample</h2>
         </div>
-        <div class="col-6 text-right">
-          <button type="button" class="btn btn-danger btn-lg button-action" style="margin-top: -120px;" onclick="buttonCloseForm()">Close</button>
+        <div class="col-6 text-right" id="contentContainer">
+          <button type="button" class="btn btn-danger btn-pill-primary btn-action-danger" onclick="buttonCloseForm()">Close</button>
         </div>
       </div>
 
@@ -276,10 +241,10 @@
       </div>
 
       <div class="showhidemodalbodyaddmain container-fluid" id="modalBodyAddMainItems">
-        <div class="container-fluid" style="overflow:auto;">
-          <div class="row">
+        <div class="container-fluid mt-4">
+          <div class="po-item-card">
             <table id="tabelitem" class="table table-bordered table-hover table-striped table-responsive-lg">
-              <thead id="tabelitem_header" class="text-center bg-primary text-white">
+              <thead id="tabelitem_header">
                 <tr>
                   <th  style="padding: 4px 12px;" scope="col" colspan="3"></th>
                   <th  style="padding: 4px 12px;" scope="col" colspan="2">Satuan</th>
@@ -301,8 +266,8 @@
         </div>
 
         <div class="row ">
-          <div class="col-md-12 mt-2 text-right">
-            <button type="button" class="btn btn-primary btn-lg button-action hideableModeDetail" onclick="buttonItemAdd()"><b>+ Tambah Item</b></button>
+          <div class="col-md-12 mt-2 text-right" id="contentContainer">
+            <button type="button" class="btn btn-primary btn-pill-primary btn-action-primary hideableModeDetail" onclick="buttonItemAdd()">+ Tambah Item</button>
           </div>
         </div>
 
@@ -418,9 +383,9 @@
           </div>
 
           <div class="row mt-2">
-            <div class="col-md-12 text-right">
-              <button type="button" class="btn btn-danger btn-lg button-action" onclick="closeFormItem()" class="btn btn-secondary">Batal</button>
-              <button type="button" id="buttonSubmitItem" class="btn btn-primary btn-lg button-action" onclick="submitItem()" class="btn btn-secondary">Submit</button>
+            <div class="col-md-12 text-right" id="contentContainer">
+              <button type="button" class="btn btn-danger btn-pill-primary btn-action-danger" onclick="closeFormItem()">Batal</button>
+              <button type="button" id="buttonSubmitItem" class="btn btn-primary btn-pill-primary btn-action-primary" onclick="submitItem()">Submit</button>
             </div>
 
           </div>
@@ -433,6 +398,7 @@
 @endsection
 
 @section('js')
+<script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/ajc-func-core.js') !!}"></script>
 <script src="{!! URL::asset('js/ajc-browsemaster.js') !!}"></script>
 <script>
@@ -451,22 +417,460 @@
   var dataItem = [];
   var dataBrowse = [];
 
-  $(document).ready(function(){
-    $("#tabelhome").DataTable({
-      "lengthChange": false,
-      "paging": false ,
+  {{-- Polyfill helper doX/cekX yang dipanggil halaman ini tapi tidak ada di
+       ajc-func-core.js (cuma messageRequired/nullToEmpty yang ada di sana) --
+       disalin persis dari ubahkemasanbarang.blade.php/permintaantransferbarang.blade.php,
+       dijaga guard typeof supaya tidak dobel kalau suatu saat ajc-func-core.js
+       menambahkannya secara global. Tanpa blok ini halaman tidak jalan sama sekali
+       (Add/Edit/Detail/Otorisasi semua manggil fungsi yang undefined). --}}
+  if (typeof doSetFormatDate !== 'function') {
+    window.doSetFormatDate = function (dateVal, sep) {
+      if (!dateVal) return '';
+      sep = sep || '/';
+      let d = new Date(dateVal);
+      if (isNaN(d.getTime())) return String(dateVal);
+      let yyyy = d.getFullYear();
+      let mm = String(d.getMonth() + 1).padStart(2, '0');
+      let dd = String(d.getDate()).padStart(2, '0');
+      return yyyy + sep + mm + sep + dd;
+    };
+  }
+
+  if (typeof doCekAkses !== 'function') {
+    window.doCekAkses = function (inputId) {
+      let v = $('#' + inputId).val();
+      if (!Number(v)) {
+        alertify.warning('No access');
+        return false;
+      }
+      return true;
+    };
+  }
+
+  if (typeof doCekOtorisasi !== 'function') {
+    window.doCekOtorisasi = function (nobukti, urlName) {
+      let boleh = true;
+      $.ajax({
+        url: "{!! url('') !!}/" + urlName,
+        type: 'post',
+        async: false,
+        data: { _token: $('#_token').val(), nobukti: nobukti },
+        success: function (res) {
+          let row = Array.isArray(res) ? res[0] : res;
+          let sudahOto = row ? Number(row.isOtorisasi1 ?? row.IsOtorisasi1 ?? 0) : 0;
+          if (sudahOto === 1) {
+            alertify.warning('Sudah diotorisasi, tidak bisa diedit');
+            boleh = false;
+          }
+        },
+        error: function () {
+          alertify.warning('Terjadi kesalahan. Silakan refresh browser.');
+          boleh = false;
+        }
+      });
+      return boleh;
+    };
+  }
+
+  if (typeof doUnlockHeader !== 'function') {
+    window.doUnlockHeader = function () {
+      $('.lockableHeader').prop('disabled', false);
+      $('.lockableModeDetail').prop('disabled', false);
+      $('.hideableModeDetail').show();
+    };
+  }
+
+  if (typeof doLockModeDetail !== 'function') {
+    window.doLockModeDetail = function () {
+      $('.lockableHeader').prop('disabled', true);
+      $('.lockableModeDetail').prop('disabled', true);
+      $('.hideableModeDetail').hide();
+    };
+  }
+
+  if (typeof doUnlockModeEdit !== 'function') {
+    window.doUnlockModeEdit = function () {
+      $('.lockableItemModeEdit').prop('disabled', false);
+      $('.hideableModeDetail').show();
+    };
+  }
+
+  if (typeof doUnlockModeDetail !== 'function') {
+    window.doUnlockModeDetail = function () {
+      $('.lockableModeDetail').prop('disabled', false);
+      $('.hideableModeDetail').show();
+    };
+  }
+
+  if (typeof doLockHeader !== 'function') {
+    window.doLockHeader = function () {
+      $('.lockableHeader').prop('disabled', true);
+    };
+  }
+
+  if (typeof doLockModeEdit !== 'function') {
+    window.doLockModeEdit = function () {
+      $('.lockableItemModeEdit').prop('disabled', true);
+    };
+  }
+
+  if (typeof doSetEmptyTable !== 'function') {
+    window.doSetEmptyTable = function (colspan, message) {
+      return '<tr><td colspan="' + colspan + '" class="text-center text-muted">' + message + '</td></tr>';
+    };
+  }
+
+  if (typeof formatCurrency !== 'function') {
+    window.formatCurrency = function (v) {
+      let n = Number(v) || 0;
+      return n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+  }
+
+  if (typeof cekNotEmpty !== 'function') {
+    window.cekNotEmpty = function (inputId) {
+      let v = $('#' + inputId).val();
+      return v !== undefined && v !== null && String(v).trim() !== '';
+    };
+  }
+
+  if (typeof doCekPeriode !== 'function') {
+    window.doCekPeriode = function (bulanId, tahunId, tanggalId) {
+      let bulan = Number($('#' + bulanId).val());
+      let tahun = Number($('#' + tahunId).val());
+      let tgl = $('#' + tanggalId).val();
+      if (!tgl) return true;
+      let d = new Date(tgl);
+      if (isNaN(d.getTime())) return true;
+      if ((d.getMonth() + 1) !== bulan || d.getFullYear() !== tahun) {
+        alertify.warning('Tanggal tidak sesuai periode');
+        return false;
+      }
+      return true;
+    };
+  }
+
+  if (typeof doGenerateNoBukti !== 'function') {
+    window.doGenerateNoBukti = function (kode) {
+      let _token = $('#_token').val();
+      let result = { Nobukti: '', Nourut: '' };
+      $.ajax({
+        url: "{!! url('spnobukti') !!}",
+        type: 'post',
+        async: false,
+        data: { _token, kode },
+        success: function (res) {
+          if (res && res[0]) {
+            result.Nobukti = res[0].Nobukti;
+            result.Nourut = res[0].Nourut;
+          }
+        },
+        error: function (err) {
+          console.log(err);
+          alertify.warning('Terjadi kesalahan. Silakan refresh browser.');
+        }
+      });
+      return result;
+    };
+  }
+
+  {{-- BBS Belum + Sudah Otorisasi digabung jadi satu tabel (#tabel), dengan kolom Status
+       dan filter Status di toolbar, sama seperti engine bbs/rs/gp/ps di
+       gudangreturpenyerahansample.blade.php/gudangpermintaansample.blade.php.
+
+       Judul kolom interaktif (geser urutan/sembunyikan lewat window.ReportTable) --
+       port 1:1 dari pola opCart/opDefaultCart milik perintahopname.blade.php (juga
+       satu tabel saja, bukan dua/tiga seperti gudangpermintaansample). Ketinggalan
+       waktu port awal (halaman ini masih thead statis, tanpa #rtBarTabel/report-table.js
+       sama sekali), baru ditambah di sini. --}}
+  let bbsCart = []
+  const BBS_HREF = 'pembebanansample'
+  const BBS_TIPE_NAMA = { 0 : 'varchar', 1 : 'float', 2 : 'date', 3 : 'bool' }
+  const BBS_TIPE_KODE = { varchar : 0, float : 1, date : 2, bool : 3 }
+
+  function bbsPickCI (row, key) {
+    if (!row) { return undefined; }
+    if (row[key] !== undefined) { return row[key]; }
+    let lower = key.toLowerCase();
+    for (let k in row) {
+      if (k.toLowerCase() === lower) { return row[k]; }
+    }
+    return undefined;
+  }
+
+  function bbsDefaultCart () {
+    return [
+      ['NoBukti',      'No. Bukti',     1, 'varchar', 0, 0],
+      ['Tanggal',      'Tanggal',       1, 'date',    0, 0],
+      ['KodeCustSupp', 'Kode Cust',     1, 'varchar', 0, 0],
+      ['NAMACUSTSUPP', 'Nama Customer', 1, 'varchar', 0, 0],
+      ['IDUSER',       'User',          1, 'varchar', 0, 0],
+      ['IsOtorisasi1', 'Status',        1, 'bool',    0, 0],
+      ['OtoUser1',     'User Oto',      1, 'varchar', 0, 0],
+      ['TglOto1',      'Tgl Oto',       1, 'date',    0, 0],
+    ]
+  }
+
+  function bbsBuatCart (headers, values, isnumerics, isshowns, desimals) {
+    headers = headers || []
+    let cart = []
+    headers.forEach((h, i) => {
+      let tipe = Number(isnumerics[i]) || 0
+      let des = (desimals && desimals[i] !== undefined && desimals[i] !== null && desimals[i] !== '')
+        ? Number(desimals[i])
+        : (tipe === 1 ? 2 : 0)
+      cart.push([
+        values[i],
+        h,
+        Number(isshowns[i]) === 1 ? 1 : 0,
+        BBS_TIPE_NAMA[tipe] || 'varchar',
+        0,
+        isNaN(des) ? 0 : des,
+      ])
+    });
+    return cart
+  }
+
+  window.g_href = BBS_HREF
+  window.g_modeReport = 1
+  window.gcart_header = []
+
+  window.doSimpanHeader = function (href, mode) {
+    let header = [], value = [], isnumber = [], isshown = [], desimal = []
+    bbsCart.forEach((c) => {
+      header.push(c[1])
+      value.push(c[0])
+      isnumber.push(BBS_TIPE_KODE[c[3]] ?? 0)
+      isshown.push(Number(c[2]) === 1 ? 1 : 0)
+      desimal.push(Number(c[5]) || 0)
     });
 
-    $("#tabellistsdhoto").DataTable({
-      "lengthChange": false,
-      "paging": false ,
+    $.ajax({
+      url   : "{!! url('saveheadertable') !!}",
+      type  : "post",
+      async : false,
+      data  : {
+        _token   : $("#_token").val(),
+        header   : JSON.stringify(header),
+        isnumber : JSON.stringify(isnumber),
+        tipe     : JSON.stringify(desimal),
+        value    : JSON.stringify(value),
+        isshown  : JSON.stringify(isshown),
+        href     : BBS_HREF,
+        urut     : 1
+      },
+      error : function (err) {
+        console.log(err)
+        alertify.warning('Gagal menyimpan pengaturan kolom')
+      }
+    })
+  }
+
+  window.doSetHeader = function (mode, reset) {
+    $.ajax({
+      url   : "{!! url('getheadertable') !!}",
+      type  : "post",
+      async : false,
+      data  : {
+        _token : $("#_token").val(),
+        href   : BBS_HREF,
+        urut   : 1,
+        reset  : reset ? 1 : 0
+      },
+      success : function (res) {
+        if (!reset && res && res.headertableheader && res.headertableheader.length) {
+          bbsCart = bbsBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal || [])
+        } else {
+          bbsCart = bbsDefaultCart()
+          window.gcart_header = bbsCart
+          window.doSimpanHeader(BBS_HREF, 1)
+        }
+        window.gcart_header = bbsCart
+      },
+      error : function (err) {
+        console.log(err)
+        alertify.warning(reset ? 'Gagal mengembalikan kolom ke tampilan default' : 'Gagal memuat pengaturan kolom')
+        bbsCart = bbsDefaultCart()
+        window.gcart_header = bbsCart
+      }
+    })
+  }
+
+  let bbsRtSudahInit = false
+  function bbsInitReportTableSekali () {
+    if (bbsRtSudahInit || typeof ReportTable === 'undefined') { return }
+    bbsRtSudahInit = true
+
+    ReportTable.init({ table : '#tabel', bar : '#rtBarTabel', onChange : reinitTabel })
+
+    let bbsGuardUlangKlik = false
+    let thead = document.querySelector('#tabel thead')
+    if (thead) {
+      thead.addEventListener('click', function (e) {
+        if (bbsGuardUlangKlik) { return }
+        let interaktif = e.target && e.target.closest && e.target.closest('.th-gear, .th-grip')
+        if (!interaktif) { return }
+        e.stopPropagation()
+        e.preventDefault()
+        bbsGuardUlangKlik = true
+        let ulang = new MouseEvent('click', { bubbles: false, cancelable: true, view: window })
+        Object.defineProperty(ulang, 'target', { value: interaktif, configurable: true })
+        thead.dispatchEvent(ulang)
+        bbsGuardUlangKlik = false
+      }, true)
+    }
+  }
+
+  function tulisTheadHeaderBBS (tableSel, cols) {
+    let thead = document.querySelector(tableSel + ' thead')
+    if (!thead || !window.ReportTable) { return; }
+    let headRowHtml = ReportTable.headHtml(cols)
+      .replace('<tr>', '<tr><th style="padding: 4px 12px;">Actions</th>');
+    thead.setAttribute('style', 'white-space:nowrap;');
+    thead.innerHTML = headRowHtml;
+  }
+
+  function bbsValueCell (row, col) {
+    let raw = bbsPickCI(row, col[0]);
+    let type = col[3];
+
+    {{-- Status (IsOtorisasi1) -- badge "Sudah/Belum Otorisasi", bukan ikon check/x bool
+         biasa. --}}
+    if (col[0] === 'IsOtorisasi1') {
+      return Number(raw) === 1
+        ? '<td class="text-center"><span class="status-badge status-badge-sudah">Sudah Otorisasi</span></td>'
+        : '<td class="text-center"><span class="status-badge status-badge-belum">Belum Otorisasi</span></td>';
+    }
+    if (type === 'date') {
+      if (!raw) { return '<td></td>'; }
+      return '<td>' + doSetFormatDate(raw, '/') + '</td>';
+    }
+    if (type === 'float') {
+      let dp = Number(col[5]) || 0;
+      let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
+      return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+    }
+    if (type === 'bool') {
+      return Number(raw)
+        ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
+        : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
+    }
+    return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
+  }
+
+  function bbsTabelActionsCell (row) {
+    let nobukti = bbsPickCI(row, 'NoBukti');
+    let sudah = Number(bbsPickCI(row, 'IsOtorisasi1')) === 1;
+    let html = '<td class="text-center">';
+    html += '<button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+    if (sudah) {
+      html += '<button class="btn btn-danger btn-sm" type="button" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key-fill"></i></button>';
+      html += '<button class="btn btn-primary btn-sm" type="button" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+    } else {
+      html += '<button class="btn btn-success btn-sm" type="button" title="Edit" onclick="buttonEdit(\'' + nobukti + '\')"><i class="bi bi-pencil-fill"></i></button>';
+      html += '<button class="btn btn-primary btn-sm" type="button" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key-fill"></i></button>';
+    }
+    html += '</td>';
+    return html;
+  }
+
+  function bbsFilterRows (rows) {
+    let status = $('#bbsStatus').val();
+    return (rows || []).filter(function (row) {
+      if (status !== '' && String(Number(bbsPickCI(row, 'IsOtorisasi1'))) !== status) { return false; }
+      return true;
     });
+  }
+
+  function bbsFilterChanged () {
+    reinitTabel();
+  }
+
+  function renderTabelRows (rows) {
+    window.gcart_header = bbsCart
+    let cols = (bbsCart.length ? bbsCart : gcart_header).filter(function (c) { return c[2] === 1; });
+    let html = '';
+    bbsFilterRows(rows).forEach(function (row) {
+      html += '<tr>' + bbsTabelActionsCell(row);
+      cols.forEach(function (col) { html += bbsValueCell(row, col); });
+      html += '</tr>';
+    });
+    {{-- Baris placeholder colspan buatan sendiri (doSetEmptyTable()) TIDAK dipakai di sini
+         -- DataTables menghitung <td> fisik per baris (bukan hasil visual colspan-nya),
+         jadi baris 1-sel dianggap "kurang kolom" dibanding jumlah kolom aktif di thead dan
+         bikin DataTables crash saat indexing ("Cannot set properties of undefined (setting
+         '_DT_CellIndex')"). Serahkan status kosong ke opsi language.emptyTable bawaan
+         DataTables (lihat reinitTabel()) yang memang didesain aman untuk kasus ini. --}}
+    document.getElementById('tabel_data').innerHTML = html;
+    tulisTheadHeaderBBS('#tabel', cols);
+  }
+
+  let lastTabelRows = [];
+  let bbsPanjangHalaman = 10;
+
+  function bbsIkatSearch () {
+    let input = document.getElementById('bbsSearch1');
+    if (!input || input.dataset.rtBound) { return; }
+    input.dataset.rtBound = '1';
+
+    let timer = null;
+    input.addEventListener('input', function () {
+      let nilai = input.value;
+      if (timer) { clearTimeout(timer); }
+      timer = setTimeout(function () {
+        if ($.fn.DataTable.isDataTable('#tabel')) {
+          $('#tabel').DataTable().search(nilai).draw();
+        }
+      }, 400);
+    });
+  }
+
+  function bbsIkatPanjangHalaman () {
+    let sel = document.getElementById('bbsLen1');
+    if (!sel || sel.dataset.rtBound) { return; }
+    sel.dataset.rtBound = '1';
+    sel.value = String(bbsPanjangHalaman);
+
+    sel.addEventListener('change', function () {
+      let n = Number(sel.value);
+      bbsPanjangHalaman = (n === -1 || n > 0) ? n : 10;
+      if ($.fn.DataTable.isDataTable('#tabel')) {
+        $('#tabel').DataTable().page.len(bbsPanjangHalaman).draw();
+      }
+    });
+  }
+
+  const BBS_DOM_STRING = "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>";
+
+  function reinitTabel () {
+    try {
+      if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().destroy(); }
+      renderTabelRows(lastTabelRows);
+      $('#tabel').DataTable({
+        dom: BBS_DOM_STRING,
+        lengthChange: false,
+        pageLength: bbsPanjangHalaman,
+        paging: true,
+        ordering: false,
+        language: { emptyTable: 'Tidak ada transaksi', zeroRecords: 'Tidak ada data yang cocok dengan pencarian' }
+      });
+      bbsIkatSearch();
+      bbsIkatPanjangHalaman();
+    } catch (e) {
+      console.error('reinitTabel failed:', e);
+      alertify.error('Gagal memperbarui tabel: ' + e.message);
+    }
+  }
+
+  $(document).ready(function(){
+    window.doSetHeader(1, false);
+    lastTabelRows = [].concat(@json($listBBS), @json($listSdhOto));
+    reinitTabel();
+
+    bbsInitReportTableSekali();
   });
 
   function loadAll() {
-    let listBBS = [], listSdhOto = [];
-    let _token = $("#_token").val();
-
     $.ajax({
       url: "{!! url('bbsloadall') !!}",
       type: "get",
@@ -474,13 +878,9 @@
       data: {
       },
       success: function(res) {
-        listBBS = res.listBBS;
-        listSdhOto = res.listSdhOto;
+        lastTabelRows = [].concat(res.listBBS, res.listSdhOto);
+        reinitTabel();
     }});
-
-    // === listBBS === //
-    loadBBS(listBBS, "tabelhome", true);
-    loadBBS(listSdhOto, "tabellistsdhoto", false);
   }
 
   function submitPrint (nobukti) {
@@ -1131,58 +1531,6 @@
 
   }
 
-  function loadBBS(_list, _table, _isBlmOto) {
-    $('#' + _table).DataTable().destroy();
-
-    let rowTable = "";
-    if (_list.length > 0) {
-      _list.forEach((item, i) => {
-        let dateBBS = doSetFormatDate(item.Tanggal, "/");
-        let dateOto1 = item.TglOto1 ? doSetFormatDate(item.TglOto1, "/") : "";
-
-        rowTable += "<tr>";
-        rowTable += _isBlmOto 
-          ? doSetActionBlmOto(item.NoBukti) 
-          : doSetActionSdhOto1(item.NoBukti);
-
-        rowTable += "<td>" + item.NoBukti + "</td>";
-        rowTable += "<td>" + dateBBS + "</td>";
-        rowTable += "<td>" + item.KodeCustSupp + "</td>";
-        rowTable += "<td>" + item.NAMACUSTSUPP + "</td>";
-        rowTable += "<td>" + item.IDUSER + "</td>";
-
-        if (!_isBlmOto) {
-          rowTable += "<td>" + (item.OtoUser1 ?? "") + "</td>";
-          rowTable += "<td>" + (dateOto1 ?? "") + "</td>";
-        }
-
-        rowTable += "</tr>";
-      });
-    } else {
-      let cHeader = _isBlmOto ? 6 : 8;
-      rowTable += doSetEmptyTable(cHeader, "Tidak ada transaksi");
-    }
-
-    $("#" + _table +"_data").html(rowTable);
-
-    $("#" + _table).DataTable({
-      "lengthChange": false,
-      "paging": false,
-    });
-  }
-
-  function doSetActionSdhOto1 (_nb) {
-    console.log('aa,');
-    let rowTable = "";
-    rowTable += '<td class="text-center">';
-    rowTable += '<button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail(\'' + _nb + '\')"><i class="bi bi-info"></i></button>';
-    rowTable += '<button class="btn btn-danger btn-sm" type="button" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + _nb + '\')"><i class="bi bi-key-fill"></i></button>';
-    rowTable += '<button class="btn btn-primary btn-sm" type="button" title="Submit Print" onclick="submitPrint(\'' + _nb + '\')"><i class="bi bi-printer"></i></button>';
-    rowTable += "</td>";
-    
-    return rowTable;
-  }
-
   function closeFormItem() {
     $('.showhide').hide();
     doUnlockHeader();
@@ -1342,12 +1690,24 @@
   function buttonOtorisasi(_nb) {
     if (!doCekAkses("akses_isotorisasi1")) return;
 
-    doOtorisasi("Pembebanan Sample", _nb, "bbsupdateotorisasi", function (res) {
-      if (res.status === 1) {
-        alertify.success(res.msg);
-        loadAll();
-      } else {
-        alertify.warning(res.msg);
+    let _token = $("#_token").val();
+
+    $.ajax({
+      url: "{!! url('bbsupdateotorisasi') !!}",
+      type: "post",
+      async: false,
+      data: { _token, nobukti: _nb },
+      success: function (res) {
+        if (res > 0) {
+          alertify.success('Berhasil otorisasi');
+          loadAll();
+        } else {
+          alertify.warning('Gagal otorisasi');
+        }
+      },
+      error: function (err) {
+        console.log(err);
+        alertify.warning('Terjadi kesalahan. Silakan refresh browser.');
       }
     });
   }
@@ -1396,22 +1756,6 @@ alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
     }
   );
 }
-
-  // function buttonBatalOtorisasi(_nb) {
-  //   if (!doCekAkses("akses_isbatal")) return;
-
-    
-  //   doBatalOtorisasi("Pembebanan Sample", _nb, "bbsupdatebatalotorisasi", function (res) {
-  //     if (res.status === 1) {
-  //       alertify.success(res.msg);
-  //       loadAll();
-  //     } else {
-  //       alertify.warning(res.msg);
-  //     }
-  //   });
-
-
-  // }
 
   function cleanFormHeader() {
     $("#input_nobukti").val("");

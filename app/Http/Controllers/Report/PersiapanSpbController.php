@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Model\VWRSPBWEB;
 use App\Model\VwOutSPBRSPB;
@@ -43,7 +43,7 @@ class PersiapanSpbController extends Controller
 
     $expedisi = DB::connection("SML")->select('select * from dbcustsupp where jenis = :id', ['id' => 3]);
 
-    return view('persiapanspb' , [
+    return view('report.persiapanspb' , [
       "periode" => $periode,
       "menul0" => $menul0,
       "outstandingArray" => $tempOutstanding,

@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
-use App\Model\User;
+use App\Models\Menu;
+use App\Models\User;
 use App\Model\BahanBarang;
 use App\Model\StockBarang;
 use App\Model\BahanBarang2;
-use App\Model\Periode;
+use App\Models\Periode;
 use App\Model\AksesMenu;
 
 class SearchController extends Controller {
@@ -26,7 +26,7 @@ class SearchController extends Controller {
 			$menu = Menu::join('akses_menu', 'menu.id', '=', 'akses_menu.id_menu')->where('akses_menu.tampil', 1)->where('menu.grup','>', 0)->where('menu.show_acc', 1)->where('akses_menu.id_user', \Auth::id())->select('menu.*')->get();
 		}
 		$periode = Periode::where('id_user', \Auth::id())->first();
-		return view('search')->with('menu', $menu)->with('periode', $periode);
+		return view('report.search')->with('menu', $menu)->with('periode', $periode);
 	}
 
 	public function searchBarang(Request $req) {

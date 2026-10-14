@@ -24,7 +24,7 @@ class PermintaanPemakaianController extends Controller
     {
         $rows = VWMASTERPRPENYERAHANBHN::where('TANGGAL', '>=', $date1)
             ->where('TANGGAL', '<', date('Y-m-d', strtotime($date2 . ' +1 day')))
-            ->orderBy('Tanggal', 'desc')->orderBy('NOBUKTI', 'asc')->orderBy('URUT', 'asc')
+            ->orderBy('Tanggal', 'desc')->orderBy('NOBUKTI', 'desc')->orderBy('URUT', 'asc')
             ->get()->groupBy('NOBUKTI');
 
         $out = [];

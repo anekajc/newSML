@@ -4,15 +4,15 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
-// use App\Model\VWOutBRGPemakaian;
+// use App\Models\VWOutBRGPemakaian;
 
 
-// use App\Model\VWPenyerahanOut;
+// use App\Models\VWPenyerahanOut;
 
 
 class PembebananPemakaianController extends Controller
@@ -147,14 +147,16 @@ public function getDetailCetak(Request $req)
 
   public function getDetailPenerimaan(Request $req) {
     $tempOutstanding = DB::connection("SML")->select("
-        Select  
+        Select
             A.NoBukti,
-            B.Urut, 
-            B.KodeBrg, 
-            H.NamaBrg, 
-            B.Qnt, 
-            B.NoSat, 
-            B.Isi Isi, 
+            A.Tanggal,
+            G.nama gudang,
+            B.Urut,
+            B.KodeBrg,
+            H.NamaBrg,
+            B.Qnt,
+            B.NoSat,
+            B.Isi Isi,
             B.Sat Satuan,
             B.KodePerkiraan,
             I.Keterangan namaPerkiraan,
@@ -169,6 +171,7 @@ public function getDetailCetak(Request $req)
         Left Outer join dbPerkiraan I on I.Perkiraan = B.KodePerkiraan
         Left Outer join dbCost J on B.KODECOST = J.KodeCost
         Left Outer join vwSubCost K on B.KODESUBCOST = K.KodeSubCost
+        Left Outer join DBGUDANG G on A.Kodegdg =G.kodegdg
         where A.NoBukti = :nobukti
         order by A.NoBukti, B.Urut
     ", [
@@ -182,11 +185,11 @@ public function getDetailCetak(Request $req)
 public function Perkiraan(Request $req)
 {
     $data = DB::connection("SML")->select("
-        SELECT 
-            A.Perkiraan, 
+        SELECT
+            A.Perkiraan,
             B.Keterangan
         FROM DBPOSTHUTPIUT A
-        LEFT OUTER JOIN DBPERKIRAAN B 
+        LEFT OUTER JOIN DBPERKIRAAN B
             ON B.Perkiraan = A.Perkiraan
         WHERE A.Kode = 'PD'
     ");
@@ -197,11 +200,11 @@ public function Perkiraan(Request $req)
 
   public function Costing (Request $req)
 {
-    $perkiraan = $req->input('perkiraan'); 
+    $perkiraan = $req->input('perkiraan');
 
     $data = DB::connection("SML")->select("
-        SELECT 
-            a.KodeCost, 
+        SELECT
+            a.KodeCost,
             a.NamaCost
         FROM dbCost a
         INNER JOIN dbPerkCost b ON a.KodeCost = b.KodeCost
@@ -218,7 +221,7 @@ public function SubCosting(Request $req)
     $kodeCost = $req->input('kodeCost');
 
     $data = DB::connection("SML")->select("
-        SELECT 
+        SELECT
             a.KodeSubCost,
             a.NamaSubCost,
             a.KodeCost
@@ -298,8 +301,8 @@ public function SubCosting(Request $req)
     $tanggal = date('Y-m-d H:i:s');
     $res = DB::connection('SML')->update("update dbPenyerahanBhn set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti", [ "nobukti" => $req->nobukti]);
      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PBG',$req->nobukti,$req->pket,0,'dbPenyerahanBhn');
-    
-    
+
+
     return $res;
   }
 
@@ -308,18 +311,18 @@ public function SubCosting(Request $req)
 {
     try {
         DB::connection("SML")->update("
-            UPDATE DBPenyerahanBhnDet 
-            SET KodePerkiraan = ?, 
-                KODECOST = ?, 
-                KODESUBCOST = ? 
-            WHERE NoBukti = ? 
+            UPDATE DBPenyerahanBhnDet
+            SET KodePerkiraan = ?,
+                KODECOST = ?,
+                KODESUBCOST = ?
+            WHERE NoBukti = ?
               AND Urut = ?
         ", [
-            $req->kodeperkiraan,   
-            $req->kodecost,       
-            $req->kodesubcost,     
-            $req->nobukti,        
-            (int)$req->urut       
+            $req->kodeperkiraan,
+            $req->kodecost,
+            $req->kodesubcost,
+            $req->nobukti,
+            (int)$req->urut
         ]);
          $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData('U','PBG',$req->nobukti,'',$req->urut,'dbPenyerahanBhndet');
         return response()->json([
@@ -333,7 +336,7 @@ public function SubCosting(Request $req)
         ], 500);
     }
 
-    
+
 
 }
 
@@ -341,7 +344,7 @@ public function SubCosting(Request $req)
 
   public function onChangeHeader (Request $req) {
     $query = 'update dbserahsample set ' . $req->field . ' = :value where nobukti = :nobukti';
-    
+
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
     return $res;
 

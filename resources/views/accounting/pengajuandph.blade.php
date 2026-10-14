@@ -290,9 +290,9 @@
                     <div class="po-toolbar">
                         <div class="po-filter-wrap">
                             <label>Periode</label>
-                            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}">
+                            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}" autocomplete="off">
                             <span class="po-filter-sep">s/d</span>
-                            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}">
+                            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}" autocomplete="off">
                         </div>
 
                         <input class="po-search-inp" type="search" id="searchBox2" placeholder="Cari data">
@@ -947,6 +947,13 @@
                                 class="btn btn-chip-biru">Proses</button>
                         </div>
                     </div>
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <input class="po-search-inp" type="search" id="searchListPengajuan"
+                                placeholder="Cari data" autocomplete="off" style="width: 100%"
+                                oninput="filterListPengajuan()">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -955,7 +962,7 @@
             <div class="col-12">
                 <div class="dph-table-outer">
                     <div class="dph-table-wrap">
-                        <table id="tabel_add_list_modal" class="dph-tb">
+                        <table id="tabel_add_list_modal" style="white-space: nowrap;" class="dph-tb">
                             <thead>
                                 <tr>
                                     <th scope="col">v</th>
@@ -1725,6 +1732,12 @@
             if (!awal || !akhir || awal.dataset.rtBound) { return; }
             awal.dataset.rtBound = '1';
 
+            // Refresh biasa (F5) membuat browser mengembalikan tanggal terakhir yang dipilih tanpa
+            // memicu change, padahal data awal dirender server untuk rentang bawaan (atribut value) —
+            // kembalikan ke nilai bawaan supaya filter dan isi tabel selalu cocok.
+            awal.value = awal.defaultValue;
+            akhir.value = akhir.defaultValue;
+
             let onUbah = function() {
                 if (!awal.value || !akhir.value) { return; }
                 if (awal.value > akhir.value) {
@@ -1956,6 +1969,40 @@
 
             //   formAddListItem
         });
+
+        // Pencarian client-side di tabel list pengajuan (page4): Supplier, JTHTempo, Faktur,
+        // N. Faktur. Baris hanya di-hide/show (tidak di-render ulang) supaya index
+        // pengajuanCheckList${i}/list_proses_dibayar${i} tetap cocok dengan listPengajuan.
+        // Baris yang sudah dicentang selalu ditampilkan.
+        function filterListPengajuan() {
+            let q = ($('#searchListPengajuan').val() || '').trim().toLowerCase()
+            let qAngka = q.replace(/,/g, '')
+
+            $('#tabel_data_add_list_modal > tr').each(function() {
+                let i = $(this).data('idx')
+                let item = listPengajuan[i]
+                if (item === undefined) {
+                    return
+                }
+
+                let checked = document.getElementById(`pengajuanCheckList${i}`).checked
+                if (!q || checked) {
+                    $(this).show()
+                    return
+                }
+
+                let nFakturRaw = parseFloat(item.Kredit).toFixed(2)
+                let teks = [
+                    item.NamaCustSupp,
+                    formatDate(item.JatuhTempo),
+                    item.NoFaktur,
+                    formatAngka(nFakturRaw)
+                ].join(' ').toLowerCase()
+
+                let cocok = teks.includes(q) || (qAngka !== '' && nFakturRaw.includes(qAngka))
+                $(this).toggle(cocok)
+            })
+        }
 
         function buttonAddBatalKL() {
             $('.showhideitemKL').hide()
@@ -4621,9 +4668,9 @@
                     // $('#tabel_add_list_modal').DataTable().destroy();
                     res.forEach((item, i) => {
                         rowTable += `
-      <tr>
+      <tr data-idx="${i}">
       <td><div class="form-check">
-          <input id="pengajuanCheckList${i}" onchange="pengajuanCheckList(${i},this.id)" class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+          <input id="pengajuanCheckList${i}" onchange="pengajuanCheckList(${i},this.id); filterListPengajuan()" class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
           </div></td>
       <td class="dph-col-supplier">${item.NamaCustSupp}</td>
       <td class="dph-col-jth">${formatDate(item.JatuhTempo)}</td>
@@ -4648,6 +4695,7 @@
 
 
                     document.getElementById("tabel_data_add_list_modal").innerHTML = rowTable
+                    filterListPengajuan()
                     // document.getElementById("tabel_data_add_list_modal").innerHTML = `<td colspan=12 class="text-center">Belum ada data</td>`
 
                     //   $("#tabel_add_list_modal").DataTable({
@@ -4902,6 +4950,7 @@
 
             console.log('buttonAddItem', tipelist, kodecustsuppx)
             $(".showhidelistpengajuandph").hide();
+            $('#searchListPengajuan').val('')
             buttonRefreshListPengajuan(tipelist, kodecustsuppx)
 
 
@@ -4941,6 +4990,7 @@
             setNewNoBukti()
 
             $(".showhidelistpengajuandph").show();
+            $('#searchListPengajuan').val('')
             buttonRefreshListPengajuan()
 
             // $('.showhideitem').hide();

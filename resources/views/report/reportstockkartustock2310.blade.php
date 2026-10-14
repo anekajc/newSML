@@ -1,4 +1,4 @@
-@extends('masterreport')
+@extends('report.masterreport')
 
 @section('reportname')
       @if ($mode_menu == 'QTY')
@@ -62,7 +62,7 @@
 
 @section('additionalModal')
         <!-- start modal browse master -->
-        @include('modalbrowsemaster')
+        @include('report.modalbrowsemaster')
         <!-- End modal browse master -->
 @endsection
 

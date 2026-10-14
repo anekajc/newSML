@@ -7,12 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
-use App\Model\User;
+use App\Models\Menu;
+use App\Models\User;
 use App\Model\BahanBarang;
 use App\Model\StockBarang;
 use App\Model\BahanBarang2;
-use App\Model\Periode;
+use App\Models\Periode;
 use App\Model\AksesMenu;
 
 class SearchController extends Controller {

@@ -6,9 +6,14 @@ Semua perubahan database newSML (DBSMLBARU) dicatat di folder ini, dipisah per m
 
 | Folder | Isi |
 |---|---|
-| `umum/` | Script yang berlaku untuk semua modul: `02_menu_web.sql` (menu web dan hak aksesnya), `06_menu_pemakai_acc_nonacc.sql` (href menu Berkas > Pemakai ACC / Non ACC). |
+| `umum/` | Script yang berlaku untuk semua modul: `02_menu_web.sql` (menu web dan hak aksesnya), `06_menu_pemakai_acc_nonacc.sql` (href menu Berkas > Pemakai ACC / Non ACC), `15_sp_flmenuweb1_dbflmenuweb.sql` (centang hak akses Berkas > Pemakai disimpan ke DBFLMENUWEB), `17_tabel_otorisasi.sql` (tabel DBREQOTORISASI & DBPUSHSUBSCRIPTION untuk lonceng otorisasi dan otorisasi Kas). |
+| `gudang/` | Script dan catatan modul gudang. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-GUDANG.md`. |
+| `report/` | Script dan catatan SP/view laporan. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-REPORT.md`. |
 | `purchasing/` | Script dan catatan modul purchasing. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-PURCHASING.md`. |
 | `marketing/` | Script dan catatan modul marketing. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-MARKETING.md`. |
+| `utilitas/` | Script dan catatan modul utilitas. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-UTILITAS.md`. |
+| `master/` | Script dan catatan modul master data. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-MASTER.md`. |
+| `accounting/` | Script dan catatan modul accounting. Penjelasan lengkapnya ada di `CATATAN-UPDATE-DB-ACCOUNTING.md`. |
 
 Nomor file tetap urut lintas folder (01, 02, 03, ...), jadi urutan menjalankannya tidak berubah walaupun filenya ada di folder berbeda.
 

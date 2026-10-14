@@ -19,7 +19,7 @@ class LaporanSelisihPerintahOpnameController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportselisihperintahopname' , [
+      return view('report.reportselisihperintahopname' , [
         "akses" => $akses
       ]);
     } else {

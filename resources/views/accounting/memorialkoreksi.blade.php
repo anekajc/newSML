@@ -827,18 +827,77 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 .modal-backdrop.mk-backdrop-tertimbun { display: none !important; }
 
 /* ---------- Modal Kartu Piutang ---------- */
-#formMkKartuPT .mk-kartu-cust {
-  border-bottom: 1px solid #dee2e6;
-  padding-bottom: 8px;
-  margin-bottom: 12px;
+/* Tampilan disamakan dengan #formPiutang menu Kas (kas/_piutang-modal.blade.php). Kotak modal,
+   header, body & footer dari picker-kas.css (class picker-kas); yang di bawah ini hanya bagian
+   yang tidak dicakup picker-kas.css. */
+
+/* Lebar dialog mengikuti #formPiutang (min-width 1400px) - picker-kas.css mematok 1140px
+   dengan !important, jadi ditimpa dengan selector yang lebih spesifik. */
+#formMkKartuPT.modal.picker-kas:is(.picker-kas, #pk#pk) .modal-dialog {
+  min-width: 1400px !important;
+  max-width: 1400px !important;
 }
-#formMkKartuPT .mk-kartu-cust .kode {
-  font-size: 1.05rem;
+
+/* Tabel kartu = .dph-tb (public/css/pengajuandphtunai.css, dimuat di menu Kas). File itu tidak
+   dimuat di halaman ini, jadi aturannya disalin ke sini dan di-scope ke tabel kartu saja.
+   padding !important mengalahkan `table tbody td { padding: 0 10px !important }` newmaster.css. */
+#formMkKartuPT table.mk-kartu-tb {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: #1D2130;
+}
+#formMkKartuPT table.mk-kartu-tb thead th {
+  background: #FAFBFF;
+  padding: 10px 12px !important;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border: none;
+  border-bottom: 2px solid #E3E6F0;
+  white-space: nowrap;
+  text-align: left;
+}
+#formMkKartuPT table.mk-kartu-tb thead th.num { text-align: right; }
+#formMkKartuPT table.mk-kartu-tb tbody td {
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: middle;
+}
+#formMkKartuPT table.mk-kartu-tb tbody tr:hover td { background: #F8F9FF; }
+
+/* Label baris identitas (Nobukti/Nama/Customer) - sama seperti label form di #formPiutang. */
+#formMkKartuPT .mk-kartu-identitas label {
+  margin-bottom: 0;
+  line-height: 38px;
+  font-size: 14px;
+}
+
+/* Tombol Selesai - pill biru seperti di menu Kas (tableMaster2.css tidak dimuat di sini). */
+#formMkKartuPT .modal-footer .btn.mk-kartu-selesai {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #212529;
+  text-transform: uppercase;
+  color: #2563eb;
+  background: #e8edff;
+  border: 1px solid #cfdcff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
-#formMkKartuPT .mk-kartu-cust .nama {
-  color: #6c757d;
+#formMkKartuPT .modal-footer .btn.mk-kartu-selesai:hover,
+#formMkKartuPT .modal-footer .btn.mk-kartu-selesai:focus {
+  color: #fff;
+  background: #0069d9;
+  border-color: #0062cc;
 }
 
 /* Tombol "Tambah" biru soft - dipakai di modal Kartu Piutang/Hutang dan di modal Aktiva. */
@@ -897,10 +956,10 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 }
 
 /* Header bergrup (Rupiah / Valas): judulnya di tengah kolom yang dinaunginya. Sengaja TANPA
-   garis pemisah dan TANPA warna sendiri - warnanya ikut header lain (.data-table thead th),
+   garis pemisah dan TANPA warna sendiri - warnanya ikut header lain (.mk-kartu-tb thead th),
    supaya tidak terlihat seperti kotak terbingkai. text-align dipaksa karena
-   .data-table thead th menetapkan rata kiri untuk semua header. */
-#tabel_mk_kartupt thead th.mk-grup {
+   .mk-kartu-tb thead th menetapkan rata kiri untuk semua header. */
+#formMkKartuPT table.mk-kartu-tb thead th.mk-grup {
   text-align: center;
 }
 
@@ -2109,10 +2168,14 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
      tombol + ditekan.
      ============================================================================ --}}
 {{-- data-backdrop="static" data-keyboard="false": modal ini hanya boleh ditutup lewat tombol
-     Close/x (mkKartuTutup()), BUKAN Esc atau klik backdrop - supaya pengecekan Sisa yang belum
+     Selesai/x (mkKartuTutup()), BUKAN Esc atau klik backdrop - supaya pengecekan Sisa yang belum
      dialokasikan (pop-up "Masih Ada Sisa") selalu lewat jalur yang sama, tidak ada jalan pintas
      yang melewatinya. Lihat mkKartuTutup(). --}}
-<div class="modal fade" id="formMkKartuPT" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+{{-- Tampilan disamakan dengan modal Pelunasan Piutang menu Kas (#formPiutang,
+     accounting/kas/_piutang-modal.blade.php): kotak modal picker-kas, baris identitas
+     Nobukti / Nama / Customer(Supplier) + kotak cari, petunjuk, tabel bergaya .dph-tb, dan
+     tombol Selesai. Hanya tampilan - id elemen & fungsi JS-nya tetap. --}}
+<div class="modal fade picker-kas" id="formMkKartuPT" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -2130,52 +2193,95 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       <div class="modal-body">
         <div class="container-fluid">
 
-          {{-- Identitas customer terpilih --}}
-          <div class="row">
-            <div class="col-12 mk-kartu-cust">
-              <div class="kode" id="mkKartuKodeCust"></div>
-              <div class="nama" id="mkKartuNamaCust"></div>
+          {{-- Identitas bukti & customer/supplier terpilih - susunan sama seperti #formPiutang
+               di menu Kas. Diisi mkKartuIsiIdentitas(). --}}
+          <div class="row mk-kartu-identitas" style="padding: 1rem 0;">
+            <div class="col-md-3">
+              <div class="row">
+                <div class="col-md-4"><div class="form-group"><label>Nobukti</label></div></div>
+                <div class="col-md-8">
+                  <div class="form-group">
+                    <input type="text" class="form-control" id="mkKartuNobukti" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="row">
+                <div class="col-md-4"><div class="form-group"><label>Nama</label></div></div>
+                <div class="col-md-8">
+                  <div class="form-group">
+                    <input type="text" class="form-control" id="mkKartuNamaCust" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="row">
+                {{-- Label ikut mkIstilah().pihak: Customer (piutang) / Supplier (hutang). --}}
+                <div class="col-md-4"><div class="form-group"><label id="mkKartuLabelPihak">Customer</label></div></div>
+                <div class="col-md-8">
+                  <div class="form-group">
+                    <input type="text" class="form-control" id="mkKartuKodeCust" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="form-group">
+                <input class="po-search-inp" type="search" id="input_search_kartupt" placeholder="Cari data" autocomplete="off" style="width: 100%">
+              </div>
             </div>
           </div>
 
-          <div class="row mb-2">
-            <div class="col-6">
+          <div class="row" style="margin-top:20px">
+            <div class="col-md-9">
+              {{-- Petunjuk per alur - yang tampil dipilih mkKartuHitung(), sama seperti tombol Tambah. --}}
+              <p id="mkKartuPetunjukLunas" class="text-muted small mb-2">Klik <b>+</b> untuk membayar faktur (nominal bisa
+                diubah), atau dobel-klik baris faktur untuk langsung melunasi seluruh sisa
+                saldonya. Baris merah = pelunasan bukti ini; klik tombol hapus atau dobel-klik
+                barisnya untuk <b>membatalkan</b>.</p>
+              <p id="mkKartuPetunjukTambah" class="text-muted small mb-2" style="display:none">Klik <b>Tambah</b> untuk
+                menambahkan faktur baru. Faktur yang ditambahkan di bukti ini bisa dibatalkan
+                lewat tombol hapus di barisnya.</p>
+            </div>
+            <div class="col-md-3 text-right">
               {{-- Alur Debet: tombol tambah faktur di atas tabel. Alur Kredit tidak memakai ini -
                    tombol + nya ada di tiap baris, lihat mkKartuRender(). --}}
-              <button type="button" id="mkKartuButtonTambah" class="btn btn-mk-tambah" onclick="mkKartuBukaFormTambah()" title="Tambah faktur">Tambah</button>
-            </div>
-            <div class="col-6 d-flex justify-content-end">
-              <input id="input_search_kartupt" type="search" class="form-control cari-modal-mk" placeholder="Cari data">
+              <button type="button" id="mkKartuButtonTambah" class="btn btn-mk-tambah mb-2" onclick="mkKartuBukaFormTambah()" title="Tambah faktur">Tambah</button>
             </div>
           </div>
 
           <div class="row">
-            <div class="col-12" style="overflow:auto; max-height: 320px">
+            <div class="col-12" style="overflow:auto; max-height: 400px">
               {{-- Kolom Aksi hanya berisi tombol Hapus, dan hanya untuk baris tambahan user
                    (ditandai NoInvoice='TBH'). Baris outstanding bawaan tidak bisa dihapus. --}}
               {{-- Susunan kolom mengikuti form lama: nilai Rupiah dan nilai Valas dipisah jadi
                    dua grup, dengan kolom Valas & Kurs di antaranya. Nilai valas diambil dari
                    DebetD/KreditD (untuk transaksi IDR isinya 0). --}}
-              <table id="tabel_mk_kartupt" class="data-table" style="overflow:auto;">
-                <thead class="text-center" style="position: sticky; top: 0; z-index: 1;">
+              <table id="tabel_mk_kartupt" class="mk-kartu-tb">
+                <thead style="position: sticky; top: 0; z-index: 2;">
                   <tr>
-                    <th style="padding: 4px 12px;" scope="col" rowspan="2">Action</th>
-                    <th style="padding: 4px 12px;" scope="col" rowspan="2">No. Faktur</th>
-                    <th style="padding: 4px 12px;" scope="col" rowspan="2">No. Retur</th>
-                    <th style="padding: 4px 12px;" scope="col" rowspan="2">Tanggal</th>
-                    <th style="padding: 4px 12px;" scope="col" rowspan="2">Jatuh Tempo</th>
-                    <th style="padding: 4px 12px;" scope="col" colspan="3" class="mk-grup">Rupiah</th>
-                    <th style="padding: 4px 12px;" scope="col" rowspan="2">Valas</th>
-                    <th style="padding: 4px 12px;" scope="col" rowspan="2">Kurs</th>
-                    <th style="padding: 4px 12px;" scope="col" colspan="3" class="mk-grup">Valas</th>
+                    <th scope="col" rowspan="2">Action</th>
+                    <th scope="col" rowspan="2">NoFaktur</th>
+                    <th scope="col" rowspan="2">NoRetur</th>
+                    <th scope="col" rowspan="2">Tanggal</th>
+                    <th scope="col" rowspan="2">Jatuh Tempo</th>
+                    <th scope="col" colspan="3" class="mk-grup">Rupiah</th>
+                    <th scope="col" rowspan="2">Valas</th>
+                    <th scope="col" rowspan="2">Kurs</th>
+                    <th scope="col" colspan="3" class="mk-grup">Valas</th>
                   </tr>
                   <tr>
-                    <th style="padding: 4px 12px;" scope="col">Debet</th>
-                    <th style="padding: 4px 12px;" scope="col">Kredit</th>
-                    <th style="padding: 4px 12px;" scope="col">Saldo</th>
-                    <th style="padding: 4px 12px;" scope="col">Debet</th>
-                    <th style="padding: 4px 12px;" scope="col">Kredit</th>
-                    <th style="padding: 4px 12px;" scope="col">Saldo</th>
+                    <th scope="col" class="num">Debet</th>
+                    <th scope="col" class="num">Kredit</th>
+                    <th scope="col" class="num">Saldo</th>
+                    <th scope="col" class="num">Debet</th>
+                    <th scope="col" class="num">Kredit</th>
+                    <th scope="col" class="num">Saldo</th>
                   </tr>
                 </thead>
                 <tbody id="tabel_data_mk_kartupt" class="text-left"></tbody>
@@ -2322,7 +2428,9 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       </div>
       </div>{{-- /#formBsGrid --}}
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="mkKartuTutup()">Close</button>
+        {{-- Sama seperti tombol Selesai di #formPiutang menu Kas; tetap lewat mkKartuTutup()
+             supaya pengecekan Sisa tidak terlewati. --}}
+        <button type="button" class="btn btn-primary btn-action-primary btn-pill-primary mk-kartu-selesai" onclick="mkKartuTutup()">Selesai</button>
       </div>
     </div>
   </div>
@@ -4484,12 +4592,20 @@ function mkPickCustomerPT (index) {
   mkKartuBuka(item)
 }
 
+// Baris identitas modal Kartu (Nobukti / Nama / Customer-Supplier), susunannya sama seperti
+// #formPiutang di menu Kas.
+function mkKartuIsiIdentitas (kode, nama) {
+  document.getElementById("mkKartuNobukti").value = $("#input_add_nobukti").val() || ''
+  document.getElementById("mkKartuNamaCust").value = nama || ''
+  document.getElementById("mkKartuKodeCust").value = (kode || '').trim()
+  document.getElementById("mkKartuLabelPihak").innerHTML = mkIstilah().pihak
+}
+
 // Buka kembali modal Kartu tanpa seed ulang - dipakai kalau customer yang dipilih sama dengan
 // yang sedang aktif, supaya baris faktur yang sudah ditambahkan tidak ikut terhapus.
 function mkKartuBukaLagi () {
   document.getElementById("mkKartuJudulPerkiraan").innerHTML = mkPerkiraanPT()
-  document.getElementById("mkKartuKodeCust").innerHTML = $("#AddAddCustsuppPT").val()
-  document.getElementById("mkKartuNamaCust").innerHTML = '[ ' + ($("#AddAddNamaCustPT").val() || '') + ' ]'
+  mkKartuIsiIdentitas($("#AddAddCustsuppPT").val(), $("#AddAddNamaCustPT").val())
 
   mkKartuRefresh()
   mkKartuTutupFormTambah()
@@ -4529,8 +4645,7 @@ function mkKartuBuka (item, edit = false) {
       document.getElementById("AddAddNoMskPT").value = res.nomsk
 
       document.getElementById("mkKartuJudulPerkiraan").innerHTML = perkiraan
-      document.getElementById("mkKartuKodeCust").innerHTML = kodecustsupp
-      document.getElementById("mkKartuNamaCust").innerHTML = '[ ' + (item.NAMACUSTSUPP || '') + ' ]'
+      mkKartuIsiIdentitas(kodecustsupp, item.NAMACUSTSUPP)
 
       mkKartuSudahDimuat = true
 
@@ -4844,6 +4959,8 @@ function mkKartuHitung () {
     $('#mkKartuButtonTambah').show()
     tombolTambah.disabled = false
   }
+  $('#mkKartuPetunjukLunas').toggle(mkModeLunas())
+  $('#mkKartuPetunjukTambah').toggle(!mkModeLunas())
 }
 
 function mkIkatSearchKartuPT () {

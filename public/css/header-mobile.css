@@ -1,0 +1,67 @@
+/*
+ * Header ringkas untuk mobile (< 768px) - dipakai layout newmaster & newmasterTest.
+ * Satu baris: judul (terpotong "…" kalau panjang) · lonceng · badge "Okt 2026" · avatar · ikon power.
+ *
+ * File ini dimuat SEBELUM <style> inline kedua layout, jadi selektornya sengaja diberi
+ * awalan .header supaya spesifisitasnya lebih tinggi dan tetap menang.
+ */
+
+/* Versi pendek badge periode - default tersembunyi (layar lebar pakai .pb-full). */
+.period-badge .pb-short { display: none; }
+
+@media (max-width: 767.98px) {
+  .header {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  /* Judul halaman boleh menyusut & terpotong; ikon di kanan tidak. */
+  .header .header-left,
+  .header .titleText {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .header .page-title,
+  .header .titleText {
+    font-size: 17px;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* newmasterTest: breadcrumb kecil di bawah judul - tetap tampil (di sebagian halaman
+     page-title kosong dan breadcrumb satu-satunya judul), tapi ikut terpotong. */
+  .header .header-left .breadcrumb {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0;
+  }
+
+  .header .header-right {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  .header .header-right > * { flex-shrink: 0; }
+
+  .header .period-badge {
+    padding: 3px 9px;
+    white-space: nowrap;
+  }
+
+  .header .period-badge .pb-full { display: none; }
+  .header .period-badge .pb-short { display: inline; }
+
+  .header .logout-link .logout-text { display: none; }
+
+  .header .logout-link {
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+    font-size: 17px;
+  }
+}

@@ -19,7 +19,7 @@ class LaporanGudangKonsinController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportgudangkonsin' , [
+      return view('report.reportgudangkonsin' , [
         "akses" => $akses
       ]);
     } else {

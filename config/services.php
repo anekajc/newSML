@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // Web Push (PWA) untuk notifikasi permintaan otorisasi - lihat app/Jobs/SendWebPush.php.
+    // Kunci dibuat sekali lewat `php artisan webpush:vapid`.
+    'webpush' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+        'subject' => env('VAPID_SUBJECT', 'mailto:admin@example.com'),
+    ],
+
 ];

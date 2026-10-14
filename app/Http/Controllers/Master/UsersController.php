@@ -7,13 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
-use App\Model\User;
+use App\Models\Menu;
+use App\Models\User;
 use App\Model\AksesMenu;
 use App\Model\AksesGudang;
 use App\Model\AksesPerkiraan;
 use App\Model\AksesLaporanPerkiraan;
-use App\Model\Periode;
+use App\Models\Periode;
 use App\Model\Gudang;
 use App\Model\Perkiraan;
 
