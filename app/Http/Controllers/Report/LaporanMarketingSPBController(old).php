@@ -17,7 +17,7 @@ class LaporanMarketingSPBController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportlaporanmarketingspb' , [
+      return view('report.reportlaporanmarketingspb' , [
         "akses" => $akses
       ]);
     } else {

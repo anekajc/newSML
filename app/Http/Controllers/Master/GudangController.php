@@ -7,19 +7,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-// use App\Model\Menu;
-// use App\Model\User;
-use App\Model\GudangSQL;
-use App\Model\RakSQL;
-use App\Model\LokasiSQL;
-// use App\Model\Periode;
+// use App\Models\Menu;
+// use App\Models\User;
+use App\Models\GudangSQL;
+use App\Models\RakSQL;
+use App\Models\LokasiSQL;
+// use App\Models\Periode;
 // use App\Model\AksesMenu;
-use App\Model\AlokasiBrg;
-use App\Model\AlokasiBrgDet;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\AlokasiBrg;
+use App\Models\AlokasiBrgDet;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 
 class GudangController extends Controller {
 

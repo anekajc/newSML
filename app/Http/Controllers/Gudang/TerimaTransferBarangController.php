@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\DBFLMENU;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\DBFLMENU;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 
@@ -43,6 +43,7 @@ class TerimaTransferBarangController extends Controller
 
   private function fetchHeaderList($date1, $date2) {
     $query = "
+    -- untuk outstanding
       SELECT
           B.NOBUKTI,
           X.TANGGAL,
@@ -64,17 +65,17 @@ class TerimaTransferBarangController extends Controller
       WHERE
           B.QNT - ISNULL(F.Qnt, 0) > 0
           AND ISNULL(B.isbatal, 0) = 0
-          AND CAST(X.TANGGAL AS DATE) BETWEEN :date1 AND :date2
+          --AND CAST(X.TANGGAL AS DATE) BETWEEN :date1 AND :date2
       GROUP BY B.NOBUKTI, X.TANGGAL, X.NOTE, X.pTERIMA
     ";
 
     $listBelumTerima = DB::connection("SML")->select($query . " HAVING ISNULL(X.pTERIMA, 0) = 0
       ORDER BY X.TANGGAL DESC, B.NOBUKTI DESC
-      ", ["date1" => $date1, "date2" => $date2]);
+      ");
 
     $listSdhTerima = DB::connection("SML")->select($query . " HAVING ISNULL(X.pTERIMA, 0) = 1
       ORDER BY X.TANGGAL DESC, B.NOBUKTI DESC
-      ", ["date1" => $date1, "date2" => $date2]);
+      ");
 
     return [
         "listBelumTerima" => $listBelumTerima,
@@ -103,32 +104,32 @@ class TerimaTransferBarangController extends Controller
 
 
     $tempOutstanding = DB::connection("SML")->select("
-        select  B.NOBUKTI, 
+        select  B.NOBUKTI,
         X.TANGGAL,
-        B.URUT,  
-        B.KODEBRG, 
-        C.NAMABRG, 
-        '' Jns_Kertas, 
+        B.URUT,
+        B.KODEBRG,
+        C.NAMABRG,
+        '' Jns_Kertas,
         '' Ukr_Kertas,
-        B.QNT, 
-        B.QNT2, 
-        B.SAT_1, 
-        B.SAT_2, 
-        B.ISI, 
-        B.GdgAsal, 
-        B.GdgTujuan, 
+        B.QNT,
+        B.QNT2,
+        B.SAT_1,
+        B.SAT_2,
+        B.ISI,
+        B.GdgAsal,
+        B.GdgTujuan,
         D.Nama+' ('+B.GdgAsal+')' NamagdgAsal,
-        E.Nama+' ('+B.GdgTujuan+')' NamagdgTujuan, 
+        E.Nama+' ('+B.GdgTujuan+')' NamagdgTujuan,
         0.00 GSM,
-        case 
-            when B.nosat=1 then B.QNT  - ISNULL(F.Qnt,0) 
-            when B.nosat=2 then B.QNT2 - ISNULL(F.Qnt2,0) 
+        case
+            when B.nosat=1 then B.QNT  - ISNULL(F.Qnt,0)
+            when B.nosat=2 then B.QNT2 - ISNULL(F.Qnt2,0)
         end as Qntx,
-        case 
-            when B.nosat=1 then C.sat1 
-            when B.nosat=2 then C.sat2 
+        case
+            when B.nosat=1 then C.sat1
+            when B.nosat=2 then C.sat2
         end as Satx
-from    dbTransferDet B    
+from    dbTransferDet B
 left join dbBarang C on C.KodeBrg = B.KodeBrg
 left join dbGudang D on D.Kodegdg = B.GdgAsal
 left join dbGudang E on E.Kodegdg = B.GdgTujuan
@@ -140,9 +141,9 @@ left join (
     from DBTRANSFERDET
     where NoTransfer is not null
     group by NoTransfer, UrutTransfer
-) F ON B.NOBUKTI = F.NoTransfer 
+) F ON B.NOBUKTI = F.NoTransfer
     AND B.URUT = F.UrutTransfer
-where 
+where
     (
         (B.nosat=1 and B.QNT  - ISNULL(F.Qnt,0)  > 0) OR
         (B.nosat=2 and B.QNT2 - ISNULL(F.Qnt2,0) > 0)
@@ -161,7 +162,7 @@ order by B.Urut
 
   public function getDetailPenerimaan (Request $req) {
     $tempPenerimaan = DB::connection("SML")->select("
-        SELECT 	
+        SELECT
         X.TANGGAL,
         B.NOBUKTI,
         B.URUT,
@@ -180,27 +181,27 @@ order by B.Urut
         D.Nama + ' (' + B.GdgAsal + ')' AS NamagdgAsal,
         E.Nama + ' (' + B.GdgTujuan + ')' AS NamagdgTujuan,
         0.00 AS GSM,
-        CASE 
-            WHEN B.nosat = 1 THEN B.QNT - ISNULL(F.Qnt, 0) 
-            WHEN B.nosat = 2 THEN B.QNT2 - ISNULL(F.Qnt2, 0) 
+        CASE
+            WHEN B.nosat = 1 THEN B.QNT - ISNULL(F.Qnt, 0)
+            WHEN B.nosat = 2 THEN B.QNT2 - ISNULL(F.Qnt2, 0)
         END AS Qntx,
-        CASE 
-            WHEN B.nosat = 1 THEN C.sat1 
-            WHEN B.nosat = 2 THEN C.sat2 
+        CASE
+            WHEN B.nosat = 1 THEN C.sat1
+            WHEN B.nosat = 2 THEN C.sat2
         END AS Satx,
         X.NOTE
-    FROM dbTransferDet B    
+    FROM dbTransferDet B
     LEFT JOIN dbBarang C ON C.KodeBrg = B.KodeBrg
     LEFT JOIN dbGudang D ON D.Kodegdg = B.GdgAsal
     LEFT JOIN dbGudang E ON E.Kodegdg = B.GdgTujuan
     LEFT JOIN DBTRANSFER X ON B.NOBUKTI = X.NOBUKTI
     LEFT JOIN (
-        SELECT NoTransfer, UrutTransfer, SUM(QNT) AS Qnt, SUM(QNT2) AS Qnt2 
-        FROM DBTRANSFERDET 
+        SELECT NoTransfer, UrutTransfer, SUM(QNT) AS Qnt, SUM(QNT2) AS Qnt2
+        FROM DBTRANSFERDET
         GROUP BY NoTransfer, UrutTransfer
     ) F ON B.NOBUKTI = F.NoTransfer AND B.URUT = F.UrutTransfer
-    WHERE	
-        B.QNT - ISNULL(F.Qnt, 0) > 0 
+    WHERE
+        B.QNT - ISNULL(F.Qnt, 0) > 0
         AND ISNULL(B.isbatal, 0) = 0
         AND ISNULL(X.pTERIMA, 0) = 1
         AND B.NOBUKTI = :nobukti
@@ -215,13 +216,13 @@ order by B.Urut
 // public function GudangAsal(Request $req)
 //   {
 //     $data = DB::connection("SML")->select("
-//         SELECT 
-//         a.KodeGdg, 
-//         a.Nama AS NamaGdg, 
-//         a.IsRusak 
-//         FROM dbGudang a 
-//         LEFT OUTER JOIN dbPemakaiGdg b ON b.kodegdg = a.kodegdg 
-//         GROUP BY a.KodeGdg, a.Nama, a.IsRusak 
+//         SELECT
+//         a.KodeGdg,
+//         a.Nama AS NamaGdg,
+//         a.IsRusak
+//         FROM dbGudang a
+//         LEFT OUTER JOIN dbPemakaiGdg b ON b.kodegdg = a.kodegdg
+//         GROUP BY a.KodeGdg, a.Nama, a.IsRusak
 //         ORDER BY a.KodeGdg");
 
 //     return response()->json($data);
@@ -230,13 +231,13 @@ order by B.Urut
 //   public function GudangTujuan(Request $req)
 //   {
 //     $data = DB::connection("SML")->select("
-//         SELECT 
-//         a.KodeGdg, 
-//         a.Nama AS NamaGdg, 
-//         a.IsRusak 
-//         FROM dbGudang a 
-//         LEFT OUTER JOIN dbPemakaiGdg b ON b.kodegdg = a.kodegdg 
-//         GROUP BY a.KodeGdg, a.Nama, a.IsRusak 
+//         SELECT
+//         a.KodeGdg,
+//         a.Nama AS NamaGdg,
+//         a.IsRusak
+//         FROM dbGudang a
+//         LEFT OUTER JOIN dbPemakaiGdg b ON b.kodegdg = a.kodegdg
+//         GROUP BY a.KodeGdg, a.Nama, a.IsRusak
 //         ORDER BY a.KodeGdg");
 
 //     return response()->json($data);
@@ -282,14 +283,14 @@ public function spAdd (Request $req)
         foreach ($tempData as $d) {
             if (!empty($d['checked']) && $d['checked'] == true) {
                 DB::connection('SML')->statement('exec SP_InsertTERIMATRANSFERweb ?,?,?,?,?,?,?,?', [
-                    $req->nobukti,  
+                    $req->nobukti,
                     $req->nourut,
-                    $d['NOBUKTI'],       
+                    $d['NOBUKTI'],
                     $username,
                     -1,
                     $req->tanggal,
                     $d['inputQnt'],
-                    $d['URUT'],     
+                    $d['URUT'],
                 ]);
             }
         }
@@ -315,11 +316,11 @@ public function spAdd (Request $req)
 //     foreach ($tempData as $d) {
 //         // dd($d);
 //         DB::connection('SML')->statement('exec SP_InsertTERIMATRANSFERweb ?,?,?,?,?,?', [
-//             $req->nobukti,                
-//             $req->nourut,                            
-//             $d['NOBUKTI'],                           
-//             $username,                             
-//             1,                                       
+//             $req->nobukti,
+//             $req->nourut,
+//             $d['NOBUKTI'],
+//             $username,
+//             1,
 //             date('Y-m-d', strtotime($req->tanggal))
 //         ]);
 //     }
@@ -330,31 +331,31 @@ public function spAdd (Request $req)
 
   public function spKoreksi (Request $req)
 {
-    $choice  = $req->choice; 
+    $choice  = $req->choice;
     $nobukti = $req->nobukti;
 
     $values = [
-        $choice,                       
-        $nobukti,                      
-        $req->nourut,              
-        $req->tanggal,          
-        $req->note ?? '',               
-        (int)$req->urut,                 
-        $req->kodebrg,                   
-        $req->kodegdgasal,               
-        $req->kodegdgtujuan,             
-        $req->sat1,                     
-        $req->sat2,                      
-        $req->qnt,                      
-        $req->qnt2,                     
-        $req->nosat,                    
-        $req->isi,                     
-        \Auth::user()->username,       
-        $req->nopenyerahan ?? ''         
+        $choice,
+        $nobukti,
+        $req->nourut,
+        $req->tanggal,
+        $req->note ?? '',
+        (int)$req->urut,
+        $req->kodebrg,
+        $req->kodegdgasal,
+        $req->kodegdgtujuan,
+        $req->sat1,
+        $req->sat2,
+        $req->qnt,
+        $req->qnt2,
+        $req->nosat,
+        $req->isi,
+        \Auth::user()->username,
+        $req->nopenyerahan ?? ''
     ];
 
     DB::connection('SML')->statement(
-        'exec SP_TRANSFER ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?', 
+        'exec SP_TRANSFER ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?',
         $values
     );
 
@@ -363,7 +364,7 @@ public function spAdd (Request $req)
 
   public function onChangeHeader (Request $req) {
     $query = 'update dbserahsample set ' . $req->field . ' = :value where nobukti = :nobukti';
-    
+
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
     return $res;
 

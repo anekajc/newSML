@@ -18,6 +18,9 @@
 
 <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
 
+{{-- Modal pemilih (Valas/CustSupp/DPP/dst.) disamakan persis dengan modal pemilih menu Kas -- lihat public/css/picker-kas.css, sama seperti so.blade.php/giroditerima.blade.php. --}}
+<link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
+
 <style>
 .toolbar {
   display: flex;
@@ -490,7 +493,7 @@
                 </div>
                 <button class="po-btn-filter" type="button" onclick="$('#modalFilterGiro').modal('show')"><i class="bi bi-funnel"></i> Filter</button>
                 <div class="po-toolbar-act">
-                  <button id="AddVisibility" class="btn btn-primary" onclick="buttonAdd()">Tambah</button>
+                  <button id="AddVisibility" class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
                 </div>
               </div>
 
@@ -565,14 +568,14 @@
 
 
 
-  <div id="" class="">
+  <div id="formBsGrid" class="">
   <div class="">
     <!-- <h1>Tes Modal</h1> -->
 
     <div class="container-fluid">
       <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-3">
           <div class="row">
             <div class="col-md-5">
               <div class="form-group">
@@ -606,7 +609,7 @@
             <div class="form-group input-group">
               <input type="hidden" class="form-control" id="input_add_simbol" placeholder="" disabled>
               <input type="text" class="form-control" id="input_add_kodeperkiraan" placeholder="" disabled>
-              <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListPerkiraan" onclick="buttonAddListPerkiraan()"><i class="bi bi-search"></i></button>
+              <button class="btn btn-chip-biru btn-sm" id="buttonAddListPerkiraan" onclick="buttonAddListPerkiraan()"><i class="bi bi-search"></i></button>
             </div>
           </div>
 
@@ -844,7 +847,7 @@
             <div class="input-group form-group">
               <input id="AddAddKodeDevisi" type="text" class="form-control" disabled>
 
-              <button id="buttonAddListDevisi" type="button" onclick="buttonAddListDevisi()" class="btn btn-chip-biru btn-sm btn-icon-search"><i class="bi bi-search"></i></button>
+              <button id="buttonAddListDevisi" type="button" onclick="buttonAddListDevisi()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
 
             </div>
           </div>
@@ -869,11 +872,6 @@
 
         <div class="row">
 
-
-
-
-
-
           <div class="col-md-2">
             <div class="form-group">
             <label>DPH</label>
@@ -885,24 +883,15 @@
           <div class="col-md-6">
             <div class="input-group form-group">
               <input id="AddAddNoDPH" type="text" class="form-control" value="" disabled>
-              <button id="buttonAddListDPH" type="button" onclick="buttonAddListDPH()" class="btn btn-chip-biru btn-sm btn-icon-search"><i class="bi bi-search"></i></button>
+              <button id="buttonAddListDPH" type="button" onclick="buttonAddListDPH()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
 
             </div>
           </div>
-
-
-
-
 
         </div>
 
 
         <div class="row" style="margin-top: -10px">
-
-
-
-
-
 
           <div class="col-md-2">
             <div class="form-group">
@@ -1007,7 +996,7 @@
             <div class="input-group form-group">
               <input id="AddAddLawan" type="text" class="form-control" disabled>
               <input id="AddAddKodeLawan" type="hidden" class="form-control" disabled>
-              <button id="buttonAddListLawan" type="button" onclick="buttonAddListLawan()" class="btn btn-chip-biru btn-sm btn-icon-search"><i class="bi bi-search"></i></button>
+              <button id="buttonAddListLawan" type="button" onclick="buttonAddListLawan()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
 
             </div>
           </div>
@@ -1078,7 +1067,7 @@
         </div>
       </div>
 
-       <div class="col-md-1">
+       <div class="col-md-3">
         <div class="form-group">
         <label>Sumber</label>
       </div>
@@ -1226,7 +1215,7 @@
   <div class="col-md-3">
     <div class="input-group form-group">
       <input id="AddAddKodeDepartemen" type="text" class="form-control" disabled>
-      <button id="buttonAddListDepartemen" type="button" onclick="buttonAddListDepartemen()" class="btn btn-chip-biru btn-sm btn-icon-search"><i class="bi bi-search"></i></button>
+      <button id="buttonAddListDepartemen" type="button" onclick="buttonAddListDepartemen()" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
 
     </div>
   </div>
@@ -1242,11 +1231,6 @@
 
 
 <!-- <div class="row" id="rowCustsupp" style="margin-top: -10px">
-
-
-
-
-
 
   <div class="col-md-2">
     <div class="form-group">
@@ -1278,15 +1262,6 @@
 
 </div>
 
-
-
-
-
-
-
-
-
-
   <!-- <div class="col-6 ">
     <div class="row">
 
@@ -1294,8 +1269,6 @@
 
     </div> -->
   <!-- </div> -->
-
-
 
 
   <div class="row mt-2" style="margin-top: 0">
@@ -1325,13 +1298,6 @@
   </div>
 
 </div>
-
-
-
-
-
-
-
 
     <!-- <div class="line"></div> -->
     <!-- <hr/> -->
@@ -1368,13 +1334,13 @@
 
   <div id="page3" style="display: none" class="mainpage container-fluid" >
 
-    <div class="row" style="margin-top: -30px">
+    <div class="row">
       <div class="col-8 text-left">
-        <h2 class="showhidepage3 page3detail">Detail Bank</h2>
-        <h2 class="showhidepage3 page3otorisasi">Otorisasi Bank</h2>
+        <h2 class="showhidepage3 page3detail"></h2>
+        <h2 class="showhidepage3 page3otorisasi"></h2>
       </div>
       <div class="col-4 text-right">
-        <button type="button" class="btn btn-danger btn-lg " style="height: 40px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
+        <button type="button" class="btn btn-danger btn-lg " style="height: 30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()"  >CLOSE</button>
       </div>
     </div>
 
@@ -1382,14 +1348,14 @@
 
 
 
-    <div id="" class="">
+    <div id="formBsGrid" class="">
     <div class="">
       <!-- <h1>Tes Modal</h1> -->
 
       <div class="container-fluid">
 
         <div class="row">
-          <div class="col-md-2">
+          <div class="col-md-3">
             <div class="row">
               <div class="col-md-5">
                 <div class="form-group">
@@ -1752,7 +1718,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1826,7 +1792,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1847,7 +1813,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>DPH</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -1870,7 +1836,6 @@
 
                 </tr>
               </thead>
-
 
               <tbody id="tabel_data_add_list_dphbbg" class="text-left" >
 
@@ -1907,7 +1872,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1987,7 +1952,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -1997,7 +1962,7 @@
       <div class="modal-header">
 
 
-          <h5 class="modal-title" id="">DPH</h5>
+          <h5 class="modal-title">DPH</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -2009,9 +1974,9 @@
 
         <div class="container-fluid mt-4" >
           <div class="row">
-            <div class="col-12">
-              <h3>DPH</h3>
-            </div>
+            {{-- <div class="col-12">
+              <h3></h3>
+            </div> --}}
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
           <div class="row">
@@ -2068,7 +2033,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2089,9 +2054,9 @@
 
         <div class="container-fluid mt-4" >
           <div class="row">
-            <div class="col-12">
+            {{-- <div class="col-12">
               <h3>DPH</h3>
-            </div>
+            </div> --}}
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
           <div class="row">
@@ -2149,7 +2114,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2291,7 +2256,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2314,7 +2279,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>Devisi</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -2364,7 +2329,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2388,7 +2353,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>Perkiraan</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -2440,7 +2405,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2461,7 +2426,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>Departemen</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -2511,7 +2476,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2532,7 +2497,7 @@
         <div class="container-fluid mt-4" >
           <div class="row">
             <div class="col-12">
-              <h3>Lawan</h3>
+              <h3></h3>
             </div>
           </div>
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
@@ -2584,7 +2549,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2660,7 +2625,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
       </div>
       </div>
 
@@ -2753,7 +2718,7 @@
 
 
       <div id="" class="modal-footer ">
-        <button type="button" class="btn btn-secondary" onclick="buttonAddListBatal()" >Batal</button>
+        <button type="button" class="btn btn-danger" onclick="buttonAddListBatal()" >Batal</button>
         <button type="button" class="btn btn-primary" onclick="buttonAddPickInvoice()" >Submit</button>
       </div>
       </div>
@@ -2891,7 +2856,7 @@
                       <div class="col-md-12">
                         <div class="input-group form-group">
                           <input id="input_giro_bank" type="text" class="form-control" disabled>
-                          <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListPerkiraanBank" onclick="buttonAddListPerkiraanBank()"><i class="bi bi-search"></i></button>
+                          <button class="btn btn-chip-biru btn-sm" id="buttonAddListPerkiraanBank" onclick="buttonAddListPerkiraanBank()"><i class="bi bi-search"></i></button>
 
                         </div>
                       </div>
@@ -3089,23 +3054,23 @@
 
               <div class="row mt-2" style="margin-top: 0">
                 <div class="col-md-12 text-right mt-4">
-                  <button type="button" class="btn btn-secondary" onclick="buttonGiroBatal()" style="height: 30px;
+                  <button type="button" class="btn btn-danger" onclick="buttonGiroBatal()" style="height: 30px;
                   border-radius: 20px;
                   font-size: 0.75rem;
                   font-weight: 600;
                   text-transform: uppercase;">Batal</button>
 
-                  <button id="buttono" type="button" onclick="submitAddGiro()" class="btn btn-primary" style="height: 30px;
+                  <button id="buttono" type="button" onclick="submitAddGiro()" class="btn btn-chip-biru" style="height: 30px;
                   border-radius: 20px;
                   font-size: 0.75rem;
                   font-weight: 600;
-                  text-transform: uppercase;">Submit Add</button>
+                  text-transform: uppercase;">Simpan</button>
 
-                  <button id="buttonSubmitEditGiro" type="button" onclick="submitEditGiro()" class="btn btn-primary" style="height: 30px;
+                  <button id="buttonSubmitEditGiro" type="button" onclick="submitEditGiro()" class="btn btn-chip-biru" style="height: 30px;
                   border-radius: 20px;
                   font-size: 0.75rem;
                   font-weight: 600;
-                  text-transform: uppercase;">Submit Edit</button>
+                  text-transform: uppercase;">Simpan</button>
 
               </div>
 
@@ -3232,7 +3197,7 @@
                     </div>
                   </div>
 
-                  <div class="row" >
+                  <div id='formBsGrid' class="row" >
                     <div class="col-xl-2">
                       <div class="row">
 
@@ -3251,7 +3216,7 @@
                         <div class="col-md-12">
                           <div class="input-group form-group">
                             <input id="input_girobgt_bank" type="text" class="form-control" disabled>
-                            <button class="btn btn-chip-biru btn-sm btn-icon-search" id="buttonAddListPerkiraanBankKoreksi" onclick="buttonAddListPerkiraanBankKoreksi()"><i class="bi bi-search"></i></button>
+                            <button class="btn btn-chip-biru btn-sm" id="buttonAddListPerkiraanBankKoreksi" onclick="buttonAddListPerkiraanBankKoreksi()"><i class="bi bi-search"></i></button>
                           </div>
                         </div>
                       </div>
@@ -3423,17 +3388,17 @@
 
                 <div class="row mt-2" style="margin-top: 0">
                   <div class="col-md-12 text-right mt-4">
-                    <button type="button" class="btn btn-secondary" onclick="buttonGiroBatalBGTt()" style="height: 30px;
+                    <button type="button" class="btn btn-danger" onclick="buttonGiroBatalBGTt()" style="height: 30px;
                     border-radius: 20px;
                     font-size: 0.75rem;
                     font-weight: 600;
                     text-transform: uppercase;">Batal</button>
 
-                    <button id="" type="button" onclick="submitAddGiroBGT()" class="btn btn-primary" style="height: 30px;
+                    <button id="" type="button" onclick="submitAddGiroBGT()" class="btn btn-chip-biru" style="height: 30px;
                     border-radius: 20px;
                     font-size: 0.75rem;
                     font-weight: 600;
-                    text-transform: uppercase;">Submit Add</button>
+                    text-transform: uppercase;">Simpan</button>
 
 
 
@@ -3642,7 +3607,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-            <button type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button>
+            <button type="button" class="btn btn-chip-biru" onclick="submitAdd()">Simpan</button>
           </div>
           </div>
 
@@ -3735,7 +3700,7 @@
 
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-              <button type="button" class="btn btn-primary" onclick="submitAddBGC()">Submit</button>
+              <button type="button" class="btn btn-chip-biru" onclick="submitAddBGC()">Simpan</button>
             </div>
             </div>
 
@@ -3827,7 +3792,7 @@
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-                <button type="button" class="btn btn-primary" onclick="submitAddBGC()">Submit</button>
+                <button type="button" class="btn btn-chip-biru" onclick="submitAddBGC()">Simpan</button>
               </div>
               </div>
 
@@ -3950,6 +3915,21 @@
 
 @section('js')
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
+<script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+{{-- Modal pemilih disamakan persis dengan modal pemilih menu Kas, pola yang sama
+     persis dengan giroditerima.blade.php/so.blade.php. Ada 6 wrapper modal: #form
+     (dipakai bersama oleh panel-panel Valas/CustSupp/DPP/DPH/DPHBBG/DPHUHT/DPHUHTBBM/
+     Devisi/Perkiraan/Departemen/Lawan/Customer/Invoice), 4 modal berdiri sendiri untuk
+     Pencairan Giro/Perkiraan BGC, dan #modalBank untuk Perkiraan Bank. --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  jQuery('#form, #modalListBGCEdit, #modalPerkiraanBGC, #modalListBGC, #modalListBGCAddKoreksi, #modalBank').addClass('picker-kas')
+  jQuery('#form .modal-footer .btn, #modalListBGCEdit .modal-footer .btn, #modalPerkiraanBGC .modal-footer .btn, #modalListBGC .modal-footer .btn, #modalListBGCAddKoreksi .modal-footer .btn, #modalBank .modal-footer .btn').filter(function () {
+    return jQuery.trim(jQuery(this).text()) === 'Batal'
+  }).addClass('picker-kas-batal')
+  pickerKasInit('tabel_add_list_perkiraanbank', { order: [[0, 'asc']] })
+})
+</script>
 <script type="text/javascript">
 let listInvoice = []
 // let tempNoBukti = ''
@@ -5691,6 +5671,7 @@ function buttonAddListLawan () {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_lawan").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_lawan', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -5767,6 +5748,7 @@ function buttonAddListLawanBGC () {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_lawan").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_lawan', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -5834,6 +5816,7 @@ function modalDPP (dataLawan) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dpp").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dpp', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -5895,6 +5878,7 @@ function modalDPHUHTBBM (dataLawan) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dphuhtbbm_custsupp").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dphuhtbbm_custsupp', { order: [[0, 'asc']] })
       document.getElementById("input_dphuhtbbm_namacustsupp").value = ''
       document.getElementById("input_dphuhtbbm_kodecustsupp").value = ''
 
@@ -5972,6 +5956,7 @@ function modalDPHUHT (dataLawan) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dphuht").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dphuht', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -6043,6 +6028,7 @@ function modalDPH (dataLawan) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dph").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dph', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -6145,6 +6131,7 @@ function buttonMinusUMB (index) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dphuhtbbm").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dphuhtbbm', { ordering: false })
 
       if (res.length) {
         document.getElementById("AddAddJumlah").value = res[0].totalqntx
@@ -6250,6 +6237,7 @@ function buttonPlusUMB (index) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dphuhtbbm").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dphuhtbbm', { ordering: false })
 
       if (res.length) {
         document.getElementById("AddAddJumlah").value = res[0].totalqntx
@@ -6377,6 +6365,7 @@ function onChangeDPPUMB (index) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dphuhtbbm").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dphuhtbbm', { ordering: false })
 
       if (res.length) {
         document.getElementById("AddAddJumlah").value = res[0].totalqntx
@@ -6484,6 +6473,7 @@ function buttonAddPickCustDPHUHTBBM (kode, nama,perkiraanlawan, kodelawan , kete
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_dphuhtbbm").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_dphuhtbbm', { ordering: false })
 
 
 
@@ -6589,6 +6579,7 @@ function buttonAddListDepartemen () {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_departemen").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_departemen', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -6649,15 +6640,16 @@ function buttonAddListValas () {
       // if(!res.length) {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
-      document.getElementById("tabel_data_add_list_perkiraan").innerHTML = rowTable
+      document.getElementById("tabel_data_add_list_valas").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_valas', { order: [[0, 'asc']] })
 
       if (res.length) {
 
         $('.showhidemodalbodyadd').hide();
-        $('#modalAddListPerkiraan').show();
+        $('#modalAddListValas').show();
         $("#form").modal('toggle')
       } else {
-        alertify.warning("Perkiraan tidak ditemukkan")
+        alertify.warning("Valas tidak ditemukkan")
       }
 
 
@@ -6712,6 +6704,7 @@ function buttonAddListDevisi () {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_devisi").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_devisi', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -6773,6 +6766,7 @@ function buttonAddListPerkiraan () {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_perkiraan").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_perkiraan', { order: [[0, 'asc']] })
 
       if (res.length) {
 
@@ -6853,6 +6847,7 @@ function buttonAddListInvoice () {
       //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
       // }
       document.getElementById("tabel_data_add_list_invoice").innerHTML = rowTable
+      pickerKasInit('tabel_add_list_invoice', { ordering: false })
 
       if (res.length) {
 
@@ -7024,7 +7019,6 @@ function buttonAddListNoInvoice () {
 
 function buttonAddListDPH () {
   console.log('buttonAddListDPH')
-  // $('#tabel_add_list_custsupp').DataTable().destroy();
   $.ajax({
     url: "{!! url('girodibukalistdphbbg') !!}",
     type: "get",
@@ -7059,10 +7053,7 @@ function buttonAddListDPH () {
         rowTable= `<tr><td class="text-center" colspan=8>Tidak ada data</td></tr>`
       }
       document.getElementById("tabel_data_add_list_dphbbg").innerHTML = rowTable
-    //   $("#tabel_add_list_custsupp").DataTable({
-    //     "lengthChange": false,
-    //       "paging": false ,
-    // });
+      pickerKasInit('tabel_add_list_dphbbg', { order: [[0, 'asc']] })
       $('.showhidemodalbodyadd').hide();
       $('#modalAddListDPHBBG').show();
       $("#form").modal('toggle')
@@ -7080,7 +7071,6 @@ function buttonAddListDPH () {
 
 function buttonAddListCustSupp () {
   console.log('buttonAddListCustsupp')
-  $('#tabel_add_list_custsupp').DataTable().destroy();
   $.ajax({
     url: "{!! url('girodibukalistcustsupp') !!}",
     type: "get",
@@ -7108,10 +7098,7 @@ function buttonAddListCustSupp () {
         rowTable= `<tr><td class="text-center" colspan=3>Tidak ada data</td></tr>`
       }
       document.getElementById("tabel_data_add_list_custsupp").innerHTML = rowTable
-      $("#tabel_add_list_custsupp").DataTable({
-        "lengthChange": false,
-          "paging": false ,
-    });
+      pickerKasInit('tabel_add_list_custsupp', { order: [[0, 'asc']] })
       $('.showhidemodalbodyadd').hide();
       $('#modalAddListCustsupp').show();
       $("#form").modal('toggle')
@@ -8204,6 +8191,7 @@ function buttonAddGiroKoreksi () {
         });
 
         document.getElementById("tabel_data_add_list_pencairangiroaddkoreksi").innerHTML = rowTable
+        pickerKasInit('tabel_add_list_pencairangiroaddkoreksi', { order: [[0, 'asc']] })
 
         $('#modalListBGCAddKoreksi').modal("toggle")
       } else {
@@ -8310,6 +8298,7 @@ function buttonAddPickPerkiraanBGC (perkiraan , keterangan) {
         });
 
         document.getElementById("tabel_data_add_list_pencairangiro").innerHTML = rowTable
+        pickerKasInit('tabel_add_list_pencairangiro', { ordering: false })
         $('#modalPerkiraanBGC').modal("toggle")
         $('#modalListBGC').modal("toggle")
       } else {
@@ -8427,6 +8416,7 @@ function refreshDataTableGiroKoreksi (nobukti = '' , urut = 0) {
         });
 
         document.getElementById("tabel_data_add_list_pencairangiroedit").innerHTML = rowTable
+        pickerKasInit('tabel_add_list_pencairangiroedit', { ordering: false })
         // $('#modalPerkiraanBGC').modal("toggle")
         // $('#modalListBGCEdit').modal("toggle")
       } else {
@@ -8562,6 +8552,7 @@ function buttonAddEditItem (i) {
           });
 
           document.getElementById("tabel_data_add_list_pencairangiroedit").innerHTML = rowTable
+          pickerKasInit('tabel_add_list_pencairangiroedit', { ordering: false })
           // $('#modalPerkiraanBGC').modal("toggle")
           $('#modalListBGCEdit').modal("toggle")
         } else {

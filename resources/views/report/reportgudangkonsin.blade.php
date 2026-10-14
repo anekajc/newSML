@@ -1,4 +1,4 @@
-@extends('masterreport2')
+@extends('report.masterreport2')
 
 <!-- Warna centang -->
   <style>
@@ -10,7 +10,7 @@
   </style>
 <!-- Warna centang -->
 
-@include('modalMarketingSO')
+@include('report.modalMarketingSO')
 
 @section('header2')
   <div class="w-100 bg-light shadow-sm py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="margin-top:-20px; margin-bottom:150px;">

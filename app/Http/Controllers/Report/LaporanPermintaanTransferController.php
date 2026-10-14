@@ -19,7 +19,7 @@ class LaporanPermintaanTransferController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportpermintaantransfer' , [
+      return view('report.reportpermintaantransfer' , [
         "akses" => $akses
       ]);
     } else {

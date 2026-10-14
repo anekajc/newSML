@@ -14,16 +14,12 @@ use Illuminate\Support\Facades\DB;
 class PemakaianBarangController extends Controller
 {
 
-    // Outstanding PPI (Permintaan Pemakaian Internal) yang belum sepenuhnya diserahkan,
-    // untuk rentang tanggal tertentu. Dipakai bareng oleh index() dan loadAll() supaya
+    // Outstanding PPI (Permintaan Pemakaian Internal) yang belum sepenuhnya diserahkan —
+    // SEMUA tanggal, tidak ikut filter Periode (filter Periode hanya untuk tab Pemakaian
+    // Barang, lihat fetchPenerimaan()). Dipakai bareng oleh index() dan loadAll() supaya
     // keduanya selalu memakai query yang sama persis (tidak ada lagi drift antar dua tempat).
-    // TANGGAL membawa komponen waktu, jadi dipakai rentang setengah-terbuka [date1, date2+1hari)
-    // bukan BETWEEN — sama seperti PermintaanPemakaianController::fetchList() — supaya baris
-    // yang timestamp-nya di tanggal akhir tidak ikut terbuang.
-    private function fetchOutstanding(string $date1, string $date2)
+    private function fetchOutstanding()
     {
-        $date2plus1 = date('Y-m-d', strtotime($date2 . ' +1 day'));
-
         $temp = DB::connection("SML")->select("select YEAR(d.tanggal) Tahun, MONTH(d.tanggal) Bulan ,A.NOBUKTI,D.TANGGAL,A.KODEBRG,C.NAMABRG, D.Kodegdg ,  G.NAMA NamaGudangAsal,a.Sat Satuan , a.Nosat NOSAT, a.ISI ISI,
 CASE WHEN A.NOSAT=1 THEN A.Qnt WHEN A.Nosat=2 THEN A.Qnt2 WHEN A.NoSat=3 THEN A.Qnt2 END QNT, Isnull(A.QntCLose,0) QntCLose
 ,B.QNT QNTPB,CASE WHEN A.NOSAT=1 THEN A.Qnt WHEN A.Nosat=2 THEN A.Qnt2 WHEN A.NoSat=3 THEN A.Qnt2 END- Isnull(A.QntCLose,0)-ISNULL(B.QNT,0) QntOS ,A.Urut
@@ -36,8 +32,8 @@ LEFT OUTER JOIN DBPRPENYERAHANBHN D ON A.NOBUKTI=D.NOBUKTI
 LEFT OUTER JOIN DBGUDANG G ON D.Kodegdg=G.KODEGDG
 
 where  CASE WHEN A.NOSAT=1 THEN A.Qnt WHEN A.Nosat=2 THEN A.Qnt2 WHEN A.NoSat=3 THEN A.Qnt2 END - Isnull(A.QntCLose,0) -ISNULL(B.QNT,0) <>0 and d.IsOtorisasi1 = 1
-and year(D.tanggal)>2022 and D.Tanggal >= :date1 and D.Tanggal < :date2plus1
-    ", ["date1" => $date1, "date2plus1" => $date2plus1]);
+and year(D.tanggal)>2022
+    ");
 
         $grouped = collect($temp)->groupBy('NOBUKTI');
         $out = [];
@@ -50,8 +46,9 @@ and year(D.tanggal)>2022 and D.Tanggal >= :date1 and D.Tanggal < :date2plus1
     // Dokumen Pemakaian Barang (dbPenyerahanBhn) yang sudah dibuat pada rentang tanggal
     // tertentu, dikelompokkan per NOBUKTI. QntOS pada header dijumlah dari seluruh baris
     // detail (lihat catatan di bawah) supaya badge Status konsisten dengan
-    // PermintaanPemakaianController::fetchList(). Rentang setengah-terbuka, lihat catatan
-    // di fetchOutstanding().
+    // PermintaanPemakaianController::fetchList(). TANGGAL membawa komponen waktu, jadi
+    // dipakai rentang setengah-terbuka [date1, date2+1hari) bukan BETWEEN supaya baris yang
+    // timestamp-nya di tanggal akhir tidak ikut terbuang.
     private function fetchPenerimaan(string $date1, string $date2)
     {
         $date2plus1 = date('Y-m-d', strtotime($date2 . ' +1 day'));
@@ -137,7 +134,7 @@ and year(D.tanggal)>2022 and D.Tanggal >= :date1 and D.Tanggal < :date2plus1
             "menul0" => $menul0,
             "date1" => $date1,
             "date2" => $date2,
-            "outstandingArray" => $this->fetchOutstanding($date1, $date2),
+            "outstandingArray" => $this->fetchOutstanding(),
             "penerimaanArray" => $this->fetchPenerimaan($date1, $date2),
             "akses" => $akses
         ]);
@@ -257,7 +254,7 @@ where iduser = :username and TRANS = 'PBG'
         }
 
         return [
-            "outstandingArray" => $this->fetchOutstanding($date1, $date2),
+            "outstandingArray" => $this->fetchOutstanding(),
             "penerimaanArray" => $this->fetchPenerimaan($date1, $date2)
         ];
     }

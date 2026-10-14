@@ -4,6 +4,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {{-- PWA (notifikasi push permintaan otorisasi) - lihat public/js/otorisasi-push.js --}}
+    <link rel="manifest" href="{!! URL::asset('manifest.webmanifest') !!}" />
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="apple-touch-icon" href="{!! URL::asset('img/pwa-192.png') !!}" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="AJC" />
+    <link rel="stylesheet" href="{!! URL::asset('css/otorisasi-push.css') !!}?v={{ @filemtime(base_path('public/css/otorisasi-push.css')) ?: '1' }}" />
+    <link rel="stylesheet" href="{!! URL::asset('css/header-mobile.css') !!}?v={{ @filemtime(base_path('public/css/header-mobile.css')) ?: '1' }}" />
     <link
         href="https://fonts.googleapis.com/css?family=Lato:300,400,400i,700|Poppins:300,400,500,600,700|PT+Serif:400,400i&display=swap"
         rel="stylesheet" type="text/css" />
@@ -975,28 +983,38 @@
                 <div class="breadcrumb" id="breadcrumb"><span>Beranda</span></div>
             </div>
             <div class="header-right">
-                <div class="period-badge">
-                  Username: {{ Auth::user()->username }}
+                <button type="button" id="otoPushToggle" class="oto-bell" title="Aktifkan notifikasi otorisasi di perangkat ini" style="display:none">
+                  <i class="bi bi-bell-slash"></i>
+                </button>
+                <a href="{{ url('otorisasiinbox') }}" class="oto-bell" title="Permintaan otorisasi">
+                  <i class="bi bi-bell"></i>
+                  <span id="otoBellCount" class="oto-bell-count" style="display:none">0</span>
+                </a>
+                @php
+                  $namaBulanHeader = [
+                      1 => 'Januari',
+                      2 => 'Februari',
+                      3 => 'Maret',
+                      4 => 'April',
+                      5 => 'Mei',
+                      6 => 'Juni',
+                      7 => 'Juli',
+                      8 => 'Agustus',
+                      9 => 'September',
+                      10 => 'Oktober',
+                      11 => 'November',
+                      12 => 'Desember',
+                  ][$periode->bulan] ?? '';
+                @endphp
+                {{-- .pb-full (layar lebar) / .pb-short (mobile < 768px) - lihat css/header-mobile.css.
+                     berkas/newsetupperiodekerja.blade.php menulis ulang isi badge ini dengan pola yang sama. --}}
+                <div class="period-badge"><span class="pb-full">Username: {{ Auth::user()->username }}
           &nbsp;–&nbsp;
-                    Periode:
-                    {{ [
-                        1 => 'Januari',
-                        2 => 'Februari',
-                        3 => 'Maret',
-                        4 => 'April',
-                        5 => 'Mei',
-                        6 => 'Juni',
-                        7 => 'Juli',
-                        8 => 'Agustus',
-                        9 => 'September',
-                        10 => 'Oktober',
-                        11 => 'November',
-                        12 => 'Desember',
-                    ][$periode->bulan] ?? '' }}
-                    {!! $periode->tahun !!}</div>
+                    Periode: {{ $namaBulanHeader }}
+                    {!! $periode->tahun !!}</span><span class="pb-short">{{ mb_substr($namaBulanHeader, 0, 3) }} {!! $periode->tahun !!}</span></div>
                 <div id="avatar" class="avatar">{{ \Auth::user()->username[0] }}</div>
-                <a class="logout-link" href="{{ route('logout') }}">
-                  <i class="bi bi-power"></i> Log Out
+                <a class="logout-link" href="{{ route('logout') }}" title="Log Out">
+                  <i class="bi bi-power"></i><span class="logout-text"> Log Out</span>
                 </a>
             </div>
         </header>
@@ -1735,6 +1753,18 @@ function goHome() {
 }
 
 </script>
+
+    <script>
+      window.OTO_PUSH = {
+        vapidKey: @json(config('services.webpush.public_key')),
+        swUrl: "{!! URL::asset('sw.js') !!}",
+        subscribeUrl: "{!! url('pushsubscribe') !!}",
+        unsubscribeUrl: "{!! url('pushunsubscribe') !!}",
+        countUrl: "{!! url('otorisasicount') !!}",
+        token: "{!! csrf_token() !!}",
+      };
+    </script>
+    <script src="{!! URL::asset('js/otorisasi-push.js') !!}?v={{ @filemtime(base_path('public/js/otorisasi-push.js')) ?: '1' }}"></script>
 
     @include('partials.ajax-error-logger')
     @yield('js')

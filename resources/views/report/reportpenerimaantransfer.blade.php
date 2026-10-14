@@ -1,4 +1,4 @@
-@extends('masterreport')
+@extends('report.masterreport')
 
 @section('reportname')
       <h3>Report Penerimaan Transfer</h3>

@@ -6,6 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="author" content="SemiColonWeb" />
 
+  {{-- PWA (notifikasi push permintaan otorisasi) - lihat public/js/otorisasi-push.js --}}
+  <link rel="manifest" href="{!! URL::asset('manifest.webmanifest') !!}" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="apple-touch-icon" href="{!! URL::asset('img/pwa-192.png') !!}" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="AJC" />
+  <link rel="stylesheet" href="{!! URL::asset('css/otorisasi-push.css') !!}?v={{ @filemtime(base_path('public/css/otorisasi-push.css')) ?: '1' }}" />
+  <link rel="stylesheet" href="{!! URL::asset('css/header-mobile.css') !!}?v={{ @filemtime(base_path('public/css/header-mobile.css')) ?: '1' }}" />
+
   {{-- Fonts --}}
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400,400i,700|Poppins:300,400,500,600,700|PT+Serif:400,400i&display=swap"
         rel="stylesheet" type="text/css" />
@@ -339,14 +348,23 @@
       <div class='titleText' id="breadcrumb"></div>
 
       <div class="header-right">
+        <button type="button" id="otoPushToggle" class="oto-bell" title="Aktifkan notifikasi otorisasi di perangkat ini" style="display:none">
+          <i class="bi bi-bell-slash"></i>
+        </button>
+        <a href="{{ url('otorisasiinbox') }}" class="oto-bell" title="Permintaan otorisasi">
+          <i class="bi bi-bell"></i>
+          <span id="otoBellCount" class="oto-bell-count" style="display:none">0</span>
+        </a>
+        {{-- .pb-full (layar lebar) / .pb-short (mobile < 768px) - lihat css/header-mobile.css. --}}
         <div class="period-badge" id="period-badge">
-          Username: {{ Auth::user()->username }}
+          <span class="pb-full">Username: {{ Auth::user()->username }}
           &nbsp;–&nbsp;
-          Periode: {{ $periode->bulan }} / {{ $periode->tahun }}
+          Periode: {{ $periode->bulan }} / {{ $periode->tahun }}</span>
+          <span class="pb-short">{{ [1 => 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][(int) $periode->bulan] ?? $periode->bulan }} {{ $periode->tahun }}</span>
         </div>
         <div class="avatar">{{ strtoupper(substr(Auth::user()->username, 0, 1)) }}</div>
-        <a class="logout-link" href="{{ route('logout') }}">
-          <i class="bi bi-power"></i> Log Out
+        <a class="logout-link" href="{{ route('logout') }}" title="Log Out">
+          <i class="bi bi-power"></i><span class="logout-text"> Log Out</span>
         </a>
       </div>
     </header>
@@ -355,6 +373,34 @@
   <div id="content-dynamic" class="nm-ui" style="display:none;"></div>
   <div id="content-report" class="nm-ui" style="display:none;"></div>
   <div id="content-blade">
+    @if (request()->routeIs('home'))
+      {{-- Ringkasan permintaan otorisasi - HANYA mobile (< 768px, lihat css/otorisasi-push.css);
+           di layar lebar cukup lonceng header. Tujuan klik sama dengan lonceng header. --}}
+      <div class="oto-home" id="otoHome">
+        <a class="oto-home-main" href="{{ url('otorisasiinbox') }}">
+          <div class="oto-home-head">
+            <span class="oto-home-label"><i class="bi bi-shield-check"></i>Otorisasi</span>
+            <span class="oto-home-time" id="otoHomeTime"></span>
+          </div>
+          <div class="oto-home-stats" id="otoHomeStats">
+            <div class="oto-home-stat is-pending"><b id="otoHomePending">–</b><span>Menunggu persetujuan Anda</span></div>
+            <div class="oto-home-stat is-hasil"><b id="otoHomeHasil">–</b><span>Hasil permintaan baru</span></div>
+          </div>
+          <div class="oto-home-clear" id="otoHomeClear" style="display:none">
+            <i class="bi bi-check2-circle"></i>
+            <div>Tidak ada permintaan otorisasi<small>Semua sudah ditindaklanjuti</small></div>
+          </div>
+        </a>
+        <div class="oto-home-enable" id="otoHomeEnable" style="display:none">
+          <i class="bi bi-bell"></i>
+          <span id="otoHomeEnableText"></span>
+          <button type="button" id="otoHomeEnableBtn" style="display:none">Aktifkan</button>
+        </div>
+        <a class="oto-home-cta" href="{{ url('otorisasiinbox') }}">
+          <span>Buka kotak otorisasi</span><i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    @endif
     <div class="container-fluid clearfix">
       <div class="row gutter-40 col-mb-80">
         @yield('content')
@@ -1113,6 +1159,65 @@ function goHome() {
 }
 
 </script>
+
+  <script>
+    window.OTO_PUSH = {
+      vapidKey: @json(config('services.webpush.public_key')),
+      swUrl: "{!! URL::asset('sw.js') !!}",
+      subscribeUrl: "{!! url('pushsubscribe') !!}",
+      unsubscribeUrl: "{!! url('pushunsubscribe') !!}",
+      countUrl: "{!! url('otorisasicount') !!}",
+      token: "{!! csrf_token() !!}",
+    };
+  </script>
+  @if (request()->routeIs('home'))
+  <script>
+    // Panel #otoHome (Beranda, mobile). Didaftarkan SEBELUM otorisasi-push.js supaya
+    // event pertamanya (otopush:count / otopush:status) tidak terlewat.
+    (function () {
+      function setStat(id, n) {
+        var b = document.getElementById(id);
+        b.textContent = n > 99 ? '99+' : n;
+        b.parentNode.classList.toggle('has', n > 0);
+      }
+
+      document.addEventListener('otopush:count', function (e) {
+        var pending = e.detail.pending || 0, hasil = e.detail.hasil || 0;
+        setStat('otoHomePending', pending);
+        setStat('otoHomeHasil', hasil);
+        var empty = !pending && !hasil;
+        document.getElementById('otoHomeStats').style.display = empty ? 'none' : '';
+        document.getElementById('otoHomeClear').style.display = empty ? '' : 'none';
+        var now = new Date();
+        document.getElementById('otoHomeTime').textContent = 'Diperbarui ' +
+          ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+      });
+
+      var ENABLE = {
+        off: ['Notifikasi belum aktif di HP ini.', true],
+        'ios-need-install': ['Di iPhone: tekan Share lalu "Add to Home Screen", buka AJC dari ikonnya untuk menerima notifikasi.', false],
+        denied: ['Notifikasi diblokir. Izinkan lewat pengaturan situs di browser.', false],
+      };
+
+      document.addEventListener('otopush:status', function (e) {
+        var d = ENABLE[e.detail];
+        document.getElementById('otoHomeEnable').style.display = d ? '' : 'none';
+        if (!d) return;
+        document.getElementById('otoHomeEnableText').textContent = d[0];
+        document.getElementById('otoHomeEnableBtn').style.display = d[1] ? '' : 'none';
+      });
+
+      document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('otoHomeEnableBtn').addEventListener('click', function () {
+          OtoPush.subscribe().catch(function (err) {
+            if (window.alertify) alertify.warning(err.message); else alert(err.message);
+          });
+        });
+      });
+    })();
+  </script>
+  @endif
+  <script src="{!! URL::asset('js/otorisasi-push.js') !!}?v={{ @filemtime(base_path('public/js/otorisasi-push.js')) ?: '1' }}"></script>
 
   @include('partials.ajax-error-logger')
   @yield('js')

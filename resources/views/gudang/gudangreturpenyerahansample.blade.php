@@ -1,152 +1,85 @@
-@extends('gudang.newmaster')
+@extends('newmasterTest')
 @section('buttons')
 
+@section('page-title', 'Retur Penyerahan Sample')
+@section('title', 'SML - Retur Penyerahan Sample')
+
 @endsection
-{{-- tampilan search bar 1 --}}
-  @section('css')
-  <style>
-  #tabel_filter {
-      display: flex;
-      align-items: flex-end;
-      margin-top: 8px;  
-      margin-right: 10px;
-      margin-bottom: -10px;
-    }
 
-  #tabel_filter label input {
-      width: 150px;
-      padding: 5px 10px; 
-      border-radius: 10px; 
-      border: 1px solid #ccc; 
-      box-shadow: none; 
-      font-size: 0.65rem; 
-    }
+@section('css')
 
-  #tabel_filter label {
-      font-weight: 600; 
-      font-size: 0.9rem; 
-      color: #333;
-    }
-  </style>
-{{-- end tampilan search bar 1 --}}
+<link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
+<link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
 
-{{-- tampilan search bar 2 --}}
-  <style>
-  #tabel2_filter {
-      display: flex;
-      align-items: flex-end;
-      margin-top: 8px;
-      margin-right: 10px;
-      margin-bottom: -10px;
-    }
+<style>
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.status-badge-sudah { color: #16a34a; border: 1px solid #cdebd7; background: #e7f7ed; }
+.status-badge-belum { color: #b45309; border: 1px solid #fbe3bd; background: #fef3e0; }
 
-  #tabel2_filter label input {
-      width: 150px;
-      padding: 5px 10px; 
-      border-radius: 10px; 
-      border: 1px solid #ccc; 
-      box-shadow: none; 
-      font-size: 0.65rem; 
-    }
+#tabel thead th,
+#tabel_add thead th,
+#tabel_detail thead th,
+#tabel_add_list_sales thead th,
+#tabel_add_list_serahsample thead th,
+#tabel_add_list_item thead th {
+  background: #f8f9fb !important;
+  color: #6b7280 !important;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+  border-bottom: 1px solid #e7e9ee;
+  border-top: none;
+}
 
-  #tabel2_filter label {
-      font-weight: 600; 
-      font-size: 0.9rem; 
-      color: #333;
-    }
+#tabel tbody tr:hover {
+  background-color: #f5f3ff;
+}
 
-  #tabel2_filter input:focus {
-      border-color: #007bff; 
-      outline: none; 
-    }
-  </style>
-{{-- end tampilan search bar 2 --}}
+.data-table th,
+.data-table td {
+  white-space: nowrap;
+}
 
-{{-- tampilan search sales --}}
-  <style>
-    #tabel_add_list_sales_filter{
-      display: flex;
-      align-items: flex-end;
-      margin-bottom: -10px;
-    }
-    #tabel_add_list_sales_filter label input {
-      width: 150px;
-      border-radius: 10px; 
-      border: 1px solid #ccc; 
-      box-shadow: none; 
-      font-size: 0.65rem;
-    }
-  </style>
-{{-- end tampilan search sales --}}
+{{-- Wadah tombol Aksi (action-buttons-wrap, bukan .po-aksi-wrap bawaan po-table-header.css)
+     tetap butuh flex manual -- selector .po-list-page tidak menjangkau nama class ini. --}}
+#tabel td:first-child {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
 
-{{-- tampilan search serahsample --}}
-  <style>
-    #tabel_add_list_serahsample_filter{
-      display: flex;
-      align-items: flex-end;
-      margin-bottom: -10px;
-    }
-    #tabel_add_list_serahsample_filter label input {
-      width: 150px;
-      border-radius: 10px; 
-      border: 1px solid #ccc; 
-      box-shadow: none; 
-      font-size: 0.65rem;
-    }
-  </style>
-{{-- end tampilan search serahsample --}}
-
-{{-- tampilan search modal barang all --}}
-  <style>
-    #input_search_barang_all {
-      width: 150px;
-      border-radius: 10px; 
-      border: 1px solid #ccc; 
-      box-shadow: none; 
-      font-size: 0.65rem;
-      display: flex;
-      align-items: flex-end;
-      margin-left: 95px;
-    }
-    .search-label {
-    font-weight: bold;
-    font-size: 0.75rem;
-    margin-right: -155px;
-    margin-top : -45px;
-    display: inline-block;
-    vertical-align: middle;
-    }
-  </style>
-{{-- end tampilan search modal barang all --}}
+#tabel tbody .action-buttons-wrap {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-6px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+}
+#tabel tbody tr:hover .action-buttons-wrap,
+#tabel tbody tr:focus-within .action-buttons-wrap {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+</style>
+@endsection
 @section('content')
 
 <div id="imagecontainer" class="d-none" style="">
   <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
 </div>
 
-<div id='page1' class="container-fluid">
-  <!-- <div id="qrcode"></div> -->
-  <div class="" style="margin-top:-80px;">
-  <div class="row">
-    <div class="col-6 text-left" >
-      <h1>Retur Penyerahan Sample</h1>
-    </div>
-    <div class="col-6 text-right">
-      <button type="button" class="btn btn-primary btn-lg " style="
-      height: 30px; 
-      margin-top: 20px; 
-      padding: 4px 12px; 
-      border-radius: 20px; 
-      font-size: 0.75rem; 
-      font-weight: 600; 
-      text-transform: uppercase; 
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" 
-      onclick="buttonAdd()">Add Penyerahan</button>
-    </div>
-
-<!-- <button onclick="loadAll()">tes</button> -->
-</div>
+<div id='page1' class="container-fluid mainpage po-list-page">
 
 <div id="printContainer" style="display:none">
 
@@ -164,138 +97,86 @@
   <input type="hidden" name="_token" id="_token" value="{{ csrf_token() }}">
 
   <div class="card">
-    <div class="card-header">
-      <div class="row">
-        <div class="nav nav-tabs col-12" id="nav-tab" role="tablist" style="border-bottom: 0;">
-          <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab"
-             aria-controls="nav-home" aria-selected="true"
-             style="color: #fff; background-color: #007bff; border-radius: 20px; padding: 4px 12px; margin: 0 10px; font-weight: 600; font-size: 0.75rem;">
-            RPS Belum Otorisasi
-          </a>
-          <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab"
-             aria-controls="nav-profile" aria-selected="false"
-             style="color: #007bff; background-color: #f8f9fa; border-radius: 20px; padding: 4px 12px; margin: 0 10px; font-weight: 600; font-size: 0.75rem; border: 2px solid #007bff;">
-            RPS Sudah Otorisasi
-          </a>
-        </div>
-      </div>
-    </div>
-
     <div class="card-body" style="padding:0;">
-      <div class="tab-content" id="myTabContent">
-        {{-- Utama --}}
-        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-          <div class="row">
-            <div class="col-12" style="overflow:auto; padding:0; margin:0; width:100%;">
-              <div class="container-fluid">
-                <table id="tabel" class="table table-bordered table-striped">
-                  <thead class="text-center bg-primary text-white">
-                    <tr>
-                      <th style="padding: 4px 12px;" scope="col">Actions</th>
-                      <th style="padding: 4px 12px;" scope="col">No Bukti</th>
-                      <th style="padding: 4px 12px;" scope="col">Tanggal</th>
-                      <th style="padding: 4px 12px;" scope="col">User</th>        
-                    </tr>
-                  </thead>
-                  <tbody id="tabel_data" class="text-left">
-                    @foreach ($listData as $item)
-                    <tr>
-                    <td class="text-center">
-                      <div class="d-flex justify-content-center align-items-center gap-2">
-                          <button class="btn btn-warning btn-sm p-1 px-2" title="Details" onclick="buttonDetail('{{ $item->NoBukti }}')">
-                              <i class="bi bi-info"></i>
-                          </button>
-                          <button class="btn btn-success btn-sm p-1 px-2" title="Edit" onclick="buttonEdit('{{ $item->NoBukti }}')">
-                              <i class="bi bi-pen"></i>
-                          </button>
-                          @if($item->IsOtorisasi1 == 0)
-                          <button class="btn btn-info btn-sm p-1 px-2" title="Otorisasi" onclick="buttonOtorisasi('{{ $item->NoBukti }}')">
-                            <i class="bi bi-key"></i>
-                          </button>
-                          @else
-                          <button class="btn btn-danger btn-sm p-1 px-2" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('{{ $item->NoBukti }}')">
-                            <i class="bi bi-key"></i>
-                          </button>
-                          @endif
-                      </div>
-                    </td>
-                    <td>{{ $item->NoBukti}}</td>
-                    <td>{{ date("Y/m/d", strtotime($item->Tanggal)) }}</td>
-                    <td>{{ $item->IDUser}}</td>
-                    </tr>
-                @endforeach
-                </tbody>
-                </table>
+      <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
+        {{-- RPS Belum Otorisasi + RPS Sudah Otorisasi digabung jadi satu tabel, dengan
+             kolom Status dan filter Status di toolbar (client-side), sama seperti merge
+             di gudangpermintaansample.blade.php/gudangpenyerahansample.blade.php. --}}
+        <div class="po-toolbar">
+          <input type="search" id="rsSearch1" class="po-search-inp" placeholder="Cari data">
+          <div class="po-len-wrap">
+            <label for="rsLen1">Tampilkan</label>
+            <select id="rsLen1" class="po-len-inp">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="-1">Semua</option>
+            </select>
+          </div>
+          <button class="po-btn-filter" type="button" onclick="$('#modalFilterRS').modal('show')">
+            <i class="bi bi-funnel"></i> Filter
+          </button>
+          <div class="po-toolbar-act">
+            <button id="AddVisibility" class="btn btn-chip-biru" onclick="buttonAdd()">Add Penyerahan</button>
+          </div>
+        </div>
+
+        <div class="modal fade rt-filter" id="modalFilterRS">
+          <div class="modal-dialog modal-md">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-funnel"></i> Filter Data</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterRS').modal('hide')"><span aria-hidden="true">&times;</span></button>
+              </div>
+              <div class="modal-body">
+                <div class="rt-section">
+                  <div class="rt-group-label">Status</div>
+                  <div>
+                    <label class="rt-field-label" for="rsStatus">Status Otorisasi</label>
+                    <select class="rt-native" id="rsStatus">
+                      <option value="" selected>Semua Status</option>
+                      <option value="0">Belum Otorisasi</option>
+                      <option value="1">Sudah Otorisasi</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="rt-reset-link" onclick="$('#rsStatus').val('')">Reset semua</button>
+                <div class="rt-footer-buttons">
+                  <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal" onclick="$('#modalFilterRS').modal('hide')">Batal</button>
+                  <button type="button" class="rt-btn rt-btn-primary" onclick="rsFilterChanged(); $('#modalFilterRS').modal('hide');">Terapkan</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        {{-- sudah otorisasi --}}
-        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-          <div class="row">
-            <div class="col-12" style="overflow:auto; padding:0; margin:0; width:100%;">
-              <div class="container-fluid">
-                <table id="tabel2" class="table table-bordered table-striped">
-                  <thead class="text-center bg-primary text-white">
-                    <tr>
-                      <th style="padding: 4px 12px;" scope="col">Actions</th>
-                      <th style="padding: 4px 12px;" scope="col">No Bukti</th>
-                      <th style="padding: 4px 12px;" scope="col">Tanggal</th>
-                      <th style="padding: 4px 12px;" scope="col">User</th>
-                      <th style="padding: 4px 12px;" scope="col">User Oto</th>
-                      <th style="padding: 4px 12px;" scope="col">Tanggal Oto</th>   
-                    </tr>
-                  </thead>
-                  <tbody id="tabel2_data" class="text-left">
-                    @foreach ($listData2 as $item)
-                      <tr>
-                        <td class="text-center">
-                        <div class="d-flex justify-content-center align-items-center gap-2">
-                            <button class="btn btn-warning btn-sm p-1 px-2" title="Details" onclick="buttonDetail('{{ $item->NoBukti }}')">
-                                <i class="bi bi-info"></i>
-                            </button>
-                            @if($item->IsOtorisasi1 == 0)
-                            <button class="btn btn-info btn-sm p-1 px-2" title="Otorisasi" onclick="buttonOtorisasi('{{ $item->NoBukti }}')">
-                              <i class="bi bi-key"></i>
-                            </button>
-                            @else
-                            <button class="btn btn-danger btn-sm p-1 px-2" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('{{ $item->NoBukti }}')">
-                              <i class="bi bi-key"></i>
-                            </button>
-                            @endif
-			    <button style="" class="btn btn-primary btn-sm" type="button"   onclick="submitPrint('{{ $item->NoBukti }}')" ><i class="bi bi-printer"></i>
-                            </button>
-                        </div>
-                      </td>
-                      <td>{{ $item->NoBukti}}</td>
-                      <td>{{ date("Y/m/d", strtotime($item->Tanggal)) }}</td>
-                      <td>{{ $item->IDUser}}</td>
-                      <td>{{ $item->OtoUser1 }}</td>
-                      <td>{{ $item->TglOto1 ? date("Y/m/d", strtotime($item->TglOto1)) : '' }}</td>
-                      </tr>
-                    @endforeach
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div> {{-- End Sudah Otorisasi --}}
+
+        <div id="rtBarTabel"></div>
+        <table id="tabel" class="data-table">
+          <thead style="white-space:nowrap;"></thead>
+          <tbody id="tabel_data" class="text-left"></tbody>
+        </table>
+        <div class="po-rt-hint">
+          <i class="bi bi-info-circle"></i>
+          Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
+          untuk menyembunyikan kolom atau mengatur jumlah desimal.
+        </div>
       </div>
     </div>
   </div>
 </div>
 </div>
-</div>
 
-<div id="page2" class="container-fluid" style="display: none; margin-top:-80px;" >
+<div id="page2" class="container-fluid mainpage" style="display: none;">
   <div class="row">
     <div class="col-6 text-left">
-      <h1>Form Retur Penyerahan Sample</h1>
+      <h1></h1>
     </div>
     <div class="col-6 text-right">
-      <button type="button" class="btn btn-danger btn-lg " style="
-        height: 30px; 
-            margin-top: 20px; 
+      <button type="button" class="btn btn-danger btn-lg" style="
+            height: 30px; 
             padding: 4px 12px; 
             border-radius: 20px; 
             font-size: 0.75rem; 
@@ -307,7 +188,7 @@
     </div>
       <div class="modal-body">
         <!-- <h1>Tes Modal</h1> -->
-        <div class="container-fluid">
+        <div id='formBsGrid' class="container-fluid">
         <div class="row">
         <input type="hidden" class="form-control" id="input_add_nourut" placeholder="No Urut" disabled>
         <!-- Kiri -->
@@ -328,8 +209,8 @@
                     <div class="input-group">
                         <input id="input_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
                         <input id="input_sales" type="hidden">
-                        <button type="button" id="btn_sales" onclick="buttonAddListSales()" class="btn btn-primary btn-sm rounded-end shadow-sm">
-                            <i class="bi bi-plus"></i>
+                        <button type="button" id="btn_sales" onclick="buttonAddListSales()" class="btn btn-chip-biru">
+                            <i class="bi bi-search"></i>
                         </button>
                     </div>
                 </div>
@@ -351,7 +232,7 @@
     </div>
     <div class="row ">
       <div class="col-md-12 text-right">
-      <button type="button" class="btn btn-primary" style="
+      <button type="button" class="btn btn-chip-biru" style="
       height: 30px;  
       padding: 4px 12px; 
       border-radius: 20px; 
@@ -360,7 +241,7 @@
       text-transform: uppercase; 
       transition: background-color 0.3s, box-shadow 0.3s;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-      onclick="buttonAddAddItem()" class="btn btn-secondary">Add Item</button>
+      onclick="buttonAddAddItem()">Tambah Item</button>
       </div>
     </div>
 
@@ -418,6 +299,7 @@
     </div>
     <!-- ADD SUBGROUP -->
     <div id="addAddItem" class="container-fluid showhide">
+      <div id='formBsGrid'>
             <!-- <div class="line"></div> -->
             <div class="row">
               <div class="col-4">
@@ -436,8 +318,8 @@
                 <div class="col-md-4">
                   <div class="input-group mb-3">
                     <input id="input_add_add_serahsample" type="text" class="form-control text-center" placeholder="No. Serah Sample" readonly>
-                    <button type="button" id="buttonAddListSerahSample" onclick="buttonAddListSerahSample()" class="btn btn-primary btn-sm rounded-end shadow-sm">
-                      <i class="bi bi-plus"></i>
+                    <button type="button" id="buttonAddListSerahSample" onclick="buttonAddListSerahSample()" class="btn btn-chip-biru">
+                      <i class="bi bi-search"></i>
                     </button>
                   </div>
                   <input type="hidden" id="input_urut_ref">
@@ -499,7 +381,7 @@
           </div>
             <div class="row mt-2">
               <div class="col-md-12 text-right">
-                <button type="button" class="btn btn-secondary" style="
+                <button type="button" class="btn btn-danger" style="
                 height: 30px; 
                 padding: 4px 12px; 
                 border-radius: 20px; 
@@ -510,7 +392,7 @@
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
                 onclick="closeShowHideAdd()" >Batal</button>
 
-                <button type="button" id="submitAddAdd" class="btn btn-primary" style="
+                <button type="button" id="submitAddAdd" class="btn btn-chip-biru" style="
                 height: 30px; 
                 padding: 4px 12px; 
                 border-radius: 20px; 
@@ -519,7 +401,7 @@
                 text-transform: uppercase; 
                 transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddAdd()">Submit Add</button>
 
-                <button type="button" id="submitAddEdit" class="btn btn-primary btn-lg" style="
+                <button type="button" id="submitAddEdit" class="btn btn-chip-biru btn-lg" style="
                 height: 30px; 
                 padding: 4px 12px; 
                 border-radius: 20px; 
@@ -632,7 +514,7 @@
 
     <!-- END ADD EDIT -->
 
-        
+        </div>
   </div>
     <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
 </div>
@@ -771,16 +653,6 @@
         <div class="modal-body" style="margin-top:-30px;">
           <div class="container-fluid mt-4">
 
-            <div class="row mb-2">
-              <div class="col-12 d-flex justify-content-end" style="padding-right: 0px;">
-                <div class="d-flex align-items-center">
-                  <label for="input_search_barang_all" class="me-2 mb-0">Search:</label>
-                  <input id="input_search_barang_all" type="text" class="form-control"
-                    style="max-width: 250px;" onkeypress="searchBarangAll(event)">
-                </div>
-              </div>
-            </div>
-
             <div class="row">
               <div class="table-responsive">
               <table id="tabel_add_list_item" class="table table-bordered table-striped">
@@ -817,7 +689,7 @@
 <!-- End modal list item add-->
 
 <!-- start modal detail -->
-<div id="page3" class="container-fluid" style="display: none; margin-top:-80px;">
+<div id="page3" class="container-fluid mainpage" style="display: none; margin-top:-80px;">
         <div class="row">
           <div class="col-6 text-left">
             <h2>Detail Retur Penyerahan Sample</h2>
@@ -919,6 +791,18 @@
 @endsection
 
 @section('js')
+<script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
+<script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+{{-- Modal pemilih Barang (#formAddListItem) disamakan persis dengan modal pemilih menu
+     Kas, pola yang sama persis dengan koreksistock.blade.php/perintahopname.blade.php. --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  jQuery('#formAddListItem').addClass('picker-kas')
+  jQuery('#formAddListItem .d-flex.justify-content-end .btn').filter(function () {
+    return jQuery.trim(jQuery(this).text()) === 'Close'
+  }).addClass('picker-kas-batal')
+})
+</script>
 <script type="text/javascript">
 let dataAddListItem = []
 let dataRefresh = []
@@ -937,19 +821,6 @@ let tempEditEdit = {}
 let tipeform = ''
 let tipeformitem = ''
 
-$(document).ready(function(){
-  $("#tabel").DataTable({
-    "lengthChange": false,
-    "paging": false,
-  });
-
-  $("#tabel2").DataTable({
-    "lengthChange": false,
-    "paging": false,
-  });
-  // loadAll();
-});
-
 function formatDate(date , pemisah = '-') {
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
@@ -964,6 +835,300 @@ function formatDate(date , pemisah = '-') {
     return [year, month, day].join(pemisah);
 }
 
+/* ============ Header tabel interaktif (window.ReportTable) ============
+ * Port 1:1 dari pola psCart/psAktifkanTabel milik gudangpenyerahansample.blade.php.
+ * RPS Belum Otorisasi + RPS Sudah Otorisasi digabung jadi satu tabel (#tabel), dengan
+ * kolom Status dan filter Status di toolbar -- sama seperti merge Belum/Sudah
+ * Otorisasi di gudangpermintaansample.blade.php/gudangpenyerahansample.blade.php.
+ * Hanya ada satu dataset di sini (tidak ada tab antrian terpisah), jadi hanya urut 1. */
+let rsCart = { 1 : [] }
+const RS_HREF = 'gudangreturpenyerahansample'
+const RS_TIPE_NAMA = { 0 : 'varchar', 1 : 'float', 2 : 'date', 3 : 'bool' }
+const RS_TIPE_KODE = { varchar : 0, float : 1, date : 2, bool : 3 }
+
+function rsPickCI (row, key) {
+  if (!row) { return undefined; }
+  if (row[key] !== undefined) { return row[key]; }
+  let lower = key.toLowerCase();
+  for (let k in row) {
+    if (k.toLowerCase() === lower) { return row[k]; }
+  }
+  return undefined;
+}
+
+function rsDefaultCart () {
+  return [
+    ['NoBukti',      'No. Bukti', 1, 'varchar', 0, 0],
+    ['Tanggal',      'Tanggal',   1, 'date',    0, 0],
+    ['IDUser',       'User',      1, 'varchar', 0, 0],
+    ['IsOtorisasi1', 'Status',    1, 'bool',    0, 0],
+    ['OtoUser1',     'User Oto',  1, 'varchar', 0, 0],
+    ['TglOto1',      'Tgl Oto',   1, 'date',    0, 0],
+  ]
+}
+
+function rsBuatCart (headers, values, isnumerics, isshowns, desimals) {
+  headers = headers || []
+  let cart = []
+  headers.forEach((h, i) => {
+    let tipe = Number(isnumerics[i]) || 0
+    let des = (desimals && desimals[i] !== undefined && desimals[i] !== null && desimals[i] !== '')
+      ? Number(desimals[i])
+      : (tipe === 1 ? 2 : 0)
+    cart.push([
+      values[i],
+      h,
+      Number(isshowns[i]) === 1 ? 1 : 0,
+      RS_TIPE_NAMA[tipe] || 'varchar',
+      0,
+      isNaN(des) ? 0 : des,
+    ])
+  });
+  return cart
+}
+
+function rsAktifkanTabel () {
+  window.g_modeReport = 1
+  window.gcart_header = rsCart[1]
+}
+
+function rsOnChangeAktif () {
+  reinitTabel();
+}
+
+window.g_href = RS_HREF
+window.g_modeReport = 1
+window.gcart_header = []
+
+window.doSimpanHeader = function (href, mode) {
+  let cart = rsCart[1] || []
+
+  let header = [], value = [], isnumber = [], isshown = [], desimal = []
+  cart.forEach((c) => {
+    header.push(c[1])
+    value.push(c[0])
+    isnumber.push(RS_TIPE_KODE[c[3]] ?? 0)
+    isshown.push(Number(c[2]) === 1 ? 1 : 0)
+    desimal.push(Number(c[5]) || 0)
+  });
+
+  $.ajax({
+    url   : "{!! url('saveheadertable') !!}",
+    type  : "post",
+    async : false,
+    data  : {
+      _token   : $("#_token").val(),
+      header   : JSON.stringify(header),
+      isnumber : JSON.stringify(isnumber),
+      tipe     : JSON.stringify(desimal),
+      value    : JSON.stringify(value),
+      isshown  : JSON.stringify(isshown),
+      href     : RS_HREF,
+      urut     : 1
+    },
+    error : function (err) {
+      console.log(err)
+      alertify.warning('Gagal menyimpan pengaturan kolom')
+    }
+  })
+}
+
+window.doSetHeader = function (mode, reset) {
+  $.ajax({
+    url   : "{!! url('getheadertable') !!}",
+    type  : "post",
+    async : false,
+    data  : {
+      _token : $("#_token").val(),
+      href   : RS_HREF,
+      urut   : 1,
+      reset  : reset ? 1 : 0
+    },
+    success : function (res) {
+      if (!reset && res && res.headertableheader && res.headertableheader.length) {
+        rsCart[1] = rsBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal || [])
+      } else {
+        rsCart[1] = rsDefaultCart()
+        window.gcart_header = rsCart[1]
+        window.doSimpanHeader(RS_HREF, 1)
+      }
+      window.gcart_header = rsCart[1]
+    },
+    error : function (err) {
+      console.log(err)
+      alertify.warning(reset ? 'Gagal mengembalikan kolom ke tampilan default' : 'Gagal memuat pengaturan kolom')
+      rsCart[1] = rsDefaultCart()
+      window.gcart_header = rsCart[1]
+    }
+  })
+}
+
+let rsRtSudahInit = false
+function rsInitReportTableSekali () {
+  if (rsRtSudahInit || typeof ReportTable === 'undefined') { return }
+  rsRtSudahInit = true
+
+  ReportTable.init({ table : '#tabel', bar : '#rtBarTabel', onChange : rsOnChangeAktif })
+
+  let rsGuardUlangKlik = false;
+  let thead = document.querySelector('#tabel thead')
+  if (thead) {
+    thead.addEventListener('click', function (e) {
+      if (rsGuardUlangKlik) { return }
+      let interaktif = e.target && e.target.closest && e.target.closest('.th-gear, .th-grip')
+      if (!interaktif) { return }
+      e.stopPropagation()
+      e.preventDefault()
+      rsGuardUlangKlik = true
+      let ulang = new MouseEvent('click', { bubbles: false, cancelable: true, view: window })
+      Object.defineProperty(ulang, 'target', { value: interaktif, configurable: true })
+      thead.dispatchEvent(ulang)
+      rsGuardUlangKlik = false
+    }, true)
+  }
+}
+
+function tulisTheadHeaderRS (tableSel, cols) {
+  let thead = document.querySelector(tableSel + ' thead')
+  if (!thead || !window.ReportTable) { return; }
+  let headRowHtml = ReportTable.headHtml(cols)
+    .replace('<tr>', '<tr><th style="padding: 4px 12px;">Actions</th>');
+  thead.setAttribute('style', 'white-space:nowrap;');
+  thead.innerHTML = headRowHtml;
+}
+
+function rsValueCell (row, col) {
+  let raw = rsPickCI(row, col[0]);
+  let type = col[3];
+
+  {{-- Kolom Status (IsOtorisasi1) dirender sebagai badge hijau (Sudah Otorisasi) atau
+       amber (Belum Otorisasi), bukan ikon check/x bool biasa. --}}
+  if (col[0] === 'IsOtorisasi1') {
+    return Number(raw) === 1
+      ? '<td class="text-center"><span class="status-badge status-badge-sudah">Sudah Otorisasi</span></td>'
+      : '<td class="text-center"><span class="status-badge status-badge-belum">Belum Otorisasi</span></td>';
+  }
+  if (type === 'date') {
+    if (!raw) { return '<td></td>'; }
+    return '<td>' + formatDate(raw, '/') + '</td>';
+  }
+  if (type === 'float') {
+    let dp = Number(col[5]) || 0;
+    let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
+    return '<td class="text-right">' + n.toLocaleString('id-ID', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
+  }
+  return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
+}
+
+{{-- RPS Belum + Sudah Otorisasi digabung -- tombol aksi dicabang sesuai status, sama
+     seperti psTabel2ActionsCell di gudangpenyerahansample.blade.php. --}}
+function rsTabelActionsCell (row) {
+  let nobukti = rsPickCI(row, 'NoBukti');
+  let sudah = Number(rsPickCI(row, 'IsOtorisasi1')) === 1;
+  let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
+  html += '<button class="btn btn-warning btn-sm" type="button" title="Details" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  if (sudah) {
+    html += '<button class="btn btn-danger btn-sm" type="button" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button class="btn btn-primary btn-sm" type="button" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
+  } else {
+    html += '<button class="btn btn-success btn-sm" type="button" title="Edit" onclick="buttonEdit(\'' + nobukti + '\', 0)"><i class="bi bi-pen"></i></button>';
+    html += '<button class="btn btn-info btn-sm" type="button" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\', 0)"><i class="bi bi-key"></i></button>';
+  }
+  html += '</div></td>';
+  return html;
+}
+
+function rsFilterRows (rows) {
+  let status = $('#rsStatus').val()
+  return (rows || []).filter(function (row) {
+    if (status !== '' && String(Number(rsPickCI(row, 'IsOtorisasi1'))) !== status) { return false }
+    return true
+  })
+}
+
+function rsFilterChanged () {
+  reinitTabel()
+}
+
+function renderTabelRows (rows) {
+  rsAktifkanTabel();
+  let cols = (rsCart[1].length ? rsCart[1] : gcart_header).filter(function (c) { return c[2] === 1; });
+  let html = "";
+  rsFilterRows(rows).forEach(function (row) {
+    html += '<tr>' + rsTabelActionsCell(row);
+    cols.forEach(function (col) { html += rsValueCell(row, col); });
+    html += '</tr>';
+  });
+  document.getElementById('tabel_data').innerHTML = html;
+  tulisTheadHeaderRS('#tabel', cols);
+}
+
+let lastTabelRows = []
+let rsPanjangHalaman = 10
+
+function rsIkatSearch () {
+  let input = document.getElementById('rsSearch1')
+  if (!input || input.dataset.rtBound) { return }
+  input.dataset.rtBound = '1'
+
+  let timer = null
+  input.addEventListener('input', function () {
+    let nilai = input.value
+    if (timer) { clearTimeout(timer) }
+    timer = setTimeout(function () {
+      if ($.fn.DataTable.isDataTable('#tabel')) {
+        $('#tabel').DataTable().search(nilai).draw()
+      }
+    }, 400)
+  })
+}
+
+function rsIkatPanjangHalaman () {
+  let sel = document.getElementById('rsLen1')
+  if (!sel || sel.dataset.rtBound) { return }
+  sel.dataset.rtBound = '1'
+  sel.value = String(rsPanjangHalaman)
+
+  sel.addEventListener('change', function () {
+    let n = Number(sel.value)
+    rsPanjangHalaman = (n === -1 || n > 0) ? n : 10
+    if ($.fn.DataTable.isDataTable('#tabel')) {
+      $('#tabel').DataTable().page.len(rsPanjangHalaman).draw()
+    }
+  })
+}
+
+const RS_DOM_STRING = "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+
+function reinitTabel () {
+  try {
+    if ($.fn.DataTable.isDataTable('#tabel')) { $('#tabel').DataTable().destroy(); }
+    renderTabelRows(lastTabelRows);
+    $('#tabel').DataTable({ dom: RS_DOM_STRING, lengthChange: false, pageLength: rsPanjangHalaman, paging: true, ordering: false });
+    rsIkatSearch();
+    rsIkatPanjangHalaman();
+  } catch (e) {
+    console.error('reinitTabel failed:', e);
+    alertify.error('Gagal memperbarui tabel: ' + e.message);
+  }
+}
+
+$(document).ready(function(){
+  rsAktifkanTabel();
+  window.doSetHeader(1, false);
+  lastTabelRows = [].concat(@json($listData), @json($listData2));
+  reinitTabel();
+
+  rsInitReportTableSekali();
+
+  {{-- Box "Search:" bawaan DataTables di modal Barang All dibuat ulang setiap
+       pickerKasInit() memanggil .destroy(), jadi diikat via delegated event supaya
+       tetap jalan walau elemennya diganti. keyup dipakai (bukan keypress) -- input
+       bawaan DataTables type="search" tidak selalu memicu event keypress saat Enter
+       ditekan di semua browser. --}}
+  $(document).on('keyup', '#tabel_add_list_item_filter input', searchBarangAll);
+});
+
 function loadAll () {
   const _token = document.getElementById("_token").value;
 
@@ -972,85 +1137,8 @@ function loadAll () {
     type: "GET",
     data: { _token },
     success: function (res) {
-      console.log('res.outstanding', res.outstanding);
-
-      $('#tabel').DataTable().destroy();
-      let rowTable = '';
-
-      res.outstanding.forEach((item) => {
-        rowTable += `
-          <tr>
-            <td class="text-center">
-              <div class="d-flex justify-content-center align-items-center gap-2">
-                <button class="btn btn-warning btn-sm p-1 px-2" title="Details" onclick="buttonDetail('${item.NoBukti}')">
-                  <i class="bi bi-info"></i>
-                </button>
-                <button class="btn btn-success btn-sm p-1 px-2" title="Edit" onclick="buttonEdit('${item.NoBukti}', ${item.IsOtorisasi1})">
-                  <i class="bi bi-pen"></i>
-                </button>
-                ${
-                  parseInt(item.IsOtorisasi1) === 0
-                  ? `<button class="btn btn-info btn-sm p-1 px-2" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}', 0)">
-                        <i class="bi bi-key"></i>
-                     </button>`
-                  : `<button class="btn btn-danger btn-sm p-1 px-2" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('${item.NoBukti}')">
-                        <i class="bi bi-key"></i>
-                     </button>`
-                }
-              </div>
-            </td>
-            <td>${item.NoBukti}</td>
-            <td>${formatDate(item.Tanggal)}</td>
-            <td>${item.IDUser}</td>
-          </tr>`;
-      });
-
-      document.getElementById("tabel_data").innerHTML = rowTable;
-
-      $("#tabel").DataTable({
-        lengthChange: false,
-        paging: false
-      });
-
-      $('#tabel2').DataTable().destroy();
-      let rowTable2 = '';
-
-      res.outstanding2.forEach((item) => {
-        rowTable2 += `
-          <tr>
-            <td class="text-center">
-              <div class="d-flex justify-content-center align-items-center gap-2">
-                <button class="btn btn-warning btn-sm p-1 px-2" title="Details" onclick="buttonDetail('${item.NoBukti}')">
-                  <i class="bi bi-info"></i>
-                </button>
-                ${
-                  parseInt(item.IsOtorisasi1) === 0
-                  ? `<button class="btn btn-info btn-sm p-1 px-2" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}', 0)">
-                        <i class="bi bi-key"></i>
-                     </button>`
-                  : `<button class="btn btn-danger btn-sm p-1 px-2" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('${item.NoBukti}')">
-                        <i class="bi bi-key"></i>
-                     </button>`
-                }
-		<button class="btn btn-primary btn-sm" title="Print" onclick="submitPrint('${item.NoBukti}')">
-                  <i class="bi bi-printer"></i>
-                </button>
-              </div>
-            </td>
-            <td>${item.NoBukti}</td>
-            <td>${formatDate(item.Tanggal)}</td>
-            <td>${item.IDUser}</td>
-            <td>${item.OtoUser1 || ''}</td>
-            <td>${item.TglOto1 ? formatDate(item.TglOto1) : ''}</td>
-          </tr>`;
-      });
-
-      document.getElementById("tabel2_data").innerHTML = rowTable2;
-
-      $("#tabel2").DataTable({
-        lengthChange: false,
-        paging: false
-      });
+      lastTabelRows = [].concat(res.outstanding, res.outstanding2);
+      reinitTabel();
     },
 
     error: function (xhr, status, error) {
@@ -1995,70 +2083,10 @@ function buttonAddPickSales (nama, kode) {
 }
 
 
-function buttonAddListGudang () {
-  console.log('buttonAddListGudang');
-  $('#tabel_add_list_gudang').DataTable().destroy();
-
-  $.ajax({
-    url: "{{ url('permintaansamplelistgudang') }}",
-    type: "get",
-    async: false,
-    success: function(res) {
-      console.log(res);
-
-      let rowTable = ``;
-      res.forEach((item, i) => {
-        rowTable += `
-          <tr>
-            <td class="text-center">
-              <button class="btn btn-primary btn-sm" type="button"
-                onclick="buttonAddPickGudang('${item.NamaGdg}', '${item.KodeGdg}')">
-                <i class="bi bi-plus"></i>
-              </button>
-            </td>
-            <td>${item.KodeGdg}</td>
-            <td>${item.NamaGdg}</td>
-          </tr>`;
-      });
-
-      if (!res.length) {
-        rowTable = `<tr><td class="text-center" colspan="3">Tidak ada data</td></tr>`;
-      }
-
-      document.getElementById("tabel_data_add_list_gudang").innerHTML = rowTable;
-      $("#tabel_add_list_gudang").DataTable({
-        "lengthChange": false,
-        "paging": false,
-      });
-
-      $('#modalAddListGudang').modal('show');
-    },
-    error: function(err) {
-      console.log(err);
-      alertify.warning('Terjadi kesalahan saat mengambil data gudang.');
-    }
-  });
-}
-
-function buttonAddPickGudang (nama, kode) {
-  $('#input_gudang_nama').val(nama);
-  $('#input_gudang').val(kode);
-  $('#modalAddListGudang').modal('hide');
-}
-
 function buttonAddListBatal() {
   $('#modalAddListSerahSample').modal('hide');
   $('#modalAddListSales').modal('hide');
-  $('#modalAddListGudang').modal('hide');
 }
-
-// function closeListItemAdd () {
-//   $("#formAddListItem").modal('toggle')
-//   // document.getElementById("input_add_add_kodebarang").value = dataAddListItem[i].KODEBRG
-//   // document.getElementById("input_add_add_keterangannama").value = dataAddListItem[i].NAMABRG
-//   var modal = document.getElementById("page2");
-//   modal.style.display = "block";
-// }
 
 function submitAddEdit () {
   console.log('submitAddEdit');
@@ -2576,17 +2604,14 @@ function buttonAddListKodeBarang () {
 
       $("#tabel_data_add_list_item").html(rowTable);
 
-      // Inisialisasi DataTable
-      $("#tabel_add_list_item").DataTable({
-        "lengthChange": false,
-        "paging": false,
-        "searching": false,
-      });
+      pickerKasInit('tabel_add_list_item', { order: [[1, 'asc']] });
 
       dataAddListItem = res;
 
       $("#formAddListItem").modal("show");
-      $("#input_search_barang_all").val("").focus();
+      $('#formAddListItem').on('shown.bs.modal', function () {
+        $('#tabel_add_list_item_filter input').trigger('focus');
+      });
     },
     error: function (err) {
       console.error("AJAX Error:", err);
@@ -2637,20 +2662,19 @@ function buttonPickBarang (index) {
 }
 
 
+{{-- Kotak "Search:" bawaan DataTables (hasil pickerKasInit) dipakai langsung sebagai
+     pemicu pencarian server-side -- keyup diikat ke #tabel_add_list_item_filter input
+     di $(document).ready(), sama seperti searchBarangAll di koreksistock.blade.php. --}}
 function searchBarangAll (e) {
   if (e.which == 13) {
     console.log("Enter ditekan");
 
-    const search = $("#input_search_barang_all").val().trim();
+    const search = e.target.value;
     const serahsample = $("#input_add_add_serahsample").val().trim();
 
     if (!serahsample) {
       alertify.warning("Silakan pilih Serah Sample terlebih dahulu.");
       return;
-    }
-
-    if ($.fn.DataTable.isDataTable("#tabel_add_list_item")) {
-      $("#tabel_add_list_item").DataTable().clear().destroy();
     }
 
     $("#tabel_data_add_list_item").html(`
@@ -2687,11 +2711,7 @@ function searchBarangAll (e) {
 
         $("#tabel_data_add_list_item").html(rowTable);
 
-        $("#tabel_add_list_item").DataTable({
-          "lengthChange": false,
-          "paging": false,
-          "searching": false,
-        });
+        pickerKasInit('tabel_add_list_item', { order: [[1, 'asc']] });
 
         dataAddListItem = res;
       },
@@ -2702,79 +2722,6 @@ function searchBarangAll (e) {
     });
   }
 }
-
-  // function searchBarangAll (e) {
-  //   if (e.which == 13) {
-  //     console.log('Enter ditekan');
-
-  //     let search = $("#input_search_barang_all").val().trim();
-
-  //     if (!search) {
-  //       if ($.fn.DataTable.isDataTable('#tabel_add_list_item')) {
-  //         $('#tabel_add_list_item').DataTable().destroy(); 
-  //       }
-  //       $("#tabel_data_add_list_item").html(`
-  //         <tr><td class="text-center" colspan="5">Tidak ada data</td></tr>
-  //       `);
-  //       return;
-  //     }
-
-  //     if ($.fn.DataTable.isDataTable('#tabel_add_list_item')) {
-  //       $('#tabel_add_list_item').DataTable().destroy(); 
-  //     }
-
-  //     $("#tabel_data_add_list_item").html(`
-  //       <tr><td class="text-center" colspan="5">Loading data...</td></tr>`);
-
-  //     $.ajax({
-  //       url: "{!! url('returpenyerahansamplelistbarang') !!}",
-  //       type: "get",
-  //       async: true,
-  //       data: {
-  //         search,
-  //         isagen: 0
-  //       },
-  //       success: function (res) {
-  //         console.log(res);
-
-  //         dataAddListItem = res;
-
-  //         let rowTable = "";
-  //         res.forEach((item, i) => {
-  //           rowTable += `
-  //             <tr>
-  //               <td>${item.Kodebrg}</td>
-  //               <td>${item.NamaBrg}</td>
-  //               <td>${item.NamaMerk ?? ''}</td>
-  //               <td>${item.partNumber ?? ''}</td>
-  //               <td class="text-center">
-  //                 <button class="btn btn-primary btn-sm" onclick="buttonAddAddInsertItem(${i})" type="button">
-  //                   <i class="bi bi-plus"></i>
-  //                 </button>
-  //               </td>
-  //             </tr>`;
-  //         });
-
-  //         if (!res.length) {
-  //           rowTable = `<tr><td class="text-center" colspan="5">Tidak ada data</td></tr>`;
-  //         }
-
-  //         $("#tabel_data_add_list_item").html(rowTable);
-
-  //         $('#tabel_add_list_item').DataTable({
-  //           "lengthChange": false,
-  //           "paging": false,
-  //           "searching": false,
-  //         });
-  //       },
-  //       error: function (err) {
-  //         console.log(err);
-  //         alertify.warning('Terjadi kesalahan, silakan refresh browser');
-  //         $("#tabel_data_add_list_item").html(`<tr><td class="text-center" colspan="5">Gagal mengambil data</td></tr>`);
-  //       }
-  //     });
-  //   }
-  // }
 
 function buttonAddAddInsertItem (i) {
   console.log('index:', i);
@@ -3138,36 +3085,5 @@ function unlockFormAdd () {
 }
 </script>
 
-{{-- script buat hover belum otorisasi dan sudah otorisasi --}}
-  <script>
-    const tabHome = document.getElementById('nav-home-tab');
-    const tabProfile = document.getElementById('nav-profile-tab');
-
-    function setActiveTab(homeActive) {
-      if (homeActive) {
-        tabHome.style.backgroundColor = '#007bff';
-        tabHome.style.color = '#fff';
-        tabProfile.style.backgroundColor = '#f8f9fa';
-        tabProfile.style.color = '#007bff';
-      } else {
-        tabProfile.style.backgroundColor = '#007bff';
-        tabProfile.style.color = '#fff';
-        tabHome.style.backgroundColor = '#f8f9fa';
-        tabHome.style.color = '#007bff';
-      }
-    }
-
-    // Default warna tab
-    setActiveTab(true);
-
-    // buat ganti tab
-    tabHome.addEventListener('click', function () {
-      setActiveTab(true);
-    });
-
-    tabProfile.addEventListener('click', function () {
-      setActiveTab(false);
-    });
-  </script>
 
 @endsection

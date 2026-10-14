@@ -12,9 +12,9 @@ use App\Models\NewUsers;
 use App\Models\VwPPL;
 use App\Models\DBFLMENU;
 
-// use App\Model\NewMenu;
-// use App\Model\NewAksesMenu;
-// use App\Model\NewUsers;
+// use App\Models\NewMenu;
+// use App\Models\NewAksesMenu;
+// use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 class ReportTesController extends Controller
@@ -41,7 +41,7 @@ class ReportTesController extends Controller
       array_push($tempOutstanding, $p);
     }
 
-    return view('reportTes' , [
+    return view('report.reportTes' , [
       "menul0" => $menul0,
       "periode" => $periode,
       // "users"=> $users,

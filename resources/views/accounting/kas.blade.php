@@ -405,12 +405,15 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
     font-size: 0.65rem;
   }
 
-/* Pelunasan Hutang (#formTunai, _tunai-modal.blade.php): kolom Action, tombol +/hapus dan
+/* Pelunasan Hutang (#formTunai, _tunai-modal.blade.php) dan Pelunasan Piutang (#formPiutang,
+   _piutang-modal.blade.php): kolom Action, tombol +/hapus dan
    warna baris pelunasan disalin dari kartu hutang Memorial Koreksi (.btn-mk-hapus,
    .btn-mk-lunas, .mk-baris-lunas di memorialkoreksi.blade.php). Baris dibuat oleh
    tunaiRowHtml() di public/js/kas.js. */
 #tabel_add_list_tunai th:first-child,
-#tabel_add_list_tunai td.kolom-tunai-action {
+#tabel_add_list_piutang th:first-child,
+#tabel_add_list_tunai td.kolom-tunai-action,
+#tabel_add_list_piutang td.kolom-tunai-action {
   width: 52px;
   white-space: nowrap;
   text-align: center;
@@ -439,11 +442,13 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 .btn-tunai-lunas:disabled {
   opacity: .4;
 }
-#tabel_add_list_tunai tr.tunai-baris-lunas td {
+#tabel_add_list_tunai tr.tunai-baris-lunas td,
+#tabel_add_list_piutang tr.tunai-baris-lunas td {
   color: #dc3545;
   background-color: #fffbea;
 }
-#tabel_add_list_tunai tr.tunai-bisa-dobel { cursor: pointer; }
+#tabel_add_list_tunai tr.tunai-bisa-dobel,
+#tabel_add_list_piutang tr.tunai-bisa-dobel { cursor: pointer; }
 </style>
 @endsection
 
@@ -454,6 +459,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 @include('accounting.kas._detail')
 @include('accounting.kas._pickers')
 @include('accounting.kas._tunai-modal')
+@include('accounting.kas._piutang-modal')
 @endsection
 
 @section('js')
@@ -472,6 +478,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
     kaslistbiayainput: "{!! url('kaslistbiayainput') !!}",
     kaslistbon: "{!! url('kaslistbon') !!}",
     kaslistcustsupp: "{!! url('kaslistcustsupp') !!}",
+    kasnotitipan: "{!! url('kasnotitipan') !!}",
     kaslistcustsupptunai: "{!! url('kaslistcustsupptunai') !!}",
     kaslistcustsuppumb: "{!! url('kaslistcustsuppumb') !!}",
     kaslistdepartemen: "{!! url('kaslistdepartemen') !!}",
@@ -500,6 +507,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
     kreditnotelistinvoice: "{!! url('kreditnotelistinvoice') !!}",
     kreditnotespadd: "{!! url('kreditnotespadd') !!}",
     kreditnotespdetail: "{!! url('kreditnotespdetail') !!}",
+    otorisasirequest: "{!! url('otorisasirequest') !!}",
     perintahreturjuallistnobeli: "{!! url('perintahreturjuallistnobeli') !!}",
     perintahreturjuallistnoinvoice: "{!! url('perintahreturjuallistnoinvoice') !!}",
     spnobuktisimbol: "{!! url('spnobuktisimbol') !!}",

@@ -19,7 +19,7 @@ class LaporanPenyerahanSampleController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportpenyerahansample' , [
+      return view('report.reportpenyerahansample' , [
         "akses" => $akses
       ]);
     } else {

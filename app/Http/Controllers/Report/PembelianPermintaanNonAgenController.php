@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Model\VwPPL;
-use App\Model\DBFLMENU;
+use App\Models\VwPPL;
+use App\Models\DBFLMENU;
 
 
 
@@ -42,7 +42,7 @@ class PembelianPermintaanNonAgenController extends Controller
       array_push($tempOutstanding, $p);
     }
 
-    return view('pembelianpermintaannonagen' , [
+    return view('report.pembelianpermintaannonagen' , [
       "menul0" => $menul0,
       "periode" => $periode,
       // "users"=> $users,

@@ -7,10 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
-use App\Model\User;
-use App\Model\Models;
-use App\Model\Periode;
+use App\Models\Menu;
+use App\Models\User;
+use App\Models\Models;
+use App\Models\Periode;
 use App\Model\AksesMenu;
 
 class ModelController extends Controller {

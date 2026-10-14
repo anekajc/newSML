@@ -108,7 +108,7 @@
 
 @section('additionalModal')
         <!-- start modal browse master -->
-        @include('modalbrowsemaster')
+        @include('report.modalbrowsemaster')
         <!-- End modal browse master -->
 @endsection
 

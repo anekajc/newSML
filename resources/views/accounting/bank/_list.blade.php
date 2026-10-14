@@ -29,9 +29,9 @@
       <div class="po-toolbar">
         <div class="po-filter-wrap">
           <label>Periode</label>
-          <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}">
+          <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}" autocomplete="off">
           <span class="po-filter-sep">s/d</span>
-          <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}">
+          <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}" autocomplete="off">
         </div>
 
         <input class="po-search-inp" type="search" id="searchBox2" placeholder="Cari data">

@@ -8,19 +8,19 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ActivityTrait;
-use App\Model\GudangSQL;
-use App\Model\RakSQL;
-use App\Model\LokasiSQL;
-use App\Model\AlokasiBrg;
-use App\Model\AlokasiBrgDet;
-use App\Model\VWOutPenerimaanBrg;
-use App\Model\vwShowAlokasiBrg;
-use App\Model\vwShowDetailAlokasiBrg;
-use App\Model\vwShowLocBrg;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\GudangSQL;
+use App\Models\RakSQL;
+use App\Models\LokasiSQL;
+use App\Models\AlokasiBrg;
+use App\Models\AlokasiBrgDet;
+use App\Models\VWOutPenerimaanBrg;
+use App\Models\vwShowAlokasiBrg;
+use App\Models\vwShowDetailAlokasiBrg;
+use App\Models\vwShowLocBrg;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 
 class AlokasiBarangController extends Controller {
   use ActivityTrait;
@@ -62,7 +62,7 @@ class AlokasiBarangController extends Controller {
       $alokasibrg = vwShowAlokasiBrg::whereMonth('TANGGAL', '=', $periode->bulan)->whereYear('TANGGAL', '=', $periode->tahun)->
           orderBy('NOBUKTI', 'DESC')->selectRaw('vwShowAlokasiBrg.*')->get();
 
-      return view("alokasibarang")
+      return view("report.alokasibarang")
       ->with('menul0', $menul0)
       ->with('periode', $periode)
       // ->with('akses', $check)

@@ -7,9 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
-use App\Model\User;
-use App\Model\Periode;
+use App\Models\Menu;
+use App\Models\User;
+use App\Models\Periode;
 use App\Model\AksesMenu;
 use App\Traits\ReportTrait;
 
@@ -38,7 +38,7 @@ class DashSalesController extends Controller {
 			$breadcrumb = 'Dashboard / Sales Forecast';
 			$settingtgl = 0;
 
-			return view("dashsales")->with('menu', $menu)->with('table', $table)->with('periode', $periode)->with('akses', $check)->with('kolom', $kolom)->with('fetch', $fetch)->with('col', $col)->with('header', $header)
+			return view("report.dashsales")->with('menu', $menu)->with('table', $table)->with('periode', $periode)->with('akses', $check)->with('kolom', $kolom)->with('fetch', $fetch)->with('col', $col)->with('header', $header)
 				->with('title', $title)->with('halaman', $halaman)->with('breadcrumb', $breadcrumb)->with('settingtgl', $settingtgl);
 		} else {
 			return redirect('/home');
@@ -123,7 +123,7 @@ class DashSalesController extends Controller {
 		// for ($i = 0; $i < count($omset_sales_lalu[0]); $i++) { array_push($omset_sales_lalu[2], $omset_sales_lalu[0][$i] + $omset_sales_lalu[1][$i]); }
 		$title = "Dashboard Sales SPL";
 		$pt = "SPL";
-		return view("dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
+		return view("report.dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
 			with('list_tahun', $list_tahun)->with('bulan', $bulan)->with('list_sales', $list_sales)->with('list_kodesls', $list_kode)->with('pt', $pt)->with('menu', $menu);
 	}
 
@@ -170,7 +170,7 @@ class DashSalesController extends Controller {
 		for ($i = 0; $i < count($omset_sales[0]); $i++) { array_push($omset_sales[2], $omset_sales[0][$i] + $omset_sales[1][$i]); }
 		// for ($i = 0; $i < count($omset_sales_lalu[0]); $i++) { array_push($omset_sales_lalu[2], $omset_sales_lalu[0][$i] + $omset_sales_lalu[1][$i]); }
 		$title = "Dashboard Sales SPLS"; $pt = "SPLS";
-		return view("dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
+		return view("report.dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
 			with('list_tahun', $list_tahun)->with('bulan', $bulan)->with('list_sales', $list_sales)->with('list_kodesls', $list_kode)->with('pt', $pt)->with('menu', $menu);
 	}
 
@@ -217,7 +217,7 @@ class DashSalesController extends Controller {
 		for ($i = 0; $i < count($omset_sales[0]); $i++) { array_push($omset_sales[2], $omset_sales[0][$i] + $omset_sales[1][$i]); }
 		// for ($i = 0; $i < count($omset_sales_lalu[0]); $i++) { array_push($omset_sales_lalu[2], $omset_sales_lalu[0][$i] + $omset_sales_lalu[1][$i]); }
 		$title = "Dashboard Sales SML"; $pt = "SML";
-		return view("dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
+		return view("report.dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
 			with('list_tahun', $list_tahun)->with('bulan', $bulan)->with('list_sales', $list_sales)->with('list_kodesls', $list_kode)->with('pt', $pt)->with('menu', $menu);
 	}
 
@@ -264,7 +264,7 @@ class DashSalesController extends Controller {
 		for ($i = 0; $i < count($omset_sales[0]); $i++) { array_push($omset_sales[2], $omset_sales[0][$i] + $omset_sales[1][$i]); }
 		// for ($i = 0; $i < count($omset_sales_lalu[0]); $i++) { array_push($omset_sales_lalu[2], $omset_sales_lalu[0][$i] + $omset_sales_lalu[1][$i]); }
 		$title = "Dashboard Sales MKS"; $pt = "MKS";
-		return view("dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
+		return view("report.dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
 			with('list_tahun', $list_tahun)->with('bulan', $bulan)->with('list_sales', $list_sales)->with('list_kodesls', $list_kode)->with('pt', $pt)->with('menu', $menu);
 	}
 
@@ -311,7 +311,7 @@ class DashSalesController extends Controller {
 		for ($i = 0; $i < count($omset_sales[0]); $i++) { array_push($omset_sales[2], $omset_sales[0][$i] + $omset_sales[1][$i]); }
 		// for ($i = 0; $i < count($omset_sales_lalu[0]); $i++) { array_push($omset_sales_lalu[2], $omset_sales_lalu[0][$i] + $omset_sales_lalu[1][$i]); }
 		$title = "Dashboard Sales MAB"; $pt = "MAB";
-		return view("dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
+		return view("report.dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
 			with('list_tahun', $list_tahun)->with('bulan', $bulan)->with('list_sales', $list_sales)->with('list_kodesls', $list_kode)->with('pt', $pt)->with('menu', $menu);
 	}
 
@@ -358,7 +358,7 @@ class DashSalesController extends Controller {
 		for ($i = 0; $i < count($omset_sales[0]); $i++) { array_push($omset_sales[2], $omset_sales[0][$i] + $omset_sales[1][$i]); }
 		// for ($i = 0; $i < count($omset_sales_lalu[0]); $i++) { array_push($omset_sales_lalu[2], $omset_sales_lalu[0][$i] + $omset_sales_lalu[1][$i]); }
 		$title = "Dashboard Sales PDW"; $pt = "PDW";
-		return view("dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
+		return view("report.dashsales")->with("akses", $check)->with('title', $title)->with('tahun', $tahun)->with('tahunlalu', $tahunlalu)->with('omset_sales', $omset_sales)->with('omset_sales_lalu', $omset_sales_lalu)->
 			with('list_tahun', $list_tahun)->with('bulan', $bulan)->with('list_sales', $list_sales)->with('list_kodesls', $list_kode)->with('pt', $pt)->with('menu', $menu);
 	}
 

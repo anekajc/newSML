@@ -19,7 +19,7 @@ class LaporanGudangPermintaanKonsinyasiController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportgudangpermintaankonsinyasi' , [
+      return view('report.reportgudangpermintaankonsinyasi' , [
         "akses" => $akses
       ]);
     } else {

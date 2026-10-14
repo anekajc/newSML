@@ -7,23 +7,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-// use App\Model\Menu;
-use App\Model\User;
+// use App\Models\Menu;
+use App\Models\User;
 // use App\Model\BahanBarang;
 // use App\Model\GrupJadi;
 // use App\Model\SubgrupJadi;
 // use App\Model\MerkJadi;
 // use App\Model\WarnaJadi;
 // use App\Model\Dimensi;
-// use App\Model\Periode;
+// use App\Models\Periode;
 // use App\Model\AksesMenu;
-use App\Model\VWDBBarang;
-use App\Model\DBBarangLokasi;
-use App\Model\LokasiSQL;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\VWDBBarang;
+use App\Models\DBBarangLokasi;
+use App\Models\LokasiSQL;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 
 class BarangJadiController extends Controller {
 
@@ -76,7 +76,7 @@ class BarangJadiController extends Controller {
 			$dimensi = LokasiSQL::all();
 			$lokasi = LokasiSQL::all();
 			$periode = NewPeriode::where('user_id', \Auth::id())->first();
-	 		return view("barangjadi")
+	 		return view("report.barangjadi")
 				->with('menul0', $menul0)
 				->with('barangjadi', $barangjadi)
 				->with('design', $design)

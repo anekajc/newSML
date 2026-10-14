@@ -1,4 +1,4 @@
-@extends('mastercore')
+@extends('report.mastercore')
 @section('buttons')
 
 @endsection

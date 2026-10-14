@@ -31,7 +31,7 @@ class LaporanPemakaianController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportpemakaian' , [
+      return view('report.reportpemakaian' , [
         "akses" => $akses,
         "mode_menu" => "RP"
       ]);

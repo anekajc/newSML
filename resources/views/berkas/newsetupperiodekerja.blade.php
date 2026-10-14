@@ -219,7 +219,9 @@ function submitPeriodeKerja () {
       // Badge periode di bar atas layout newmasterTest (class .period-badge, tanpa id).
       let el = document.querySelector(".period-badge");
       if (el) {
-        el.innerHTML = `Username: {{ Auth::user()->username }} &nbsp;–&nbsp; Periode: ${namaBulanPeriode[bulan]} ${tahun}`;
+        // Dua versi: .pb-full (layar lebar) / .pb-short (mobile) - lihat css/header-mobile.css.
+        el.innerHTML = `<span class="pb-full">Username: {{ Auth::user()->username }} &nbsp;–&nbsp; Periode: ${namaBulanPeriode[bulan]} ${tahun}</span>` +
+          `<span class="pb-short">${String(namaBulanPeriode[bulan]).substring(0, 3)} ${tahun}</span>`;
       }
 
       // Also keep the hidden periode_bulan/periode_tahun inputs on THIS page

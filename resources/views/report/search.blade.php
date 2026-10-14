@@ -1,4 +1,4 @@
-@extends('master')
+@extends('report.master')
 
 @section('breadcrumb')
 <li class="nav-item">

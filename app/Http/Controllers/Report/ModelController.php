@@ -7,10 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
-use App\Model\User;
-use App\Model\Models;
-use App\Model\Periode;
+use App\Models\Menu;
+use App\Models\User;
+use App\Models\Models;
+use App\Models\Periode;
 use App\Model\AksesMenu;
 
 class ModelController extends Controller {
@@ -28,7 +28,7 @@ class ModelController extends Controller {
 			}
 			$model = Models::where('deleted', 0)->get();
 			$periode = Periode::where('id_user', \Auth::id())->first();
-			return view("model")->with('menu', $menu)->with('model', $model)->with('periode', $periode)->with('akses', $check);
+			return view("report.model")->with('menu', $menu)->with('model', $model)->with('periode', $periode)->with('akses', $check);
 		} else {
 			return redirect('/home');
 		}

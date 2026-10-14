@@ -4,13 +4,12 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\DBFLMENU;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\DBFLMENU;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
-
 
 class KoreksiStockController extends Controller
 {
@@ -28,16 +27,16 @@ class KoreksiStockController extends Controller
 
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(6);
 
+    $date1 = \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $date2 = \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
 
-    $tempOutstanding = DB::connection("SML")->select("declare @Tahun int, @Bulan int
-
+    $tempOutstanding = DB::connection("SML")->select("
     Select * from vwMasterKoreksi
-    where month(tanggal)= :bulan and year(tanggal)= :tahun and nobukti like '%KRS%' and isotorisasi1 = 0" , ["tahun" =>$periode->tahun , "bulan" => $periode->bulan ]);
+    where CAST(tanggal as date) between :date1 and :date2 and nobukti like '%KRS%' and isotorisasi1 = 0" , ["date1" => $date1 , "date2" => $date2]);
 
-    $tempOutstanding2 = DB::connection("SML")->select("declare @Tahun int, @Bulan int
-
+    $tempOutstanding2 = DB::connection("SML")->select("
     Select * from vwMasterKoreksi
-    where month(tanggal)= :bulan and year(tanggal)= :tahun and nobukti like '%KRS%' and isotorisasi1 = 1" , ["tahun" =>$periode->tahun , "bulan" => $periode->bulan ]);
+    where CAST(tanggal as date) between :date1 and :date2 and nobukti like '%KRS%' and isotorisasi1 = 1" , ["date1" => $date1 , "date2" => $date2]);
 
 
     return view('gudang.koreksistock' , [
@@ -51,36 +50,35 @@ class KoreksiStockController extends Controller
 
   }
 
-  public function loadAll()
+  public function loadAll(Request $req)
 {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
+    $date1 = $req->date1 ?: \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d');
+    $date2 = $req->date2 ?: \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d');
+
     // Belum Otorisasi
     $tempOutstanding = DB::connection("SML")->select("
-        declare @Tahun int, @Bulan int
-        Select * 
+        Select *
         from vwMasterKoreksi
-        where month(tanggal) = :bulan 
-          and year(tanggal) = :tahun 
+        where CAST(tanggal as date) between :date1 and :date2
           and nobukti like '%KRS%'
           and isotorisasi1 = 0
     ", [
-        "tahun" => $periode->tahun,
-        "bulan" => $periode->bulan
+        "date1" => $date1,
+        "date2" => $date2
     ]);
 
     // Sudah Otorisasi
     $tempOutstanding2 = DB::connection("SML")->select("
-        declare @Tahun int, @Bulan int
-        Select * 
+        Select *
         from vwMasterKoreksi
-        where month(tanggal) = :bulan 
-          and year(tanggal) = :tahun 
+        where CAST(tanggal as date) between :date1 and :date2
           and nobukti like '%KRS%'
           and isotorisasi1 = 1
     ", [
-        "tahun" => $periode->tahun,
-        "bulan" => $periode->bulan
+        "date1" => $date1,
+        "date2" => $date2
     ]);
 
     return [

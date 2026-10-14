@@ -4,11 +4,11 @@
 namespace App\Http\Controllers\Accounting;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\DBFLMENU;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\DBFLMENU;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 
@@ -363,7 +363,7 @@ and  Perkiraan in (select Perkiraan from dbAksesPerkiraan where UserID= :usernam
   public function listLawanBGC (Request $req) {
     $username = \Auth::user()->username;
     // $listData = DB::connection('SML')->select("select Perkiraan, Keterangan , Simbol from DBPERKIRAAN where Perkiraan like '1111%' and Tipe = 1");
-    $listData = DB::connection('SML')->select(" Select Perkiraan, Keterangan, Simbol, cast(IsPPN as tinyint) IsPPN from dbPerkiraan where Tipe=1
+    $listData = DB::connection('SML')->select("Select Perkiraan, Keterangan, Simbol, cast(IsPPN as tinyint) IsPPN from dbPerkiraan where Tipe=1
 and Perkiraan in (select Perkiraan from dbPostHutPiut where Kode='BANK')
 and Perkiraan in (select Perkiraan from dbAksesPerkiraan where UserID= :username )
  Order by Perkiraan

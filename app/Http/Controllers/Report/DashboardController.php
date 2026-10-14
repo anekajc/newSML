@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
+use App\Models\Menu;
 use App\Model\Merk;
 use App\Model\Sales;
 use App\Model\AksesMenu;
@@ -34,7 +34,7 @@ class DashboardController extends Controller {
 		}else{
 			$menu = Menu::join('akses_menu', 'menu.id', '=', 'akses_menu.id_menu')->where('akses_menu.tampil', 1)->where('menu.grup','>', 0)->where('menu.show_acc', 1)->where('akses_menu.id_user', \Auth::id())->select('menu.*')->get();
 		}
-		return view("dashboard")->with('menu', $menu);
+		return view("report.dashboard")->with('menu', $menu);
 	}
 
 	public function getMenu() {

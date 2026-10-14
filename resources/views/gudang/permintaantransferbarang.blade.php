@@ -84,6 +84,16 @@
 
 
     <style>
+        /* newmaster.css memaku `#formBsGrid .form-control` setinggi 38px, sehingga atribut rows pada
+           textarea (Keterangan rows=5, alamat Gudang rows=3) tidak berefek dan kotaknya hanya satu
+           baris. Textarea dikembalikan ke tinggi aslinya — pengecualian yang sama seperti di
+           accounting/memorialkoreksi.blade.php. */
+        #formBsGrid textarea.form-control {
+            height: auto;
+        }
+    </style>
+
+    <style>
         .rodokNdukurTitik {
             margin-top: -12px;
         }
@@ -236,9 +246,9 @@
                     <div class="po-toolbar">
                         <div class="po-filter-wrap">
                             <label>Periode</label>
-                            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}">
+                            <input type="date" class="po-filter-inp" id="inputDate1" value="{!! $date1 !!}" autocomplete="off">
                             <span class="po-filter-sep">s/d</span>
-                            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}">
+                            <input type="date" class="po-filter-inp" id="inputDate2" value="{!! $date2 !!}" autocomplete="off">
                         </div>
 
                         <input class="po-search-inp" type="search" id="searchBox2" placeholder="Cari data">
@@ -365,7 +375,7 @@
         </div>
 
         <div id="modalBodyAddMain" class="">
-            <div class="modal-body" id="">
+            <div class="modal-body" id="formBsGrid">
                 <div class="row">
                     <div class="col-md-3">
                         <div class="row">
@@ -2276,6 +2286,12 @@
             }
             awal.dataset.rtBound = '1';
 
+            // Refresh biasa (F5) membuat browser mengembalikan tanggal terakhir yang dipilih tanpa
+            // memicu change, padahal data awal dirender server untuk rentang bawaan (atribut value) —
+            // kembalikan ke nilai bawaan supaya filter dan isi tabel selalu cocok.
+            awal.value = awal.defaultValue;
+            akhir.value = akhir.defaultValue;
+
             let onUbah = function() {
                 if (!awal.value || !akhir.value) {
                     return;
@@ -2584,7 +2600,7 @@
             }
 
 
-            alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+            var dlgBatalOtorisasi = alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
                 function(evt, value) {
                     // alertify.success("You entered: " + value);
                     let xpket = value;
@@ -2621,9 +2637,7 @@
                     console.log('no')
                     alertify.error("Action cancelled");
                 });
-
-
-
+                dlgBatalOtorisasi.elements.root.classList.add('ajs-app-buttons', 'is-danger');
         }
 
         function onChangeKeterangan() {
@@ -4925,6 +4939,12 @@
             document.getElementById("input_add_kodeGudangTujuan").value = ''
             document.getElementById("input_add_namaGudangTujuan").value = ''
             document.getElementById("input_add_keterangan").value = ''
+            // Tanggal harus kembali ke hari ini — kalau tidak, tanggal dokumen terakhir yang dibuka
+            // lewat Detail/Edit (refreshDataTableAdd) ikut terbawa ke form Tambah.
+            let hariIni = new Date()
+            document.getElementById("input_add_tanggal").value = hariIni.getFullYear() + '-' +
+                String(hariIni.getMonth() + 1).padStart(2, '0') + '-' +
+                String(hariIni.getDate()).padStart(2, '0')
             muatDropdownGudangAsal()
             muatDropdownGudangTujuan()
         }
@@ -5232,7 +5252,7 @@
             console.log(dataTableAdd[i])
             let dataDelete = dataTableAdd[i]
 
-            alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + dataDelete.NamaBrg + ' ?',
+            var dlgHapusItem = alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + dataDelete.NamaBrg + ' ?',
                 function() {
 
                     let _token = $("#_token").val();
@@ -5288,7 +5308,7 @@
                 function() {
                     console.log('no')
                 });
-
+            dlgHapusItem.elements.root.classList.add('ajs-app-buttons', 'is-danger');
         }
 
         function formatDate(date) {

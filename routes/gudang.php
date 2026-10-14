@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Gudang\PemakaianBarangController;
 use App\Http\Controllers\Gudang\PembebananPemakaianController;
 use App\Http\Controllers\Gudang\ClosingTransferController;
+use App\Http\Controllers\Gudang\ClosingPerintahOpnameController;
 use App\Http\Controllers\Gudang\TerimaTransferBarangController;
 use App\Http\Controllers\Gudang\TransferBarangController;
 use App\Http\Controllers\Gudang\PermintaanPemakaianController;
@@ -52,6 +53,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/closingtransferloadall', [ClosingTransferController::class, 'loadAll']);
     Route::post('/closingtransferlock', [ClosingTransferController::class, 'lock']);
     Route::post('/closingtransferunlock', [ClosingTransferController::class, 'unlock']);
+
+    // CLOSING PERINTAH OPNAME
+    Route::get('/closingperintahopname', [ClosingPerintahOpnameController::class, 'index']);
+    Route::get('/closingperintahopnameloadall', [ClosingPerintahOpnameController::class, 'loadAll']);
+    Route::post('/closingperintahopnamelock', [ClosingPerintahOpnameController::class, 'lock']);
+    Route::post('/closingperintahopnameunlock', [ClosingPerintahOpnameController::class, 'unlock']);
 
     // TERIMA TRANSFER BARANG
     Route::get('/terimatransferbarang', [TerimaTransferBarangController::class, 'index']);

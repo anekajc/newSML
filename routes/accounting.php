@@ -22,6 +22,7 @@ Route::post('/kaslistbon', [KasController::class, 'listBon']);
 Route::post('/kaslistsubcosting', [KasController::class, 'listSubCosting']);
 Route::post('/kaslistcosting', [KasController::class, 'listCosting']);
 Route::post('/kaschangekembaliuang', [KasController::class, 'changeKembaliUang']);
+Route::post('/kasnotitipan', [KasController::class, 'getNoTitipan']);
 
 Route::post('/kaslistakumulasi', [KasController::class, 'listAkumulasi']);
 
@@ -71,6 +72,7 @@ Route::post('/kasdetailCetak', [KasController::class, 'getDetailCetak']);
 Route::get('/bank', [BankController::class, 'index']);
 Route::get('/banklistkasheader', [BankController::class, 'listKasHeader']);
 Route::post('/banklistlawan', [BankController::class, 'listLawan']);
+Route::post('/banknotitipan', [BankController::class, 'getNoTitipan']);
 Route::post('/banklistsubcosting', [BankController::class, 'listSubCosting']);
 Route::post('/banklistcosting', [BankController::class, 'listCosting']);
 

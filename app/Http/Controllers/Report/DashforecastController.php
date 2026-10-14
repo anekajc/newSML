@@ -7,9 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
-use App\Model\User;
-use App\Model\Periode;
+use App\Models\Menu;
+use App\Models\User;
+use App\Models\Periode;
 use App\Model\AksesMenu;
 use App\Traits\ReportTrait;
 
@@ -38,7 +38,7 @@ class DashforecastController extends Controller {
 			$breadcrumb = 'Dashboard / Sales Forecast';
 			$settingtgl = 0;
 
-			return view("dashforecast")->with('menu', $menu)->with('table', $table)->with('periode', $periode)->with('akses', $check)->with('kolom', $kolom)->with('fetch', $fetch)->with('col', $col)->with('header', $header)
+			return view("report.dashforecast")->with('menu', $menu)->with('table', $table)->with('periode', $periode)->with('akses', $check)->with('kolom', $kolom)->with('fetch', $fetch)->with('col', $col)->with('header', $header)
 				->with('title', $title)->with('halaman', $halaman)->with('breadcrumb', $breadcrumb)->with('settingtgl', $settingtgl);
 		} else {
 			return redirect('/home');

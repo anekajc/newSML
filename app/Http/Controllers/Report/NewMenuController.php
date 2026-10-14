@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\NewMenuReport;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\NewMenuReport;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 class NewMenuController extends Controller
@@ -59,7 +59,7 @@ class NewMenuController extends Controller
 
     $menu = NewMenuReport::orderBy('KODEMENU')->get();
 
-    return view('newmenu' , [
+    return view('report.newmenu' , [
       // "title" => "Home",
       "periode" => $periode,
       "menu" => $menu,

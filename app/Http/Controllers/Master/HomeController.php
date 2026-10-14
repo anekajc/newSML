@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\Menu;
-use App\Model\User;
-use App\Model\Periode;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
+use App\Models\Menu;
+use App\Models\User;
+use App\Models\Periode;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
 
 class HomeController extends Controller
 {

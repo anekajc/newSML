@@ -7,10 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
-use App\Model\Menu;
+use App\Models\Menu;
 use App\Model\AksesMenu;
-use App\Model\User;
-use App\Model\Periode;
+use App\Models\User;
+use App\Models\Periode;
 use App\Model\PermintaanPemakaian;
 use App\Model\DetailPermintaanPemakaian;
 use App\Model\PemakaianBarang;
@@ -23,16 +23,16 @@ use App\Model\StockBarang;
 use App\Model\PostJurnalOto;
 use App\Model\Trans;
 use App\Traits\ActivityTrait;
-use App\Model\GudangSQL;
-use App\Model\RakSQL;
-use App\Model\LokasiSQL;
-use App\Model\Koreksi;
-use App\Model\KoreksiDet;
-use App\Model\VWStkBrg;
-use App\Model\VWDBBarang;
-use App\Model\VWOutPenerimaanBrg;
-use App\Model\vwShowOpnameBrg;
-use App\Model\vwShowDetOpnameBrg;
+use App\Models\GudangSQL;
+use App\Models\RakSQL;
+use App\Models\LokasiSQL;
+use App\Models\Koreksi;
+use App\Models\KoreksiDet;
+use App\Models\VWStkBrg;
+use App\Models\VWDBBarang;
+use App\Models\VWOutPenerimaanBrg;
+use App\Models\vwShowOpnameBrg;
+use App\Models\vwShowDetOpnameBrg;
 
 class OpnameBrgController extends Controller {
   use ActivityTrait;
@@ -56,7 +56,7 @@ class OpnameBrgController extends Controller {
           orderBy('NOBUKTI', 'DESC')->selectRaw('vwShowOpnameBrg.*')->get();
 
 
-      return view("opnamebrg")->with('menu', $menu)->with('periode', $periode)->with('akses', $check)->with('penerimaan', $penerimaan)->
+      return view("report.opnamebrg")->with('menu', $menu)->with('periode', $periode)->with('akses', $check)->with('penerimaan', $penerimaan)->
              with('gudang', $gudang)->with('opnamebrg', $opnamebrg);
 		} else {
 			return redirect('/home');

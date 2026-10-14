@@ -86,8 +86,12 @@ Route::middleware('auth')->group(function () {
     require __DIR__.'/report.php';
 });
 require __DIR__.'/berkas.php';
+require __DIR__.'/utilitas.php';
+require __DIR__.'/otorisasi.php';
 
-Route::get('/__debug_login_sa', function () {
-    Auth::loginUsingId(\App\Models\User::where('username', 'SA')->first()->id);
-    return 'ok';
-});
+// Route uji: login sebagai SA tanpa password. Dinonaktifkan (2026-10-14) karena siapa pun bisa
+// masuk sebagai SA. Buka komentar hanya sementara saat pengujian lokal.
+// Route::get('/__debug_login_sa', function () {
+//     Auth::loginUsingId(\App\Models\User::where('username', 'SA')->first()->id);
+//     return 'ok';
+// });

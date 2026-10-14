@@ -304,6 +304,28 @@
                                             </div>
                                         </div>
 
+                                        {{-- No Titipan: hanya BBK + Lawan 113400. Bisa diketik lalu Enter, atau
+                                             browse lewat tombol cari - lihat buttonAddListTitipan() di
+                                             public/js/bank.js. Tampil/sembunyi lewat resetTitipan(). --}}
+                                        <div class="row kas-row-tight" id="rowNoTitipan" style="display:none">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>No Titipan</label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-9">
+                                                <div class="input-group form-group">
+                                                    <input id="AddAddNoTitipan" type="text" class="form-control"
+                                                        onkeypress="onKeyPressNoTitipan(event)">
+                                                    <input id="AddAddUrutTitipan" type="hidden">
+                                                    <button id="buttonAddListTitipan" type="button"
+                                                        onclick="buttonAddListTitipan()" class="btn btn-chip-biru"><i
+                                                            class="bi bi-search"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="row kas-row-tight" id="rowCustsupp">
                                             <div class="col-md-3">
                                                 <div class="form-group">

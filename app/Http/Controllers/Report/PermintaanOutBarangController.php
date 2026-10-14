@@ -8,19 +8,19 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ActivityTrait;
-use App\Model\GudangSQL;
-use App\Model\RakSQL;
-use App\Model\LokasiSQL;
-use App\Model\OutBrg;
-use App\Model\OutBrgDet;
-use App\Model\vwOutBarang;
-use App\Model\vwShowOutBrg;
-use App\Model\vwShowPilihBarang;
-use App\Model\vwShowpilihNoTransaksi;
-use App\Model\NewMenu;
-use App\Model\NewAksesMenu;
-use App\Model\NewPeriode;
-use App\Model\NewUsers;
+use App\Models\GudangSQL;
+use App\Models\RakSQL;
+use App\Models\LokasiSQL;
+use App\Models\OutBrg;
+use App\Models\OutBrgDet;
+use App\Models\vwOutBarang;
+use App\Models\vwShowOutBrg;
+use App\Models\vwShowPilihBarang;
+use App\Models\vwShowpilihNoTransaksi;
+use App\Models\NewMenu;
+use App\Models\NewAksesMenu;
+use App\Models\NewPeriode;
+use App\Models\NewUsers;
 
 class PermintaanOutBarangController extends Controller {
   use ActivityTrait;
@@ -75,7 +75,7 @@ class PermintaanOutBarangController extends Controller {
           orderBy('TANGGAL', 'DESC')->selectRaw('vwOutBarang.*')->get();
       $persiapanppbrg = vwShowOutBrg::whereMonth('TANGGAL', '=', $periode->bulan)->whereYear('TANGGAL', '=', $periode->tahun)->
           orderBy('NOBUKTI', 'DESC')->selectRaw('vwShowOutBrg.*')->get();
-      return view("permintaanoutbarang")
+      return view("report.permintaanoutbarang")
       ->with('menul0', $menul0)
       ->with('periode', $periode)
       // ->with('akses', $check)
@@ -138,7 +138,7 @@ class PermintaanOutBarangController extends Controller {
           orderBy('TANGGAL', 'DESC')->selectRaw('vwOutBarang.*')->get();
       $persiapanppbrg = vwShowOutBrg::whereMonth('TANGGAL', '=', $periode->bulan)->whereYear('TANGGAL', '=', $periode->tahun)->
           orderBy('NOBUKTI', 'DESC')->selectRaw('vwShowOutBrg.*')->get();
-      return view("permintaanoutbarang")
+      return view("report.permintaanoutbarang")
       ->with('menul0', $menul0)
       ->with('periode', $periode)
       // ->with('akses', $check)

@@ -17,7 +17,7 @@ class LaporanMarketingSOController extends Controller {
     if ($akses['userLoggedOut']) { return redirect('/'); }
 
     if ($akses['akses']->Access) {
-      return view('reportmarketingso' , [
+      return view('report.reportmarketingso' , [
         "akses" => $akses
       ]);
     } else {
