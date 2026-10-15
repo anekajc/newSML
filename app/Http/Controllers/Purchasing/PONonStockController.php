@@ -275,81 +275,12 @@ class PONonStockController extends Controller
   // }
 
   /**
-   * Data tab "Purchase Order". Dipanggil lewat AJAX hanya saat tab tersebut dibuka,
-   * sama persis dengan POController@loadPurchaseOrder - bedanya cuma B.pJasa = 1.
+   * Data tab "Purchase Order" (server-side paging). Isi & aturannya sama persis dengan
+   * POController@loadPurchaseOrder - bedanya cuma pJasa = 1. Lihat POController::daftarPO().
    */
   public function loadPurchaseOrder (Request $req) {
-    $periode = NewPeriode::where('user_id' , Auth::User()->username)->first();
-    list($tglawal, $tglakhir) = $this->periodeRange($periode);
-
-    $inputAwal  = $req->input('tglawal');
-    $inputAkhir = $req->input('tglakhir');
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $inputAwal))  { $tglawal  = $inputAwal; }
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $inputAkhir)) { $tglakhir = $inputAkhir; }
-    if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
-
-    $tempOutstanding2 = DB::connection("SML")->select("declare @tglawal date, @tglakhir date  ,@pJasa Bit
-
-select @tglawal= :tglawal, @tglakhir= :tglakhir
-
-Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
-        b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
-        TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-       A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-       A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-       A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-       A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-       Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                 else 1
-            end As Bit) NeedOtorisasi,A.IsOtorisasi2
-       ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
-       A.FlagTipe,NOSO,NOPOCUST ,A.tglKirim,A.MaxOL,b.qnt as qnt,b.qntbeli as qntbeli
-From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
-where a.Tanggal between @tglawal and @tglakhir
-and  TotTotalRp>=200000000
-and B.pJasa= 1
-
-UNION ALL
-
-Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
-        b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
-        TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-       A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-       A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-       A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-       A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-       Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                 else 1
-            end As Bit) NeedOtorisasi,A.IsOtorisasi2
-       ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
-       A.FlagTipe,NOSO,NOPOCUST ,A.tglKirim,A.MaxOL,b.qnt as qnt,b.qntbeli as qntbeli
-From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
-where a.Tanggal between @tglawal and @tglakhir
-and  TotTotalRp < 200000000
-and B.pJasa= 1
-
-order by Tanggal desc, NoBukti desc" , ["tglawal" => $tglawal , "tglakhir" =>$tglakhir]);
-
-$collection2 = collect($tempOutstanding2)->groupBy('NOBUKTI');
-$tempOutstanding3 = [];
-foreach ($collection2 as $p) {
-  array_push($tempOutstanding3, $p);
-}
-
-    return [
-      "tempOutstanding3" => $tempOutstanding3,
-    ];
-}
+    return POController::daftarPO($req, 1);
+  }
 
   /**
    * Data tab "Outstanding PR" dengan server-side paging DataTables - sama persis dengan

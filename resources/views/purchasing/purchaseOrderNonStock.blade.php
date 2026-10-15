@@ -386,12 +386,16 @@
      Elemennya adalah .dataTables_processing bawaan DataTables, tampilannya ditulis ulang
      di sini. */
   #tabel_wrapper,
-  #tabel2_wrapper {
+  #tabel2_wrapper,
+  #myTabContent {
     position: relative;
   }
 
+  /* .po-memuat-awal = lapisan yang sama selama konfigurasi kolom diambil saat halaman
+     dibuka (tabelnya belum dibungkus DataTables). */
   #tabel_wrapper > .dataTables_processing,
-  #tabel2_wrapper > .dataTables_processing {
+  #tabel2_wrapper > .dataTables_processing,
+  #myTabContent > .po-memuat-awal {
     position: absolute;
     top: 0;
     left: 0;
@@ -409,6 +413,20 @@
   @keyframes ponsMunculLoading {
     0%, 45% { opacity: 0; }
     100% { opacity: 1; }
+  }
+
+  #myTabContent > .po-memuat-awal { min-height: 140px; }
+
+  /* Lapisan "sedang diproses" (ponsProses) di atas seluruh halaman & modal - sama dengan
+     .ip-proses-overlay di marketing/invoicepenjualan. */
+  .po-proses-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, .35);
+    z-index: 2000;
+    cursor: progress;
+    animation: ponsMunculLoading .34s ease-out both;
   }
 
   .po-loading-chip {
@@ -1703,7 +1721,7 @@
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="submitAddAdd()">Simpan</button>
 
-              <button type="button" id="submitAddEdit" class="btn btn-primary btn-lg" style="
+              <button type="button" id="submitAddEdit" class="btn btn-lg btn-chip-biru" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -1712,7 +1730,7 @@
               text-transform: uppercase;
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-              onclick="submitAddEdit()" class="btn btn-secondary">Simpan</button>
+              onclick="submitAddEdit()">Simpan</button>
             </div>
 
           </div>
@@ -2902,27 +2920,21 @@ let dataRefreshOutstanding = []
 let dataRefreshOutstanding2 = []
 
 // Kartu ringkasan (Jumlah Supplier / Total DPP / Outstanding PR) di atas tab-content.
-// Jumlah Supplier & Total DPP dihitung dari dataTampil2 (baris yang sedang tampil di tab
-// Purchase Order, sudah kena filter periode + status/otorisasi). Outstanding PR
+// Jumlah Supplier & Total DPP dihitung server (POController::daftarPO) dari seluruh PO
+// tab Purchase Order yang kena filter periode + status/otorisasi. Outstanding PR
 // diambil dari recordsTotal endpoint ponsdataoutstandingpr - satu baris di sana =
 // satu kode barang, jadi 1 nobukti dengan 3 barang terhitung 3. Tidak ada
 // Outstanding SO di sini - menu ini tidak punya SO.
-let ponsKpiDPP = []
 let ponsKpiOut = { 1 : null }
 
 function renderKpiPONS () {
-  let totalDPP = 0
-  let suppSet = new Set()
-  ;(ponsKpiDPP || []).forEach((r) => {
-    totalDPP += Number(r.TotDPPRp) || 0
-    // 1 supplier = 1 hitungan walau punya banyak PO. KodeSupp di-trim + upper supaya
-    // kode yang sama tidak terhitung dobel hanya karena beda spasi/huruf.
-    let kodeSupp = String(r.KodeSupp || '').trim().toUpperCase()
-    if (kodeSupp) { suppSet.add(kodeSupp) }
-  })
+  // ponsKpiPO diisi dari respons ponsloadpurchaseorder - lihat renderTabelPO().
+  let kpi = ponsKpiPO
+  let totalDPP = kpi ? (Number(kpi.totDPP) || 0) : 0
+  let jmlSupp = kpi ? (Number(kpi.jmlSupp) || 0) : 0
 
   let cards = [
-    ['Jumlah Supplier', suppSet.size, '#dc2626', '#fee2e2', 'bi bi-people', false],
+    ['Jumlah Supplier', jmlSupp, '#dc2626', '#fee2e2', 'bi bi-people', false],
     ['Total DPP', totalDPP, '#4f46e5', '#ede9fe', 'bi bi-receipt', true],
     ['Outstanding PR', ponsKpiOut[1] === null ? '-' : ponsKpiOut[1], '#0891b2', '#cffafe', 'bi bi-clipboard-data', false]
   ]
@@ -3225,6 +3237,10 @@ function onChangeHeader (field, value) {
 }
 
 function submitAddAdd () {
+  ponsProses('Menyimpan item...', function () { submitAddAddKerja() })
+}
+
+function submitAddAddKerja () {
 
 
   let checkDate = new Date($("#input_add_tanggal").val())
@@ -3535,7 +3551,7 @@ function submitAddAdd () {
 
       if (res == 1) {
 
-        loadAll()
+        ponsTandaiDaftarBerubah()
         tipeform = 'edit'
         document.getElementById("buttonAddListPelanggan").disabled = true
         document.getElementById("input_add_kodesupplier").disabled = true
@@ -3545,7 +3561,6 @@ function submitAddAdd () {
         refreshDataTableAdd(NoBukti)
 
         alertify.success('Berhasil menambah item')
-        ponsSegarkanOutstanding()
       }
       if(res == 2) {
         setNewNoBukti()
@@ -3574,6 +3589,10 @@ function submitAddAdd () {
 }
 
 function submitAddEdit () {
+  ponsProses('Menyimpan item...', function () { submitAddEditKerja() })
+}
+
+function submitAddEditKerja () {
 
   console.log('submitAddEdits')
 
@@ -3852,14 +3871,13 @@ function submitAddEdit () {
         alertify.warning('Kode barang tidak ada di master barang - pilih barang lewat tombol browse')
         return
       }
-      loadAll()
+      ponsTandaiDaftarBerubah()
 
       // lockFormAdd()
       $('.showhide').hide();
       refreshDataTableAdd(NoBukti)
 
       alertify.success('Berhasil edit item')
-      ponsSegarkanOutstanding()
 
     },
     error: function (err) {
@@ -5387,13 +5405,18 @@ function ponsUrutTabAktif () {
 
 const PONS_SELEKTOR_TABEL_AKTIF = '#myTabContent .tab-pane.active table.data-table'
 
-function ponsBuatCart (headers, values, isnumerics, isshowns, desimals, aliasordered) {
+// labelQty: judul kolom "Qnt..." ditampilkan sebagai "Qty..." (hanya tab outstanding;
+// nama field datanya tetap, yang berubah hanya judul yang terlihat user).
+function ponsBuatCart (headers, values, isnumerics, isshowns, desimals, aliasordered, labelQty) {
   let cart = []
   ;(headers || []).forEach((h, i) => {
     let tipe = Number(isnumerics[i]) || 0
     let label = h
     if (aliasordered && aliasordered[i] && aliasordered[i].alias) {
       label = aliasordered[i].alias
+    }
+    if (labelQty) {
+      label = String(label).replace(/qnt/gi, 'Qty')
     }
     let des = (desimals && desimals[i] !== undefined && desimals[i] !== null)
       ? Number(desimals[i])
@@ -5430,7 +5453,7 @@ function ponsAktifkanTabel (urut) {
 
 function ponsOnChangeAktif () {
   if (ponsActiveUrut === 2) {
-    renderTabelPO()
+    renderTabelPO(true)
   } else {
     initTabelOutstandingPons(ponsActiveUrut, true)
   }
@@ -5509,7 +5532,7 @@ function ponsPindahBar (urut) {
   }
 }
 
-let ponsTimerSearch = { 1 : null }
+let ponsTimerSearch = { 1 : null, 2 : null }
 function ponsIkatSearch (urut) {
   let input = document.getElementById(urut === 2 ? 'ponsSearch2' : PONS_OUT[urut].search)
   if (!input || input.dataset.rtBound) { return }
@@ -5518,15 +5541,10 @@ function ponsIkatSearch (urut) {
   input.addEventListener('input', function () {
     let nilai = input.value
     let idTabel = urut === 2 ? 'tabel2' : PONS_OUT[urut].tabel
-    if (urut === 2) {
-      // Guard isDataTable() - tanpa ini, .DataTable() pada tabel yang baru saja
-      // di-destroy() (mis. saat berpindah tab persis ketika event ini menyala) diam-diam
-      // membuat instance DataTable baru dengan opsi bawaan, bukan error.
-      if ($.fn.DataTable.isDataTable('#' + idTabel)) {
-        $('#' + idTabel).DataTable().search(nilai).draw()
-      }
-      return
-    }
+    // Kedua tabel server-side - jangan tembak server tiap ketukan. Guard isDataTable()
+    // - tanpa ini, .DataTable() pada tabel yang baru saja di-destroy() (mis. saat
+    // berpindah tab persis ketika event ini menyala) diam-diam membuat instance
+    // DataTable baru dengan opsi bawaan, bukan error.
     if (ponsTimerSearch[urut]) { clearTimeout(ponsTimerSearch[urut]) }
     ponsTimerSearch[urut] = setTimeout(function () {
       if ($.fn.DataTable.isDataTable('#' + idTabel)) {
@@ -5564,7 +5582,7 @@ function ponsIkatPeriode () {
       alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
       return
     }
-    loadTabelPO(true)
+    loadTabelPO(true, true)
   }
 
   awal.addEventListener('change', onUbah)
@@ -5650,7 +5668,7 @@ window.doSetHeader = function (mode, reset) {
       if (urut === 2) {
         ponsCart[2] = ponsBuatCart(res.headertableheader2, res.headertablevalue2, res.isnumeric2, res.isshown2, res.desimal2, res.aliasordered2)
       } else {
-        ponsCart[1] = ponsBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal, res.aliasordered)
+        ponsCart[1] = ponsBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal, res.aliasordered, true)
       }
       window.gcart_header = ponsCart[urut]
     },
@@ -5697,6 +5715,7 @@ function ponsRenderNilai (col, item) {
 
 // Menggambar tabel "Outstanding PR" (urut 1) - server-side paging, tanpa kolom Actions.
 function initTabelOutstandingPons (urut, pakaiCache) {
+  if (!ponsMetaSudah) { return }
   let cfg = PONS_OUT[urut]
   if (!cfg) { return }
   let selTabel = '#' + cfg.tabel
@@ -5873,7 +5892,7 @@ function ponsTerapkanFilter () {
   ponsFilterOtorisasi = $('#ponsModalOtorisasi').val() || 'SEMUA'
   ponsUpdateFilterBadge()
   $('#modalFilterPONS').modal('hide')
-  renderTabelPO()
+  loadTabelPO(true, true)
 }
 
 function ponsResetFilter () {
@@ -5883,42 +5902,68 @@ function ponsResetFilter () {
   $('#ponsModalOtorisasi').val('SEMUA')
   ponsUpdateFilterBadge()
   $('#modalFilterPONS').modal('hide')
-  renderTabelPO()
+  loadTabelPO(true, true)
 }
 
 let ponsTab2Sudahdimuat = false
 
-// Data tab "Purchase Order" ditarik sekaligus per rentang periode (Periode s/d), sama
-// seperti purchaseOrder.blade.php - lihat PONonStockController@loadPurchaseOrder.
-function loadTabelPO (paksa) {
+// ---- Tab "Purchase Order" (urut 2): server-side paging ----
+// Dulu seluruh PO dalam periode ditarik sekaligus lalu dipaging di browser - periode yang
+// dimundurkan (ribuan PO) lambat sekali. Sekarang tiap halaman diminta ke server
+// (POController::daftarPO, pJasa = 1), sama seperti purchaseOrder.blade.php: filter
+// Status/Otorisasi, kotak cari, urutan kolom, dan angka KPI ikut dihitung di server.
+let ponsCachePO = null
+let ponsPakaiCachePO = false
+let ponsKpiPO = null
+let ponsDrawPO = 0
+
+// keHalamanAwal = true saat periode/filter berubah; selain itu (habis simpan/otorisasi)
+// tetap di halaman yang sama.
+function loadTabelPO (paksa, keHalamanAwal) {
+  // Konfigurasi kolom belum selesai diambil (halaman baru dibuka) - loadAll() sendiri
+  // yang akan menggambar tab aktif begitu konfigurasinya datang.
+  if (!ponsMetaSudah) { return }
   if (ponsTab2Sudahdimuat && !paksa) { return }
-  $.ajax({
-    url: "{!! url('ponsloadpurchaseorder') !!}",
-    type: "get",
-    data: {
-      tglawal  : $('#ponsTglAwal').val(),
-      tglakhir : $('#ponsTglAkhir').val()
-    },
-    success: function(res) {
-      dataRefreshOutstanding2 = res.tempOutstanding3
-      ponsTab2Sudahdimuat = true
-      renderTabelPO()
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Gagal memuat data Purchase Order')
-    }
-  })
+  ponsTab2Sudahdimuat = true
+  if ($.fn.DataTable.isDataTable('#tabel2')) {
+    ponsCachePO = null
+    ponsPakaiCachePO = false
+    $('#tabel2').DataTable().ajax.reload(null, !!keHalamanAwal)
+    return
+  }
+  renderTabelPO()
 }
 
-function renderTabelPO () {
+// Isi sel kolom otorisasi/batal - HTML-nya sama persis dengan versi sebelum server-side.
+function ponsSelCentang (nyala) {
+  return nyala
+    ? '<i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i>'
+    : '<i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i>'
+}
+
+function ponsSelTanggal (nilai) {
+  return nilai ? formatDate(nilai).split('-').reverse().join('/') : ''
+}
+
+// pakaiCache = true dipanggil dari ponsOnChangeAktif() saat kolom digeser/disembunyikan -
+// datanya tidak berubah, jadi respons terakhir dipakai lagi tanpa menembak server.
+function renderTabelPO (pakaiCache) {
   let level = $("#level").val()
 
   ponsAktifkanTabel(2)
 
+  let posisi = null
   if ($.fn.DataTable.isDataTable('#tabel2')) {
-    $('#tabel2').DataTable().destroy()
+    let dtLama = $('#tabel2').DataTable()
+    posisi = {
+      start  : dtLama.page.info().start,
+      search : dtLama.search(),
+      order  : dtLama.order()
+    }
+    $('#tabel2_data').find('[data-toggle="tooltip"]').tooltip('dispose')
+    dtLama.destroy()
   }
+  document.getElementById("tabel2_data").innerHTML = ""
 
   let cols2 = ponsKolomTampil(2)
   let kolomRender2 = cols2.map(ponsKolomRender)
@@ -5968,19 +6013,38 @@ function renderTabelPO () {
     baris2.insertAdjacentHTML('beforeend', headerTable2)
   }
 
-  let rowTable2 = ""
-
-  let dataTampil2 = (dataRefreshOutstanding2 && dataRefreshOutstanding2[0]) ? dataRefreshOutstanding2[0] : []
-  if (ponsFilterStatus !== 'SEMUA') {
-    dataTampil2 = dataTampil2.filter(function (r) { return ponsStatusPO(r) === ponsFilterStatus })
+  // Definisi kolom DataTables + nama field untuk ORDER BY di server (null = tidak bisa
+  // diurutkan). Urutan sel otorisasi tiap level mengikuti judulnya: Authorized, User Oto, Tanggal Oto.
+  let columns = []
+  let fieldKolom = []
+  let tambahKolom = function (field, def) {
+    columns.push(Object.assign({ data : null }, def))
+    fieldKolom.push(field)
   }
-  if (ponsFilterOtorisasi !== 'SEMUA') {
-    dataTampil2 = dataTampil2.filter(function (r) { return ponsOtorisasiPO(r) === ponsFilterOtorisasi })
+  let kolomCentang = function (field, nyala) {
+    tambahKolom(field, {
+      className : 'text-center',
+      render : function (data, type, item) { return ponsSelCentang(nyala(item)) },
+      createdCell : function (td, cellData, item) {
+        td.classList.add(nyala(item) ? 'text-success' : 'text-danger')
+      }
+    })
+  }
+  let kolomOto = function (n) {
+    kolomCentang('IsOtorisasi' + n, function (item) { return Number(item['IsOtorisasi' + n]) })
+  }
+  let kolomTgl = function (field) {
+    tambahKolom(field, { render : function (data, type, item) { return ponsSelTanggal(item[field]) } })
+  }
+  let kolomTeks = function (field) {
+    tambahKolom(field, { render : function (data, type, item) { return item[field] || '' } })
   }
 
-  if (dataTampil2.length > 0) {
-    dataTampil2.forEach((item, i) => {
-      // Warna & ikon disamakan dengan pembelianpermintaanagen.blade.php.
+  // Warna & ikon disamakan dengan pembelianpermintaanagen.blade.php.
+  tambahKolom(null, {
+    orderable : false,
+    className : 'text-center',
+    render : function (data, type, item) {
       let tombolAksiPO = `<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail('${item.NoBukti}')"><i class="bi bi-info"></i></button>`
       if (Number(item.IsOtorisasi1)) {
         tombolAksiPO += `
@@ -5991,76 +6055,44 @@ function renderTabelPO () {
           <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
           <button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit('${item.NoBukti}')"><i class="bi bi-pen"></i></button>`
       }
+      return tombolAksiPO
+    }
+  })
 
-      rowTable2 += `
-      <tr>
-        <td class="text-center" style=''>
-          ${tombolAksiPO}
-        </td>
-      `
-      kolomRender2.forEach((c) => {
-        if (c.tipe === 1) {
-          rowTable2 += `<td style="text-align: right;">${ponsRenderNilai(c, item)}</td>`
-        } else {
-          rowTable2 += `<td>${ponsRenderNilai(c, item)}</td>`
-        }
-      });
+  kolomRender2.forEach((c) => {
+    tambahKolom(c.field, {
+      className : c.tipe === 1 ? 'text-right' : '',
+      render : function (data, type, item) { return ponsRenderNilai(c, item) }
+    })
+  });
 
-      rowTable2 += `
-      ${Number(item.IsOtorisasi1) ?
-          '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-        :
-        '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-      }
-      <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
-      <td>${item.OtoUser1 || ''}</td>
-      `
-
-      if (level > 1) {
-        rowTable2 += `
-        ${Number(item.IsOtorisasi2) ?
-            '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-          :
-          '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-        }
-        <td>${item.OtoUser2 || ''}</td>
-        <td>${item.TglOto2 ? formatDate(item.TglOto2).split('-').reverse().join('/') : ''}</td>
-        `
-        if (level > 2) {
-          rowTable2 += `
-          ${Number(item.IsOtorisasi3) ?
-              '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-            :
-            '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-          }
-          <td>${item.TglOto3 ? formatDate(item.TglOto3).split('-').reverse().join('/') : ''}</td>
-          <td>${item.OtoUser3 || ''}</td>
-          `
-          if (level > 3) {
-            rowTable2 += `
-            ${Number(item.IsOtorisasi4) ?
-                '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-              :
-              '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-            }
-            <td>${item.TglOto4 ? formatDate(item.TglOto4).split('-').reverse().join('/') : ''}</td>
-            <td>${item.OtoUser4 || ''}</td>
-            `
-            if (level > 4) {
-              rowTable2 += `
-              ${Number(item.IsOtorisasi5) ?
-                  '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-                :
-                '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-              }
-              <td>${item.TglOto5 ? formatDate(item.TglOto5).split('-').reverse().join('/') : ''}</td>
-              <td>${item.OtoUser5 || ''}</td>
-              `
-            }
-          }
+  kolomOto(1)
+  kolomTeks('OtoUser1')
+  kolomTgl('TglOto1')
+  if (level > 1) {
+    kolomOto(2)
+    kolomTeks('OtoUser2')
+    kolomTgl('TglOto2')
+    if (level > 2) {
+      kolomOto(3)
+      kolomTeks('OtoUser3')
+      kolomTgl('TglOto3')
+      if (level > 3) {
+        kolomOto(4)
+        kolomTeks('OtoUser4')
+        kolomTgl('TglOto4')
+        if (level > 4) {
+          kolomOto(5)
+          kolomTeks('OtoUser5')
+          kolomTgl('TglOto5')
         }
       }
-
+    }
+  }
+  kolomCentang('Isbatal', function (item) { return item.Isbatal == 1 })
+  kolomTeks('UserBatal')
+  tambahKolom('TglBatal', {
+    render : function (data, type, item) {
       let tglBatalTampil = ''
       if (item.TglBatal) {
         let dTb = new Date(item.TglBatal)
@@ -6068,70 +6100,160 @@ function renderTabelPO () {
         let mm = ("0" + (dTb.getMonth() + 1)).slice(-2)
         tglBatalTampil = dd + '/' + mm + '/' + dTb.getFullYear()
       }
+      return tglBatalTampil
+    }
+  })
+  tambahKolom('StatusPO', {
+    className : 'text-center',
+    render : function (data, type, item) { return ponsBadgeStatus(item) }
+  })
 
-      rowTable2 += `  ${item.Isbatal == 1 ?
-          '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>' :
-          '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-        }
-      <td>${item.UserBatal || ''}</td>
-      <td>${tglBatalTampil}</td>
-      <td class="text-center">${ponsBadgeStatus(item)}</td>
-      </tr>
-      `
-    });
-  }
+  ponsPakaiCachePO = !!(pakaiCache && ponsCachePO)
 
-  document.getElementById("tabel2_data").innerHTML = rowTable2
+  let inputSearch2 = document.getElementById('ponsSearch2')
+  let kataCari = posisi ? posisi.search : (inputSearch2 ? inputSearch2.value : '')
+  let orderAman = posisi ? posisi.order.filter((o) => o[0] < columns.length) : []
 
   $("#tabel2").DataTable({
+    // Lapisan "Memuat data..." sama dengan tab Outstanding PR & menu marketing.
+    "processing" : true,
+    "serverSide" : true,
     "lengthChange": false,
     "pageLength": ponsPanjangHalaman[2],
-    "order": [],
-    "dom": "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+    "searchDelay" : 400,
+    // [] = urutan bawaan server (Tanggal/NoBukti terbaru dulu).
+    "order": orderAman,
+    "displayStart" : posisi ? posisi.start : 0,
+    "search" : { "search" : kataCari || '' },
+    "dom": "r<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+    "language" : {
+      "processing" : '<span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span>'
+    },
+    "columns" : columns,
+    "ajax" : function (data, callback) {
+      if (ponsPakaiCachePO && ponsCachePO) {
+        ponsPakaiCachePO = false
+        callback(Object.assign({}, ponsCachePO, { draw : data.draw }))
+        return
+      }
+
+      let kolom = null
+      let arah = 'asc'
+      if (data.order && data.order.length && fieldKolom[data.order[0].column]) {
+        kolom = fieldKolom[data.order[0].column]
+        arah = data.order[0].dir
+      }
+
+      ponsDrawPO = data.draw
+      $.ajax({
+        url : "{!! url('ponsloadpurchaseorder') !!}",
+        type : "get",
+        data : {
+          draw : data.draw,
+          start : data.start,
+          length : data.length,
+          search : data.search ? data.search.value : '',
+          orderCol : kolom,
+          orderDir : arah,
+          tglawal : $('#ponsTglAwal').val(),
+          tglakhir : $('#ponsTglAkhir').val(),
+          status : ponsFilterStatus,
+          otorisasi : ponsFilterOtorisasi
+        },
+        success : function (res) {
+          ponsCachePO = res
+          // Respons yang datang terlambat tidak boleh menimpa angka KPI.
+          if (data.draw === ponsDrawPO) {
+            ponsKpiPO = res.kpi || null
+            renderKpiPONS()
+          }
+          callback(res)
+        },
+        error : function (err) {
+          console.log('ponsloadpurchaseorder gagal:', err.status, err.responseText)
+          alertify.warning('Gagal memuat data Purchase Order')
+          // WAJIB tetap memanggil callback, kalau tidak tabel berhenti merespons.
+          callback({ draw : data.draw, data : [], recordsTotal : 0, recordsFiltered : 0 })
+        }
+      })
+    },
+    "preDrawCallback" : function () {
+      $('#tabel2_data').find('[data-toggle="tooltip"]').tooltip('dispose')
+      $('body > .tooltip').remove()
+    },
+    "drawCallback" : function () {
+      setTimeout(ponsAturTinggiTabel, 0)
+      $('#tabel2_data [data-toggle="tooltip"]').tooltip({ container: 'body', boundary: 'window' })
+    }
   });
+
+  // Kelas "card" bawaan integrasi Bootstrap 4 membuat lapisan memuat tidak pernah hilang -
+  // lihat catatan yang sama di initTabelOutstandingPons().
+  let ponsElMemuat2 = document.querySelector('#tabel2_wrapper > .dataTables_processing')
+  if (ponsElMemuat2) { ponsElMemuat2.classList.remove('card') }
 
   ponsIkatSearch(2)
   ponsIkatPanjangHalaman(2)
   ponsIkatPeriode()
-  let inputSearch2 = document.getElementById('ponsSearch2')
-  if (inputSearch2 && inputSearch2.value) {
-    $('#tabel2').DataTable().search(inputSearch2.value).draw()
-  }
+  if (inputSearch2) { inputSearch2.value = kataCari || '' }
   ponsAturTinggiTabel()
-  $('#tabel2_data [data-toggle="tooltip"]').tooltip({ container: 'body', boundary: 'window' })
-
-  ponsKpiDPP = dataTampil2
-  renderKpiPONS()
 }
+
+// Lapisan "Memuat data..." di atas area tabel selama konfigurasi kolom diambil saat
+// halaman dibuka (tabelnya belum dibungkus DataTables, jadi belum punya lapisan sendiri).
+function ponsTampilMemuatAwal (tampil) {
+  $('#myTabContent').children('.po-memuat-awal').remove()
+  if (!tampil) { return }
+  $('#myTabContent').append(
+    '<div class="po-memuat-awal"><span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span></div>'
+  )
+}
+
+// Konfigurasi kolom (ponsloadall) cukup diambil SEKALI seumur halaman - perubahan kolom
+// sesudahnya sudah tercatat di ponsCart. loadAll() berikutnya (habis simpan/otorisasi)
+// cukup memuat ulang datanya; dulu tiap kali ikut mengambil konfigurasi lagi secara
+// sinkron (layar membeku).
+let ponsMetaSudah = false
+let ponsMetaSedangDiambil = false
 
 function loadAll () {
   console.log('loadall')
 
   ponsInitReportTableSekali()
 
-  let meta = null
+  if (ponsMetaSudah) {
+    ponsMuatUlangData()
+    return
+  }
+  if (ponsMetaSedangDiambil) {
+    return
+  }
+  ponsMetaSedangDiambil = true
+  ponsTampilMemuatAwal(true)
+
   $.ajax({
     url: "{!! url('ponsloadall') !!}",
     type: "get",
-    async: false,
     data: {
     },
-    success: function(res) {
-      meta = res
+    success: function(meta) {
+      ponsCart[1] = ponsBuatCart(meta.headertableheader, meta.headertablevalue, meta.isnumeric, meta.isshown, meta.desimal, meta.aliasordered, true)
+      ponsCart[2] = ponsBuatCart(meta.headertableheader2, meta.headertablevalue2, meta.isnumeric2, meta.isshown2, meta.desimal2, meta.aliasordered2)
+      ponsMetaSudah = true
+      ponsMuatUlangData()
     },
     error: function (err) {
       console.log(err)
       alertify.warning('Gagal memuat konfigurasi tabel')
-    }})
+    },
+    complete: function () {
+      ponsMetaSedangDiambil = false
+      ponsTampilMemuatAwal(false)
+    }
+  })
+}
 
-  if (!meta) {
-    return
-  }
-
-  ponsCart[1] = ponsBuatCart(meta.headertableheader, meta.headertablevalue, meta.isnumeric, meta.isshown, meta.desimal, meta.aliasordered)
-  ponsCart[2] = ponsBuatCart(meta.headertableheader2, meta.headertablevalue2, meta.isnumeric2, meta.isshown2, meta.desimal2, meta.aliasordered2)
-
-  dataRefreshOutstanding2 = []
+function ponsMuatUlangData () {
   ponsTab2Sudahdimuat = false
 
   let urutAktif = ponsUrutTabAktif()
@@ -6146,6 +6268,63 @@ function loadAll () {
   } else {
     initTabelOutstandingPons(urutAktif)
   }
+}
+
+// Tambah/edit/hapus item di form TIDAK lagi memuat ulang daftar PO & tab Outstanding PR
+// setiap kali - cukup ditandai, lalu dimuat ulang sekali saat form ditutup.
+let ponsDaftarBerubah = false
+
+function ponsTandaiDaftarBerubah () {
+  ponsDaftarBerubah = true
+}
+
+function ponsMuatUlangJikaBerubah () {
+  if (!ponsDaftarBerubah) { return }
+  ponsDaftarBerubah = false
+  loadAll()
+  ponsSegarkanOutstanding()
+}
+
+// Lapisan "sedang diproses" di atas seluruh halaman - sama dengan menu marketing
+// (ipMulaiProses di invoicepenjualan) dan purchaseOrder.blade.php (poProses).
+let ponsSibuk = 0
+
+function ponsMulaiProses (teks) {
+  if (ponsSibuk) { return false }
+  ponsSibuk++
+  let lapisan = document.getElementById('ponsProsesOverlay')
+  if (!lapisan) {
+    lapisan = document.createElement('div')
+    lapisan.id = 'ponsProsesOverlay'
+    lapisan.className = 'po-proses-overlay'
+    lapisan.innerHTML = '<span class="po-loading-chip"><span class="po-loading-spin"></span><span class="po-proses-teks"></span></span>'
+    document.body.appendChild(lapisan)
+  }
+  lapisan.querySelector('.po-proses-teks').textContent = teks || 'Memproses...'
+  lapisan.style.display = 'block'
+  return true
+}
+
+function ponsSelesaiProses () {
+  ponsSibuk = Math.max(0, ponsSibuk - 1)
+  if (ponsSibuk) { return }
+  let lapisan = document.getElementById('ponsProsesOverlay')
+  if (lapisan) { lapisan.style.display = 'none' }
+}
+
+// Pekerjaan di halaman ini masih memakai AJAX sinkron (async:false): lapisannya
+// digambar dulu, baru pekerjaannya dijalankan.
+function ponsProses (teks, kerja) {
+  if (!ponsMulaiProses(teks)) { return }
+  requestAnimationFrame(function () {
+    setTimeout(function () {
+      try {
+        kerja()
+      } finally {
+        ponsSelesaiProses()
+      }
+    }, 0)
+  })
 }
 
 // Kartu KPI Outstanding PR tampil di semua tab, tapi tabelnya sendiri baru digambar
@@ -6979,6 +7158,10 @@ function cleanFormAdd () {
 }
 
 function buttonEdit (NOBUKTI) {
+  ponsProses('Memuat data...', function () { buttonEditKerja(NOBUKTI) })
+}
+
+function buttonEditKerja (NOBUKTI) {
   let pcekglobal = 0
   $.ajax({
     url: "{!! url('ceklockperiode') !!}",
@@ -7064,6 +7247,10 @@ if (pcekglobal) {
  let noBuktiUntukAdd = 0
 
 function buttonAdd (noBukti) {
+  ponsProses('Memuat data...', function () { buttonAddKerja(noBukti) })
+}
+
+function buttonAddKerja (noBukti) {
   let pcekglobal = 0
   $.ajax({
     url: "{!! url('ceklockperiode') !!}",
@@ -7140,12 +7327,14 @@ function buttonCloseForm () {
   $('#page3').hide();
   $('#page2').hide();
   $('#page1').show();
+  ponsMuatUlangJikaBerubah()
 
 }
 
 function buttonCloseFormDetail () {
   $('#page3').hide();
   $('#page1').show();
+  ponsMuatUlangJikaBerubah()
 
 }
 
@@ -7203,6 +7392,10 @@ function cekPoDet () {
 }
 
 function buttonDetail (NOBUKTI) {
+  ponsProses('Memuat data...', function () { buttonDetailKerja(NOBUKTI) })
+}
+
+function buttonDetailKerja (NOBUKTI) {
   tipeform = 'detail'
   console.log('button Detail' , NOBUKTI)
 
@@ -7260,6 +7453,7 @@ function refreshDataTableAdd (NOBUKTI) {
           $('#page3').hide();
           $('#page2').hide();
           $('#page1').show();
+          ponsMuatUlangJikaBerubah()
         } else {
           dataHeaderAdd = res.list[0]
           dataTableAdd = res.list
@@ -7356,7 +7550,7 @@ function buttonAddDeleteItem (i) {
   let dataDelete = dataTableAdd[i]
 
   alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + dataDelete.NamaBrg + ' ?',
-      function() {
+      function() { ponsProses('Menghapus item...', function () {
 
         let _token = $("#_token").val();
         let Choice = "D"
@@ -7436,7 +7630,7 @@ function buttonAddDeleteItem (i) {
           },
           success: function(res) {
             console.log('resspsoadd', res)
-            loadAll()
+            ponsTandaiDaftarBerubah()
 
             // lockFormAdd()
             $('.showhide').hide();
@@ -7444,7 +7638,6 @@ function buttonAddDeleteItem (i) {
             refreshDataTableAdd(NoBukti)
 
             alertify.success('Berhasil menghapus item')
-            ponsSegarkanOutstanding()
 
           },
           error: function (err) {
@@ -7453,7 +7646,7 @@ function buttonAddDeleteItem (i) {
           }
 
         })
-      }
+      }) }
     ,function(){
       console.log('no')
     });

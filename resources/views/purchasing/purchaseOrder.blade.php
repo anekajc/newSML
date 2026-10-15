@@ -555,14 +555,23 @@
      DataTables. (Nama directive-nya sengaja tidak ditulis lengkap di sini: Blade tetap
      mengompilasi directive walau berada di dalam komentar CSS.) */
   #tabel_wrapper,
-  #tabelso_wrapper {
+  #tabel2_wrapper,
+  #tabelso_wrapper,
+  #tabel_add_list_barang_nonfocplus_wrapper,
+  #myTabContent {
     /* Acuan position:absolute lapisan di bawah. DataTables sendiri sudah menetapkannya,
        ditulis ulang di sini supaya tidak bergantung pada file CSS-nya ikut termuat. */
     position: relative;
   }
 
+  /* #tabel2 (tab Purchase Order) sekarang juga server-side, jadi ikut memakai lapisan
+     yang sama. .po-memuat-awal = lapisan yang sama selama konfigurasi kolom diambil saat
+     halaman dibuka (tabelnya belum dibungkus DataTables). */
   #tabel_wrapper > .dataTables_processing,
-  #tabelso_wrapper > .dataTables_processing {
+  #tabel2_wrapper > .dataTables_processing,
+  #tabelso_wrapper > .dataTables_processing,
+  #tabel_add_list_barang_nonfocplus_wrapper > .dataTables_processing,
+  #myTabContent > .po-memuat-awal {
     position: absolute;
     top: 0;
     left: 0;
@@ -622,6 +631,20 @@
 
   @keyframes poPutarLoading {
     to { transform: rotate(360deg); }
+  }
+
+  #myTabContent > .po-memuat-awal { min-height: 140px; }
+
+  /* Lapisan "sedang diproses" (poProses) di atas seluruh halaman & modal - sama dengan
+     .ip-proses-overlay di marketing/invoicepenjualan. */
+  .po-proses-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, .35);
+    z-index: 2000;
+    cursor: progress;
+    animation: poMunculLoading .34s ease-out both;
   }
 
   #tabel td.dataTables_empty,
@@ -2278,7 +2301,7 @@ td input[type="checkbox"] {
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
               onclick="submitAddAdd()">Simpan</button>
 
-              <button type="button" id="submitAddEdit" class="btn btn-primary btn-lg" style="
+              <button type="button" id="submitAddEdit" class="btn btn-lg btn-chip-biru" style="
               height: 30px;
               padding: 4px 12px;
               border-radius: 20px;
@@ -2287,7 +2310,7 @@ td input[type="checkbox"] {
               text-transform: uppercase;
               transition: background-color 0.3s, box-shadow 0.3s;
               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-              onclick="submitAddEdit()" class="btn btn-secondary">Simpan</button>
+              onclick="submitAddEdit()">Simpan</button>
             </div>
 
           </div>
@@ -4739,6 +4762,10 @@ function onChangeHeader (field, value) {
 
 
 function submitAddTambahSOAll () {
+  poProses('Menyimpan item...', function () { submitAddTambahSOAllKerja() })
+}
+
+function submitAddTambahSOAllKerja () {
 
     console.log('submitAddTambahSO')
     console.log(tempDataTableTambahSO)
@@ -4971,7 +4998,7 @@ function submitAddTambahSOAll () {
                 console.log(res)
                 if (res == 1) {
 
-                  loadAll()
+                  poTandaiDaftarBerubah()
                   tipeform = 'edit'
                   document.getElementById("buttonAddListPelanggan").disabled = true
                   document.getElementById("input_add_kodesupplier").disabled = true
@@ -4983,7 +5010,6 @@ function submitAddTambahSOAll () {
 
                   $("#form").modal('toggle')
                   alertify.success('Berhasil menambah item')
-                  poSegarkanOutstanding()
                 }
                 if(res == 2) {
                   setNewNoBukti()
@@ -5004,6 +5030,10 @@ function submitAddTambahSOAll () {
 
 
 function submitAddAdd () {
+  poProses('Menyimpan item...', function () { submitAddAddKerja() })
+}
+
+function submitAddAddKerja () {
 
     console.log('submitAddAdd')
 
@@ -5273,7 +5303,7 @@ function submitAddAdd () {
       if (flagharga !='lanjut'){
         console.log('spadd a')
          alertify.confirm('' + flagharga + ' ?',
-          function() {
+          function() { poProses('Menyimpan item...', function () {
 
 
                   $.ajax({
@@ -5348,7 +5378,7 @@ function submitAddAdd () {
 
                       if (res == 1) {
 
-                        loadAll()
+                        poTandaiDaftarBerubah()
                         tipeform = 'edit'
                         document.getElementById("buttonAddListPelanggan").disabled = true
                         document.getElementById("input_add_kodesupplier").disabled = true
@@ -5359,7 +5389,6 @@ function submitAddAdd () {
                         refreshDataTableAdd(NoBukti)
 
                         alertify.success('Berhasil menambah item')
-                        poSegarkanOutstanding()
                       }
                       if(res == 2) {
                         setNewNoBukti()
@@ -5376,7 +5405,7 @@ function submitAddAdd () {
 
 
 
-                }
+                }) }
                   ,function(){
                 console.log(' cancel harga minimal')
 
@@ -5468,7 +5497,7 @@ function submitAddAdd () {
                       console.log(res)
                       if (res == 1) {
 
-                        loadAll()
+                        poTandaiDaftarBerubah()
                         tipeform = 'edit'
                         document.getElementById("buttonAddListPelanggan").disabled = true
                         document.getElementById("input_add_kodesupplier").disabled = true
@@ -5479,7 +5508,6 @@ function submitAddAdd () {
                         refreshDataTableAdd(NoBukti)
 
                         alertify.success('Berhasil menambah item')
-                        poSegarkanOutstanding()
                       }
                       if(res == 2) {
                         setNewNoBukti()
@@ -5525,6 +5553,10 @@ function submitAddAdd () {
 
 
 function submitAddEdit () {
+  poProses('Menyimpan item...', function () { submitAddEditKerja() })
+}
+
+function submitAddEditKerja () {
 
   console.log('submitAddEdits')
 
@@ -5759,7 +5791,7 @@ function submitAddEdit () {
     console.log ('=============================>',flagharga)
     if (flagharga !='lanjut'){
          alertify.confirm('' + flagharga + ' ?',
-          function() {
+          function() { poProses('Menyimpan item...', function () {
 
 
 
@@ -5834,14 +5866,13 @@ function submitAddEdit () {
                                                             },
                                                             success: function(res) {
                                                               console.log('resspsoaddedit', res)
-                                                              loadAll()
+                                                              poTandaiDaftarBerubah()
 
                                                               // lockFormAdd()
                                                               $('.showhide').hide();
                                                               refreshDataTableAdd(NoBukti)
 
                                                               alertify.success('Berhasil edit item')
-                                                              poSegarkanOutstanding()
 
                                                             },
                                                             error: function (err) {
@@ -5851,7 +5882,7 @@ function submitAddEdit () {
 
                                                           })
 
-                              }
+                              }) }
 
 
                   ,function(){
@@ -5933,14 +5964,13 @@ function submitAddEdit () {
                                                             },
                                                             success: function(res) {
                                                               console.log('resspsoaddedit', res)
-                                                              loadAll()
+                                                              poTandaiDaftarBerubah()
 
                                                               // lockFormAdd()
                                                               $('.showhide').hide();
                                                               refreshDataTableAdd(NoBukti)
 
                                                               alertify.success('Berhasil edit item')
-                                                              poSegarkanOutstanding()
 
                                                             },
                                                             error: function (err) {
@@ -6626,68 +6656,142 @@ function buttonAddAddListBarang (opsi = {}) {
   } else {
 
 
-    // SO : seluruh SO yang masih outstanding sekaligus. Endpoint tersendiri, BUKAN
-    // polistbarangnosoplus, karena yang itu menyaring per satu nomor SO (peninggalan alur
-    // dua langkah) dan masih dipakai halaman lain - lihat POController@listBarangSOAll.
-    if ($.fn.DataTable.isDataTable('#tabel_add_list_barang_nonfocplus')) { $('#tabel_add_list_barang_nonfocplus').DataTable().destroy() }
-
-    $.ajax({
-      url: "{!! url('polistbarangsoall') !!}",
-      type: "get",
-      async: false,
-      data: {
-      },
-      success: function(res) {
-        let rowTable = ``
-        dataAddAddListItem = res
-
-        // Sama seperti cabang PR: auto-pick hanya kalau hasilnya benar-benar satu baris SO.
-        if (autoPick && keyword) {
-          let cocok = poCariIndeksBarang(keyword, 'KodeBrg', 'NamaBrg')
-          if (cocok.length === 1) {
-            buttonAddAddPickBarangNonFOCPlus(cocok[0])
-            poFokusQty()
-            return
-          }
-        }
-
-        dataAddAddListItem.forEach((item, i) => {
-          rowTable += `
-          <tr class="pick-row" onclick="buttonAddAddPickBarangNonFOCPlus(${i})">
-            <td>${item.KodeBrg}</td>
-            <td style="">${item.NamaBrg}</td>
-            <td>${formatAngka(item.Qnt)}</td>
-            <td>${formatAngka(item.Qnt2)}</td>
-            <td>${item.Sat}</td>
-            <td>${item.SisaPPL}</td>
-            <td>${item.Sisa2PPL}</td>
-            <td>${item.NoBukti}</td>
-            <td>${item.PartNumber}</td>
-
-          </tr>`
-        });
-
-        document.getElementById("tabel_data_add_list_barang_nonfocplus").innerHTML = rowTable
-
-        pickerKasInit('tabel_add_list_barang_nonfocplus')
-
-        if (keyword) { $("#tabel_add_list_barang_nonfocplus").DataTable().search(keyword).draw() }
-
-        document.getElementById("namaHeaderTable").textContent = 'Barang dari SO'
-        $('.showhidemodalbodyadd').hide();
-        $('#modalBodyAddAddListBarangNonFOCPlus').show();
-
-        $("#form").modal('toggle')
-
-      },
-      error: function (err) {
-        console.log(err)
-        alertify.warning('Terjadi kesalahan silahkan refresh browser')
-      }
-
-    })
+    // SO : seluruh SO yang masih outstanding. Dulu seluruh barisnya (~7.000 baris, 2,3 MB)
+    // ditarik sekaligus tiap kali modal dibuka - lemot. Sekarang modalnya server-side:
+    // hanya satu halaman yang diminta (POController@listBarangSOAllHalaman, syarat barisnya
+    // sama persis dengan listBarangSOAll), kotak Search & urutan kolom juga diproses server.
+    if (autoPick && keyword) {
+      poAutoPickBarangSO(keyword)
+      return
+    }
+    poBukaPickerBarangSO(keyword)
   }
 }
+
+// Baris SO hasil server yang terakhir tampil di modal - klik baris memilih dari sini.
+let poBarisPickerSO = []
+
+// Auto-pick (Enter di kolom kode barang), urutannya sama dengan poCariIndeksBarang():
+// kode barang PERSIS dulu; kalau tidak ada, kode/nama yang MENGANDUNG kata kunci. Hanya
+// kalau hasilnya tepat satu baris SO barang itu langsung dipilih; selain itu modal dibuka
+// dengan kata kunci di kotak Search.
+function poAutoPickBarangSO (keyword) {
+  if (!poMulaiProses('Mencari barang...')) { return }
+  let tanya = function (param, lanjut) {
+    $.ajax({
+      url : "{!! url('polistbarangsoallhal') !!}",
+      type : "get",
+      data : Object.assign({ draw : 1, start : 0, length : 2 }, param),
+      success : lanjut,
+      error : function (err) {
+        console.log(err)
+        poSelesaiProses()
+        alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      }
+    })
+  }
+  let pilih = function (row) {
+    poSelesaiProses()
+    dataAddAddListItem = [row]
+    buttonAddAddPickBarangNonFOCPlus(0)
+    poFokusQty()
+  }
+
+  tanya({ kode : keyword }, function (res) {
+    if (res.recordsTotal === 1) { pilih(res.data[0]); return }
+    if (res.recordsTotal > 1) { poSelesaiProses(); poBukaPickerBarangSO(keyword); return }
+    tanya({ kodeNama : keyword }, function (res2) {
+      if (res2.recordsTotal === 1) { pilih(res2.data[0]); return }
+      poSelesaiProses()
+      poBukaPickerBarangSO(keyword)
+    })
+  })
+}
+
+function poBukaPickerBarangSO (keyword) {
+  let sel = '#tabel_add_list_barang_nonfocplus'
+  if ($.fn.DataTable.isDataTable(sel)) { $(sel).DataTable().destroy() }
+  document.getElementById("tabel_data_add_list_barang_nonfocplus").innerHTML = ''
+  poBarisPickerSO = []
+
+  let angka = function (field) {
+    return { data : null, render : function (d, t, item) { return formatAngka(item[field]) } }
+  }
+  let teks = function (field) {
+    return { data : null, render : function (d, t, item) { return (item[field] === null || item[field] === undefined) ? '' : item[field] } }
+  }
+  // Urutan & isi kolom sama dengan baris yang dulu dirakit manual.
+  let columns = [teks('KodeBrg'), teks('NamaBrg'), angka('Qnt'), angka('Qnt2'), teks('Sat'),
+                 teks('SisaPPL'), teks('Sisa2PPL'), teks('NoBukti'), teks('PartNumber')]
+  let fieldKolom = ['KodeBrg', 'NamaBrg', 'Qnt', 'Qnt2', 'Sat', 'SisaPPL', 'Sisa2PPL', 'NoBukti', 'PartNumber']
+
+  pickerKasInit('tabel_add_list_barang_nonfocplus', {
+    processing : true,
+    serverSide : true,
+    searchDelay : 400,
+    order : [],
+    search : { search : keyword || '' },
+    columns : columns,
+    language : {
+      processing : '<span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span>',
+      lengthMenu : 'Tampilkan _MENU_',
+      emptyTable : 'Tidak ada data',
+      zeroRecords : 'Tidak ada data yang cocok dengan pencarian'
+    },
+    createdRow : function (row, item, idx) {
+      row.classList.add('pick-row')
+      row.setAttribute('data-idx', idx)
+    },
+    ajax : function (data, callback) {
+      let kolom = null
+      let arah = 'asc'
+      if (data.order && data.order.length && fieldKolom[data.order[0].column]) {
+        kolom = fieldKolom[data.order[0].column]
+        arah = data.order[0].dir
+      }
+      $.ajax({
+        url : "{!! url('polistbarangsoallhal') !!}",
+        type : "get",
+        data : {
+          draw : data.draw,
+          start : data.start,
+          length : data.length,
+          search : data.search ? data.search.value : '',
+          orderCol : kolom,
+          orderDir : arah
+        },
+        success : function (res) {
+          poBarisPickerSO = res.data || []
+          callback(res)
+        },
+        error : function (err) {
+          console.log(err)
+          alertify.warning('Terjadi kesalahan silahkan refresh browser')
+          callback({ draw : data.draw, data : [], recordsTotal : 0, recordsFiltered : 0 })
+        }
+      })
+    }
+  })
+
+  // Kelas "card" bawaan integrasi Bootstrap 4 membuat lapisan memuat tidak pernah hilang.
+  let elMemuat = document.querySelector('#tabel_add_list_barang_nonfocplus_wrapper > .dataTables_processing')
+  if (elMemuat) { elMemuat.classList.remove('card') }
+
+  document.getElementById("namaHeaderTable").textContent = 'Barang dari SO'
+  $('.showhidemodalbodyadd').hide();
+  $('#modalBodyAddAddListBarangNonFOCPlus').show();
+
+  $("#form").modal('toggle')
+}
+
+// Klik baris modal "Barang dari SO" - didelegasikan karena barisnya dibuat ulang tiap
+// halaman. createdRow menandai indeks baris di dalam halaman yang sedang tampil.
+$(document).on('click', '#tabel_add_list_barang_nonfocplus tbody tr.pick-row', function () {
+  let item = poBarisPickerSO[Number(this.getAttribute('data-idx'))]
+  if (!item) { return }
+  dataAddAddListItem = [item]
+  buttonAddAddPickBarangNonFOCPlus(0)
+})
 
 
 
@@ -7518,8 +7622,8 @@ let poPerluGambar = { 1 : false, 2 : false, 3 : false }
  * (initTabelOutstanding) dengan tabel di bawah ini sebagai pembedanya - dengan
  * begitu perbaikan pada salah satu tab otomatis berlaku untuk keduanya.
  *
- * urut 2 = tab "Purchase Order" tidak ikut di sini: datanya ditarik sekaligus lalu
- * digambar renderTabelPO(), bukan per halaman dari server.
+ * urut 2 = tab "Purchase Order" tidak ikut di sini: juga server-side, tapi kolom & isinya
+ * berbeda sehingga digambar renderTabelPO() sendiri.
  */
 const PO_OUT = {
   1 : {
@@ -7558,8 +7662,8 @@ let poPakaiCacheOut = { 1 : false, 3 : false }
 // initTabelOutstanding()/renderTabelPO() melakukan destroy+init tiap kali kolom
 // digeser/disembunyikan - tanpa ini tabel selalu balik ke nilai awal walau
 // dropdownnya masih menunjuk pilihan pengguna. Nilai -1 berarti "semua data"
-// (dipahami DataTables maupun servernya). urut 2 (tab Purchase Order) paging-nya
-// murni di client (data sudah ditarik sekaligus), bukan lewat server seperti 1/3.
+// (dipahami DataTables maupun servernya). Ketiga tabel (termasuk urut 2, tab Purchase Order)
+// sekarang paging-nya lewat server.
 let poPanjangHalaman = { 1 : 10, 2 : 10, 3 : 10 }
 
 // Nomor urut tabel milik tab yang sedang aktif.
@@ -7580,13 +7684,30 @@ const PO_TIPE_NAMA = { 0 : 'varchar', 1 : 'float', 2 : 'date' }
 // tab yang sedang aktif tanpa perlu init() ulang tiap kali tab berpindah.
 const PO_SELEKTOR_TABEL_AKTIF = '#myTabContent .tab-pane.active table.data-table'
 
-function poBuatCart (headers, values, isnumerics, isshowns, desimals, aliasordered) {
+// Tab Outstanding SO (urut 3): kolom Qnt2, Sisa2PPL, NoSat, Isi, Urut & Tolerate tidak ditampilkan sama sekali
+// (juga tidak muncul di menu roda gigi), dan judul SisaPPL ditampilkan sebagai SisaSO. Nama
+// field data dari server tetap - yang diatur di sini hanya kolom yang terlihat user.
+const PO_OUTSO_BUANG = ['qnt2', 'sisa2ppl', 'nosat', 'isi', 'urut', 'tolerate']
+function poKolomOutSO (cart) {
+  return (cart || []).filter(c => PO_OUTSO_BUANG.indexOf(String(c[6]).toLowerCase()) === -1)
+    .map(c => {
+      if (String(c[6]).toLowerCase() === 'sisappl') { c[1] = 'SisaSO' }
+      return c
+    })
+}
+
+// labelQty: judul kolom "Qnt..." ditampilkan sebagai "Qty..." (hanya tab outstanding;
+// nama field datanya tetap, yang berubah hanya judul yang terlihat user).
+function poBuatCart (headers, values, isnumerics, isshowns, desimals, aliasordered, labelQty) {
   let cart = []
   ;(headers || []).forEach((h, i) => {
     let tipe = Number(isnumerics[i]) || 0
     let label = h
     if (aliasordered && aliasordered[i] && aliasordered[i].alias) {
       label = aliasordered[i].alias
+    }
+    if (labelQty) {
+      label = String(label).replace(/qnt/gi, 'Qty')
     }
     let des = (desimals && desimals[i] !== undefined && desimals[i] !== null)
       ? Number(desimals[i])
@@ -7632,7 +7753,7 @@ function poAktifkanTabel (urut) {
 // memanggil poAktifkanTabel() sebelum tabel manapun bisa diinteraksi.
 function poOnChangeAktif () {
   if (poActiveUrut === 2) {
-    renderTabelPO()
+    renderTabelPO(true)
   } else {
     // true = pakai cache respons terakhir tabel itu, jangan menembak server -
     // perubahan kolom tidak mengubah datanya, hanya cara menampilkannya.
@@ -7764,7 +7885,7 @@ function poPindahBar (urut) {
 // instance DataTables yang sedang aktif. Diikat sekali per input lewat dataset.rtBound
 // karena initTabelOutstanding()/renderTabelPO() memanggil ini tiap kali tabel
 // di-destroy+init ulang, sementara elemen inputnya sendiri tidak pernah diganti.
-let poTimerSearch = { 1 : null, 3 : null }
+let poTimerSearch = { 1 : null, 2 : null, 3 : null }
 function poIkatSearch (urut) {
   let input = document.getElementById(urut === 2 ? 'poSearch2' : PO_OUT[urut].search)
   if (!input || input.dataset.rtBound) { return }
@@ -7772,15 +7893,11 @@ function poIkatSearch (urut) {
 
   input.addEventListener('input', function () {
     let nilai = input.value
-    if (urut === 2) {
-      $('#tabel2').DataTable().search(nilai).draw()
-      return
-    }
-    // Tabel outstanding server-side - jangan tembak server tiap ketukan, sama seperti
+    // Ketiga tabel sekarang server-side - jangan tembak server tiap ketukan, sama seperti
     // searchDelay bawaan DataTables yang dulu berlaku untuk kotak search default.
     if (poTimerSearch[urut]) { clearTimeout(poTimerSearch[urut]) }
     poTimerSearch[urut] = setTimeout(function () {
-      $('#' + PO_OUT[urut].tabel).DataTable().search(nilai).draw()
+      $('#' + (urut === 2 ? 'tabel2' : PO_OUT[urut].tabel)).DataTable().search(nilai).draw()
     }, 400)
   })
 }
@@ -7792,9 +7909,8 @@ function poIkatSearch (urut) {
 //
 // page.len(n).draw() sengaja dipakai, BUKAN destroy+init lewat initTabelOutstanding():
 // DataTables sendiri yang menghitung ulang halaman lalu menembak ajax dengan length
-// yang baru, jadi susunan kolom, urutan sort, dan kata pencarian tetap utuh. Untuk urut 2
-// (tab Purchase Order, paging murni di client) page.len().draw() juga aman karena
-// datanya sudah ada semua di tabel - DataTables hanya menghitung ulang halaman tampilnya.
+// yang baru, jadi susunan kolom, urutan sort, dan kata pencarian tetap utuh.
+// Berlaku sama untuk tab Purchase Order (urut 2) yang juga server-side.
 // .draw() tanpa argumen mengembalikan tampilan ke halaman pertama - memang yang
 // diinginkan, karena nomor halaman lama tidak lagi berarti setelah jumlah baris berubah.
 function poIkatPanjangHalaman (urut) {
@@ -7825,7 +7941,7 @@ function poIkatPeriode () {
       alertify.warning('Tanggal awal tidak boleh melebihi tanggal akhir')
       return
     }
-    loadTabelPO(true)
+    loadTabelPO(true, true)
   }
 
   awal.addEventListener('change', onUbah)
@@ -7886,7 +8002,7 @@ function poTerapkanFilter () {
   poFilterOtorisasi = $('#poModalOtorisasi').val() || 'SEMUA'
   poUpdateFilterBadge()
   $('#modalFilterPO').modal('hide')
-  renderTabelPO()
+  loadTabelPO(true, true)
 }
 
 function poResetFilter () {
@@ -7896,7 +8012,7 @@ function poResetFilter () {
   $('#poModalOtorisasi').val('SEMUA')
   poUpdateFilterBadge()
   $('#modalFilterPO').modal('hide')
-  renderTabelPO()
+  loadTabelPO(true, true)
 }
 
 // Kotak scroll tabel dibuat setinggi sisa ruang di #content supaya halaman TIDAK perlu
@@ -7998,9 +8114,9 @@ window.doSetHeader = function (mode, reset) {
       if (urut === 2) {
         poCart[2] = poBuatCart(res.headertableheader2, res.headertablevalue2, res.isnumeric2, res.isshown2, res.desimal2, res.aliasordered2)
       } else if (urut === 3) {
-        poCart[3] = poBuatCart(res.headertableheader3, res.headertablevalue3, res.isnumeric3, res.isshown3, res.desimal3, res.aliasordered3)
+        poCart[3] = poKolomOutSO(poBuatCart(res.headertableheader3, res.headertablevalue3, res.isnumeric3, res.isshown3, res.desimal3, res.aliasordered3, true))
       } else {
-        poCart[1] = poBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal, res.aliasordered)
+        poCart[1] = poBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal, res.aliasordered, true)
       }
       window.gcart_header = poCart[urut]
     },
@@ -8088,6 +8204,7 @@ function poRapikanBarisKosong (api) {
 // poCacheOut[urut] dipakai lagi, tanpa menembak server. pakaiCache diabaikan (selalu
 // ambil data baru) kalau memang belum ada cache untuk dipakai.
 function initTabelOutstanding (urut, pakaiCache) {
+  if (!poMetaSudah) { return }
   let cfg = PO_OUT[urut]
   if (!cfg) { return }
   let selTabel = '#' + cfg.tabel
@@ -8290,38 +8407,69 @@ function initTabelOutstanding (urut, pakaiCache) {
   poAturTinggiTabel()
 }
 
-// Ambil data tab "Purchase Order". Dipanggil saat tabnya dibuka, bukan saat halaman dimuat.
-function loadTabelPO (paksa) {
+// ---- Tab "Purchase Order" (urut 2): server-side paging ----
+// Dulu seluruh PO dalam periode ditarik sekaligus lalu dipaging di browser - periode yang
+// dimundurkan (ribuan PO) butuh puluhan detik. Sekarang tiap halaman diminta ke server
+// (POController@daftarPO), sama seperti tab Outstanding: filter Status/Otorisasi, kotak
+// cari, urutan kolom, dan angka KPI ikut dihitung di server.
+let poCachePO = null
+let poPakaiCachePO = false
+let poKpiPO = null
+let poDrawPO = 0
+
+// Ambil ulang data tab "Purchase Order". Dipanggil saat tabnya dibuka, bukan saat halaman
+// dimuat. keHalamanAwal = true saat periode/filter berubah (nomor halaman lama tidak
+// berarti lagi); selain itu (habis simpan/otorisasi) tetap di halaman yang sama.
+function loadTabelPO (paksa, keHalamanAwal) {
+  // Konfigurasi kolom belum selesai diambil (halaman baru dibuka) - loadAll() sendiri
+  // yang akan menggambar tab aktif begitu konfigurasinya datang.
+  if (!poMetaSudah) { return }
   if (poTab2Sudahdimuat && !paksa) {
     return
   }
-  $.ajax({
-    url: "{!! url('poloadpurchaseorder') !!}",
-    type: "get",
-    data: {
-      tglawal  : $('#poTglAwal').val(),
-      tglakhir : $('#poTglAkhir').val()
-    },
-    success: function(res) {
-      dataRefreshOutstanding2 = res.tempOutstanding3
-      poTab2Sudahdimuat = true
-      renderTabelPO()
-    },
-    error: function (err) {
-      console.log(err)
-      alertify.warning('Gagal memuat data Purchase Order')
-    }
-  })
+  poTab2Sudahdimuat = true
+  if ($.fn.DataTable.isDataTable('#tabel2')) {
+    poCachePO = null
+    poPakaiCachePO = false
+    $('#tabel2').DataTable().ajax.reload(null, !!keHalamanAwal)
+    return
+  }
+  renderTabelPO()
 }
 
-function renderTabelPO () {
+// Isi sel kolom otorisasi/batal - HTML-nya sama persis dengan versi sebelum server-side.
+function poSelCentang (nyala, awalan) {
+  return (awalan || '') + (nyala
+    ? '<i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i>'
+    : '<i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i>')
+}
+
+function poSelTanggal (nilai) {
+  return nilai ? formatDate(nilai).split('-').reverse().join('/') : ''
+}
+
+// pakaiCache = true dipanggil dari poOnChangeAktif() saat kolom digeser/disembunyikan/
+// diubah desimalnya - datanya tidak berubah, jadi respons terakhir dipakai lagi tanpa
+// menembak server (sama seperti initTabelOutstanding()).
+function renderTabelPO (pakaiCache) {
   let level = $("#level").val()
 
   poAktifkanTabel(2)
 
+  // Simpan posisi tampilan (halaman, urutan, kata pencarian) supaya destroy+init di
+  // bawah tidak mengembalikan tabel ke keadaan awal.
+  let posisi = null
   if ($.fn.DataTable.isDataTable('#tabel2')) {
-    $('#tabel2').DataTable().destroy()
+    let dtLama = $('#tabel2').DataTable()
+    posisi = {
+      start  : dtLama.page.info().start,
+      search : dtLama.search(),
+      order  : dtLama.order()
+    }
+    $('#tabel2_data').find('[data-toggle="tooltip"]').tooltip('dispose')
+    dtLama.destroy()
   }
+  document.getElementById("tabel2_data").innerHTML = ""
 
   // Satu daftar kolom untuk header DAN isi baris. Sebelumnya header dibangun dari
   // laaliasordered2 yang berisi SEMUA kolom (mengabaikan isshown) sementara barisnya
@@ -8381,193 +8529,214 @@ if (baris2) {
   baris2.insertAdjacentHTML('beforeend', headerTable2)
 }
 
-  let rowTable2 = ""
-
-  // Data mentahnya satu array datar di [0] - lihat catatan groupBy di controller.
-  let dataTampil2 = (dataRefreshOutstanding2 && dataRefreshOutstanding2[0]) ? dataRefreshOutstanding2[0] : []
-  if (poFilterStatus !== 'SEMUA') {
-    dataTampil2 = dataTampil2.filter(function (r) { return poStatusPO(r) === poFilterStatus })
+  // Definisi kolom DataTables + nama field untuk ORDER BY di server (null = tidak bisa
+  // diurutkan). Urutan sel otorisasi tiap level mengikuti judulnya: Authorized, User Oto, Tanggal Oto.
+  let columns = []
+  let fieldKolom = []
+  let tambahKolom = function (field, def) {
+    columns.push(Object.assign({ data : null }, def))
+    fieldKolom.push(field)
   }
-  if (poFilterOtorisasi !== 'SEMUA') {
-    dataTampil2 = dataTampil2.filter(function (r) { return poOtorisasiPO(r) === poFilterOtorisasi })
+  let kolomOto = function (n, awalan) {
+    tambahKolom('IsOtorisasi' + n, {
+      className : 'text-center',
+      render : function (data, type, item) { return poSelCentang(Number(item['IsOtorisasi' + n]), awalan) },
+      createdCell : function (td, cellData, item) {
+        td.classList.add(Number(item['IsOtorisasi' + n]) ? 'text-success' : 'text-danger')
+      }
+    })
+  }
+  let kolomTgl = function (field) {
+    tambahKolom(field, { render : function (data, type, item) { return poSelTanggal(item[field]) } })
+  }
+  let kolomTeks = function (field) {
+    tambahKolom(field, { render : function (data, type, item) { return item[field] || '' } })
   }
 
-  if (dataTampil2.length > 0) {
-    dataTampil2.forEach((item, i) => {
+  // PO yang sudah terotorisasi tidak boleh diedit lagi - tombol Edit/Otorisasi
+  // diganti Batal Otorisasi + Print. Yang belum terotorisasi sebaliknya.
+  // Warna & ikon disamakan dengan pembelianpermintaanagen.blade.php.
+  tambahKolom(null, {
+    orderable : false,
+    className : 'text-center',
+    render : function (data, type, item) {
+      let tombolAksiPO = `<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail('${item.NoBukti}')"><i class="bi bi-info"></i></button>`
+      if (Number(item.IsOtorisasi1)) {
+        tombolAksiPO += `
+          <button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
+          <button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="openPrintModal('${item.NoBukti}')"><i class="bi bi-printer"></i></button>`
+      } else {
+        tombolAksiPO += `
+          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}' , ${item.IsOtorisasi1})"><i class="bi bi-key"></i></button>
+          <button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit('${item.NoBukti}')"><i class="bi bi-pen"></i></button>`
+      }
+      return tombolAksiPO
+    }
+  })
 
-        // PO yang sudah terotorisasi tidak boleh diedit lagi - tombol Edit/Otorisasi
-        // diganti Batal Otorisasi + Print. Yang belum terotorisasi sebaliknya.
-        // Warna & ikon disamakan dengan pembelianpermintaanagen.blade.php.
-        let tombolAksiPO = `<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail('${item.NoBukti}')"><i class="bi bi-info"></i></button>`
-        if (Number(item.IsOtorisasi1)) {
-          tombolAksiPO += `
-            <button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
-            <button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="openPrintModal('${item.NoBukti}')"><i class="bi bi-printer"></i></button>`
-        } else {
-          tombolAksiPO += `
-            <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}' , ${item.IsOtorisasi1})"><i class="bi bi-key"></i></button>
-            <button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit('${item.NoBukti}')"><i class="bi bi-pen"></i></button>`
+  // Daftar kolom yang sama persis dengan yang dipakai header di atas.
+  kolomRender2.forEach((c) => {
+    tambahKolom(c.field, {
+      className : c.tipe === 1 ? 'text-right' : '',
+      render : function (data, type, item) { return poRenderNilai(c, item) }
+    })
+  });
+
+  kolomOto(1, '')
+  kolomTeks('OtoUser1')
+  kolomTgl('TglOto1')
+  if (level > 1) {
+    kolomOto(2, '2')
+    kolomTeks('OtoUser2')
+    kolomTgl('TglOto2')
+    if (level > 2) {
+      kolomOto(3, '3')
+      kolomTeks('OtoUser3')
+      kolomTgl('TglOto3')
+      if (level > 3) {
+        kolomOto(4, '')
+        kolomTeks('OtoUser4')
+        kolomTgl('TglOto4')
+        if (level > 4) {
+          kolomOto(5, '')
+          kolomTeks('OtoUser5')
+          kolomTgl('TglOto5')
         }
+      }
+    }
+  }
+  tambahKolom('Isbatal', {
+    className : 'text-center',
+    render : function (data, type, item) { return poSelCentang(item.Isbatal == 1, '') },
+    createdCell : function (td, cellData, item) {
+      td.classList.add(item.Isbatal == 1 ? 'text-success' : 'text-danger')
+    }
+  })
+  kolomTeks('UserBatal')
+  tambahKolom('StatusPO', {
+    className : 'text-center',
+    render : function (data, type, item) { return poBadgeStatus(item) }
+  })
 
-        rowTable2 += `
-        <tr>
-          <td class="text-center" style=''>
-            ${tombolAksiPO}
-          </td>
+  poPakaiCachePO = !!(pakaiCache && poCachePO)
 
-          `
-          // Daftar kolom yang sama persis dengan yang dipakai header di atas.
-          kolomRender2.forEach((c) => {
-            if (c.tipe === 1) {
-              rowTable2 += `<td style="text-align: right;">${poRenderNilai(c, item)}</td>`
-            } else {
-              rowTable2 += `<td>${poRenderNilai(c, item)}</td>`
-            }
-          });
-
-          rowTable2 += `
-
-          ${Number(item.IsOtorisasi1) ?
-              '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-            :
-            '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-          }
-          <td>${item.TglOto1 ? formatDate(item.TglOto1).split('-').reverse().join('/') : ''}</td>
-
-          <td>${item.OtoUser1 || ''}</td>
-          `
-
-          if (level > 1) {
-            rowTable2 += `
-            ${Number(item.IsOtorisasi2) ?
-                '<td class="text-success text-center">2<i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-              :
-              '<td class="text-danger text-center">2<i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-            }
-
-            <td>${item.OtoUser2 || '' } </td>
-            <td>${item.TglOto2 ? formatDate(item.TglOto2).split('-').reverse().join('/') : ''} </td>
-
-
-            `
-            if (level > 2) {
-              rowTable2 += `
-              ${Number(item.IsOtorisasi3) ?
-                  '<td class="text-success text-center">3<i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-                :
-                '<td class="text-danger text-center">3<i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-              }
-              <td>${item.TglOto3 ? formatDate(item.TglOto3).split('-').reverse().join('/') : ''} </td>
-
-              <td>${item.OtoUser3 || '' } </td>
-              `
-              if (level > 3) {
-                rowTable2 += `
-                ${Number(item.IsOtorisasi4) ?
-                    '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-                  :
-                  '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-                }
-                <td>${item.TglOto4 ? formatDate(item.TglOto4).split('-').reverse().join('/') : ''}</td>
-
-                <td>${item.OtoUser4 || '' }</td>
-                `
-                if (level > 4) {
-                  rowTable2 += `
-                  ${Number(item.IsOtorisasi5) ?
-                      '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>'
-                    :
-                    '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-                  }
-                  <td>${item.TglOto5 ? formatDate(item.TglOto5).split('-').reverse().join('/') : ''}</td>
-
-                  <td>${item.OtoUser5 || '' }</td>
-                  `
-
-
-                }
-
-              }
-
-            }
-
-          }
-
-          rowTable2 += `  ${item.IsBatal == 1 ?
-              '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"><div style="display: none">1</div></i></td>' :
-              '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"><div style="display: none">0</div></i></td>'
-            }
-          <td>${item.UserBatal || ''}</td>
-          <td class="text-center">${poBadgeStatus(item)}</td>
-
-        </tr>
-        `
-    });
-}
-
-  // Buang tooltip lama sebelum tombolnya diganti - kalau tidak, elemen tooltip
-  // Bootstrap yang sudah dibuat tertinggal di <body> dan bisa menutupi tombol baru.
-  $('#tabel2_data').find('[data-toggle="tooltip"]').tooltip('dispose')
-  document.getElementById("tabel2_data").innerHTML = rowTable2
+  // Kata pencarian: dipulihkan dari posisi sebelum destroy, atau (init pertama) dari
+  // kotak #poSearch2 yang statis di blade dan nilainya tidak ikut hilang.
+  let inputSearch2 = document.getElementById('poSearch2')
+  let kataCari = posisi ? posisi.search : (inputSearch2 ? inputSearch2.value : '')
+  // Indeks kolom sort lama bisa sudah tidak ada (kolom baru saja disembunyikan).
+  let orderAman = posisi ? posisi.order.filter((o) => o[0] < columns.length) : []
 
   $("#tabel2").DataTable({
+    // Lapisan "Memuat data..." sama dengan tab Outstanding & menu marketing - lihat blok
+    // .po-loading-* di bagian atas file.
+    "processing" : true,
+    "serverSide" : true,
     "lengthChange": false,
     "pageLength": poPanjangHalaman[2],
-    // "order": [] WAJIB - tanpa ini DataTables jatuh ke default [[0,'asc']] (kolom
-    // Actions), yang selama ini kebetulan tidak terlihat karena isinya HTML yang
-    // di-strip jadi kunci kosong semua. Data sudah datang terurut dari server
-    // (Tanggal/NoBukti terbaru dulu - lihat POController@loadPurchaseOrder), jadi
-    // di sini cukup dipertahankan urutan DOM apa adanya.
-    "order": [],
-    "dom": "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+    "searchDelay" : 400,
+    // "order": [] = urutan bawaan server (Tanggal/NoBukti terbaru dulu - lihat
+    // POController::daftarPO), bukan default DataTables [[0,'asc']] (kolom Actions).
+    "order": orderAman,
+    "displayStart" : posisi ? posisi.start : 0,
+    "search" : { "search" : kataCari || '' },
+    // "r" di paling depan = elemen indikator memuat, sengaja DI LUAR .po-table-wrap
+    // supaya jadi anak langsung wrapper tabel dan tidak ikut tergulung bersama isinya.
+    "dom": "r<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
     "language": {
+      "processing" : '<span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span>',
       "emptyTable": "Tidak ada data",
       "zeroRecords": "Tidak ada data yang cocok dengan pencarian"
     },
-    "drawCallback": function () { poRapikanBarisKosong(this.api()) },
+    "columns" : columns,
+    "ajax" : function (data, callback) {
+      if (poPakaiCachePO && poCachePO) {
+        poPakaiCachePO = false
+        callback(Object.assign({}, poCachePO, { draw : data.draw }))
+        return
+      }
+
+      let kolom = null
+      let arah = 'asc'
+      if (data.order && data.order.length && fieldKolom[data.order[0].column]) {
+        kolom = fieldKolom[data.order[0].column]
+        arah = data.order[0].dir
+      }
+
+      poDrawPO = data.draw
+      $.ajax({
+        url : "{!! url('poloadpurchaseorder') !!}",
+        type : "get",
+        data : {
+          draw : data.draw,
+          start : data.start,
+          length : data.length,
+          search : data.search ? data.search.value : '',
+          orderCol : kolom,
+          orderDir : arah,
+          tglawal : $('#poTglAwal').val(),
+          tglakhir : $('#poTglAkhir').val(),
+          status : poFilterStatus,
+          otorisasi : poFilterOtorisasi
+        },
+        success : function (res) {
+          poCachePO = res
+          // Respons yang datang terlambat (sudah ada permintaan lebih baru) tidak
+          // boleh menimpa angka KPI - baris tabelnya sendiri sudah disaring DataTables.
+          if (data.draw === poDrawPO) {
+            poKpiPO = res.kpi || null
+            renderKpiPO()
+          }
+          callback(res)
+        },
+        error : function (err) {
+          console.log('poloadpurchaseorder gagal:', err.status, err.responseText)
+          alertify.warning('Gagal memuat data Purchase Order')
+          // WAJIB tetap memanggil callback - lihat catatan yang sama di initTabelOutstanding().
+          callback({ draw : data.draw, data : [], recordsTotal : 0, recordsFiltered : 0 })
+        }
+      })
+    },
+    "preDrawCallback" : function () {
+      // Tombol lama akan dibuang - tutup tooltip-nya dulu supaya tidak tertinggal di <body>.
+      $('#tabel2_data').find('[data-toggle="tooltip"]').tooltip('dispose')
+      $('body > .tooltip').remove()
+    },
+    "drawCallback": function () {
+      poRapikanBarisKosong(this.api())
+      setTimeout(poAturTinggiTabel, 0)
+      // container:'body' supaya tooltip tidak terjepit di dalam <td> sempit,
+      // boundary:'window' supaya Popper tidak menganggap .po-table-wrap yang pendek
+      // sebagai batas dan menumpuk tooltip di atas tombol.
+      $('#tabel2_data [data-toggle="tooltip"]').tooltip({ container: 'body', boundary: 'window' })
+    },
   });
+
+  // Kelas "card" bawaan integrasi Bootstrap 4 membuat lapisan memuat tidak pernah hilang -
+  // lihat catatan yang sama di initTabelOutstanding().
+  let elMemuat = document.querySelector('#tabel2_wrapper > .dataTables_processing')
+  if (elMemuat) { elMemuat.classList.remove('card') }
 
   poIkatSearch(2)
   poIkatPanjangHalaman(2)
   poIkatPeriode()
-  // Init DataTable di atas mereset filter pencarian - kotak #poSearch2 sendiri statis
-  // di blade dan nilainya tidak ikut hilang, jadi diterapkan ulang di sini supaya
-  // ganti periode tanggal tidak diam-diam membuang kata pencarian yang sedang aktif.
-  let inputSearch2 = document.getElementById('poSearch2')
-  if (inputSearch2 && inputSearch2.value) {
-    $('#tabel2').DataTable().search(inputSearch2.value).draw()
-  }
+  if (inputSearch2) { inputSearch2.value = kataCari || '' }
   poAturTinggiTabel()
-  // container:'body' supaya tooltip tidak terjepit di dalam <td> sempit,
-  // boundary:'window' supaya Popper tidak menganggap .po-table-wrap yang pendek
-  // sebagai batas dan menumpuk tooltip di atas tombol.
-  $('#tabel2_data [data-toggle="tooltip"]').tooltip({ container: 'body', boundary: 'window' })
-
-  poKpiDPP = dataTampil2
-  renderKpiPO()
 }
 
 // Kartu ringkasan (Jumlah Supplier / Total DPP / Outstanding PR / Outstanding SO) di atas
-// tab-content. Jumlah Supplier & Total DPP dihitung dari dataTampil2 (baris yang sedang
-// tampil di tab Purchase Order, sudah kena filter periode + status/otorisasi).
+// tab-content. Jumlah Supplier & Total DPP dihitung server (POController::daftarPO) dari
+// seluruh PO tab Purchase Order yang kena filter periode + status/otorisasi.
 // Outstanding PR/SO diambil dari recordsTotal endpoint podataoutstandingpr/so - satu
 // baris di sana = satu kode barang, jadi 1 nobukti dengan 3 barang terhitung 3.
-let poKpiDPP = []
 let poKpiOut = { 1 : null, 3 : null }
 
 function renderKpiPO () {
-  let totalDPP = 0
-  let suppSet = new Set()
-  ;(poKpiDPP || []).forEach((r) => {
-    totalDPP += Number(r.TotDPPRp) || 0
-    // 1 supplier = 1 hitungan walau punya banyak PO. KodeSupp di-trim + upper supaya
-    // kode yang sama tidak terhitung dobel hanya karena beda spasi/huruf.
-    let kodeSupp = String(r.KodeSupp || '').trim().toUpperCase()
-    if (kodeSupp) { suppSet.add(kodeSupp) }
-  })
+  let jmlSupp = poKpiPO ? (Number(poKpiPO.jmlSupp) || 0) : 0
+  let totalDPP = poKpiPO ? (Number(poKpiPO.totDPP) || 0) : 0
 
   let cards = [
-    ['Jumlah Supplier', suppSet.size, '#dc2626', '#fee2e2', 'bi bi-people', false],
+    ['Jumlah Supplier', jmlSupp, '#dc2626', '#fee2e2', 'bi bi-people', false],
     ['Total DPP', totalDPP, '#4f46e5', '#ede9fe', 'bi bi-receipt', true],
     ['Outstanding PR', poKpiOut[1] === null ? '-' : poKpiOut[1], '#0891b2', '#cffafe', 'bi bi-clipboard-data', false],
     ['Outstanding SO', poKpiOut[3] === null ? '-' : poKpiOut[3], '#ca8a04', '#fef9c3', 'bi bi-cart-check', false]
@@ -8586,52 +8755,80 @@ function renderKpiPO () {
   `).join('')
 }
 
+// Lapisan "Memuat data..." di atas area tabel selama konfigurasi kolom diambil saat
+// halaman dibuka (tabelnya belum dibungkus DataTables, jadi belum punya lapisan sendiri).
+function poTampilMemuatAwal (tampil) {
+  $('#myTabContent').children('.po-memuat-awal').remove()
+  if (!tampil) { return }
+  $('#myTabContent').append(
+    '<div class="po-memuat-awal"><span class="po-loading-chip"><span class="po-loading-spin"></span>Memuat data...</span></div>'
+  )
+}
+
+// Konfigurasi kolom (poloadall) cukup diambil SEKALI seumur halaman. Perubahan kolom
+// sesudahnya sudah tercatat langsung di poCart (report-table.js / doSetHeader), jadi
+// loadAll() berikutnya (habis simpan/otorisasi) cukup memuat ulang datanya saja -
+// dulu tiap kali ikut mengambil konfigurasi lagi secara sinkron (layar membeku ~2 detik).
+let poMetaSudah = false
+let poMetaSedangDiambil = false
+
 function loadAll () {
   console.log('loadall')
 
   // Idempotent - hanya benar-benar mengikat sekali seumur halaman, lihat definisinya.
   poInitReportTableSekali()
 
-  let meta = null
+  if (poMetaSudah) {
+    poMuatUlangData()
+    return
+  }
+  if (poMetaSedangDiambil) {
+    return
+  }
+  poMetaSedangDiambil = true
+  poTampilMemuatAwal(true)
+
   $.ajax({
     url: "{!! url('poloadall') !!}",
     type: "get",
-    async: false,
     data: {
     },
-    success: function(res) {
-      meta = res
+    success: function(meta) {
+      laisshown = meta.isshown
+      laheadertable = meta.headertableheader
+      laheadertablevalue = meta.headertablevalue
+      laisnumeric = meta.isnumeric
+      ladesimal = meta.desimal
+      laaliasordered = meta.aliasordered
+
+      laisshown2 = meta.isshown2
+      laheadertable2 = meta.headertableheader2
+      laheadertablevalue2 = meta.headertablevalue2
+      laisnumeric2 = meta.isnumeric2
+      ladesimal2 = meta.desimal2
+      laaliasordered2 = meta.aliasordered2
+
+      poCart[1] = poBuatCart(laheadertable, laheadertablevalue, laisnumeric, laisshown, ladesimal, laaliasordered, true)
+      poCart[2] = poBuatCart(laheadertable2, laheadertablevalue2, laisnumeric2, laisshown2, ladesimal2, laaliasordered2)
+      poCart[3] = poKolomOutSO(poBuatCart(meta.headertableheader3, meta.headertablevalue3, meta.isnumeric3, meta.isshown3, meta.desimal3, meta.aliasordered3, true))
+
+      poMetaSudah = true
+      poMuatUlangData()
     },
     error: function (err) {
       console.log(err)
       alertify.warning('Gagal memuat konfigurasi tabel')
-    }})
+    },
+    complete: function () {
+      poMetaSedangDiambil = false
+      poTampilMemuatAwal(false)
+    }
+  })
+}
 
-  if (!meta) {
-    return
-  }
-
-  laisshown = meta.isshown
-  laheadertable = meta.headertableheader
-  laheadertablevalue = meta.headertablevalue
-  laisnumeric = meta.isnumeric
-  ladesimal = meta.desimal
-  laaliasordered = meta.aliasordered
-
-  laisshown2 = meta.isshown2
-  laheadertable2 = meta.headertableheader2
-  laheadertablevalue2 = meta.headertablevalue2
-  laisnumeric2 = meta.isnumeric2
-  ladesimal2 = meta.desimal2
-  laaliasordered2 = meta.aliasordered2
-
-  poCart[1] = poBuatCart(laheadertable, laheadertablevalue, laisnumeric, laisshown, ladesimal, laaliasordered)
-  poCart[2] = poBuatCart(laheadertable2, laheadertablevalue2, laisnumeric2, laisshown2, ladesimal2, laaliasordered2)
-  poCart[3] = poBuatCart(meta.headertableheader3, meta.headertablevalue3, meta.isnumeric3, meta.isshown3, meta.desimal3, meta.aliasordered3)
-
+function poMuatUlangData () {
   // Data tab Purchase Order dianggap belum dimuat lagi - kalau tab itu sedang tidak
   // aktif, ambilnya ditunda sampai tabnya benar-benar dibuka (lihat poPerluGambar di bawah).
-  dataRefreshOutstanding2 = []
   poTab2Sudahdimuat = false
 
   // Hanya tabel di tab yang SEDANG AKTIF yang digambar (dan menembak server kalau
@@ -8650,6 +8847,65 @@ function loadAll () {
   } else {
     initTabelOutstanding(urutAktif)
   }
+}
+
+// Tambah/edit/hapus item di form TIDAK lagi memuat ulang daftar PO & tab Outstanding
+// setiap kali (dulu: konfigurasi kolom + seluruh daftar + 2 tabel outstanding + 2 KPI,
+// padahal daftarnya sedang tertutup form). Cukup ditandai, lalu dimuat ulang sekali
+// saat form ditutup dan daftarnya tampil lagi.
+let poDaftarBerubah = false
+
+function poTandaiDaftarBerubah () {
+  poDaftarBerubah = true
+}
+
+function poMuatUlangJikaBerubah () {
+  if (!poDaftarBerubah) { return }
+  poDaftarBerubah = false
+  loadAll()
+  poSegarkanOutstanding()
+}
+
+// Lapisan "sedang diproses" di atas seluruh halaman - tampilannya sama dengan menu
+// marketing (ipMulaiProses di invoicepenjualan). Pekerjaan di halaman ini masih memakai
+// AJAX sinkron (async:false), jadi poProses() menggambar lapisannya dulu baru
+// menjalankan pekerjaannya; spinner tetap berputar selama browser menunggu server.
+let poSibuk = 0
+
+function poMulaiProses (teks) {
+  if (poSibuk) { return false }
+  poSibuk++
+  let lapisan = document.getElementById('poProsesOverlay')
+  if (!lapisan) {
+    lapisan = document.createElement('div')
+    lapisan.id = 'poProsesOverlay'
+    lapisan.className = 'po-proses-overlay'
+    lapisan.innerHTML = '<span class="po-loading-chip"><span class="po-loading-spin"></span><span class="po-proses-teks"></span></span>'
+    document.body.appendChild(lapisan)
+  }
+  lapisan.querySelector('.po-proses-teks').textContent = teks || 'Memproses...'
+  lapisan.style.display = 'block'
+  return true
+}
+
+function poSelesaiProses () {
+  poSibuk = Math.max(0, poSibuk - 1)
+  if (poSibuk) { return }
+  let lapisan = document.getElementById('poProsesOverlay')
+  if (lapisan) { lapisan.style.display = 'none' }
+}
+
+function poProses (teks, kerja) {
+  if (!poMulaiProses(teks)) { return }
+  requestAnimationFrame(function () {
+    setTimeout(function () {
+      try {
+        kerja()
+      } finally {
+        poSelesaiProses()
+      }
+    }, 0)
+  })
 }
 
 // Kartu KPI Outstanding PR/SO tampil di semua tab, tapi tabelnya sendiri baru
@@ -9777,6 +10033,10 @@ function cleanFormAdd () {
 }
 
 function buttonEdit (NOBUKTI) {
+  poProses('Memuat data...', function () { buttonEditKerja(NOBUKTI) })
+}
+
+function buttonEditKerja (NOBUKTI) {
 let pcekglobal = 0
   $.ajax({
     url: "{!! url('ceklockperiode') !!}",
@@ -9854,6 +10114,10 @@ if (pcekglobal) {
 }
 
 function buttonAdd (noBukti) {
+  poProses('Memuat data...', function () { buttonAddKerja(noBukti) })
+}
+
+function buttonAddKerja (noBukti) {
   let pcekglobal = 0
   $.ajax({
     url: "{!! url('ceklockperiode') !!}",
@@ -9933,12 +10197,14 @@ function buttonCloseForm () {
   $('#page3').hide();
   $('#page2').hide();
   $('#page1').show();
+  poMuatUlangJikaBerubah()
 
 }
 
 function buttonCloseFormDetail () {
   $('#page3').hide();
   $('#page1').show();
+  poMuatUlangJikaBerubah()
 
 }
 
@@ -9996,6 +10262,10 @@ function cekPoDet () {
 }
 
 function buttonDetail (NOBUKTI) {
+  poProses('Memuat data...', function () { buttonDetailKerja(NOBUKTI) })
+}
+
+function buttonDetailKerja (NOBUKTI) {
   tipeform = 'detail'
   console.log('button Detail' , NOBUKTI)
 
@@ -10053,6 +10323,7 @@ function refreshDataTableAdd (NOBUKTI) {
           $('#page3').hide();
           $('#page2').hide();
           $('#page1').show();
+          poMuatUlangJikaBerubah()
         } else {
           dataHeaderAdd = res.list[0]
           dataTableAdd = res.list
@@ -10183,6 +10454,7 @@ function refreshDataTableEdit (NOBUKTI) {
           $('#page3').hide();
           $('#page2').hide();
           $('#page1').show();
+          poMuatUlangJikaBerubah()
         } else {
           dataHeaderAdd = res.list[0]
           dataTableAdd = res.list
@@ -10312,6 +10584,7 @@ function refreshDataTableDetail (NOBUKTI) {
           $('#page3').hide();
           $('#page2').hide();
           $('#page1').show();
+          poMuatUlangJikaBerubah()
         } else {
           dataHeaderAdd = res.list[0]
           dataTableAdd = res.list
@@ -11872,7 +12145,7 @@ function buttonAddDeleteItem (i) {
   let dataDelete = dataTableAdd[i]
 
   alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + dataDelete.NamaBrg + ' ?',
-      function() {
+      function() { poProses('Menghapus item...', function () {
 
         let _token = $("#_token").val();
         let Choice = "D"
@@ -11952,7 +12225,7 @@ function buttonAddDeleteItem (i) {
           },
           success: function(res) {
             console.log('resspsoadd', res)
-            loadAll()
+            poTandaiDaftarBerubah()
 
             // lockFormAdd()
             $('.showhide').hide();
@@ -11960,7 +12233,6 @@ function buttonAddDeleteItem (i) {
             refreshDataTableAdd(NoBukti)
 
             alertify.success('Berhasil menghapus item')
-            poSegarkanOutstanding()
 
           },
           error: function (err) {
@@ -11969,7 +12241,7 @@ function buttonAddDeleteItem (i) {
           }
 
         })
-      }
+      }) }
     ,function(){
       console.log('no')
     });

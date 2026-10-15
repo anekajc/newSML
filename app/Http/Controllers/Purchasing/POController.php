@@ -458,12 +458,81 @@ class POController extends Controller
   // }
 
   /**
-   * Data tab "Purchase Order". Dipanggil lewat AJAX hanya saat tab tersebut dibuka,
-   * supaya tidak ikut memperlambat waktu buka halaman.
+   * Data tab "Purchase Order" dengan server-side paging DataTables.
+   *
+   * Dulu seluruh PO dalam periode ditarik sekaligus lalu dipaging di browser. Jalur ke
+   * SQL Server hanya ~230 KB/detik, jadi periode yang dimundurkan (ribuan PO) butuh
+   * puluhan detik hanya untuk memindahkan datanya. Sekarang yang dikirim cuma satu
+   * halaman; filter Status/Otorisasi, kotak cari, urutan kolom, dan angka KPI (Jumlah
+   * Supplier & Total DPP) dihitung di server dengan aturan yang sama seperti dulu
+   * dihitung di browser.
    */
   public function loadPurchaseOrder (Request $req) {
+    return self::daftarPO($req, 0);
+  }
+
+  /**
+   * Isi baris tab Purchase Order. Kolom keluarannya sama persis dengan query lama
+   * (dbPO + vwMasterPO, union TotTotalRp >= / < 200jt), hanya isi vwMasterPO ditulis
+   * ulang di sini dengan filter tanggal & pJasa dipasang DI DALAM agregasinya - view
+   * aslinya mengagregasi seluruh dbPO/dbPODet/DBBELIDET dulu baru disaring di luar.
+   * Union lama sama dengan "TotTotalRp is not null" (tiap baris masuk tepat satu cabang).
+   * Dipakai juga oleh PONonStockController (pJasa = 1).
+   */
+  public static function sqlDaftarPO () {
+    return "
+      Select a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
+        b.TotSubTotal, b.TotDiskon, b.TotTotal, b.TotDPP, b.TotPPN, b.TotNet,
+        b.TotSubTotalRp, b.TotDiskonRp, b.TotTotalRp, b.TotDPPRp, b.TotPPNRp, b.TotNetRp,
+        A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+        A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+        A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
+        A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+        A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
+        Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+                       Case when A.IsOtorisasi2=1 then 1 else 0 end+
+                       Case when A.IsOtorisasi3=1 then 1 else 0 end+
+                       Case when A.IsOtorisasi4=1 then 1 else 0 end+
+                       Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
+                  else 1
+             end As Bit) NeedOtorisasi
+        ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
+        A.FlagTipe,A.NOSO,A.NOPOCUST ,A.tglKirim,A.MaxOL,b.qnt as qnt,b.qntbeli as qntbeli
+      From dbPO a WITH(NOLOCK)
+      inner join (
+        Select A.NoBukti, C.NAMACUSTSUPP,
+          A.Handling, A.FakturSupp,
+          sum(B.SubTotal) TotSubTotal, sum(B.NDiskon) TotDiskon,
+          sum(B.SubTotal)-sum(B.NDiskon) TotTotal, sum(B.NDPP) TotDPP,
+          sum(B.NPPN) TotPPN, sum(B.NNet) TotNet,
+          sum(B.SubTotal*A.Kurs) TotSubTotalRp, sum(B.NDiskon*A.Kurs) TotDiskonRp,
+          sum(B.SubTotal*A.Kurs)-sum(B.NDiskon*A.Kurs) TotTotalRp, sum(B.NDPP*A.Kurs) TotDPPRp,
+          sum(B.NPPN*A.Kurs) TotPPNRp, sum(B.NNet*A.Kurs) TotNetRp,
+          SUM(B.QNT-B.QntBatal) qnt, D.qntbeli
+        From dbPO A WITH(NOLOCK)
+        Left Outer Join dbPODet B WITH(NOLOCK) on B.NoBukti=A.NoBukti
+        Left Outer Join dbCustSupp C WITH(NOLOCK) on c.KodeCustSupp=a.KodeSupp
+        left outer join (select nopo,sum(qnt)qntbeli from DBBELIDET WITH(NOLOCK) group by nopo) D on D.NoPO=A.NOBUKTI
+        where A.Tanggal between @tglawal and @tglakhir
+          and ISNULL(A.pJasa,0) = @pJasa
+        Group By A.NoBukti, A.Tanggal, A.KodeSupp, C.NAMACUSTSUPP, C.Kota,
+          A.Handling, A.FakturSupp, isnull(A.IsBatal,0),ISNULL(A.pJasa,0),D.qntbeli
+      ) b on a.NoBukti=b.NoBukti
+      where a.Tanggal between @tglawal and @tglakhir
+        and b.TotTotalRp is not null
+    ";
+  }
+
+  /**
+   * Server-side paging tab Purchase Order (stock: pJasa 0, non stock: pJasa 1).
+   * Parameter: draw/start/length (length -1 = semua), search, orderCol/orderDir,
+   * tglawal/tglakhir, status (SEMUA/Sudah/Belum/Sebagian/Batal), otorisasi (SEMUA/Sudah/Belum).
+   */
+  public static function daftarPO (Request $req, $pJasa) {
     $periode = NewPeriode::where('user_id' , Auth::User()->username)->first();
-    list($tglawal, $tglakhir) = $this->periodeRange($periode);
+    $stamp = mktime(0, 0, 0, (int) $periode->bulan, 1, (int) $periode->tahun);
+    $tglawal  = date('Y-m-01', $stamp);
+    $tglakhir = date('Y-m-t', $stamp);
 
     $inputAwal  = $req->input('tglawal');
     $inputAkhir = $req->input('tglakhir');
@@ -471,75 +540,119 @@ class POController extends Controller
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $inputAkhir)) { $tglakhir = $inputAkhir; }
     if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
 
-    $tempOutstanding2 = DB::connection("SML")->select("declare @tglawal date, @tglakhir date  ,@pJasa Bit
+    $draw   = (int) $req->input('draw', 1);
+    $start  = (int) $req->input('start', 0);
+    $length = (int) $req->input('length', 10);
+    if ($start < 0) { $start = 0; }
+    $semua = ($length === -1);
+    if (!$semua && ($length < 1 || $length > 500)) { $length = 10; }
 
-select @tglawal= :tglawal, @tglakhir= :tglakhir
+    // Status penerimaan - urutan & aturannya sama dengan poStatusPO() di blade:
+    // qnt 0 selalu Batal (walau qntbeli juga 0), qntbeli 0 Belum, kurang dari qnt Sebagian.
+    $exprStatus = "case when isnull(X.qnt,0) = 0 then 'Batal'
+                        when isnull(X.qntbeli,0) = 0 then 'Belum'
+                        when X.qntbeli < X.qnt then 'Sebagian'
+                        else 'Sudah' end";
 
-Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
-        b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
-        TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-       A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-       A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-       A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-       A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-       Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                 else 1
-            end As Bit) NeedOtorisasi,A.IsOtorisasi2
-       ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
-       A.FlagTipe,NOSO,NOPOCUST ,A.tglKirim,A.MaxOL,b.qnt as qnt,b.qntbeli as qntbeli
-From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
-where a.Tanggal between @tglawal and @tglakhir
-and  TotTotalRp>=200000000
-and B.pJasa= 0
+    // Filter Status/Otorisasi menyaring baris SEBELUM KPI dihitung (sama seperti dulu:
+    // kartu KPI mengikuti filter, tidak mengikuti kotak cari).
+    $where = '1 = 1';
+    $status = (string) $req->input('status', 'SEMUA');
+    if (in_array($status, ['Sudah', 'Belum', 'Sebagian', 'Batal'], true)) {
+      $where .= " and ($exprStatus) = '$status'";
+    }
+    $otorisasi = (string) $req->input('otorisasi', 'SEMUA');
+    if ($otorisasi === 'Sudah') { $where .= " and isnull(X.IsOtorisasi1,0) = 1"; }
+    if ($otorisasi === 'Belum') { $where .= " and isnull(X.IsOtorisasi1,0) = 0"; }
 
-UNION ALL
+    $search = trim((string) $req->input('search', ''));
+    $whereCari = '1 = 1';
+    if ($search !== '') {
+      $whereCari = "(X.NoBukti like @cari or X.KodeSupp like @cari or X.NamaCustSupp like @cari
+        or X.FakturSupp like @cari or X.NOSO like @cari or X.NOPOCUST like @cari
+        or X.OtoUser1 like @cari or X.OtoUser2 like @cari or X.OtoUser3 like @cari
+        or X.OtoUser4 like @cari or X.OtoUser5 like @cari or X.UserBatal like @cari
+        or convert(varchar(10), X.Tanggal, 103) like @cari
+        or convert(varchar(10), X.tglKirim, 103) like @cari
+        or ($exprStatus) like @cari)";
+    }
 
-Select  a.isAut,a.NoBukti, a.Tanggal,a.KodeSupp, b.NamaCustSupp, b.Handling, b.FakturSupp,
-        b.TotSubTotal, b.TotDiskon, b.TotTotal, TotDPP, b.TotPPN, TotNet,
-        TotSubTotalRp, TotDiskonRp, TotTotalRp, TotDPPRp, TotPPNRp, TotNetRp,
-        A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
-       A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-       A.IsOtorisasi3, A.OtoUser3, A.TglOto3,
-       A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-       A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-       Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                 else 1
-            end As Bit) NeedOtorisasi,A.IsOtorisasi2
-       ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
-       A.FlagTipe,NOSO,NOPOCUST ,A.tglKirim,A.MaxOL,b.qnt as qnt,b.qntbeli as qntbeli
-From dbPO a Left Outer Join vwMasterPO b on a.NoBukti=b.NoBukti
-where a.Tanggal between @tglawal and @tglakhir
-/*and  Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                      Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                 else 1
-            end As Bit)=1  */     AND TotTotalRp < 200000000
-and B.pJasa= 0
+    // Nama kolom ORDER BY di-whitelist (anti SQL injection). StatusPO = kolom Status.
+    $allowedOrder = [
+      'isAut', 'NoBukti', 'Tanggal', 'KodeSupp', 'NamaCustSupp', 'Handling', 'FakturSupp',
+      'TotSubTotal', 'TotDiskon', 'TotTotal', 'TotDPP', 'TotPPN', 'TotNet',
+      'TotSubTotalRp', 'TotDiskonRp', 'TotTotalRp', 'TotDPPRp', 'TotPPNRp', 'TotNetRp',
+      'IsOtorisasi1', 'OtoUser1', 'TglOto1', 'IsOtorisasi2', 'OtoUser2', 'TglOto2',
+      'IsOtorisasi3', 'OtoUser3', 'TglOto3', 'IsOtorisasi4', 'OtoUser4', 'TglOto4',
+      'IsOtorisasi5', 'OtoUser5', 'TglOto5', 'NeedOtorisasi', 'Isbatal', 'UserBatal',
+      'TglBatal', 'FlagTipe', 'NOSO', 'NOPOCUST', 'tglKirim', 'MaxOL', 'qnt', 'qntbeli'
+    ];
+    $orderCol = (string) $req->input('orderCol', '');
+    $orderDir = strtolower((string) $req->input('orderDir', 'asc')) === 'desc' ? 'DESC' : 'ASC';
+    $kolomOrder = null;
+    foreach ($allowedOrder as $k) {
+      if (strcasecmp($k, $orderCol) === 0) { $kolomOrder = $k; break; }
+    }
+    if ($orderCol === 'StatusPO') {
+      $orderBy = "($exprStatus) $orderDir, X.Tanggal DESC, X.NoBukti DESC";
+    } else if ($kolomOrder) {
+      $orderBy = "X.[$kolomOrder] $orderDir, X.Tanggal DESC, X.NoBukti DESC";
+    } else {
+      // Default sama dengan query lama: terbaru di atas.
+      $orderBy = 'X.Tanggal DESC, X.NoBukti DESC';
+    }
 
-order by Tanggal desc, NoBukti desc" , ["tglawal" => $tglawal , "tglakhir" =>$tglakhir]);
+    $sql = self::sqlDaftarPO();
+    $deklarasi = "SET NOCOUNT ON
+      declare @tglawal date, @tglakhir date, @pJasa bit, @cari varchar(210)
+      select @tglawal = ?, @tglakhir = ?, @pJasa = ?, @cari = ?";
+    $bind = [$tglawal, $tglakhir, (int) $pJasa, '%' . $search . '%'];
 
-$collection2 = collect($tempOutstanding2)->groupBy('NOBUKTI');
-$tempOutstanding3 = [];
-foreach ($collection2 as $p) {
-  // code...
-  array_push($tempOutstanding3, $p);
-}
+    // Satu kali jalan: jumlah baris (setelah filter), jumlah baris yang cocok dengan
+    // kotak cari, dan angka KPI. Supplier dihitung unik setelah trim + upper, kode
+    // kosong tidak dihitung - sama dengan renderKpiPO() dulu.
+    $agg = DB::connection("SML")->select("$deklarasi
+      select count(1) as jml,
+             sum(case when $whereCari then 1 else 0 end) as jmlCari,
+             count(distinct nullif(upper(ltrim(rtrim(X.KodeSupp))), '')) as jmlSupp,
+             sum(isnull(X.TotDPPRp,0)) as totDPP
+      from ( $sql ) X
+      where $where
+    ", $bind);
+    $total    = count($agg) ? (int) $agg[0]->jml : 0;
+    $totalCari = count($agg) ? (int) $agg[0]->jmlCari : 0;
+
+    $batasBaris = '';
+    if (!$semua) {
+      $batas = $start + $length;
+      $batasBaris = "where Y.NoBaris > $start and Y.NoBaris <= $batas";
+    }
+
+    $rows = [];
+    if ($totalCari > 0) {
+      $rows = DB::connection("SML")->select("$deklarasi
+        select Y.* from (
+          select ROW_NUMBER() over (order by $orderBy) as NoBaris, X.*
+          from ( $sql ) X
+          where $where and $whereCari
+        ) Y
+        $batasBaris
+        order by Y.NoBaris
+      ", $bind);
+      foreach ($rows as $r) { unset($r->NoBaris); }
+    }
 
     return [
-      "tempOutstanding3" => $tempOutstanding3,
+      "draw" => $draw,
+      "recordsTotal" => $total,
+      "recordsFiltered" => $totalCari,
+      "data" => $rows,
+      "kpi" => [
+        "jmlSupp" => count($agg) ? (int) $agg[0]->jmlSupp : 0,
+        "totDPP"  => count($agg) ? $agg[0]->totDPP : 0,
+      ],
     ];
-}
+  }
 
   /**
    * Data tab "Outstanding PR" dengan server-side paging DataTables.
@@ -1298,6 +1411,123 @@ $username
                         WHEN A1.TIPEBAYAR=1 THEN 1 END =1
                         order by A.NoBukti, A.KodeBrg, A.NoSat");
     return $listData;
+  }
+
+  /**
+   * Versi per halaman (server-side DataTables) dari listBarangSOAll() untuk modal
+   * "Barang dari SO" di form Purchase Order. Dulu seluruh barang SO outstanding
+   * (~7.000 baris, 2,3 MB) ditarik sekaligus setiap kali modal dibuka - lewat jalur ke
+   * SQL Server yang hanya ~230 KB/detik itu butuh ~6 detik, belum termasuk browser
+   * menyusun ribuan baris. Sekarang yang dikirim hanya satu halaman.
+   *
+   * Syarat barisnya SAMA PERSIS dengan listBarangSOAll() (query itu sendiri tidak
+   * diubah dan tetap ada). Parameter:
+   *   draw/start/length (length -1 = semua), search, orderCol/orderDir,
+   *   kode     : saring kode barang PERSIS (dipakai auto-pick Enter di kolom kode barang),
+   *   kodeNama : saring kode ATAU nama barang mengandung teks ini (auto-pick tahap 2).
+   */
+  public function listBarangSOAllHalaman (Request $req)
+  {
+    $draw   = (int) $req->input('draw', 1);
+    $start  = (int) $req->input('start', 0);
+    $length = (int) $req->input('length', 10);
+    if ($start < 0) { $start = 0; }
+    $semua = ($length === -1);
+    if (!$semua && ($length < 1 || $length > 500)) { $length = 10; }
+
+    $where = '1 = 1';
+    $search = trim((string) $req->input('search', ''));
+    if ($search !== '') {
+      $where .= " and (X.KodeBrg like @cari or X.NamaBrg like @cari or X.NoBukti like @cari
+                   or X.PartNumber like @cari or X.Sat like @cari or X.NoPesanan like @cari)";
+    }
+    $kode = trim((string) $req->input('kode', ''));
+    if ($kode !== '') {
+      $where .= " and X.KodeBrg = @kode";
+    }
+    $kodeNama = trim((string) $req->input('kodeNama', ''));
+    if ($kodeNama !== '') {
+      $where .= " and (X.KodeBrg like @kodeNama or X.NamaBrg like @kodeNama)";
+    }
+
+    // Nama kolom ORDER BY di-whitelist (anti SQL injection).
+    $allowedOrder = ['KodeBrg', 'NamaBrg', 'Qnt', 'Qnt2', 'Sat', 'SisaPPL', 'Sisa2PPL', 'NoBukti', 'PartNumber'];
+    $orderCol = (string) $req->input('orderCol', '');
+    $orderDir = strtolower((string) $req->input('orderDir', 'asc')) === 'desc' ? 'DESC' : 'ASC';
+    if (in_array($orderCol, $allowedOrder, true)) {
+      $orderBy = "X.[$orderCol] $orderDir, X.NoBukti, X.KodeBrg, X.NoSat";
+    } else {
+      // Urutan bawaan sama dengan listBarangSOAll().
+      $orderBy = 'X.NoBukti, X.KodeBrg, X.NoSat';
+    }
+
+    $batasBaris = '';
+    if (!$semua) {
+      $batas = $start + $length;
+      $batasBaris = "where Y.NoBaris > $start and Y.NoBaris <= $batas";
+    }
+
+    // Satu kali jalan: COUNT(*) OVER() memberi jumlah baris hasil saring sekaligus,
+    // tanpa query hitung terpisah. Isi derived table X = listBarangSOAll() tanpa ORDER BY.
+    $ambil = function ($batasBaris) use ($orderBy, $where, $search, $kode, $kodeNama) {
+    return DB::connection('SML')->select("SET NOCOUNT ON
+      declare @cari varchar(210), @kode varchar(50), @kodeNama varchar(210)
+      select @cari = ?, @kode = ?, @kodeNama = ?
+      select Y.* from (
+        select ROW_NUMBER() over (order by $orderBy) as NoBaris,
+               count(*) over () as JmlBaris, X.*
+        from (
+          SELECT a.KodeBrg, B.NamaBrg, a.Qnt,a.Qnt2, a.SATUAN Sat,A.Qnt-ISnull(C.Qnt,0) SisaPPL,
+                 cast(A.Qnt2- Case When a.NoSAT=2 Then ISnull(C.Qnt2,0) When a.NoSAT=3 Then ISnull(C.Qnt2,0) else ISnull(C.Qnt2,0)*a.ISI end as NUmeric(18,4)) Sisa2PPL,
+                 a.NoSat, a.Isi, a.NoBukti, a.Urut,0 Tolerate
+                 , B.PartNumber, A1.Tanggal, A1.NoPesanan
+          from DBSODET a WITH(NOLOCK)
+          Left Outer Join Dbbarang B WITH(NOLOCK) on A.kodebrg=B.Kodebrg
+          Left Outer Join DBSO A1 WITH(NOLOCK) on A.NoBukti=A1.NoBukti
+          left Outer Join (select NoPPL,UrutPPL,Sum(case when nosat=1 then Qnt else Qnt*ISI End) - Sum(case when nosat=1 then QntBatal else QntBatal*ISI End) Qnt
+          ,Sum(case when Nosat=2 then Qnt
+          when NOSAT=3 then Qnt
+          when NOSAT=1 then Qnt/ISI  End )-
+          Sum(case when Nosat=2 then QntBatal
+          when NOSAT=3 then QntBatal
+          when NOSAT=1 then QntBatal/ISI  End ) Qnt2 from dbPOdet WITH(NOLOCK) group by NoPPL,UrutPPL)
+          C on A.nobukti=C.noppl and A.urut=C.urutPPL
+          where  isnull(B.Isjasa,0)=0 and A.IsCetakKitir=1
+          And A.Qnt-ISnull(C.Qnt,0)>0
+          and Cast(Case when Case when A1.IsOtorisasi1=1 then 1 else 0 end+
+          Case when A1.IsOtorisasi2=1 then 1 else 0 end+
+          Case when A1.IsOtorisasi3=1 then 1 else 0 end+
+          Case when A1.IsOtorisasi4=1 then 1 else 0 end+
+          Case when A1.IsOtorisasi5=1 then 1 else 0 end=A1.MaxOL then 0
+          else 1
+          end As Bit)=0
+          and CASE WHEN A1.TIPEBAYAR=0 AND  ISNULL(A1.unblock,0)=1 THEN 1
+          WHEN A1.TIPEBAYAR=0 AND  ISNULL(A1.unblock,0)=0 THEN 0
+          WHEN A1.TIPEBAYAR=1 THEN 1 END =1
+        ) X
+        where $where
+      ) Y
+      $batasBaris
+      order by Y.NoBaris
+    ", ['%' . $search . '%', $kode, '%' . $kodeNama . '%']);
+    };
+    $rows = $ambil($batasBaris);
+
+    $jml = count($rows) ? (int) $rows[0]->JmlBaris : 0;
+    // Halaman di luar jangkauan (mis. kotak cari diubah saat sedang di halaman jauh):
+    // barisnya kosong tapi pagination tetap butuh jumlah hasil saringnya.
+    if (!count($rows) && $start > 0) {
+      $satu = $ambil('where Y.NoBaris = 1');
+      $jml = count($satu) ? (int) $satu[0]->JmlBaris : 0;
+    }
+    foreach ($rows as $r) { unset($r->NoBaris, $r->JmlBaris); }
+
+    return [
+      "draw" => $draw,
+      "recordsTotal" => $jml,
+      "recordsFiltered" => $jml,
+      "data" => $rows,
+    ];
   }
 
   public function listNoSo (Request $req) {
