@@ -225,6 +225,8 @@ Route::middleware('auth')->group(function () {
     // Purchase Order. Route terpisah, bukan menumpang polistbarangnosoplus di atas, karena
     // route itu masih dipakai gudang/transferbarang dan purchasing/perintahreturbeli.
     Route::get('/polistbarangsoall',                [POController::class, 'listBarangSOAll']);
+    // Versi per halaman (server-side) untuk modal "Barang dari SO" - lihat listBarangSOAllHalaman.
+    Route::get('/polistbarangsoallhal',             [POController::class, 'listBarangSOAllHalaman']);
     Route::get('/poloadpurchaseorder',              [POController::class, 'loadPurchaseOrder']);
     Route::get('/podataoutstandingpr',              [POController::class, 'dataOutstandingPR']);
     Route::get('/podataoutstandingso',              [POController::class, 'dataOutstandingSO']);
