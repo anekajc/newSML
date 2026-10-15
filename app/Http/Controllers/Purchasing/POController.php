@@ -1122,8 +1122,13 @@ select b.*,c.KodeJab,isnull(d.PlafonOtoPO , 0) PlafonOtoPO,
     return 1;
   }
 
+  // Keterangan (alasan) batal otorisasi wajib, sama seperti menu lain; dicatat ke LoggingData('btloto').
   public function updateBatalOtorisasi (Request $req) {
     $username = Auth::user()->username;
+    $pket = trim((string) $req->pket);
+    if ($pket === '') {
+      return $this->tolak('Keterangan batal otorisasi harus diisi.');
+    }
     $po = $this->headerDokumen('DBPO', $req->nobukti);
     if (!$po) {
       return $this->tolak('PO ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
@@ -1167,14 +1172,14 @@ select b.*,c.KodeJab,isnull(d.PlafonOtoPO , 0) PlafonOtoPO,
       if($cekOto[0]->leveloto == 1) {
 
         $res = DB::connection('SML')->update("update dbpo set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti", ["nobukti" => $req->nobukti]);
-        $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PO',$req->nobukti,'',0,'DBPO');
+        $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PO',$req->nobukti,$pket,0,'DBPO');
 
       } else {
         $res = DB::connection('SML')->update("update dbpo set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti", ["nobukti" => $req->nobukti]);
         $res = DB::connection('SML')->update("update dbpo set isOtorisasi2 = 0, maxol = -1 , OtoUser2= '' , TglOto2 = NULL where nobukti = :nobukti", ["nobukti" => $req->nobukti]);
 
-         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PO',$req->nobukti,'',0,'DBPO');
-         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto2','PO',$req->nobukti,'',0,'DBPO');
+         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PO',$req->nobukti,$pket,0,'DBPO');
+         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto2','PO',$req->nobukti,$pket,0,'DBPO');
 
 
       }
@@ -1183,8 +1188,8 @@ select b.*,c.KodeJab,isnull(d.PlafonOtoPO , 0) PlafonOtoPO,
       $res = DB::connection('SML')->update("update dbpo set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL , isbatal = 1, Userbatal = :username , tglbatal = getDate() where nobukti = :nobukti", ["username" => $username, "nobukti" => $req->nobukti]);
       $res = DB::connection('SML')->update("update dbpo set isOtorisasi2 = 0, maxol = -1 , OtoUser2= '' , TglOto2 = NULL , isbatal = 1, Userbatal = :username , tglbatal = getDate() where nobukti = :nobukti", ["username" => $username, "nobukti" => $req->nobukti]);
 
-       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PO',$req->nobukti,'',0,'DBPO');
-       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto2','PO',$req->nobukti,'',0,'DBPO');
+       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PO',$req->nobukti,$pket,0,'DBPO');
+       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto2','PO',$req->nobukti,$pket,0,'DBPO');
 
 
     }
@@ -2022,6 +2027,7 @@ Select 	b.nosat,E.ISI1,E.ISI2,E.ISI3,E.SAT1,E.SAT2,E.SAT3,A.NoBukti, A.NoUrut, A
 	A.Handling, A.Keterangan, A.FakturSupp,IsExp,
 	A.KodeVls, D.NamaVls, A.Kurs, A.PPN, A.TipeBayar, A.Hari, A.Disc, B.KeteranganBarang, B.Hrgawal,
 	B.Urut, B.KodeBrg, case when B.NAMABRG='' then E.NAMABRG else E.NamaBrg End NamaBrg, B.Satuan, B.Qnt, B.Nosat, B.Isi,
+        E.NamaBrg NamaBrgAsli, isnull(B.NamaBrg,'') NamaAlias,
         B.Harga, B.DISCP, B.DISCTOT, B.NoPPL, B.UrutPPL, A.IsClose,B.IsClose IsCloseD,
         case when A.Kurs=1 then 0.0 else B.SubTotal end TotalUSD,a.KodeExp,F.namaCustSupp NamaExp,
 	round(B.SubTotal*A.Kurs,2) TotalIDR, round(B.NDPP*A.Kurs,2) NDPP,

@@ -1927,6 +1927,7 @@ td input[type="checkbox"] {
                 <tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
+                  <th style="padding: 4px 12px;" scope="col">Nama Alias</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Qty</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Sat</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Harga</th>
@@ -2080,7 +2081,7 @@ td input[type="checkbox"] {
                   </div>
 
                   <div class="form-row align-items-center mb-2">
-                    <label class="col-md-3 mb-0">Nama Barang</label>
+                    <label class="col-md-3 mb-0">Nama Alias</label>
                     <div class="col-md-9">
                       <input type="text" class="form-control" id="input_add_add_namabarang">
                     </div>
@@ -6235,8 +6236,8 @@ function buttonAddEditItem (i) {
   syncOutstandingDariFOC(tempAddEdit)
   document.getElementById("input_add_add_nopnwpo").value = tempAddEdit.NoPNW
   document.getElementById("input_add_add_kodebarang").value = tempAddEdit.KodeBrg
-  document.getElementById("input_add_add_namabarangasli").value = tempAddEdit.NamaBrg
-  document.getElementById("input_add_add_namabarang").value = tempAddEdit.NamaBrg
+  document.getElementById("input_add_add_namabarangasli").value = tempAddEdit.NamaBrgAsli
+  document.getElementById("input_add_add_namabarang").value = tempAddEdit.NamaAlias
   document.getElementById("input_add_add_discpersen1").value = Number(tempAddEdit.DiscP1) ?  tempAddEdit.DiscP1 : '0.00'
   document.getElementById("input_add_add_discpersen2").value = Number(tempAddEdit.Discp2) ?  tempAddEdit.Discp2 : '0.00'
   document.getElementById("input_add_add_discpersen3").value = Number(tempAddEdit.Discp3) ?  tempAddEdit.Discp3 : '0.00'
@@ -6501,9 +6502,9 @@ function poItemDariSO (item) {
   return noPPL !== '' && noPPL === noSo
 }
 
-// Identitas barang (dropdown "+ Dari", kode barang, tombol browse, nama barang) hanya
+// Identitas barang (dropdown "+ Dari", kode barang, tombol browse) hanya
 // boleh dipilih/diganti saat MENAMBAH item baru. Saat MENGEDIT item yang sudah tersimpan,
-// keempatnya dikunci - baris yang sudah ada tidak boleh diganti jadi barang lain.
+// ketiganya dikunci - baris yang sudah ada tidak boleh diganti jadi barang lain.
 //
 // Ini juga menutup risiko yang lebih dalam: submitAddEdit() menentukan pengiriman
 // Noso/NOPOCUST dari nilai dropdown ini (lihat catatan di deklarasi poNosoHeader), jadi
@@ -6511,13 +6512,12 @@ function poItemDariSO (item) {
 // lama dibuka lalu disimpan ulang tanpa qty/harga benar-benar berubah.
 //
 // input_add_add_namabarangasli tidak ikut disebut di sini karena sudah readonly sejak
-// awal. Qty, harga, diskon, satuan, dan note SENGAJA tidak dikunci - itu memang bagian
+// awal. Nama alias, qty, harga, diskon, satuan, dan note SENGAJA tidak dikunci - itu memang bagian
 // yang boleh dikoreksi lewat edit.
 function poKunciIdentitasBarang (kunci) {
   document.getElementById('input_add_add_outstanding').disabled = kunci
   document.getElementById('input_add_add_kodebarang').disabled = kunci
   document.getElementById('buttonBrowseBarangItem').disabled = kunci
-  document.getElementById('input_add_add_namabarang').disabled = kunci
 }
 
 // Harga Awal hanya boleh diisi saat menambah item baru; saat mengedit item yang sudah
@@ -9291,7 +9291,7 @@ function buttonAddAddPickBarangAll (kodebrg) {
 
       tempAddAdd = res.barang[0]
       document.getElementById("input_add_add_kodebarang").value = tempAddAdd.Kodebrg
-      document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
+      document.getElementById("input_add_add_namabarang").value = ''
       document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
       document.getElementById("input_add_add_disc").value = '0.00'
       document.getElementById("input_add_add_discrp").value = '0.00'
@@ -9369,7 +9369,7 @@ function buttonAddAddPickBarangFOCPlus (index , pEdit = 0) {
   cekSatuanBarang(tempAddAdd.Kodebrg)
 
   document.getElementById("input_add_add_kodebarang").value = tempAddAdd.Kodebrg
-  document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
+  document.getElementById("input_add_add_namabarang").value = ''
   document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
 
   // FOC diambil dari master barang, jadi tidak punya asal PR maupun SO: keempat field
@@ -9492,7 +9492,7 @@ function buttonAddAddPickBarangNonFOC (index , pEdit = 0) {
   cekSatuanBarang(tempAddAdd.KodeBrg)
 
   document.getElementById("input_add_add_kodebarang").value = tempAddAdd.KodeBrg
-  document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
+  document.getElementById("input_add_add_namabarang").value = ''
   document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
   document.getElementById("input_add_add_qty").value = formatAngka(parseFloat(tempAddAdd.SisaPPL).toFixed(2))
 
@@ -9598,7 +9598,7 @@ function buttonAddAddPickBarangNonFOCPlus (index , pEdit = 0) {
   cekSatuanBarang(tempAddAdd.KodeBrg)
   // return
   document.getElementById("input_add_add_kodebarang").value = tempAddAdd.KodeBrg
-  document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
+  document.getElementById("input_add_add_namabarang").value = ''
   document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
   document.getElementById("input_add_add_qty").value = formatAngka(parseFloat(tempAddAdd.Qnt).toFixed(2))
 
@@ -10339,7 +10339,7 @@ function refreshDataTableAdd (NOBUKTI) {
 
     // if(!dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="9">Belum ada barang</td>
+      <td class="text-center" colspan="10">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -10382,6 +10382,7 @@ function refreshDataTableAdd (NOBUKTI) {
             `<tr>
               <td>${item.KodeBrg}</td>
               <td>${item.NamaBrg}</td>
+              <td>${item.NamaAlias || ''}</td>
               <td class="text-center">${item.Qnt ? formatAngka(item.Qnt) : '0.00'}</td>
               <td class="text-center">${item.Satuan}</td>
               <td class="text-center">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
@@ -10400,7 +10401,7 @@ function refreshDataTableAdd (NOBUKTI) {
 
           if(!dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="9">Belum ada barang</td>
+            <td class="text-center" colspan="10">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -10470,7 +10471,7 @@ function refreshDataTableEdit (NOBUKTI) {
 
     // if(!dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="9">Belum ada barang</td>
+      <td class="text-center" colspan="10">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -10514,6 +10515,7 @@ function refreshDataTableEdit (NOBUKTI) {
             `<tr>
               <td>${item.KodeBrg}</td>
               <td>${item.NamaBrg}</td>
+              <td>${item.NamaAlias || ''}</td>
               <td class="text-center">${item.Qnt ? formatAngka(item.Qnt) : '0.00'}</td>
               <td class="text-center">${item.Satuan}</td>
               <td class="text-center">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
@@ -10532,7 +10534,7 @@ function refreshDataTableEdit (NOBUKTI) {
 
           if(!dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="9">Belum ada barang</td>
+            <td class="text-center" colspan="10">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -10600,7 +10602,7 @@ function refreshDataTableDetail (NOBUKTI) {
 
     // if(!dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="9">Belum ada barang</td>
+      <td class="text-center" colspan="10">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -10638,6 +10640,7 @@ function refreshDataTableDetail (NOBUKTI) {
             `<tr>
               <td>${item.KodeBrg}</td>
               <td>${item.NamaBrg}</td>
+              <td>${item.NamaAlias || ''}</td>
               <td>${item.KeteranganBarang || ''}</td>
               <td class="text-center">${item.Qnt ? formatAngka(item.Qnt) : '0.00'}</td>
               <td class="text-center">${item.Satuan}</td>
@@ -10650,7 +10653,7 @@ function refreshDataTableDetail (NOBUKTI) {
 
           if(!dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="9">Belum ada barang</td>
+            <td class="text-center" colspan="10">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("tabel_data_add").innerHTML = rowTable
