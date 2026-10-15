@@ -409,6 +409,10 @@
 @endsection
 
 @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /setnomortransaksi itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
 
   .stp-card {
@@ -838,6 +842,12 @@ function submitSetingPerusahaan() {
         alertify.warning(res);
       } else {
         alertify.success("Data Perusahaan telah disimpan");
+        // Logo NPWP 1 baru langsung dipasang di ikon sidebar tanpa refresh halaman.
+        if (data.has('logo_1')) {
+          $('#sidebar .sidebar-logo .logo-icon')
+            .css({ background: '#fff', overflow: 'hidden' })
+            .html('<img src="{!! url('setnomortransaksilogo') !!}?v=' + Date.now() + '" alt="Logo" style="width:100%; height:100%; object-fit:contain;">')
+        }
         loadAll();
       }
     },

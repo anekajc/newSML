@@ -943,9 +943,9 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo" onclick="goHome()" style="cursor:pointer;">
         {{-- Ikon sidebar memakai Logo NPWP 1 dari menu Set Nomor Transaksi
-             (resources/views/berkas/img/logoperusahaan/npwp1.*). Belum ada logo = kotak "SPL" lama. --}}
+             (storage/app/gambar-perusahaan/logoperusahaan/npwp1.*). Belum ada logo = kotak "SPL" lama. --}}
         @php
-          $fileLogoSidebar = collect(glob(resource_path('views/berkas/img/logoperusahaan/npwp1.*')) ?: [])->first();
+          $fileLogoSidebar = \App\Http\Controllers\Berkas\SetNomorTransaksiController::fileLogoSidebar();
         @endphp
         @if ($fileLogoSidebar)
           <div class="logo-icon" style="background:#fff; overflow:hidden;">
