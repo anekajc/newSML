@@ -667,7 +667,7 @@ class ClosingPOController extends Controller
     $nobukti = $req->Nobukti;
     $urut    = $req->Urut;
     $reason  = trim((string) $req->KetBatal);
-    $tanggal = $req->TglBatal ?: date('Y-m-d H:i:s');
+    $tanggal = date('Y-m-d H:i:s');
 
     if (!$reason) {
       return response()->json(['success' => false, 'message' => 'Keterangan batal tidak boleh kosong.'], 422);
@@ -692,7 +692,7 @@ class ClosingPOController extends Controller
     DB::connection('SML')->beginTransaction();
     try {
       DB::connection('SML')->update("
-        Update DBPODET set QntBatal = :QntBatal, UserBatal = :UserBatal, TglBatal = :TglBatal,
+        Update DBPODET set QntBatal = isnull(QntBatal, 0) + :QntBatal, UserBatal = :UserBatal, TglBatal = :TglBatal,
                            isbatal = 1, Ketbatal = :KetBatal
         where Nobukti = :Nobukti and Urut = :Urut
       ", [
@@ -720,7 +720,7 @@ class ClosingPOController extends Controller
   public function updateCloseHeader (Request $req) {
     $nobukti = $req->Nobukti;
     $reason  = trim((string) $req->KetBatal);
-    $tanggal = $req->TglBatal ?: date('Y-m-d H:i:s');
+    $tanggal = date('Y-m-d H:i:s');
 
     if (!$reason) {
       return response()->json(['success' => false, 'message' => 'Keterangan batal tidak boleh kosong.'], 422);
@@ -740,7 +740,7 @@ class ClosingPOController extends Controller
     try {
       foreach ($bisaDiclose as $data) {
         DB::connection('SML')->update("
-          Update DBPODET set QntBatal = :QntBatal, UserBatal = :UserBatal, TglBatal = :TglBatal,
+          Update DBPODET set QntBatal = isnull(QntBatal, 0) + :QntBatal, UserBatal = :UserBatal, TglBatal = :TglBatal,
                              isbatal = 1, Ketbatal = :KetBatal
           where Nobukti = :Nobukti and Urut = :Urut
         ", [

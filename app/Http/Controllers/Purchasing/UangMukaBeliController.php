@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\NewMenu;
 use App\Models\NewPeriode;
 use Illuminate\Support\Facades\DB;
+use App\Traits\PenjagaTransaksi;
 
 
 
@@ -16,6 +17,8 @@ class UangMukaBeliController extends Controller
 
 
 {
+  use PenjagaTransaksi;
+
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase Order).
   private function periodeRange ($periode) {
@@ -181,7 +184,15 @@ where A.nobukti=@NObukti
     $tanggal = date('Y-m-d H:i:s');
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
-    $res = DB::connection('SML')->update("update dbumjual set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti", ["username" => \Auth::user()->username , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
+    $um = $this->headerDokumen('DBUMJUAL', $req->nobukti);
+    if (!$um) {
+      return $this->tolak('Uang muka ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    // Syarat belum oto di WHERE: klik ganda / dua user bersamaan tidak memposting dua kali
+    $res = DB::connection('SML')->update("update dbumjual set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti and isnull(IsOtorisasi1, 0) = 0", ["username" => \Auth::user()->username , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
+    if (!$res) {
+      return $this->tolak('Uang muka ' . $req->nobukti . ' sudah diotorisasi oleh ' . $um->otouser1 . '.');
+    }
      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData('oto','UMB',$req->nobukti,'',0,'DBUMJUAL');
     $values = [
       '',
@@ -201,6 +212,17 @@ where A.nobukti=@NObukti
     $tanggal = date('Y-m-d H:i:s');
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
+    $um = $this->headerDokumen('DBUMJUAL', $req->nobukti);
+    if (!$um) {
+      return $this->tolak('Uang muka ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $um->isotorisasi1 !== 1) {
+      return $this->tolak('Uang muka ' . $req->nobukti . ' belum diotorisasi.');
+    }
+    $tolak = $this->cekDipakaiUM($um);
+    if ($tolak) {
+      return $tolak;
+    }
     $res = DB::connection('SML')->update("update dbumjual set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL  where nobukti = :nobukti", [ "nobukti" => $req->nobukti]);
      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','UMB',$req->nobukti,$req->pket,0,'DBUMJUAL');
     $values = [
@@ -295,6 +317,19 @@ QNTCR=CASE WHEN QntOpname-SaldoComp>=0  THEN 0 ELSE (QntOpname-SaldoComp)*-1  EN
       $nobukti = $req->nobukti;
       $xurut=0;
 
+   if ($choice == 'U' || $choice == 'D') {
+     $um = $this->headerDokumen('DBUMJUAL', $nobukti);
+     if (!$um) {
+       return $this->tolak('Uang muka ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+     }
+     if ((int) $um->isotorisasi1 === 1) {
+       return $this->tolak('Uang muka ' . $nobukti . ' sudah diotorisasi, tidak bisa diubah atau dihapus.');
+     }
+     $tolak = $this->cekDipakaiUM($um);
+     if ($tolak) {
+       return $tolak;
+     }
+   }
    if ($choice=='D'){  
     $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( $req->choice,'UMB',$nobukti,'',$xurut,'DBUMJUAL');
   //return [ $req->choice,'UMB',$nobukti,'',$xurut,'DBUMJUAL'];
@@ -308,9 +343,15 @@ QNTCR=CASE WHEN QntOpname-SaldoComp>=0  THEN 0 ELSE (QntOpname-SaldoComp)*-1  EN
       }
 
       $checkqucary = DB::connection('SML')->select("Select Nobukti,ISnull(OutUM,0) OutUM,ISnull(TOTDPPUM,0) TOTDPPUM,round(ISnull(DPP,0),1) DPP from VwOUMJ where Nobukti= :nopo",["nopo" => $req->noso]);
+      if ($choice != 'D' && !$checkqucary) {
+        return $this->tolak('PO ' . $req->noso . ' tidak ditemukan atau belum diotorisasi penuh.');
+      }
 
       if ($choice == "I") {
         $checkbatal = DB::connection('SML')->select("select * from DBPODET where NOBUKTI = :nopo",["nopo" => $req->noso]);
+        if (!$checkbatal) {
+          return $this->tolak('PO ' . $req->noso . ' tidak punya item.');
+        }
         if ((float)$checkbatal[0]->QntBatal > 0) {
           return 4;
         }
@@ -415,4 +456,23 @@ public function spCetak (Request $req)
       return $tempCetak1;
   }
 
+  // Uang muka yang sudah dibayar lewat kas/bank atau sudah dipakai di pembelian (DBBELI.NOUMK)
+  // / DBUMBELIDET tidak boleh dibatalkan, diubah, atau dihapus. Pembayaran tercatat sebagai baris
+  // DBUMJUAL tambahan dengan NOBUKTI sama (UrutTrans >= 1, NoTrans = bukti kas/bank) - sp_umj
+  // 'D' menghapus semua baris NOBUKTI itu, termasuk catatan pembayarannya.
+  private function cekDipakaiUM($um) {
+    $bayar = DB::connection('SML')->selectOne("select top 1 NoTrans from DBUMJUAL where NOBUKTI = cast(? as varchar(50)) and isnull(NoTrans, '') <> ''", [(string) $um->nobukti]);
+    if ($bayar) {
+      return $this->tolak('Uang muka ' . $um->nobukti . ' sudah dibayar di ' . $bayar->NoTrans . ', tidak bisa dibatalkan atau diubah.');
+    }
+    $beli = DB::connection('SML')->selectOne("select top 1 NOBUKTI from DBBELI where NOUMK = cast(? as varchar(50))", [(string) $um->nobukti]);
+    if ($beli) {
+      return $this->tolak('Uang muka ' . $um->nobukti . ' sudah dipakai di ' . $beli->NOBUKTI . ', tidak bisa dibatalkan atau diubah.');
+    }
+    $det = DB::connection('SML')->selectOne("select top 1 NoBukti from DBUMBELIDET where NoUM = cast(? as varchar(50))", [(string) $um->nobukti]);
+    if ($det) {
+      return $this->tolak('Uang muka ' . $um->nobukti . ' sudah dipakai di ' . $det->NoBukti . ', tidak bisa dibatalkan atau diubah.');
+    }
+    return null;
+  }
 }

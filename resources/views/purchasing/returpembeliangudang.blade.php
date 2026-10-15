@@ -7,6 +7,10 @@
 {{-- Tampilan baru: tab custom, tabel .data-table, header interaktif - disamakan dengan
      resources/views/purchasing/newpo.blade.php / uangmukabeli.blade.php. --}}
   @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /returbeli itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
   /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
      #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
@@ -2114,6 +2118,11 @@ function submitAdd () {
 
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        loadAll()
+        return
+      }
       console.log(res ,'!')
 
       if (res ==1) {
@@ -2238,6 +2247,10 @@ function buttonKoreksiDelete(index) {
             nolpb
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             console.log(res ,'succes delete koreksi')
             refreshKoreksi(norpb)
             alertify.success('Item telah didelete');
@@ -2363,6 +2376,10 @@ function submitAddKoreksi () {
       nolpb
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       console.log(res ,'succes add koreksi')
       refreshKoreksi(norpb)
       alertify.success('Item telah ditambah');
@@ -2509,6 +2526,10 @@ function submitEditKoreksi () {
         nolpb
       },
       success: function(res) {
+        if (res && res.pesan) {
+          alertify.warning(res.pesan)
+          return
+        }
         console.log(res ,'succes edit koreksi')
         refreshKoreksi(norpb)
         alertify.success('Item telah diedt');

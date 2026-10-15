@@ -5,6 +5,10 @@
 @endsection
 
 @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /uangmukabeli itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
   /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
      #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
@@ -1402,6 +1406,10 @@ if (pcekglobal) {
             pbeli
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
 	console.log(res)	
             if (res == 1) {
               
@@ -2009,6 +2017,11 @@ function buttonOtorisasi (nobukti) {
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              loadAll()
+              return
+            }
             alertify.success('Berhasil update otorisasi')
             loadAll()
 
@@ -2064,6 +2077,11 @@ function buttonBatalOtorisasi (nobukti) {
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              loadAll()
+              return
+            }
             alertify.success('Berhasil batal otorisasi')
             loadAll()
 
@@ -2194,6 +2212,10 @@ function submitAdd () {
 	    dppdetail
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       if (res == 1) {
         console.log(res)
         if (choice == 'I') {

@@ -10,9 +10,12 @@ use App\Models\DBFLMENU;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use App\Traits\PenjagaTransaksi;
 
 class InvoiceReturBeliController extends Controller
 {
+  use PenjagaTransaksi;
+
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Uang Muka Beli).
   private function periodeRange ($periode) {
@@ -99,6 +102,14 @@ public function onChangeHeader (Request $req) {
   $allowedFields = ['DISC'];
   if (!in_array($req->field, $allowedFields, true)) {
     return response()->json(['res' => 0, 'res2' => 0]);
+  }
+
+  $retur = $this->headerDokumen('DBRBELI', $req->nobukti);
+  if (!$retur) {
+    return $this->tolak('Retur ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+  }
+  if ((int) $retur->isotorisasi1 === 1) {
+    return $this->tolak('Retur ' . $req->nobukti . ' sudah diotorisasi, tidak bisa diubah.');
   }
 
   $query = 'update dbrbeli set ' . $req->field . ' = :value where nobukti = :nobukti';
@@ -261,6 +272,12 @@ public function onChangeHeader (Request $req) {
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
     $nobukti = $req->nobukti;
     $pket = $req->pket;
+    foreach (['NoInvoice', 'NOFAKTUR'] as $kolom) {
+      $dph = $this->dipakaiOleh('DBDPHDET', $kolom, $nobukti);
+      if ($dph) {
+        return $this->tolak('Retur ' . $nobukti . ' sudah dipakai di pelunasan ' . $dph . ', otorisasi tidak bisa dibatalkan.');
+      }
+    }
 
     return DB::connection('SML')->transaction(function () use ($periode, $nobukti, $pket) {
       // hanya baris yang sedang terotorisasi yang boleh dibatalkan.
@@ -323,6 +340,13 @@ public function onChangeHeader (Request $req) {
       }
     }
 
+    $retur = $this->headerDokumen('DBRBELI', $nobukti);
+    if (!$retur) {
+      return $this->tolak('Retur ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $retur->isotorisasi1 === 1) {
+      return $this->tolak('Retur ' . $nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+    }
     $res = DB::connection('SML')->update("update DBRbelidet set harga=:harga, DISCP = :DISCP, DiscP2 = :DiscP2, DiscP3 = :DiscP3 where nobukti = :nobukti and urut=:urut", [ "nobukti" => $req->nobukti,"urut" => $req->urut,"harga" => $req->harga,"DISCP" => $req->DISCP,"DiscP2" => $req->DiscP2,"DiscP3" => $req->DiscP3]);
 	$tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( $choice,'RPB',$nobukti,'',$xurut,'DBRBELIDET');
 

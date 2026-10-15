@@ -9,6 +9,7 @@ use App\Models\NewAksesMenu;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use App\Traits\PenjagaTransaksi;
 use App\Models\VWOutRBeli;
 use App\Models\DBFLMENU;
 
@@ -18,6 +19,8 @@ use App\Models\VWRBeliOut;
 
 class ReturPembelianGudangController extends Controller
 {
+  use PenjagaTransaksi;
+
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase
   // Order/Uang Muka Beli). Dipakai untuk kedua tab, lihat catatan di loadAll().
@@ -182,6 +185,13 @@ AND a.KODESUPP=:nobukti
             throw new \RuntimeException('STOK_TIDAK_CUKUP');
           }
 
+          // Qty retur tidak boleh melebihi sisa perintah retur saat disimpan (cek di browser memakai
+          // sisa saat form dibuka). Rumus sama dengan sp_TempOutPRRBelitrade.
+          $sisa = $this->sisaPRB($noout, $d['Urut']);
+          if ((float) $d['inputQntTerima'] > $sisa + 0.0001) {
+            throw new \RuntimeException('SISA_PRB|' . $d['Kodebrg'] . '|' . $sisa);
+          }
+
           $values = [
             $username,
             $noout,
@@ -205,6 +215,10 @@ AND a.KODESUPP=:nobukti
     } catch (\RuntimeException $e) {
       if ($e->getMessage() === 'STOK_TIDAK_CUKUP') {
         return 3;
+      }
+      if (strpos($e->getMessage(), 'SISA_PRB|') === 0) {
+        [, $kodebrg, $sisa] = explode('|', $e->getMessage());
+        return $this->tolak('Qty retur ' . $kodebrg . ' melebihi sisa perintah retur saat ini (' . (float) $sisa . '), mungkin sudah diretur user lain. Tutup form lalu buka lagi.');
       }
       throw $e;
     }
@@ -344,6 +358,13 @@ AND a.KODESUPP=:nobukti
 
 
     public function spKoreksi (Request $req) {
+    $retur = $this->headerDokumen('DBRBELI', $req->input('norpb'));
+    if (!$retur) {
+      return $this->tolak('Retur ' . $req->input('norpb') . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $retur->isotorisasi1 === 1) {
+      return $this->tolak('Retur ' . $req->input('norpb') . ' sudah diotorisasi di menu Invoice Retur Beli, tidak bisa diubah.');
+    }
     $values = [
       $req->input('choice'),
       $req->input('norpb'),
@@ -392,6 +413,18 @@ public function spCetak (Request $req)
       return $tempCetak1;
   }
 
-
-
+  // Sisa qty perintah retur (PRB) per item: rumus sama dengan kolom QntOUt di
+  // getDetailOutstanding (yang dibandingkan browser) - satuan PRB menentukan kolom Qnt1/Qnt2.
+  private function sisaPRB($noPRB, $urut) {
+    $r = DB::connection('SML')->selectOne("
+      select case when A.NOSAT = 1 then isnull(A.Qnt1, 0) - isnull(B.Qnt1, 0)
+                  else isnull(A.Qnt2, 0) - isnull(B.Qnt2, 0) end as Sisa
+      from DBPRRBELIDET A
+      left outer join (select NOPRB, UrutPRB, sum(Qnt1) Qnt1, sum(Qnt2) Qnt2 from DBRBELIDET
+                       where NOPRB = cast(? as varchar(50)) group by NOPRB, UrutPRB) B
+        on A.NOBUKTI = B.NOPRB and A.URUT = B.UrutPRB
+      where A.NOBUKTI = cast(? as varchar(50)) and A.URUT = ?",
+      [(string) $noPRB, (string) $noPRB, (int) $urut]);
+    return $r ? (float) $r->Sisa : 0.0;
+  }
 }

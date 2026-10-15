@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\PenjagaTransaksi;
 
 
 class PembelianPermintaanDebetNoteController extends Controller
@@ -13,6 +14,8 @@ class PembelianPermintaanDebetNoteController extends Controller
 // sp_ProsesPostingHutPiut
 // sp_ProsesPostingJurnalOto
 {
+  use PenjagaTransaksi;
+
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Uang Muka Beli).
   private function periodeRange ($periode) {
@@ -153,11 +156,18 @@ class PembelianPermintaanDebetNoteController extends Controller
   }
 
 public function updateOtorisasi(Request $req) {
+    $dn = $this->headerDokumen('DBDEBETNOTE', $req->nobukti);
+    if (!$dn) {
+      return $this->tolak('Debet note ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $dn->isotorisasi1 === 1) {
+      return $this->tolak('Debet note ' . $req->nobukti . ' sudah diotorisasi oleh ' . $dn->otouser1 . '.');
+    }
     $tanggal = now();
     $res = DB::connection('SML')->update(
         "UPDATE dbdebetnote
          SET IsOtorisasi1 = 1, OtoUser1 = :username, TglOto1 = :tanggal
-         WHERE NoBukti = :nobukti",
+         WHERE NoBukti = :nobukti AND isnull(IsOtorisasi1, 0) = 0",
         [
             "username" => \Auth::user()->username,
             "tanggal" => $tanggal,
@@ -177,6 +187,19 @@ public function updateBatalOtorisasi(Request $req) {
     }
     if (trim((string) $req->pket) === '') {
       return response()->json(['message' => 'Keterangan harus diisi'], 422);
+    }
+    $dn = $this->headerDokumen('DBDEBETNOTE', $req->nobukti);
+    if (!$dn) {
+      return $this->tolak('Debet note ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $dn->isotorisasi1 !== 1) {
+      return $this->tolak('Debet note ' . $req->nobukti . ' belum diotorisasi.');
+    }
+    foreach (['NoInvoice', 'NOFAKTUR'] as $kolom) {
+      $dph = $this->dipakaiOleh('DBDPHDET', $kolom, $req->nobukti);
+      if ($dph) {
+        return $this->tolak('Debet note ' . $req->nobukti . ' sudah dipakai di pelunasan ' . $dph . ', otorisasi tidak bisa dibatalkan.');
+      }
     }
 
     $res = DB::connection('SML')->update(
@@ -203,6 +226,12 @@ public function updateBatalOtorisasi(Request $req) {
         }
       }
 
+      if ($req->tipeform != 'add') {
+        $dn = $this->headerDokumen('DBDEBETNOTE', $req->nobukti);
+        if ($dn && (int) $dn->isotorisasi1 === 1) {
+          return $this->tolak('Debet note ' . $req->nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+        }
+      }
       if (empty($tempData) || !is_array($tempData)) {
         return response()->json(['message' => 'Tidak ada item dipilih'], 422);
       }
@@ -252,6 +281,13 @@ public function updateBatalOtorisasi(Request $req) {
   }
 
   public function spKoreksi (Request $req) {
+  $dn = $this->headerDokumen('DBDEBETNOTE', $req->nobukti);
+  if (!$dn) {
+    return $this->tolak('Debet note ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+  }
+  if ((int) $dn->isotorisasi1 === 1) {
+    return $this->tolak('Debet note ' . $req->nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+  }
   try {
     DB::connection('SML')->statement('exec Sp_DebetNote ?,?,?,?,?,?,?,?,?,?,?,?', [
       $req->choice,

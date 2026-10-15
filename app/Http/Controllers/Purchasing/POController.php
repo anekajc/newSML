@@ -12,12 +12,15 @@ use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Models\VwPPL;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\PenjagaTransaksi;
 
 
 // use App\Http\Controllers\NewMenuController;
 
 class POController extends Controller
 {
+  use PenjagaTransaksi;
+
 
   public function index(Request $req) {
     $kodemenu = '04101';
@@ -923,9 +926,39 @@ class POController extends Controller
     return $res;
   }
 
+  // Kolom DBPO yang boleh diubah lewat onChangeHeader (nama field dari JS, huruf kecil). Nama
+  // kolom dulu disambung langsung dari request ke SQL: kolom apa pun (mis. IsOtorisasi1) bisa
+  // diubah, dan field form yang tidak punya kolom di DBPO (Draft PO, Sales, PIC, PWO, Back
+  // Office, No SO, Alamat Kirim) membuat error 500 di mode edit.
+  private $kolomHeaderPO = [
+    'keterangan' => 'KETERANGAN', 'tglkirim' => 'TglKirim', 'tipeppn' => 'TipePPN', 'ppn' => 'PPN',
+    'hari' => 'HARI', 'disc' => 'DISC', 'tipebayar' => 'TIPEBAYAR', 'kodegdg' => 'KodeGDG',
+    'kodevls' => 'KODEVLS', 'kurs' => 'KURS', 'kodeexp' => 'KODEEXP',
+  ];
+  private $kolomHeaderPOAngka = ['TipePPN', 'PPN', 'HARI', 'DISC', 'TIPEBAYAR', 'KURS'];
+
   public function onChangeHeader (Request $req) {
-    $query = 'update dbpo set ' . $req->field . ' = :value where nobukti = :nobukti';
-    $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
+    $kolom = $this->kolomHeaderPO[strtolower((string) $req->field)] ?? null;
+    $po = $kolom ? $this->headerDokumen('DBPO', $req->nobukti) : null;
+    if (!$kolom || !$po) {
+      // Field tanpa kolom DBPO, atau nomor bukti yang bukan PO (form Perintah Retur Beli ikut
+      // memanggil endpoint ini): tidak ada yang disimpan, sama seperti sebelumnya, tanpa error.
+      return ['ok' => 0, 'abaikan' => 1];
+    }
+    if ((int) $po->isotorisasi1 === 1 || (int) $po->isotorisasi2 === 1) {
+      return $this->tolak('PO ' . $req->nobukti . ' sudah diotorisasi, header tidak bisa diubah.');
+    }
+    $nilai = $req->value;
+    if (in_array($kolom, $this->kolomHeaderPOAngka, true)) {
+      $nilai = (float) str_replace(',', '', (string) $nilai);
+    } else if ($kolom === 'TglKirim') {
+      if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string) $nilai, $m) || (int) $m[1] < 1900 || !checkdate((int) $m[2], (int) $m[3], (int) $m[1])) {
+        return $this->tolak('Tanggal kirim tidak valid.');
+      }
+    } else {
+      $nilai = (string) $nilai;
+    }
+    $res = DB::connection('SML')->update("update dbpo set $kolom = :value where nobukti = :nobukti", ["value" => $nilai , "nobukti" => $req->nobukti]);
     return $res;
 
   }
@@ -1007,6 +1040,13 @@ class POController extends Controller
 
   public function updateOtorisasi (Request $req) {
     $username = Auth::user()->username;
+    $po = $this->headerDokumen('DBPO', $req->nobukti);
+    if (!$po) {
+      return $this->tolak('PO ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $po->isotorisasi1 === 1 && (int) $po->isotorisasi2 === 1) {
+      return $this->tolak('PO ' . $req->nobukti . ' sudah diotorisasi.');
+    }
      $maxOL = DB::connection('SML')->select("select * from dbmenu where href ='purchaseorder'");
     $cekOto = DB::connection('SML')->select("
 select b.*,c.KodeJab,isnull(d.PlafonOtoPO , 0) PlafonOtoPO,
@@ -1024,6 +1064,13 @@ select b.*,c.KodeJab,isnull(d.PlafonOtoPO , 0) PlafonOtoPO,
 					 group by nobukti
 					 ) E on 1=1
     where a.href ='purchaseorder' and b.USERID= :username ", ["nobukti" => $req->nobukti , "username" => $username]);
+    if (!$cekOto || !$maxOL) {
+      return $this->tolak('Jabatan/plafon otorisasi PO untuk user ' . $username . ' belum diatur.');
+    }
+    // Level 1 sudah oleh user lain: jalur dept head (> 200 jt) tidak menimpa otorisasi pertama
+    if ((int) $po->isotorisasi1 === 1 && $cekOto[0]->nnet > 200000000 && $cekOto[0]->KodeJab == '03') {
+      return $this->tolak('PO ' . $req->nobukti . ' sudah diotorisasi level 1 oleh ' . $po->otouser1 . ', menunggu otorisasi direktur.');
+    }
     $tanggal = date('Y-m-d H:i:s');
 
     // diatas plafon langsung tolak
@@ -1077,6 +1124,23 @@ select b.*,c.KodeJab,isnull(d.PlafonOtoPO , 0) PlafonOtoPO,
 
   public function updateBatalOtorisasi (Request $req) {
     $username = Auth::user()->username;
+    $po = $this->headerDokumen('DBPO', $req->nobukti);
+    if (!$po) {
+      return $this->tolak('PO ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $po->isotorisasi1 !== 1 && (int) $po->isotorisasi2 !== 1) {
+      return $this->tolak('PO ' . $req->nobukti . ' belum diotorisasi.');
+    }
+    // PO yang sudah diterima gudang / sudah ada uang muka tidak boleh dibatalkan: sesudah batal
+    // otorisasi itemnya bisa diedit/dihapus, padahal DBBELIDET/DBUMJUAL masih menunjuk PO ini.
+    $terima = $this->dipakaiOleh('DBBELIDET', 'NoPO', $req->nobukti);
+    if ($terima) {
+      return $this->tolak('PO ' . $req->nobukti . ' sudah diterima di ' . $terima . ', otorisasi tidak bisa dibatalkan.');
+    }
+    $um = DB::connection('SML')->selectOne("select top 1 NOBUKTI from DBUMJUAL where NOSO = cast(? as varchar(50)) and isnull(pBeli, 0) = 1 and isnull(IsBatal, 0) = 0", [(string) $req->nobukti]);
+    if ($um) {
+      return $this->tolak('PO ' . $req->nobukti . ' sudah dipakai Uang Muka Beli ' . $um->NOBUKTI . ', otorisasi tidak bisa dibatalkan.');
+    }
     $maxOL = DB::connection('SML')->select("select * from dbmenu where href = 'purchaseorder'");
 
     $cekOto = DB::connection('SML')->select("
@@ -1095,6 +1159,9 @@ select b.*,c.KodeJab,isnull(d.PlafonOtoPO , 0) PlafonOtoPO,
            group by nobukti
            ) E on 1=1
     where a.href ='purchaseorder' and b.USERID= :username ", ["nobukti" => $req->nobukti , "username" => $username]);
+    if (!$cekOto) {
+      return $this->tolak('Jabatan/plafon otorisasi PO untuk user ' . $username . ' belum diatur.');
+    }
     $tanggal = date('Y-m-d H:i:s');
     if ( $cekOto[0]->nnet > $cekOto[0]->PlafonOtoPO ) {
       if($cekOto[0]->leveloto == 1) {
@@ -1789,6 +1856,13 @@ foreach ( $tempData as $d ) {
     }
     // return ["asd" => $xurut] ;
 
+    if (!($choice == 'I' && $jmlrecord == 0)) {
+      $tolak = $this->cekUbahPO($nobukti, $choice == 'I' ? null : $req->Urut);
+      if ($tolak) {
+        return $tolak;
+      }
+    }
+
     if ($choice =='D'){
       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'PO',$nobukti,'',$xurut,'dbpodet');
       }
@@ -2083,9 +2157,23 @@ order by B.TANGGAL Desc
 
   }
 
-
-
-
-
-
+  // PO yang sudah diotorisasi tidak boleh diubah, dan item yang sudah diterima gudang tidak
+  // boleh diedit/dihapus. Mengembalikan jawaban penolakan, atau null kalau boleh. Dipakai juga
+  // PONonStockController (PO Non Stock memakai DBPO yang sama).
+  public function cekUbahPO($nobukti, $urut = null) {
+    $po = $this->headerDokumen('DBPO', $nobukti);
+    if (!$po) {
+      return $this->tolak('PO ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $po->isotorisasi1 === 1 || (int) $po->isotorisasi2 === 1) {
+      return $this->tolak('PO ' . $nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+    }
+    if ($urut !== null) {
+      $terima = $this->dipakaiOleh('DBBELIDET', 'NoPO', $nobukti, 'UrutPO', $urut);
+      if ($terima) {
+        return $this->tolak('Item ini sudah diterima di ' . $terima . ', tidak bisa diubah atau dihapus.');
+      }
+    }
+    return null;
+  }
 }

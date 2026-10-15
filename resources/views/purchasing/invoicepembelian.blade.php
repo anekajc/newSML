@@ -2099,6 +2099,10 @@ console.log('vvvvvvvvvvvvvvvvvv')
 
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            return
+          }
           if (res > 0) {
             loadAll()
 
@@ -2142,6 +2146,11 @@ console.log('vvvvvvvvvvvvvvvvvv')
 
                       },
                       success: function(res) {
+                        if (res && res.pesan) {
+                          alertify.warning(res.pesan)
+                          loadAll()
+                          return
+                        }
                         if (res > 0) {
                           console.log(nobukti)
                           loadAll()
@@ -2188,6 +2197,11 @@ console.log('vvvvvvvvvvvvvvvvvv')
             otorisasi
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              loadAll()
+              return
+            }
             if (res > 0) {
               console.log(nobukti, otorisasi)
               loadAll()
@@ -2241,6 +2255,11 @@ console.log('vvvvvvvvvvvvvvvvvv')
                 pket: value
               },
               success: function (res) {
+                if (res && res.pesan) {
+                  alertify.warning(res.pesan)
+                  loadAll()
+                  return
+                }
                 if (res > 0) {
                   loadAll()
                   alertify.success('Berhasil batal otorisasi');
@@ -3449,6 +3468,10 @@ console.log('vvvvvvvvvvvvvvvvvv')
                 reqEd,
               },
               success: function(res) {
+                if (res && res.pesan) {
+                  alertify.warning(res.pesan)
+                  return
+                }
                 console.log(res)
                 console.log("del successsssssssssssssssssssss")
                 loadAll()
@@ -3533,6 +3556,10 @@ console.log('vvvvvvvvvvvvvvvvvv')
 
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            return
+          }
           console.log(res)
           console.log("successsssssssssssssssssssss")
           loadAll()
@@ -3635,6 +3662,10 @@ console.log('vvvvvvvvvvvvvvvvvv')
           reqHarga,
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            return
+          }
           console.log(res)
           console.log("successsssssssssssssssssssssx")
           loadAll()
@@ -3741,6 +3772,10 @@ console.log('vvvvvvvvvvvvvvvvvv')
               reqHarga
             },
             success: function(res) {
+              if (res && res.pesan) {
+                alertify.warning(res.pesan)
+                return
+              }
               console.log(res)
               console.log("successsssssssssssssssssssss")
               loadAll()
@@ -4333,6 +4368,11 @@ if (pcekglobal) {
                   inputTanggal: inputTanggal
                 },
                 success: function (res) {
+                  if (res && res.pesan) {
+                    alertify.warning(res.pesan)
+                    loadAll()
+                    return
+                  }
                   console.log(res , "RESPOND");
                   if (res == 1) {
 

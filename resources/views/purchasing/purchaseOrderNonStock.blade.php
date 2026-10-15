@@ -3021,6 +3021,11 @@ function buttonOtorisasi (nobukti) {
 
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        loadAll()
+        return
+      }
       alertify.success('Berhasil update otorisasi')
       loadAll()
 
@@ -3057,6 +3062,11 @@ function buttonBatalOtorisasi (nobukti) {
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              loadAll()
+              return
+            }
             alertify.success('Berhasil batal otorisasi')
             loadAll()
 
@@ -3227,6 +3237,13 @@ function onChangeHeader (field, value) {
       nobukti
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
+      if (res && res.abaikan) {
+        return
+      }
       alertify.success(`update ${field} berhasil`)
 
     },error: function (err) {
@@ -3548,6 +3565,10 @@ function submitAddAddKerja () {
       UrutPNW
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
 
       if (res == 1) {
 
@@ -3866,6 +3887,10 @@ function submitAddEditKerja () {
 
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       console.log('resspsoaddedit', res)
       if (res == 3) {
         alertify.warning('Kode barang tidak ada di master barang - pilih barang lewat tombol browse')
@@ -7629,6 +7654,10 @@ function buttonAddDeleteItem (i) {
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             console.log('resspsoadd', res)
             ponsTandaiDaftarBerubah()
 

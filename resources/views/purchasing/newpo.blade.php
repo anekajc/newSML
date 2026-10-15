@@ -3084,6 +3084,10 @@ for (let f = 0; f < fillerCount; f++) {
                 reqEd,
               },
               success: function(res) {
+                if (res && res.pesan) {
+                  alertify.warning(res.pesan)
+                  return
+                }
                 // console.log(res , "RESPOND");
                 console.log(res)
                 console.log("del successsssssssssssssssssssss")
@@ -3183,6 +3187,10 @@ for (let f = 0; f < fillerCount; f++) {
           reqEd,
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            return
+          }
           // console.log(res , "RESPOND");
           console.log(res)
           console.log("successsssssssssssssssssssss")
@@ -3323,6 +3331,10 @@ for (let f = 0; f < fillerCount; f++) {
           reqEd,
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            return
+          }
           // console.log(res , "RESPOND");
           console.log(res)
           console.log("successsssssssssssssssssssss")
@@ -3431,6 +3443,10 @@ for (let f = 0; f < fillerCount; f++) {
           reqEd,
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            return
+          }
           loadAll();
           resetDetailPembelian(reqNoBukti, reqNoPO);
           alertify.success('Item telah diadd');
@@ -4220,6 +4236,11 @@ if (pcekglobal) {
                   inputTanggal: inputTanggal
                 },
                 success: function (res) {
+                  if (res && res.pesan) {
+                    alertify.warning(res.pesan)
+                    loadAll()
+                    return
+                  }
                   console.log(res , "RESPOND");
                   if (res == 1) {
 

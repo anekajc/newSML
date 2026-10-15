@@ -10,6 +10,7 @@ use App\Models\DBFLMENU;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use App\Traits\PenjagaTransaksi;
 use App\Models\VwPPL;
 use Illuminate\Auth;
 
@@ -18,6 +19,8 @@ use Illuminate\Auth;
 
 class PerintahReturBeliController extends Controller
 {
+  use PenjagaTransaksi;
+
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase
   // Order/Uang Muka Beli). Lihat UangMukaBeliController::periodeRange().
@@ -155,6 +158,13 @@ class PerintahReturBeliController extends Controller
     if (!in_array($req->field, $allowedFields)) {
       return 0;
     }
+    $prb = $this->headerDokumen('DBPRRBELI', $req->nobukti);
+    if (!$prb) {
+      return $this->tolak('Perintah retur ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $prb->isotorisasi1 === 1) {
+      return $this->tolak('Perintah retur ' . $req->nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+    }
 
     $res = DB::connection('SML')->update(
       'update dbPRRBeli set ' . $req->field . ' = :value where NOBUKTI = :nobukti',
@@ -166,15 +176,36 @@ class PerintahReturBeliController extends Controller
 
   public function updateOtorisasi (Request $req) {
     $tanggal = date('Y-m-d H:i:s');
-    $res = DB::connection('SML')->update("update DBPRRBELI set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti", ["username" => \Auth::user()->username , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
+    $prb = $this->headerDokumen('DBPRRBELI', $req->nobukti);
+    if (!$prb) {
+      return $this->tolak('Perintah retur ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    // Syarat belum oto di WHERE: dua user bersamaan tidak saling menimpa user/tanggal otorisasi
+    $res = DB::connection('SML')->update("update DBPRRBELI set isOtorisasi1 = 1, maxol = 1 , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti and isnull(IsOtorisasi1, 0) = 0", ["username" => \Auth::user()->username , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
+    if (!$res) {
+      return $this->tolak('Perintah retur ' . $req->nobukti . ' sudah diotorisasi oleh ' . $prb->otouser1 . '.');
+    }
      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'oto','PRB',$req->nobukti,'',0,'DBPRRBELI');
 return $res;
   }
 
   public function updateBatalOtorisasi (Request $req) {
     $tanggal = date('Y-m-d H:i:s');
+    $prb = $this->headerDokumen('DBPRRBELI', $req->nobukti);
+    if (!$prb) {
+      return $this->tolak('Perintah retur ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $prb->isotorisasi1 !== 1) {
+      return $this->tolak('Perintah retur ' . $req->nobukti . ' belum diotorisasi.');
+    }
+    // Sudah dipakai Retur Pembelian Gudang: sesudah batal otorisasi itemnya bisa diedit/dihapus,
+    // padahal DBRBELIDET.NOPRB/UrutPRB masih menunjuk item itu.
+    $retur = $this->dipakaiOleh('DBRBELIDET', 'NOPRB', $req->nobukti);
+    if ($retur) {
+      return $this->tolak('Perintah retur ' . $req->nobukti . ' sudah dipakai di ' . $retur . ', otorisasi tidak bisa dibatalkan.');
+    }
     $res = DB::connection('SML')->update("update DBPRRBELI set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti", [ "nobukti" => $req->nobukti]);
-    $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PR',$req->nobukti,$req->pket,0,'DBPRRBELI');
+    $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PRB',$req->nobukti,$req->pket,0,'DBPRRBELI');
  return $res;
   }
 
@@ -630,6 +661,22 @@ having COUNT(*)>1
 
     if($choice == "D" || $choice == "U"){
       $Urut = $req->Urut;
+    }
+
+    if (!($choice == "I" && $jmlrecord == 0)) {
+      $prb = $this->headerDokumen('DBPRRBELI', $nobukti);
+      if (!$prb) {
+        return $this->tolak('Perintah retur ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+      }
+      if ((int) $prb->isotorisasi1 === 1) {
+        return $this->tolak('Perintah retur ' . $nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+      }
+      if ($choice == "D" || $choice == "U") {
+        $retur = $this->dipakaiOleh('DBRBELIDET', 'NOPRB', $nobukti, 'UrutPRB', $Urut);
+        if ($retur) {
+          return $this->tolak('Item ini sudah dipakai di ' . $retur . ', tidak bisa diubah atau dihapus.');
+        }
+      }
     }
 
             // $values = [
