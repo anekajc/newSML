@@ -69,7 +69,7 @@ class SetNomorTransaksiController extends Controller
     if (count($detail)) {
       $gambar = [];
       foreach (self::SLOT_GAMBAR as $kunci => $slot) {
-        $file = $this->cariFileGambar($slot[0], $slot[1]);
+        $file = self::cariFileGambar($slot[0], $slot[1]);
         $gambar[$kunci] = $file
           ? 'data:' . (mime_content_type($file) ?: 'image/png') . ';base64,' . base64_encode(file_get_contents($file))
           : '';
@@ -80,8 +80,11 @@ class SetNomorTransaksiController extends Controller
     return $detail;
   }
 
-  // Gambar TTD & Logo disimpan sebagai file di resources/views/berkas/img/{ttd,logoperusahaan},
+  // Gambar TTD & Logo disimpan sebagai file di storage/app/gambar-perusahaan/{ttd,logoperusahaan},
   // satu file per NPWP: npwp1.<ext> & npwp2.<ext>. Kunci = nama field upload dari form.
+  // Dulu disimpan di resources/views/berkas/img - di server folder itu tidak bisa ditulis web
+  // server (gambar lama tidak bisa diganti), jadi sekarang ke storage yang memang wajib writable.
+  // File lama di resources tetap dibaca sebagai cadangan selama belum ada gambar baru di storage.
   const SLOT_GAMBAR = [
     'ttd_1'  => ['ttd', 'npwp1'],
     'logo_1' => ['logoperusahaan', 'npwp1'],
@@ -90,13 +93,17 @@ class SetNomorTransaksiController extends Controller
   ];
   const EKSTENSI_GAMBAR = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'];
 
-  private function folderGambar($folder) {
+  private static function folderGambar($folder) {
+    return storage_path('app' . DIRECTORY_SEPARATOR . 'gambar-perusahaan' . DIRECTORY_SEPARATOR . $folder);
+  }
+
+  private static function folderGambarLama($folder) {
     return resource_path('views/berkas/img/' . $folder);
   }
 
-  private function cariFileGambar($folder, $nama) {
+  private static function cariDiFolder($dir, $nama) {
     foreach (self::EKSTENSI_GAMBAR as $ext) {
-      $file = $this->folderGambar($folder) . DIRECTORY_SEPARATOR . $nama . '.' . $ext;
+      $file = $dir . DIRECTORY_SEPARATOR . $nama . '.' . $ext;
       if (is_file($file)) {
         return $file;
       }
@@ -104,11 +111,21 @@ class SetNomorTransaksiController extends Controller
     return null;
   }
 
-  // Logo NPWP 1 untuk ikon sidebar layout newmasterTest. Folder gambar ada di resources (tidak
-  // bisa diakses langsung dari browser), jadi file dikirim lewat route ini. URL di layout memakai
+  private static function cariFileGambar($folder, $nama) {
+    return self::cariDiFolder(self::folderGambar($folder), $nama)
+      ?: self::cariDiFolder(self::folderGambarLama($folder), $nama);
+  }
+
+  // Path file Logo NPWP 1 (null = belum ada) - dipakai layout newmasterTest & newmaster2x.
+  public static function fileLogoSidebar() {
+    return self::cariFileGambar('logoperusahaan', 'npwp1');
+  }
+
+  // Logo NPWP 1 untuk ikon sidebar layout newmasterTest. Folder gambar tidak bisa diakses
+  // langsung dari browser, jadi file dikirim lewat route ini. URL di layout memakai
   // ?v=<waktu ubah file>, jadi aman di-cache browser lama - ganti logo otomatis ganti URL.
   public function logo() {
-    $file = $this->cariFileGambar('logoperusahaan', 'npwp1');
+    $file = self::fileLogoSidebar();
     if (!$file) {
       abort(404);
     }
@@ -210,16 +227,25 @@ class SetNomorTransaksiController extends Controller
         ]
     );
 
-    // Simpan gambar baru; file lama di slot yang sama (ekstensi apa pun) dihapus dulu.
+    // Simpan gambar baru ke storage; file lama di slot yang sama (ekstensi apa pun) dihapus dulu.
     foreach ($unggahan as $kunci => [$file, $ext]) {
       [$folder, $nama] = self::SLOT_GAMBAR[$kunci];
-      while ($lama = $this->cariFileGambar($folder, $nama)) {
+      $dir = self::folderGambar($folder);
+      while ($lama = self::cariDiFolder($dir, $nama)) {
         @unlink($lama);
         if (is_file($lama)) {
           return 'Data tersimpan, tapi gambar lama ' . $labelGambar[$kunci] . ' tidak bisa diganti';
         }
       }
-      $file->move($this->folderGambar($folder), $nama . '.' . $ext);
+      try {
+        $file->move($dir, $nama . '.' . $ext);
+      } catch (\Throwable $e) {
+        return 'Data tersimpan, tapi gambar ' . $labelGambar[$kunci] . ' gagal disimpan (folder storage tidak bisa ditulis)';
+      }
+      // Salinan lama di resources dibersihkan kalau bisa; kalau tidak bisa dihapus tidak masalah
+      // karena file di storage selalu didahulukan.
+      while (($lamaRes = self::cariDiFolder(self::folderGambarLama($folder), $nama)) && @unlink($lamaRes)) {
+      }
     }
 
     return 1;

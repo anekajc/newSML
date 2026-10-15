@@ -2002,7 +2002,7 @@ function buttonBatalOtorisasi (nobukti, isOtorisasi) {
 
        if (xpket==''){
           alertify.warning('Keterangan harus diisi.');
-          $.abort();
+          return false;
         }
       let _token = $("#_token").val();
 
@@ -2058,7 +2058,7 @@ function submitAddEdit () {
     let tanggal = $("#input_add_tanggal").val();
     let kodebarang = $("#input_add_add_kodebarang").val();
     let keterangannama = $("#input_add_add_keterangannama").val();
-    let satuanInput = $("#input_add_add_satuan").val().toString(); // pastikan string
+    let satuanInput = String($("#input_add_add_satuan").val() || ''); // pastikan string (val() null kalau tidak ada opsi terpilih)
     let isjasa = 0;
     let qnt = formatAngkaVal($("#input_add_add_qnt").val())
     let keterangan = $("#input_add_add_keterangan").val();
@@ -2089,17 +2089,17 @@ function submitAddEdit () {
         if (satuanInput === "1") {
             nosat = 1;
             satuan = barang.SAT1;
-            isi = parseFloat(String(barang.ISI1).replace(/\./g,''));
+            isi = Number(String(barang.ISI1 ?? 0).replace(/,/g, '')) || 0;
             qnt1 = qnt * isi;
         } else if (satuanInput === "2") {
             nosat = 2;
             satuan = barang.SAT2;
-            isi = parseFloat(String(barang.ISI2).replace(/\./g,''));
+            isi = Number(String(barang.ISI2 ?? 0).replace(/,/g, '')) || 0;
             qnt1 = qnt * isi;
         } else if (satuanInput === "3") {
             nosat = 3;
             satuan = barang.SAT3;
-            isi = parseFloat(String(barang.ISI3).replace(/\./g,''));
+            isi = Number(String(barang.ISI3 ?? 0).replace(/,/g, '')) || 0;
             qnt1 = qnt * isi;
         } else {
             alertify.warning("Satuan tidak cocok dengan data barang");
@@ -2184,18 +2184,18 @@ function submitAddEdit () {
 
   // Isi dropdown satuan
   let selectOption = '';
-  if (tempEdit.IsJasa === "1") {
+  if (Number(tempEdit.IsJasa) === 1) {
     selectOption = '<option value="1" selected>-</option>';
   } else {
     selectOption = '<option value=0 selected>Pilih Satuan</option>';
     if (tempEdit.SAT1) {
-      selectOption += `<option value=1>${tempEdit.SAT1} - ${Number(String(tempEdit.ISI1||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
+      selectOption += `<option value=1>${tempEdit.SAT1} - ${Number(String(tempEdit.ISI1||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
     }
     if (tempEdit.SAT2) {
-      selectOption += `<option value=2>${tempEdit.SAT2} - ${Number(String(tempEdit.ISI2||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
+      selectOption += `<option value=2>${tempEdit.SAT2} - ${Number(String(tempEdit.ISI2||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
     }
     if (tempEdit.SAT3) {
-      selectOption += `<option value=3>${tempEdit.SAT3} - ${Number(String(tempEdit.ISI3||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
+      selectOption += `<option value=3>${tempEdit.SAT3} - ${Number(String(tempEdit.ISI3||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
     }
   }
   document.getElementById("input_add_add_satuan").innerHTML = selectOption;
@@ -2207,7 +2207,7 @@ function submitAddEdit () {
   $('#input_add_add_qnt').autoNumeric('set', parseFloat(tempEdit.Qnt || 0).toFixed(2));
   document.getElementById("input_add_add_keterangan").value = tempEdit.Keterangan || '';
 
-  let defaultNoSat = tempEdit.IsJasa === "1" ? "1" : String(tempEdit.NoSat || "0");
+  let defaultNoSat = Number(tempEdit.IsJasa) === 1 ? "1" : String(tempEdit.NoSat || "0");
   document.getElementById("input_add_add_satuan").value = defaultNoSat;
 
   // Tampilkan mode edit
@@ -2296,6 +2296,11 @@ if (pcekglobal) {
     //seharusnya ini pakai data table add
       dataTableAdd = res
   }})
+  if (!dataTableAdd.length) {
+    alertify.warning('Data tidak ditemukan, silakan refresh')
+    loadAll()
+    return
+  }
   let rowTable = ``
   dataTableAdd.forEach((item, i) => {
     rowTable += `<tr >
@@ -2404,6 +2409,7 @@ function buttonAddDeleteItem (index) {
   }
 
 function buttonDetail (nobukti) {
+  let adaData = false
   $.ajax({
     url: "{!! url('pembelianpermintaanagenlistdepartemen') !!}",
     type: "get",
@@ -2428,6 +2434,12 @@ function buttonDetail (nobukti) {
       nobukti
     },
     success: function(res) {
+      if (!res.length) {
+        alertify.warning('Data tidak ditemukan, silakan refresh')
+        loadAll()
+        return
+      }
+      adaData = true
 
       let rowTable = ``
       res.forEach((item, i) => {
@@ -2451,6 +2463,7 @@ function buttonDetail (nobukti) {
       // document.getElementById("input_detail_tanggal").value  = res[0].Tanggal
 
   }})
+  if (!adaData) { return }
   $("#page3").show();
   $("#page1").hide();
 }
@@ -2572,6 +2585,7 @@ function buttonCloseForm () {
   $('#page2').hide();
   $('#page3').hide();
   $('#page1').show();
+  prAturTinggiTabel()
 }
 
 function buttonAddListKodeBarang () {
@@ -2669,9 +2683,9 @@ function buttonAddAddInsertItem (i) {
   $('#input_add_add_keterangannama').val(item.NAMABRG);
 
   let satuanOptions = '';
-  if (item.SAT1) satuanOptions += `<option value="${item.SAT1}">${item.SAT1} - ${Number(String(item.ISI1||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
-  if (item.SAT2) satuanOptions += `<option value="${item.SAT2}">${item.SAT2} - ${Number(String(item.ISI2||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
-  if (item.SAT3) satuanOptions += `<option value="${item.SAT3}">${item.SAT3} - ${Number(String(item.ISI3||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
+  if (item.SAT1) satuanOptions += `<option value="${item.SAT1}">${item.SAT1} - ${Number(String(item.ISI1||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
+  if (item.SAT2) satuanOptions += `<option value="${item.SAT2}">${item.SAT2} - ${Number(String(item.ISI2||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
+  if (item.SAT3) satuanOptions += `<option value="${item.SAT3}">${item.SAT3} - ${Number(String(item.ISI3||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
   $('#input_add_add_satuan').html(satuanOptions);
 
   $('#formAddListItem').modal('hide');
@@ -2725,13 +2739,13 @@ function buttonAddAddInsertItem (i) {
     isi = barang.ISI1 || 1;
     satuan = 1;
   } else if (satuan === barang.SAT1) {
-    isi = parseFloat(String(barang.ISI1).replace(/\./g,''));
+    isi = Number(String(barang.ISI1 ?? 0).replace(/,/g, '')) || 0;
     nosat = 1;
   } else if (satuan === barang.SAT2) {
-    isi = parseFloat(String(barang.ISI2).replace(/\./g,''));
+    isi = Number(String(barang.ISI2 ?? 0).replace(/,/g, '')) || 0;
     nosat = 2;
   } else if (satuan === barang.SAT3) {
-    isi = parseFloat(String(barang.ISI3).replace(/\./g,''));
+    isi = Number(String(barang.ISI3 ?? 0).replace(/,/g, '')) || 0;
     nosat = 3;
   } else {
     alertify.warning("Satuan tidak valid");
@@ -2879,13 +2893,13 @@ function buttonAddAddItem () {
   // Reset dropdown satuan
   let satuanOptions = `<option value="" selected disabled>Pilih Satuan</option>`;
   if (tempAdd.SAT1) {
-    satuanOptions += `<option value="${tempAdd.SAT1}">[1] ${tempAdd.SAT1} - ${Number(String(tempAdd.ISI1||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
+    satuanOptions += `<option value="${tempAdd.SAT1}">[1] ${tempAdd.SAT1} - ${Number(String(tempAdd.ISI1||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
   }
   if (tempAdd.SAT2) {
-    satuanOptions += `<option value="${tempAdd.SAT2}">[2] ${tempAdd.SAT2} - ${Number(String(tempAdd.ISI2||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
+    satuanOptions += `<option value="${tempAdd.SAT2}">[2] ${tempAdd.SAT2} - ${Number(String(tempAdd.ISI2||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
   }
   if (tempAdd.SAT3) {
-    satuanOptions += `<option value="${tempAdd.SAT3}">[3] ${tempAdd.SAT3} - ${Number(String(tempAdd.ISI3||0).replace(/\./g,'')).toLocaleString('id-ID')}</option>`;
+    satuanOptions += `<option value="${tempAdd.SAT3}">[3] ${tempAdd.SAT3} - ${Number(String(tempAdd.ISI3||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
   }
 
   document.getElementById("input_add_add_satuan").innerHTML = satuanOptions;
@@ -2942,6 +2956,7 @@ function refreshDataTableAdd (NOBUKTI = "") {
         $('#page3').hide();
         $('#page2').hide();
         $('#page1').show();
+        prAturTinggiTabel()
         return
       }
 

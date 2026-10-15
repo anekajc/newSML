@@ -568,10 +568,10 @@ $iconMap = [
 
 <body>
     {{-- Logo & nama perusahaan, sama seperti newmasterTest.blade.php: ikon memakai Logo NPWP 1
-         dari menu Set Nomor Transaksi (resources/views/berkas/img/logoperusahaan/npwp1.*),
+         dari menu Set Nomor Transaksi (storage/app/gambar-perusahaan/logoperusahaan/npwp1.*),
          nama memakai Inisial Perusahaan (DBNOMOR.ALIAS). Dipakai di loader & sidebar di bawah. --}}
     @php
-      $fileLogoSidebar = collect(glob(resource_path('views/berkas/img/logoperusahaan/npwp1.*')) ?: [])->first();
+      $fileLogoSidebar = \App\Http\Controllers\Berkas\SetNomorTransaksiController::fileLogoSidebar();
       try {
         $inisialPerusahaan = trim((string) (\DB::connection('SML')->select('select top 1 ALIAS from DBNOMOR')[0]->ALIAS ?? ''));
       } catch (\Throwable $e) {
