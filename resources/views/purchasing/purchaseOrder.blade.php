@@ -10451,6 +10451,7 @@ function refreshDataTableAdd (NOBUKTI) {
             `<tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
+                  <th style="padding: 4px 12px;" scope="col">Nama Alias</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Qty</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Sat</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Harga</th>
@@ -10582,6 +10583,7 @@ function refreshDataTableEdit (NOBUKTI) {
             `<tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
+                  <th style="padding: 4px 12px;" scope="col">Nama Alias</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Qty</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Sat</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Harga</th>
@@ -10703,6 +10705,7 @@ function refreshDataTableDetail (NOBUKTI) {
                 <tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
+                  <th style="padding: 4px 12px;" scope="col">Nama Alias</th>
                   <th style="padding: 4px 12px;" scope="col">Keterangan</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Qty</th>
                   <th style="padding: 4px 12px;" scope="col" class="text-center">Sat</th>
