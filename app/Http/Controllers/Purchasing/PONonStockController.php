@@ -725,7 +725,12 @@ $xurut=0;
     }
     // return ["asd" => $xurut] ;
 
-
+    if (!($choice == 'I' && $jmlrecord == 0)) {
+      $tolak = app('App\Http\Controllers\Purchasing\POController')->cekUbahPO($nobukti, $choice == 'I' ? null : $req->Urut);
+      if ($tolak) {
+        return $tolak;
+      }
+    }
 
 if ($choice =='D'){
       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( $choice,'PO',$nobukti,'',$xurut,'DBPODET');

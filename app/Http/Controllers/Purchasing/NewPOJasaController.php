@@ -183,6 +183,10 @@ public function spBeliGudang (Request $req) {
     ]);
     return 1;
   }
+  $tolak = app('App\Http\Controllers\Purchasing\NewPOController')->cekUbahBeliItem($req);
+  if ($tolak) {
+    return $tolak;
+  }
 
   // return $req;
   // $data = $req->input('data');
@@ -307,6 +311,10 @@ public function addDBBeli (Request $req) {
         $check = DB::connection('SML')->select('select * from dbBeli where NOBUKTI = :nobukti',["nobukti" => $noBukti]);
         if ($check) {
           return 2;
+        }
+        $tolak = app('App\Http\Controllers\Purchasing\NewPOController')->cekTambahBeli($date, $noPO, $data);
+        if ($tolak) {
+          return $tolak;
         }
         // delete	TempOutstandingPO where IDUser=@IDUser
         DB::connection('SML')->statement('delete	TempOutstandingPO where IDUser = :idUser',['idUser' => $username ]);

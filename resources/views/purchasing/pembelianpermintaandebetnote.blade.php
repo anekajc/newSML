@@ -5,6 +5,10 @@
 @endsection
 
 @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /pembelianpermintaandebetnote itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
   /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
      #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
@@ -1438,6 +1442,10 @@ function submitAddEdit () {
       nourut
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       if (res == 1) {
         $('.showhideitem').hide();
         loadAll()
@@ -1493,6 +1501,10 @@ function buttonAddDelete (i) {
             nilairp
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             if (res == 1) {
               $('.showhideitem').hide();
               loadAll()
@@ -1572,6 +1584,10 @@ function buttonAddPickInvoice () {
           nourut
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            return
+          }
           if (res == 1) {
             alertify.success('DN telah ditambah');
             loadAll()
@@ -1813,6 +1829,11 @@ function submitOtorisasi () {
       nobukti
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        loadAll()
+        return
+      }
       alertify.success('Berhasil update otorisasi');
       loadAll();
       buttonCloseForm();
@@ -1896,6 +1917,11 @@ function buttonOtorisasi (nobukti) {
         nobukti
       },
       success: function (res) {
+        if (res && res.pesan) {
+          alertify.warning(res.pesan)
+          loadAll()
+          return
+        }
         alertify.success('Berhasil update otorisasi');
         loadAll();
       },
@@ -2007,6 +2033,11 @@ function buttonBatalOtorisasi(nobukti) {
           pket: value
         },
         success: function (res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            loadAll()
+            return
+          }
           if (res > 0) {
             alertify.success('Berhasil batal otorisasi');
             loadAll();

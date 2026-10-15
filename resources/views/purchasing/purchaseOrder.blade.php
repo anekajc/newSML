@@ -4321,9 +4321,13 @@ function buttonOtorisasi (nobukti , isoto1) {
           <td class="text-right">${item.SaldoRP ? formatAngka(parseFloat(item.SaldoRP).toFixed(2)) : '0.00'}</td>
         </tr>`;
 
-        totalTotal += item.TotalX;
-        saldoTotal += item.totalsaldorp;
       });
+
+      // TotalX & totalsaldorp sudah total per PO (sama di tiap baris), ambil sekali saja
+      if (dataTableAdd.length) {
+        totalTotal = parseFloat(dataTableAdd[0].TotalX) || 0;
+        saldoTotal = parseFloat(dataTableAdd[0].totalsaldorp) || 0;
+      }
 
       rows += `<tr class="border-0">
         <td colspan="3"></td>
@@ -4409,6 +4413,11 @@ function buttonOtorisasi (nobukti , isoto1) {
                   type: "POST",
                   data: { _token, nobukti , isoto1oto},
                   success: function(res) {
+                    if (res && res.pesan) {
+                      alertify.warning(res.pesan)
+                      loadAll()
+                      return
+                    }
                     console.log('resupdoto')
                     if(res == 2) {
                       alertify.warning("Melebihi plafon")
@@ -4448,6 +4457,11 @@ function buttonOtorisasi (nobukti , isoto1) {
             type: "POST",
             data: { _token, nobukti  , isoto1oto},
             success: function(res) {
+              if (res && res.pesan) {
+                alertify.warning(res.pesan)
+                loadAll()
+                return
+              }
               console.log('resupdoto')
               console.log(res)
               if(res == 2) {
@@ -4559,6 +4573,11 @@ function buttonBatalOtorisasi (nobukti) {
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              loadAll()
+              return
+            }
             alertify.success('Berhasil batal otorisasi')
             loadAll()
 
@@ -4750,6 +4769,13 @@ function onChangeHeader (field, value) {
       nobukti
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
+      if (res && res.abaikan) {
+        return
+      }
       alertify.success(`update ${field} berhasil`)
 
     },error: function (err) {
@@ -5375,6 +5401,10 @@ function submitAddAddKerja () {
 
                     },
                     success: function(res) {
+                      if (res && res.pesan) {
+                        alertify.warning(res.pesan)
+                        return
+                      }
 
                       if (res == 1) {
 
@@ -5493,6 +5523,10 @@ function submitAddAddKerja () {
 
                     },
                     success: function(res) {
+                      if (res && res.pesan) {
+                        alertify.warning(res.pesan)
+                        return
+                      }
                       console.log("resss")
                       console.log(res)
                       if (res == 1) {
@@ -5865,6 +5899,10 @@ function submitAddEditKerja () {
 
                                                             },
                                                             success: function(res) {
+                                                              if (res && res.pesan) {
+                                                                alertify.warning(res.pesan)
+                                                                return
+                                                              }
                                                               console.log('resspsoaddedit', res)
                                                               poTandaiDaftarBerubah()
 
@@ -5963,6 +6001,10 @@ function submitAddEditKerja () {
 
                                                             },
                                                             success: function(res) {
+                                                              if (res && res.pesan) {
+                                                                alertify.warning(res.pesan)
+                                                                return
+                                                              }
                                                               console.log('resspsoaddedit', res)
                                                               poTandaiDaftarBerubah()
 
@@ -12224,6 +12266,10 @@ function buttonAddDeleteItem (i) {
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             console.log('resspsoadd', res)
             poTandaiDaftarBerubah()
 

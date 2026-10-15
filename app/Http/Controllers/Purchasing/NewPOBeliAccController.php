@@ -14,9 +14,12 @@ use App\Models\vwOUtPOWMS;
 use App\Models\VWtampilbeli;
 use App\Models\vwMasterBeli;
 use App\Models\NEWDBBELI;
+use App\Traits\PenjagaTransaksi;
 
 class NewPOBeliAccController extends Controller
 {
+  use PenjagaTransaksi;
+
  
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase Order).
@@ -136,8 +139,21 @@ class NewPOBeliAccController extends Controller
   }
 
 public function onChangeHeader (Request $req) {
-    $query = 'update dbbeli set ' . $req->field . ' = :value where nobukti = :nobukti';
-    $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
+    // Hanya DISC & KURS yang diubah dari form Pembelian. Nama kolom dulu disambung langsung dari
+    // request ke SQL, jadi kolom apa pun (mis. IsOtorisasi1) bisa diubah lewat request.
+    $kolom = ['disc' => 'DISC', 'kurs' => 'KURS'][strtolower((string) $req->field)] ?? null;
+    if (!$kolom) {
+      return $this->tolak('Kolom ' . $req->field . ' tidak bisa diubah dari form Pembelian.');
+    }
+    $beli = $this->headerDokumen('DBBELI', $req->nobukti);
+    if (!$beli) {
+      return $this->tolak('Pembelian ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $beli->isotorisasi1 === 1) {
+      return $this->tolak('Pembelian ' . $req->nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+    }
+    $nilai = (float) str_replace(',', '', (string) $req->value);
+    $res = DB::connection('SML')->update("update dbbeli set $kolom = :value where nobukti = :nobukti", ["value" => $nilai , "nobukti" => $req->nobukti]);
     // exec sp_UpdateBeli '+QuotedStr(NoBukti.Text)+',:0 
     $values = [ $req->nobukti,11];
     DB::connection('SML')->statement('exec sp_UpdateBeli ?,?', $values);
@@ -167,7 +183,15 @@ public function spUpdateSO (Request $req) {
       }
 
 
-      $update = DB::connection('SML')->update("update dbbeli set IsOtorisasi1 = :otorisasi , OtoUser1 = :username , TglOto1 = getDate() , MaxOL = 1 where nobukti = :nobukti", ['otorisasi' => $otorisasi, 'username' => $username,  'nobukti' => $nobukti ] );
+      $beli = $this->headerDokumen('DBBELI', $nobukti);
+      if (!$beli) {
+        return $this->tolak('Pembelian ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+      }
+      // Syarat belum oto di WHERE: klik ganda / dua user bersamaan tidak memposting dua kali
+      $update = DB::connection('SML')->update("update dbbeli set IsOtorisasi1 = :otorisasi , OtoUser1 = :username , TglOto1 = getDate() , MaxOL = 1 where nobukti = :nobukti and isnull(IsOtorisasi1, 0) = 0", ['otorisasi' => $otorisasi, 'username' => $username,  'nobukti' => $nobukti ] );
+      if (!$update) {
+        return $this->tolak('Pembelian ' . $nobukti . ' sudah diotorisasi oleh ' . $beli->otouser1 . '.');
+      }
     
      $values = [
       '',
@@ -199,6 +223,19 @@ public function spUpdateSO (Request $req) {
         }
 
 
+        $beli = $this->headerDokumen('DBBELI', $nobukti);
+        if (!$beli) {
+          return $this->tolak('Pembelian ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+        }
+        if ((int) $beli->isotorisasi1 !== 1) {
+          return $this->tolak('Pembelian ' . $nobukti . ' belum diotorisasi.');
+        }
+        // Sudah di-invoice / diretur / dibayar: batal otorisasi menghapus posting hutang & jurnal
+        // padahal dokumen lanjutan itu masih menunjuk pembelian ini.
+        $pakai = app('App\Http\Controllers\Purchasing\NewPOController')->dipakaiBeli($nobukti);
+        if ($pakai) {
+          return $this->tolak('Pembelian ' . $nobukti . ' sudah dipakai di ' . $pakai . ', otorisasi tidak bisa dibatalkan.');
+        }
         $update = DB::connection('SML')->update("update dbbeli set IsOtorisasi1 = 0 , OtoUser1 = '' , TglOto1 = NULL, MaxOL = -1 where nobukti = :nobukti", [  'nobukti' => $nobukti ] );
        
          $values = [
@@ -266,6 +303,10 @@ public function getDetailPO (Request $req) {
 }
 
 public function spBeliGudang (Request $req) {
+  $tolak = app('App\Http\Controllers\Purchasing\NewPOController')->cekUbahBeliItem($req);
+  if ($tolak) {
+    return $tolak;
+  }
   // return $req;
   // $data = $req->input('data');
   // $dataLPB = $req->input('dataLPB');

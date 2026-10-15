@@ -309,7 +309,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/uangmukabeliprint',             [UangMukaBeliController::class, 'spCetak']);
     Route::get('/uangmukabelilistpo',            [UangMukaBeliController::class, 'listPO']);
     Route::post('/uangmukabelidetail',           [UangMukaBeliController::class, 'getDetail']);
-    Route::post('/uangmukabelispdelete',         [UangMukaBeliController::class, 'spDelete']);
+    // Dinonaktifkan: UangMukaBeliController@spDelete menghapus DBBAOPDET/DBBAOP (opname stok), bukan
+    // uang muka, dan tidak dipanggil tampilan - hapus UMB lewat uangmukabelispadd (choice D).
+    // Route::post('/uangmukabelispdelete',         [UangMukaBeliController::class, 'spDelete']);
     Route::get('/uangmukabeliloadall',           [UangMukaBeliController::class, 'loadAll']);
     Route::post('/uangmukabelispadd',            [UangMukaBeliController::class, 'spAdd']);
     Route::post('/uangmukabelispotorisasi',      [UangMukaBeliController::class, 'spOtorisasi']);

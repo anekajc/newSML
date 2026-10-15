@@ -6,6 +6,10 @@
 
 
 @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /pembelianpermintaanagen itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
   /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
      #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
@@ -1916,7 +1920,8 @@ function buttonOtorisasi (nobukti, isOtorisasi) {
         alertify.success('Berhasil otorisasi');
         loadAll();
       } else {
-        alertify.warning('Gagal otorisasi');
+        alertify.warning(res && res.pesan ? res.pesan : 'Gagal otorisasi');
+        loadAll();
       }
     },
     error: function (err) {
@@ -2021,7 +2026,8 @@ function buttonBatalOtorisasi (nobukti, isOtorisasi) {
             alertify.success('Berhasil batal otorisasi');
             loadAll();
           } else {
-            alertify.warning('Gagal batal otorisasi');
+            alertify.warning(res && res.pesan ? res.pesan : 'Gagal batal otorisasi');
+            loadAll();
           }
         },
         error: function (err) {
@@ -2154,6 +2160,10 @@ function submitAddEdit () {
         },
         success: function(res) {
             console.log('respoedit', res);
+            if (res && res.pesan) {
+              alertify.warning(res.pesan);
+              return;
+            }
             loadAll();
             $('.showhide').hide();
             refreshDataTableAdd(nobukti);
@@ -2398,6 +2408,10 @@ function buttonAddDeleteItem (index) {
             jmlrecord,
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan);
+              return;
+            }
             alertify.success("Item sudah di delete");
             refreshDataTableAdd(nobukti)
             loadAll()
@@ -2827,6 +2841,8 @@ function buttonAddAddInsertItem (i) {
       } else if (res == 2) {
         setNewNoBukti();
         alertify.warning('Nobukti telah direfresh, silakan submit ulang');
+      } else {
+        alertify.warning(res && res.pesan ? res.pesan : 'Gagal menambah item');
       }
     },
     error: function (err) {

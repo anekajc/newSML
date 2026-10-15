@@ -12,6 +12,7 @@ use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Models\VwPPL;
 use App\Models\DBFLMENU;
+use App\Traits\PenjagaTransaksi;
 
 
 
@@ -19,6 +20,8 @@ use App\Models\DBFLMENU;
 
 class PembelianPermintaanNonStockController extends Controller
 {
+  use PenjagaTransaksi;
+
 
  public function index(Request $req)
 {
@@ -63,8 +66,8 @@ class PembelianPermintaanNonStockController extends Controller
 
     $queryOtorisasi = '';
 
-    if ($req->isoto != 2) {
-        $queryOtorisasi = ' AND IsOtorisasi1 = ' . $req->isoto;
+    if (in_array((string) $req->isoto, ['0', '1'], true)) {
+        $queryOtorisasi = ' AND IsOtorisasi1 = ' . (int) $req->isoto;
     }
 
     // =========================
@@ -123,9 +126,16 @@ class PembelianPermintaanNonStockController extends Controller
 }
 
   public function updateOtorisasi(Request $req) {
+    $pr = $this->headerDokumen('DBPPL', $req->nobukti);
+    if (!$pr) {
+      return $this->tolak('PR ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $pr->isotorisasi1 === 1) {
+      return $this->tolak('PR ' . $req->nobukti . ' sudah diotorisasi oleh ' . $pr->otouser1 . '.');
+    }
     $tanggal = now();
     $res = DB::connection('SML')->update(
-        "UPDATE DBPPL SET isOtorisasi1 = 1, maxol = 1, OtoUser1 = :username, TglOto1 = :tanggal WHERE NoBukti = :nobukti",
+        "UPDATE DBPPL SET isOtorisasi1 = 1, maxol = 1, OtoUser1 = :username, TglOto1 = :tanggal WHERE NoBukti = :nobukti AND isnull(IsOtorisasi1, 0) = 0",
         [
             "username" => \Auth::user()->username,
             "tanggal" => $tanggal,
@@ -137,6 +147,19 @@ class PembelianPermintaanNonStockController extends Controller
     return $res;
 }
   public function updateBatalOtorisasi(Request $req) {
+    $pr = $this->headerDokumen('DBPPL', $req->nobukti);
+    if (!$pr) {
+      return $this->tolak('PR ' . $req->nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $pr->isotorisasi1 !== 1) {
+      return $this->tolak('PR ' . $req->nobukti . ' belum diotorisasi.');
+    }
+    // PR yang sudah dibuat PO tidak boleh dibatalkan: sesudah batal otorisasi itemnya bisa
+    // diedit/dihapus, padahal DBPODET.NoPPL/UrutPPL masih menunjuk item itu.
+    $po = $this->dipakaiOleh('DBPODET', 'NoPPL', $req->nobukti);
+    if ($po) {
+      return $this->tolak('PR ' . $req->nobukti . ' sudah dibuat PO ' . $po . ', otorisasi tidak bisa dibatalkan.');
+    }
     $res = DB::connection('SML')->update(
         "UPDATE DBPPL SET isOtorisasi1 = 0, maxol = -1, OtoUser1 = '', TglOto1 = NULL WHERE NoBukti = :nobukti",
         [
@@ -255,12 +278,23 @@ class PembelianPermintaanNonStockController extends Controller
         // return 'ttt';
         $xurut=1;
     }
+    // Semua item dihapus di form edit (sp_PPL ikut menghapus header) lalu user menambah item
+    // lagi: JS masih mengirim jmlrecord 1, jadi header dibuat ulang di sini, bukan ditolak.
+    if ($choice == "I" && $jmlrecord != 0 && !$this->headerDokumen('DBPPL', $nobukti)) {
+      $jmlrecord = 0;
+    }
     if ($choice == "I" && $jmlrecord == 0) {
         $check = DB::connection('SML')->select('select * from DBPPL where Nobukti = :nobukti', ['nobukti' => $nobukti]);
         if ($check) {
             return 2;
         }
+    } else {
+      $tolak = $this->cekUbahPR($nobukti, $choice == 'U' ? $req->urut : null);
+      if ($tolak) {
+        return $tolak;
+      }
     }
+    $jmlSebelum = $this->jumlahBaris('DBPPLDET', $nobukti);
     $values = [
         $choice,
         $nobukti,
@@ -282,10 +316,13 @@ class PembelianPermintaanNonStockController extends Controller
         (int) $req->urutso,
         (int) $req->pagen,
         $req->nopocust ?? '',
-        (int) $req->jmlrecord,
+        (int) $jmlrecord,
         (int) $req->pjasa
     ];
     DB::connection('SML')->statement('exec sp_PPL ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?', $values);
+    if ($choice == 'I' && $this->jumlahBaris('DBPPLDET', $nobukti) <= $jmlSebelum) {
+      return $this->tolak('Item gagal disimpan. Silakan coba lagi.');
+    }
       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( $req->choice,'PR',$nobukti,'',$xurut,'DBPPLDET');
     return 1;
   }
@@ -308,6 +345,10 @@ class PembelianPermintaanNonStockController extends Controller
 
 
   public function spDelete (Request $req) {
+    $tolak = $this->cekUbahPR($req->nobukti, $req->urut);
+    if ($tolak) {
+      return $tolak;
+    }
 
     // $listData = $req->listData;
     // foreach ($listData as $d) {
@@ -348,6 +389,26 @@ class PembelianPermintaanNonStockController extends Controller
     //
     // DB::connection('SML')->statement('exec sp_RSPB ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?' ,$values);
     // return 1;
+  }
+
+
+  // PR yang sudah diotorisasi tidak boleh diubah, dan item yang sudah dibuat PO tidak boleh
+  // diedit/dihapus. Mengembalikan jawaban penolakan, atau null kalau boleh.
+  private function cekUbahPR($nobukti, $urut = null) {
+    $pr = $this->headerDokumen('DBPPL', $nobukti);
+    if (!$pr) {
+      return $this->tolak('PR ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    if ((int) $pr->isotorisasi1 === 1) {
+      return $this->tolak('PR ' . $nobukti . ' sudah diotorisasi, tidak bisa diubah.');
+    }
+    if ($urut !== null) {
+      $po = $this->dipakaiOleh('DBPODET', 'NoPPL', $nobukti, 'UrutPPL', $urut);
+      if ($po) {
+        return $this->tolak('Item ini sudah dibuat PO ' . $po . ', tidak bisa diubah atau dihapus.');
+      }
+    }
+    return null;
   }
 
 }

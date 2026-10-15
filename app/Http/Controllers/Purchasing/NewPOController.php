@@ -8,11 +8,14 @@ use App\Models\NewPeriode;
 use Illuminate\Support\Facades\DB;
 use App\Models\vwOUtPOWMS;
 use App\Models\VWtampilbeli;
+use App\Traits\PenjagaTransaksi;
 
 
 
 class NewPOController extends Controller
 {
+  use PenjagaTransaksi;
+
 
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti Purchase Order).
@@ -230,6 +233,10 @@ public function spBeliGudang (Request $req) {
   // }
 
   //=======================
+  $tolak = $this->cekUbahBeliItem($req);
+  if ($tolak) {
+    return $tolak;
+  }
   $values = [
     $req->input('choice'),
     $req->input('reqNoBukti'),
@@ -338,6 +345,10 @@ public function addDBBeli (Request $req) {
         if ($check) {
           return 2;
         }
+        $tolak = $this->cekTambahBeli($date, $noPO, $data);
+        if ($tolak) {
+          return $tolak;
+        }
         // delete	TempOutstandingPO where IDUser=@IDUser
         DB::connection('SML')->statement('delete	TempOutstandingPO where IDUser = :idUser',['idUser' => $username ]);
         foreach ($data as $d) {
@@ -387,5 +398,103 @@ public function addDBBeli (Request $req) {
           return $tempCetak1;
       }
 
+  // ---- Pengaman penerimaan (dipakai juga NewPOJasaController & NewPOBeliAccController) ----
 
+  // Nomor dokumen lanjutan yang sudah memakai penerimaan/pembelian (LPB) ini, atau null:
+  // invoice pembelian, perintah retur beli, retur beli, dan pelunasan hutang (DPH).
+  public function dipakaiBeli($nobukti) {
+    $cek = [
+      ['DBInvoiceDET', 'NoBeli'], ['DBPRRBELIDET', 'NOPBL'], ['DBRBELIDET', 'NOPBL'],
+      ['DBDPHDET', 'NOFAKTUR'], ['DBDPHDET', 'NoInvoice'],
+    ];
+    foreach ($cek as [$tabel, $kolom]) {
+      $pakai = $this->dipakaiOleh($tabel, $kolom, $nobukti);
+      if ($pakai) {
+        return $pakai;
+      }
+    }
+    return null;
+  }
+
+  // Penerimaan yang sudah diotorisasi (menu Pembelian) atau sudah dipakai dokumen lanjutan tidak
+  // boleh diubah; qty terima hasil edit/tambah tidak boleh melebihi sisa PO. Choice 'F' (faktur
+  // & keterangan) tetap boleh. Mengembalikan jawaban penolakan, atau null kalau boleh.
+  public function cekUbahBeliItem(Request $req) {
+    $choice = $req->input('choice');
+    if (!in_array($choice, ['I', 'U', 'D'], true)) {
+      return null;
+    }
+    $nobukti = $req->input('reqNoBukti');
+    $beli = $this->headerDokumen('DBBELI', $nobukti);
+    if (!$beli && $choice != 'I') {
+      return $this->tolak('Penerimaan ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+    }
+    // Header tidak ada + choice I: semua item sudah dihapus di form edit (sp_BeliGudang ikut
+    // menghapus header) lalu user menambah item lagi - SP membuat header baru, jadi boleh.
+    if ($beli && (int) $beli->isotorisasi1 === 1) {
+      return $this->tolak('Penerimaan ' . $nobukti . ' sudah diotorisasi di menu Pembelian, tidak bisa diubah.');
+    }
+    $pakai = $beli ? $this->dipakaiBeli($nobukti) : null;
+    if ($pakai) {
+      return $this->tolak('Penerimaan ' . $nobukti . ' sudah dipakai di ' . $pakai . ', tidak bisa diubah.');
+    }
+    if ($choice != 'D') {
+      $qty = (float) str_replace(',', '', (string) $req->input('reqQtyTerima'));
+      // Qty reject tidak dihitung diterima (sama dengan rumus sisa), jadi yang dibandingkan qty bersih
+      $qtyBersih = $qty - (float) str_replace(',', '', (string) $req->input('reqQtyReject'));
+      $sisa = $this->sisaPO($req->input('reqNoPO'), $req->input('reqUrutPO'), $nobukti, $choice == 'U' ? $req->input('reqUrut') : 0);
+      if ($sisa === null) {
+        return $this->tolak('Item PO ' . $req->input('reqNoPO') . ' tidak ditemukan.');
+      }
+      if ($qty <= 0) {
+        return $this->tolak('Qty terima harus lebih dari 0.');
+      }
+      if ($qtyBersih > $sisa + 0.0001) {
+        return $this->tolak('Qty terima ' . $qtyBersih . ' melebihi sisa PO (' . $sisa . ').');
+      }
+    }
+    return null;
+  }
+
+  // Penerimaan baru dari PO: tanggal harus sah dan di periode kerja aktif (sama dengan cek di
+  // browser), qty terima tiap item tidak boleh melebihi sisa PO saat disimpan - cek di browser
+  // memakai sisa saat form dibuka, jadi dua user yang menerima PO sama bisa melebihi PO.
+  public function cekTambahBeli($tanggal, $noPO, $data) {
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})/', (string) $tanggal, $m) || !checkdate((int) $m[2], (int) $m[3], (int) $m[1])
+        || (int) $m[1] !== (int) $periode->tahun || (int) $m[2] !== (int) $periode->bulan) {
+      return $this->tolak('Tanggal tidak sesuai periode kerja ' . $periode->bulan . '/' . $periode->tahun . '.');
+    }
+    if (!is_array($data) || !count($data)) {
+      return $this->tolak('Tidak ada item dipilih.');
+    }
+    foreach ($data as $d) {
+      $qty = (float) str_replace(',', '', (string) ($d['inputQntTerima'] ?? 0));
+      $sisa = $this->sisaPO($noPO, $d['Urut'] ?? 0);
+      if ($sisa === null) {
+        return $this->tolak('Item PO ' . $noPO . ' urut ' . ($d['Urut'] ?? '') . ' tidak ditemukan.');
+      }
+      if ($qty <= 0) {
+        return $this->tolak('Qty terima item yang dicentang harus lebih dari 0.');
+      }
+      if ($qty > $sisa + 0.0001) {
+        return $this->tolak('Qty terima ' . ($d['KODEBRG'] ?? $d['KodeBrg'] ?? '') . ' (' . $qty . ') melebihi sisa PO saat ini (' . $sisa . '), mungkin sudah diterima user lain. Tutup form lalu buka lagi.');
+      }
+    }
+    return null;
+  }
+
+  // Sisa qty PO per item, rumus sama dengan sp_RefreshTempOutstandingPOweb: Qnt + Tolerate -
+  // QntBatal - (QntTerima - QntReject) semua penerimaan, tidak termasuk baris penerimaan
+  // $kecualiBukti/$kecualiUrut (baris yang sedang diedit). Null kalau item PO tidak ada.
+  public function sisaPO($noPO, $urutPO, $kecualiBukti = '', $kecualiUrut = 0) {
+    $r = DB::connection('SML')->selectOne("
+      select B.Qnt + isnull(B.Tolerate, 0) - isnull(B.QntBatal, 0)
+             - isnull((select sum(D.QntTerima - isnull(D.QntReject, 0)) from DBBELIDET D
+                       where D.NoPO = B.NOBUKTI and D.UrutPO = B.URUT
+                         and not (D.NOBUKTI = cast(? as varchar(50)) and D.URUT = ?)), 0) as Sisa
+      from DBPODET B where B.NOBUKTI = cast(? as varchar(50)) and B.URUT = ?",
+      [(string) $kecualiBukti, (int) $kecualiUrut, (string) $noPO, (int) $urutPO]);
+    return $r ? (float) $r->Sisa : null;
+  }
 }

@@ -5,6 +5,10 @@
 @endsection
 
 @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /invoicereturbeli itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
   /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
      #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
@@ -2321,6 +2325,10 @@ function submitAddEdit () {
       DiscP3
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       console.log('resspadd', res)
       if (res == 1) {
         $('.showhideitem').hide();
@@ -2382,6 +2390,10 @@ function buttonAddDeleteItem (i) {
             nolpb: 0
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             if (res == 1) {
               $('.showhideitem').hide();
               loadAll()
@@ -2548,6 +2560,10 @@ function submitAddAdd () {
 
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
 
 
       console.log('resspadd', res)
@@ -3588,6 +3604,11 @@ alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
           pket :value
         },
         success: function (res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            loadAll()
+            return
+          }
           if (res > 0) {
             alertify.success('Berhasil batal otorisasi');
             loadAll();
@@ -3650,6 +3671,11 @@ function buttonOtorisasi (nobukti) {
           nobukti
         },
         success: function(res) {
+          if (res && res.pesan) {
+            alertify.warning(res.pesan)
+            loadAll()
+            return
+          }
           console.log(res)
           if (res > 0) {
             alertify.success('Berhasil update otorisasi')
@@ -3726,6 +3752,10 @@ function onChangeHeader (field, value) {
       nobukti
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       alertify.success(`update ${field} berhasil`)
 
     },error: function (err) {

@@ -349,12 +349,7 @@ class PembelianClosingPRController extends Controller
     $mode    = $req->input('mode', 'item');
     $urut    = $req->input('urut');
 
-    $query = DB::connection('SML')->table('vwOutPPL')->where('Nobukti', $nobukti);
-    if ($mode === 'item') {
-      $query->where('urut', $urut);
-    }
-
-    $rows = $query->get();
+    $rows = collect($this->sisaPR($nobukti, $mode === 'item' ? $urut : null));
     $jml = $rows->count();
     $rowsSisa = $rows->filter(function ($r) { return (float) $r->SisaPPL > 0; });
     $jmlSisa = $rowsSisa->count();
@@ -393,16 +388,12 @@ class PembelianClosingPRController extends Controller
             ], 422);
         }
 
-        $data = DB::connection('SML')
-            ->table('vwOutPPL')
-            ->where('Nobukti', $nobukti)
-            ->where('urut', $urut)
-            ->first();
+        $data = $this->sisaPR($nobukti, $urut)[0] ?? null;
 
         if (!$data) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data tidak ditemukan di vwOutPPL.'
+                'message' => 'Data PR tidak ditemukan, mungkin sudah dihapus.'
             ], 422);
         }
 
@@ -419,7 +410,7 @@ class PembelianClosingPRController extends Controller
                 ->where('Nobukti', $data->Nobukti)
                 ->where('Urut', $data->urut)
                 ->update([
-                    'Qntbatal'  => $data->SisaPPL,
+                    'Qntbatal'  => (float) $data->QntBatal + (float) $data->SisaPPL,
                     'KetBatal'  => $reason,
                     'userbatal' => $user,
                     'Tglbatal'  => $tanggal,
@@ -436,15 +427,12 @@ class PembelianClosingPRController extends Controller
             ], 500);
         }
     } else {
-        $dataList = DB::connection('SML')
-            ->table('vwOutPPL')
-            ->where('Nobukti', $nobukti)
-            ->get();
+        $dataList = collect($this->sisaPR($nobukti));
 
         if ($dataList->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data tidak ditemukan di vwOutPPL.'
+                'message' => 'Data PR tidak ditemukan, mungkin sudah dihapus.'
             ], 422);
         }
 
@@ -466,7 +454,7 @@ class PembelianClosingPRController extends Controller
                     ->where('Nobukti', $data->Nobukti)
                     ->where('Urut', $data->urut)
                     ->update([
-                        'Qntbatal'  => $data->SisaPPL,
+                        'Qntbatal'  => (float) $data->QntBatal + (float) $data->SisaPPL,
                         'KetBatal'  => $reason,
                         'userbatal' => $user,
                         'Tglbatal'  => $tanggal,
@@ -541,4 +529,27 @@ class PembelianClosingPRController extends Controller
     }
   }
 
+  // Sisa PR per item dihitung langsung dari DBPPLDET + total DBPODET. vwOutPPL mengelompokkan
+  // DBPODET sampai IsClose/Isbatal/Tolerate, sehingga item PR yang dipakai beberapa baris PO
+  // dengan status berbeda muncul lebih dari sekali dengan sisa parsial (34 item PR/PRA di data
+  // Okt 2026) - lock dulu bisa mengisi Qty Batal dari baris yang salah. Rumus SisaPPL sama
+  // dengan vwOutPPL, dan item yang boleh diclose tetap hanya yang ada di vwOutPPL (PR sudah
+  // otorisasi, tidak batal, masih bersisa, sesuai batas tanggal view).
+  private function sisaPR($nobukti, $urut = null) {
+    $sql = "select B.Nobukti, B.Urut as urut, isnull(B.Qntbatal, 0) as QntBatal,
+              (B.Qnt - isnull(B.Qntbatal, 0)) - (isnull(S.Qnt, 0) - isnull(S.QntBatal, 0)) as SisaPPL
+            from DBPPLDET B
+            left outer join (
+              select NoPPL, UrutPPL, sum(Qnt) Qnt, sum(isnull(QntBatal, 0)) QntBatal
+              from DBPODET where NoPPL = cast(? as varchar(50)) group by NoPPL, UrutPPL
+            ) S on S.NoPPL = B.Nobukti and S.UrutPPL = B.Urut
+            where B.Nobukti = cast(? as varchar(50))
+              and B.Urut in (select V.urut from vwOutPPL V where V.Nobukti = cast(? as varchar(50)))";
+    $bind = [(string) $nobukti, (string) $nobukti, (string) $nobukti];
+    if ($urut !== null) {
+      $sql .= " and B.Urut = ?";
+      $bind[] = (int) $urut;
+    }
+    return DB::connection('SML')->select($sql . " order by B.Urut", $bind);
+  }
 }

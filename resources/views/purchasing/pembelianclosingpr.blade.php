@@ -2,6 +2,10 @@
 @section('page-title', 'Pembelian Closing PR')
 
 @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /pembelianclosingpr itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
   {{-- Header tabel interaktif (drag kolom + roda gigi + bar kolom tersembunyi), disamakan
      dengan resources/views/purchasing/purchaseOrder.blade.php. Aturannya di-scope ke
      #tabel/#tabel2/#rtBar - id tabel di halaman ini sudah cocok apa adanya. --}}

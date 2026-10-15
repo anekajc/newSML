@@ -5,6 +5,10 @@
 @endsection
 {{-- tampilan search bar 1 --}}
   @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /perintahreturbeli itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
   /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
      #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
@@ -2558,6 +2562,11 @@ function buttonOtorisasi (nobukti) {
 
       },
       success: function(res) {
+        if (res && res.pesan) {
+          alertify.warning(res.pesan)
+          loadAll()
+          return
+        }
         alertify.success('Berhasil update otorisasi')
         loadAll()
 
@@ -2602,6 +2611,11 @@ let _token = $("#_token").val();
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              loadAll()
+              return
+            }
             alertify.success('Berhasil batal otorisasi')
             loadAll()
 
@@ -2647,6 +2661,10 @@ function onChangeCatatan () {
       nobukti
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       alertify.success('update Keterangan berhasil')
     },
     error: function (err) {
@@ -2819,6 +2837,13 @@ function onChangeHeader (field, value) {
       nobukti
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
+      if (res && res.abaikan) {
+        return
+      }
       alertify.success(`update ${field} berhasil`)
 
     },error: function (err) {
@@ -2957,6 +2982,10 @@ function submitAddAdd () {
 
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       
       if (res == 1) {
 
@@ -3117,6 +3146,10 @@ function submitAddEdit () {
 
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
       console.log('resspsoaddedit', res)
       loadAll()
 
@@ -5844,6 +5877,10 @@ function buttonAddDeleteItem (i) {
 
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             console.log('resspsoadd', res)
             loadAll()
 

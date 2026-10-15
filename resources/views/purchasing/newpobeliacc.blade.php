@@ -5,6 +5,10 @@
   @endsection
 
     @section('css')
+{{-- js/canvas/functions.js (dimuat layout) mencari plugin di path relatif "js/" - dari URL
+     /newpobeliacc itu jadi 404 (plugins.easing.js). scwJsPath adalah variabel resmi template
+     Canvas untuk menunjuk folder plugin-nya; didefinisikan di sini supaya layout tidak diubah. --}}
+<script>var scwJsPath = "{!! URL::asset('js/canvas') !!}";</script>
 <style>
   /* Form Add/Edit/Detail/Otorisasi dibungkus div#formBsGrid supaya input memakai gaya
      #formBsGrid di public/css/newmaster.css (tinggi 38px, sudut 8px, border halus, abu-abu saat
@@ -2045,6 +2049,11 @@ function detailPembelian1(index) {
               otorisasi
             },
             success: function(res) {
+              if (res && res.pesan) {
+                alertify.warning(res.pesan)
+                loadAll()
+                return
+              }
               if (res > 0) {
                 console.log(nobukti, otorisasi)
                 loadAll()
@@ -2091,6 +2100,11 @@ function detailPembelian1(index) {
                   pket: value
                 },
                 success: function(res) {
+                  if (res && res.pesan) {
+                    alertify.warning(res.pesan)
+                    loadAll()
+                    return
+                  }
                   if (res > 0) {
                     console.log(nobukti, otorisasi)
                     loadAll()
@@ -2251,6 +2265,11 @@ function detailPembelian1(index) {
                 otorisasi
               },
               success: function(res) {
+                if (res && res.pesan) {
+                  alertify.warning(res.pesan)
+                  loadAll()
+                  return
+                }
                 if (res > 0) {
                   loadAll()
 
@@ -2773,6 +2792,10 @@ function formatAngkaX (angka) {
                   reqEd,
                 },
                 success: function(res) {
+                  if (res && res.pesan) {
+                    alertify.warning(res.pesan)
+                    return
+                  }
                   // console.log(res , "RESPOND");
                   console.log(res)
                   console.log("del successsssssssssssssssssssss")
@@ -2878,6 +2901,10 @@ function formatAngkaX (angka) {
             reqEd,
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             // console.log(res , "RESPOND");
             console.log(res)
             console.log("successsssssssssssssssssssss")
@@ -3042,6 +3069,10 @@ function formatAngkaX (angka) {
             reqHarga,
           },
           success: function(res) {
+            if (res && res.pesan) {
+              alertify.warning(res.pesan)
+              return
+            }
             // console.log(res , "RESPOND");
             console.log(res)
             console.log("successsssssssssssssssssssssx")
@@ -3155,6 +3186,10 @@ function formatAngkaX (angka) {
                 reqHarga
               },
               success: function(res) {
+                if (res && res.pesan) {
+                  alertify.warning(res.pesan)
+                  return
+                }
                 // console.log(res , "RESPOND");
                 console.log(res)
                 console.log("successsssssssssssssssssssss")
@@ -3184,6 +3219,10 @@ function onChangeHeader (field, value) {
       nobukti
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        return
+      }
        console.log('CH');
       console.log(value);
       alertify.success(`update ${field} berhasil`)
@@ -4335,6 +4374,11 @@ if (pcekglobal) {
                     inputTanggal: inputTanggal
                   },
                   success: function (res) {
+                    if (res && res.pesan) {
+                      alertify.warning(res.pesan)
+                      loadAll()
+                      return
+                    }
                     console.log(res , "RESPOND");
                     if (res == 1) {
 

@@ -9,6 +9,7 @@ use App\Models\NewAksesMenu;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use App\Traits\PenjagaTransaksi;
 use App\Models\vwOUtPOWMS;
 use App\Models\VWtampilbeli;
 use App\Models\vwBrowsOutBeli;
@@ -17,6 +18,8 @@ use App\Models\NEWDBBELI;
 
 class InvoicePembelianController extends Controller
 {
+  use PenjagaTransaksi;
+
 
   // Rentang tanggal default = satu bulan penuh periode kerja user (sama seperti NewPOController).
   private function periodeRange ($periode) {
@@ -206,7 +209,15 @@ order by A.NOBUKTI
       }
 
 
-      $update = DB::connection('SML')->update("update dbinvoice set IsOtorisasi1 = :otorisasi , OtoUser1 = :username , TglOto1 = getDate() , MaxOL = 1 where nobukti = :nobukti", ['otorisasi' => $otorisasi, 'username' => $username,  'nobukti' => $nobukti ] );
+      $inv = $this->headerDokumen('DBINVOICE', $nobukti);
+      if (!$inv) {
+        return $this->tolak('Invoice ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+      }
+      // Syarat belum oto di WHERE: dua user bersamaan tidak saling menimpa user/tanggal otorisasi
+      $update = DB::connection('SML')->update("update dbinvoice set IsOtorisasi1 = :otorisasi , OtoUser1 = :username , TglOto1 = getDate() , MaxOL = 1 where nobukti = :nobukti and isnull(IsOtorisasi1, 0) = 0", ['otorisasi' => $otorisasi, 'username' => $username,  'nobukti' => $nobukti ] );
+      if (!$update) {
+        return $this->tolak('Invoice ' . $nobukti . ' sudah diotorisasi oleh ' . $inv->otouser1 . '.');
+      }
       return $update;
 
     }
@@ -214,6 +225,17 @@ order by A.NOBUKTI
 
     public function spUnOtorisasi1 (Request $req) {
         $nobukti =  $req->nobukti;
+        $inv = $this->headerDokumen('DBINVOICE', $nobukti);
+        if (!$inv) {
+          return $this->tolak('Invoice ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+        }
+        if ((int) $inv->isotorisasi1 !== 1) {
+          return $this->tolak('Invoice ' . $nobukti . ' belum diotorisasi.');
+        }
+        $bayar = $this->dibayarInvoice($nobukti);
+        if ($bayar) {
+          return $this->tolak('Invoice ' . $nobukti . ' sudah dibayar di ' . $bayar . ', otorisasi tidak bisa dibatalkan.');
+        }
 
         $update = DB::connection('SML')->update("update dbinvoice set IsOtorisasi1 = 0 , OtoUser1 = '' , TglOto1 = NULL, MaxOL = -1 where nobukti = :nobukti", [  'nobukti' => $nobukti ] );
 
@@ -228,6 +250,17 @@ order by A.NOBUKTI
     public function deleteinvoice (Request $req) {
       
         $nobukti =  $req->nobukti;
+        $inv = $this->headerDokumen('DBINVOICE', $nobukti);
+        if (!$inv) {
+          return $this->tolak('Invoice ' . $nobukti . ' tidak ditemukan, mungkin sudah dihapus.');
+        }
+        if ((int) $inv->isotorisasi1 === 1) {
+          return $this->tolak('Invoice ' . $nobukti . ' sudah diotorisasi, tidak bisa dihapus.');
+        }
+        $bayar = $this->dibayarInvoice($nobukti);
+        if ($bayar) {
+          return $this->tolak('Invoice ' . $nobukti . ' sudah dibayar di ' . $bayar . ', tidak bisa dihapus.');
+        }
        
         $update = DB::connection('SML')->update("
         
@@ -258,6 +291,12 @@ order by A.NOBUKTI
           $nopajak = $req->input('nopajak');
           $nobuktipotong=  $req->input('nobuktipotong');
           $noinvoice = $req->input('noinvoice');
+          // Tanggal setengah diketik (mis. tahun 0202) ditolak SQL Server dengan error out-of-range
+          foreach (['Tgl faktur pajak' => $tglfpajak, 'Tgl bukti potong' => $tglbpotong, 'Tgl invoice' => $tglinvoice] as $label => $tgl) {
+            if ($tgl !== null && (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string) $tgl, $m) || (int) $m[1] < 1900 || !checkdate((int) $m[2], (int) $m[3], (int) $m[1]))) {
+              return $this->tolak($label . ' tidak valid.');
+            }
+          }
 
           // Tanggal transaksi (kolom Tanggal) tidak boleh diubah dari modal kelengkapan
           // dokumen, dan hanya dokumen yang belum diotorisasi yang boleh diedit.
@@ -336,7 +375,45 @@ order by A.Tanggal, A.NoBukti" ,["nobukti"=>  $req->input('NoBukti')] );
 public function spBeliGudang (Request $req) {
 $username = \Auth::user()->username;
 $tempData = $req->input('tempData');
+if (!is_array($tempData) || !count($tempData)) {
+  return $this->tolak('Tidak ada LPB dipilih.');
+}
+$nobuktiInv = $req->input('reqNobukti');
+$inv = $this->headerDokumen('DBINVOICE', $nobuktiInv);
+if ($inv && (int) $inv->isotorisasi1 === 1) {
+  return $this->tolak('Invoice ' . $nobuktiInv . ' sudah diotorisasi, tidak bisa diubah.');
+}
+// LPB yang sudah masuk invoice lain (atau invoice ini) tidak boleh di-invoice lagi
 foreach ($tempData as $d) {
+  $sudah = $this->dipakaiOleh('DBInvoiceDET', 'NoBeli', $d['NoBukti'] ?? '');
+  if ($sudah) {
+    return $this->tolak('LPB ' . ($d['NoBukti'] ?? '') . ' sudah masuk invoice ' . $sudah . '.');
+  }
+}
+// Semua LPB disimpan dalam satu transaksi. SP_INVB menomori URUT detail mulai 1 di SETIAP
+// panggilan (ROW_NUMBER tanpa offset), sehingga LPB kedua dalam satu invoice melanggar
+// PK_DBInvoiceDET (NOBUKTI, URUT) - dulu error 500 dengan LPB pertama sudah terlanjur tersimpan.
+// LPB pertama tetap lewat SP_INVB (membuat header), LPB berikutnya disisipkan dengan URUT
+// lanjutan memakai kolom yang sama persis dengan SP_INVB.
+DB::connection('SML')->beginTransaction();
+try {
+foreach ($tempData as $d) {
+  if ($this->jumlahBaris('DBInvoiceDET', $nobuktiInv) > 0) {
+    DB::connection('SML')->insert("
+      insert into DBInvoiceDET (NOBUKTI, URUT, NoBeli, KODEBRG, KodeGdg,
+        PPN, KURS, DISC, QNT, NOSAT, SATUAN, SAT_1, SAT_2, ISI,
+        HARGA, DISCP, DISCTOT, BYANGKUT, NoPO, UrutPO,
+        QntTerima, Qnt1Terima, Qnt2Terima, UrutBeli,
+        KetReject, DiscP2, DiscP3, DiscP4, DiscP5, NoSPJ, NamaBrg, NILAIPPN)
+      select :nobukti, (select max(URUT) from DBInvoiceDET where NOBUKTI = :nobukti2) + ROW_NUMBER() over (order by A.URUT),
+        A.NOBUKTI, A.KODEBRG, A.KodeGdg, A.PPN, A.KURS, A.DISC, A.QntTerima, A.NOSAT, A.SATUAN, A.Sat_1, A.Sat_2,
+        A.ISI, A.HARGA, A.DISCP, A.DISCTOT, A.BYANGKUT, A.NoPO, A.UrutPO, A.QntTerima, A.Qnt1Terima, A.Qnt2Terima, A.URUT,
+        A.KetReject, A.DiscP2, A.DiscP3, A.DiscP4, A.DiscP5, '', A.NamaBrg, A.NilaiPPN
+      from DBBELIDET A
+      where A.NoPO = :nopo and A.NOBUKTI = :nolpb
+    ", ['nobukti' => $nobuktiInv, 'nobukti2' => $nobuktiInv, 'nopo' => $req->input('reqNopo'), 'nolpb' => $d['NoBukti']]);
+    continue;
+  }
       $values = [
     $req->input('reqNobukti'), //1
     $req->input('reqNourut'),  //1
@@ -358,9 +435,17 @@ foreach ($tempData as $d) {
 
 
     }
-  
-  
-   1;
+  if (!$this->headerDokumen('DBINVOICE', $nobuktiInv) || $this->jumlahBaris('DBInvoiceDET', $nobuktiInv) == 0) {
+    DB::connection('SML')->rollBack();
+    return $this->tolak('Invoice gagal disimpan. Silakan coba lagi.');
+  }
+  DB::connection('SML')->commit();
+} catch (\Throwable $e) {
+  DB::connection('SML')->rollBack();
+  return $this->tolak('Invoice gagal disimpan: ' . $e->getMessage());
+}
+
+   return 1;
 
 
 }
@@ -423,7 +508,14 @@ public function addDBBeli (Request $req) {
 
 }
 
-
-
-
+  // Nomor pelunasan hutang (DPH) yang sudah membayar invoice ini, atau null.
+  private function dibayarInvoice($nobukti) {
+    foreach (['NoInvoice', 'NoinvoiceBeli', 'NOFAKTUR'] as $kolom) {
+      $dph = $this->dipakaiOleh('DBDPHDET', $kolom, $nobukti);
+      if ($dph) {
+        return $dph;
+      }
+    }
+    return null;
+  }
 }
