@@ -2081,7 +2081,7 @@ function detailPembelian1(index) {
           console.log(nobukti, otorisasi)
 
           // Keterangan batal otorisasi wajib diisi untuk semua jenis (dulu hanya di menu Acc Tunai newSML).
-          alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+          alertify.prompt("Batal Otorisasi", "Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
             function(evt, value) {
               if (value.trim() == '') {
                 alertify.warning('Keterangan harus diisi.');

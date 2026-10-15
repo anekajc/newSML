@@ -607,7 +607,7 @@
       }).join('') + '</tr>';
     });
 
-    if (gsum_isgrandtotal === 1) html += totalRow('GRAND TOTAL', totals, cols, totalKeys, 'grand-total');
+    if (gsum_isgrandtotal === 0) html += totalRow('GRAND TOTAL', totals, cols, totalKeys, 'grand-total');
 
     tbody.innerHTML = html;
     document.getElementById('footerLabel').textContent = 'Menampilkan ' + rows.length + ' baris';
