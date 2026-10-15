@@ -1384,7 +1384,7 @@
                   <th style="padding: 4px 12px;" scope="col">Diskon</th>
                   <th style="padding: 4px 12px;" scope="col">Sub Total</th>
                   <th style="padding: 4px 12px;" scope="col">No. PR</th>
-                  <th style="padding: 4px 12px;" scope="col">Actions</th>
+                  <th style="padding: 4px 12px;" scope="col" id="th_add_actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="tabel_data_add" class="text-left" >
@@ -7455,6 +7455,8 @@ function buttonDetailKerja (NOBUKTI) {
 function refreshDataTableAdd (NOBUKTI) {
 
   console.log('refreshDataTableAdd' , NOBUKTI)
+  // Mode detail hanya melihat - kolom Actions disembunyikan (header + sel).
+  document.getElementById("th_add_actions").style.display = tipeform == 'detail' ? 'none' : ''
   if (!NOBUKTI) {
 
     // if(!dataTableAdd.length) {
@@ -7504,7 +7506,7 @@ function refreshDataTableAdd (NOBUKTI) {
               <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
               <td>${item.NoPPL ? item.NoPPL : ''}</td>
-              <td class="text-center">
+              <td class="text-center" style="${tipeform == 'detail' ? 'display:none' : ''}">
                 ${tipeform == 'edit' ?
                 `<button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
                 <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})"><i class="bi bi-trash"></i></button>`
