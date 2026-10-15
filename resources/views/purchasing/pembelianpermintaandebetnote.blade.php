@@ -2015,7 +2015,7 @@ function buttonBatalOtorisasi(nobukti) {
     return;
   }
 
-  alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+  alertify.prompt("Batal Otorisasi", "Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
     function (evt, value) {
       if (!String(value || '').trim()) {
         alertify.warning('Keterangan harus diisi.');

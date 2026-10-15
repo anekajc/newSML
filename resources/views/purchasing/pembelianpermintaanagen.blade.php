@@ -2001,7 +2001,7 @@ function buttonBatalOtorisasi (nobukti, isOtorisasi) {
 
 
 
-  alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+  alertify.prompt("Batal Otorisasi", "Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
     function (evt, value) {
       let xpket = value;
 

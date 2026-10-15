@@ -15,10 +15,17 @@
      Filter: Bulan/Tahun tetap di toolbar; Divisi dipindah ke modal "Filter Laporan" (satu-satunya
      field di sana, wajib diisi, tidak dihitung di badge) — dropdown polos (bukan entity-picker
      modalAccountingJurnal lagi), diisi dari endpoint loadDivisi controller ini sendiri.
-     Tidak ada kolom No Bukti → tanpa panel voucher. Tidak ada KPI/chart di halaman ini.
+     Tidak ada kolom No Bukti → tanpa panel voucher.
      Alur: triggerSp (ambil totalA/B/C dari dbLRHPP, endpoint dipakai bareng dengan labarugi
      bulanan) → sp_ReportLabaRugiTH (baris per bulan + % memakai total itu).
-     Data hanya dimuat setelah klik "Tampilkan". --}}
+     Data hanya dimuat setelah klik "Tampilkan".
+     Di atas tabel: 2 chart dibangun sisi-klien dari lastRows untuk Januari..bulan terpilih —
+     kiri bar Pendapatan (Kelompok=3) vs Beban (Kelompok=4) per bulan (rumus sama dengan
+     labarugi bulanan: dijumlah dulu, baru abs); kanan line Laba / Rugi per bulan dari baris
+     Persen='D' (tanda dipertahankan, rugi tampil di bawah nol). --}}
+
+<!-- Chart.js v4 (di-bundle lokal: public/plugins/chart.js/chart.umd.min.js) -->
+<script src="{!! URL::asset('plugins/chart.js/chart.umd.min.js') !!}?v={{ @filemtime(base_path('public/plugins/chart.js/chart.umd.min.js')) ?: '1' }}"></script>
 
 <style>
   /* tinggi awal area tabel supaya dropdown tidak terpotong container pendek */
@@ -33,6 +40,21 @@
      biarkan scroll horizontal alami di dalam .table-wrap (sudah overflow:auto). */
   .tb-report .tb thead th.th-group,
   .tb-report .tb thead th.rt-th { white-space: nowrap; }
+
+  /* ── Chart section ── */
+  .tb-report .chart-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;
+  }
+  @media (max-width: 900px) { .tb-report .chart-grid { grid-template-columns: 1fr; } }
+  .tb-report .chart-box {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .tb-report .chart-box h3 {
+    font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 12px;
+  }
+  .tb-report .chart-holder { position: relative; height: 260px; }
+  .tb-report .chart-holder canvas { max-height: 260px; }
 </style>
 
 @section('header2')
@@ -73,6 +95,18 @@
             <div class="export-opt" onclick="doExport('Print')"><i class="bi bi-printer-fill text-warning"></i> Cetak Laporan</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- CHARTS (dibangun sisi-klien dari lastRows, Januari..bulan terpilih) -->
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h3>Pendapatan vs Beban</h3>
+        <div class="chart-holder"><canvas id="lrtChart1"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3>Laba / Rugi per Bulan</h3>
+        <div class="chart-holder"><canvas id="lrtChart2"></canvas></div>
       </div>
     </div>
 
@@ -188,6 +222,7 @@
 
   let g_reportTitle = "";
   let lastRows = [];   // hasil fetch terakhir (dipakai render / search)
+  let chartBulan = defaultBulan;   // jumlah bulan di chart (Januari..N), dikunci saat klik "Tampilkan"
 
   let globalDivisi = "-";  // diisi loadDivisiDropdown() saat page load (selalu wajib diisi)
 
@@ -242,6 +277,9 @@
       bar: '#rtBar',
       onChange: function () { if (lastRows.length) { applyFilters(); } else { render(); } }
     });
+
+    // Chart dipaint kosong sebelum data pertama dimuat.
+    buildCharts([]);
 
     // Sengaja TIDAK memuat data saat halaman dibuka — laporan hanya dimuat setelah
     // pengguna klik tombol "Tampilkan".
@@ -332,6 +370,7 @@
     if (typeof doSetHeader === 'function') { doSetHeader(g_modeReport); }
 
     document.getElementById('footerLabel').innerHTML = loadingHtml('Memuat data...');
+    chartBulan = defaultBulan;
 
     // 1) ambil base total untuk kolom %  2) ambil baris laba rugi tahunan
     triggerSp(defaultBulan, defaultTahun, _divisi);
@@ -347,10 +386,12 @@
         lastRows = Array.isArray(res) ? res : ((res && res.res1) ? res.res1 : []);
         $('#searchBox2').val('');
         render();
+        buildCharts(lastRows);
       },
       error: function () {
         lastRows = [];
         render();
+        buildCharts(lastRows);
       }
     });
   }
@@ -368,6 +409,98 @@
   function esc(v) {
     return String(v == null ? '' : v)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ── CHARTS (dibangun sisi-klien dari lastRows; kolom Persen/Kelompok dari SP) ── */
+  let _charts = {};
+
+  function fmtShort(v) {
+    v = Math.round(num(v)); const a = Math.abs(v);
+    if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + ' M';
+    if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + ' jt';
+    if (a >= 1e3) return (v / 1e3).toFixed(0) + ' rb';
+    return String(v);
+  }
+  function _destroyChart(id) { if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; } }
+
+  /* ── Chart 1 (kiri): Pendapatan (Kelompok 3) vs Beban (Kelompok 4), dijumlah per bulan
+     Januari..chartBulan (tanpa kolom Total).
+     Chart 2 (kanan): Laba / Rugi per bulan dari baris Persen='D', tanda dipertahankan. ── */
+  function buildCharts(rows) {
+    if (typeof Chart === 'undefined') return;   // gagal muat Chart.js → lewati (tabel tetap jalan)
+    try {
+      Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+      Chart.defaults.font.size = 12;
+      Chart.defaults.color = '#64748b';
+
+      const months = [];
+      for (let m = 1; m <= chartBulan; m++) { months.push(m); }
+      const labels = months.map(m => NAMA_BULAN[m - 1]);
+
+      // Dijumlah dulu apa adanya, baru tandanya dibuang — supaya total bersih
+      // (mis. beban yang saling menghapus) tidak melar akibat abs per baris.
+      const sumMonth = (kelompok, m) => Math.abs((rows || [])
+        .filter(r => str(pickCI(r, 'Kelompok')) === kelompok)
+        .reduce((acc, r) => acc + currencyNormalizer(pickCI(r, 'bln' + m)), 0));
+
+      _destroyChart('lrt1');
+      _charts.lrt1 = new Chart(document.getElementById('lrtChart1'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Pendapatan', data: months.map(m => sumMonth('3', m)), backgroundColor: '#4F46E5', borderRadius: 6 },
+            { label: 'Beban',      data: months.map(m => sumMonth('4', m)), backgroundColor: '#DB2777', borderRadius: 6 },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: (c) => ' ' + c.dataset.label + ': ' + fmtShort(c.parsed.y) } }
+          },
+          scales: { y: { ticks: { callback: (v) => fmtShort(v) } } }
+        }
+      });
+
+      // Baris LABA / RUGI (Persen='D'). Nilai negatif (rugi) sengaja TIDAK di-abs.
+      const lrRow = (rows || []).find(r => str(pickCI(r, 'Persen')).toUpperCase() === 'D');
+      const labaRugi = months.map(m => lrRow ? currencyNormalizer(pickCI(lrRow, 'bln' + m)) : 0);
+
+      _destroyChart('lrt2');
+      _charts.lrt2 = new Chart(document.getElementById('lrtChart2'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Laba / Rugi',
+            data: labaRugi,
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22,163,74,.12)',
+            fill: true, tension: 0.3,
+            pointRadius: 4, pointHoverRadius: 6,
+            pointBackgroundColor: labaRugi.map(v => v < 0 ? '#dc2626' : '#16a34a')
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (c) => ' ' + (c.parsed.y < 0 ? 'Rugi' : 'Laba') + ': ' + fmtShort(c.parsed.y) } }
+          },
+          scales: {
+            y: {
+              ticks: { callback: (v) => fmtShort(v) },
+              // garis nol ditebalkan supaya bulan rugi (di bawah nol) mudah dibedakan
+              grid: {
+                color: (ctx) => (ctx.tick && ctx.tick.value === 0) ? '#94a3b8' : 'rgba(0,0,0,.06)',
+                lineWidth: (ctx) => (ctx.tick && ctx.tick.value === 0) ? 1.5 : 1
+              }
+            }
+          }
+        }
+      });
+    } catch (e) { console.error('buildCharts', e); }
   }
 
   /* ── HEADER DUA TINGKAT (band per bulan + Total), TANPA drag ──
@@ -452,7 +585,7 @@
       }).join('') + '</tr>';
     });
 
-    if (gsum_isgrandtotal === 1) html += totalRow('GRAND TOTAL', totals, cols, totalKeys, 'grand-total');
+    if (gsum_isgrandtotal === 0) html += totalRow('GRAND TOTAL', totals, cols, totalKeys, 'grand-total');
 
     tbody.innerHTML = html;
     document.getElementById('footerLabel').textContent = 'Menampilkan ' + rows.length + ' baris';
