@@ -1882,8 +1882,6 @@ function submitAddEdit () {
       }
       if (res == 1) {
 
-
-
         // tipeform = 'edit'
         // lockFormAdd()
         $('.showhideitem').hide();
@@ -1892,10 +1890,8 @@ function submitAddEdit () {
         loadAll()
         refreshDataTable(nobukti)
 
-
         alertify.success('Berhasil Edit Invoice')
       }
-
 
     },
     error: function (err) {
