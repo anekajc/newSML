@@ -4,11 +4,11 @@
 namespace App\Http\Controllers\Accounting;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\NewMenu;
-use App\Models\NewAksesMenu;
-use App\Models\DBFLMENU;
-use App\Models\NewPeriode;
-use App\Models\NewUsers;
+use App\Model\NewMenu;
+use App\Model\NewAksesMenu;
+use App\Model\DBFLMENU;
+use App\Model\NewPeriode;
+use App\Model\NewUsers;
 use App\Services\OtorisasiService;
 use Illuminate\Support\Facades\DB;
 
@@ -953,7 +953,9 @@ select Perkiraan,Keterangan from dbPerkiraan where  tipe=1
   }
 
   public function spTempHutPiut (Request $req) {
-    $tanggal = date('Y-m-d H:i:s');
+    // Tanggal baris pelunasan = hari ini, jam 00:00:00 (tanpa jam) - sp_TransaksiKasBankDPH yang
+    // membaca dbTempHutPiut tidak menerima Tanggal ber-jam. Dipakai Bank juga (kassptemphutpiut).
+    $tanggal = date('Y-m-d 00:00:00');
  $data = $req->data;
     $username = \Auth::user()->username;
     if ($req->choice == 'I' ) {
