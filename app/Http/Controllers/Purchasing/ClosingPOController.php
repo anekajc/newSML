@@ -66,7 +66,8 @@ class ClosingPOController extends Controller
           A.Tanggal,
           B.NamaCustSupp,
           B.kodebrg,
-          B.namabrg,
+          -- B.namabrg milik vwMasterPOOut berisi nama alias di PO; yang ditampilkan nama asli DBBARANG
+          ISNULL(E.NamaBrg, B.namabrg) as namabrg,
           B.satuan,
           B.qnt,
           B.qntterima,
@@ -79,6 +80,7 @@ class ClosingPOController extends Controller
           B.Urut
       from dbPO A
       Left Outer Join vwMasterPOOut B on A.NoBukti = B.NoBukti
+      Left Outer Join DBBARANG E on E.KODEBRG = B.kodebrg
       where ISNULL(B.qntbatal, 0) <> 0
     ";
   }
@@ -228,7 +230,11 @@ class ClosingPOController extends Controller
     $orderCol = (string) $req->input('orderCol', '');
     $orderDir = strtolower((string) $req->input('orderDir', 'asc')) === 'desc' ? 'DESC' : 'ASC';
 
-    if (in_array($orderCol, $allowedOrder, true)) {
+    if ($orderCol === 'NamaBrg') {
+      // NamaBrg yang tampil adalah nama asli DBBARANG (lihat select di bawah), bukan
+      // A.NamaBrg milik view yang berisi nama alias PO - sort harus ikut nama asli.
+      $orderBy = 'ISNULL(E.NamaBrg, A.NamaBrg) ' . $orderDir . ', A.NoBukti, A.Urut';
+    } else if (in_array($orderCol, $allowedOrder, true)) {
       $orderBy = 'A.[' . $orderCol . '] ' . $orderDir . ', A.NoBukti, A.Urut';
     } else {
       // Default: data terbaru di atas. A.Urut sengaja tetap ASC - itu nomor urut
@@ -240,7 +246,7 @@ class ClosingPOController extends Controller
     $bind  = ["tglawal" => $tglawal, "tglakhir" => $tglakhir];
     $search = trim((string) $req->input('search', ''));
     if ($search !== '') {
-      $where .= " and (A.NoBukti like :cari1 or A.kodebrg like :cari2 or A.NamaBrg like :cari3 or A.NAMACUSTSUPP like :cari4)";
+      $where .= " and (A.NoBukti like :cari1 or A.kodebrg like :cari2 or ISNULL(E.NamaBrg, A.NamaBrg) like :cari3 or A.NAMACUSTSUPP like :cari4)";
       $like = '%' . $search . '%';
       $bind = array_merge($bind, ["cari1" => $like, "cari2" => $like, "cari3" => $like, "cari4" => $like]);
     }
@@ -249,6 +255,7 @@ class ClosingPOController extends Controller
       SET NOCOUNT ON
       select count(1) as jml
       from vwOutPOBatal A WITH(NOLOCK)
+      Left Outer Join DBBARANG E WITH(NOLOCK) on E.KODEBRG = A.kodebrg
       where $where
     ", $bind);
     $total = count($jml) ? (int) $jml[0]->jml : 0;
@@ -264,11 +271,14 @@ class ClosingPOController extends Controller
       select X.* from (
         select ROW_NUMBER() over (order by $orderBy) as NoBaris,
                A.NoBukti+' '+right('00000000'+cast(A.urut as varchar(8)),8) KeyUrut,
-               A.Nobukti, A.TANGGAL, A.NAMACUSTSUPP, A.kodebrg, A.NamaBrg, A.Satuan,
+               A.Nobukti, A.TANGGAL, A.NAMACUSTSUPP, A.kodebrg,
+               -- A.NamaBrg milik view berisi nama alias di PO; yang ditampilkan nama asli DBBARANG
+               ISNULL(E.NamaBrg, A.NamaBrg) as NamaBrg, A.Satuan,
                A.Qnt, A.qntterima, A.QntBatal, A.urut,
                -- QntSisa bawaan vwOutPOBatal belum mengurangi QntBatal, jadi dihitung ulang
                (ISNULL(A.Qnt, 0) - ISNULL(A.QntBatal, 0) - ISNULL(A.qntterima, 0)) as QntSisa
         from vwOutPOBatal A WITH(NOLOCK)
+        Left Outer Join DBBARANG E WITH(NOLOCK) on E.KODEBRG = A.kodebrg
         where $where
       ) X
       $batasBaris
