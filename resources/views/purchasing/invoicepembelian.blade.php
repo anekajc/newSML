@@ -4598,7 +4598,7 @@ if (pcekglobal) {
         <td>${detail_row.Satuan}</td>
         <td class="text-right">${detail_row.Harga ? formatAngkaX(detail_row.Harga) : '0.00' }</td>
         <td class="text-right">${detail_row.DiscRp1 ? formatAngkaX(detail_row.DiscRp1) : '0.00' }</td>
-        <td class="text-right">${detail_row.NNET ? formatAngkaX(detail_row.NNET) : '0.00' }</td></tr>`
+        <td class="text-right">${detail_row.TotalIDR ? formatAngkaX(detail_row.TotalIDR) : '0.00' }</td></tr>`
 
 
 
@@ -4643,11 +4643,16 @@ if (pcekglobal) {
           $('#detailPembelianJthTempoout').val(ipbTanggalYMD(new Date(detail_row_data[0].TglJatuhTempo)))
         }
 
-        document.getElementById("input_det_discout").value = detail_row_data[0].disc ?? 0
-        document.getElementById("input_det_discrpout").value = detail_row_data[0].DISCRP ?? 0
-        document.getElementById("input_det_dppout").value = detail_row_data[0].TotDPP ?? 0
-        document.getElementById("input_det_ppnout").value = detail_row_data[0].TotPPN ?? 0
-        document.getElementById("input_det_grandtotalout").value = detail_row_data[0].TotNet ?? 0
+        // Header dbBeli milik LPB tidak pernah diisi total (NILAIDPP/NILAIPPN/NILAINET selalu 0) -
+        // nilai sebenarnya ada di baris dbBeliDet, jadi DPP/PPN/Grand Total dijumlah dari detail.
+        let detTotDPP = detail_row_data.reduce((jml, r) => jml + (parseFloat(r.NDPP) || 0), 0)
+        let detTotPPN = detail_row_data.reduce((jml, r) => jml + (parseFloat(r.NPPN) || 0), 0)
+        // input Disc % / DiscRp bertipe number - nilainya tanpa pemisah ribuan
+        document.getElementById("input_det_discout").value = (parseFloat(detail_row_data[0].disc) || 0).toFixed(2)
+        document.getElementById("input_det_discrpout").value = (parseFloat(detail_row_data[0].DISCRP) || 0).toFixed(2)
+        document.getElementById("input_det_dppout").value = formatAngkaX(detTotDPP)
+        document.getElementById("input_det_ppnout").value = formatAngkaX(detTotPPN)
+        document.getElementById("input_det_grandtotalout").value = formatAngkaX(detTotDPP + detTotPPN)
         $('#detailDateout').val(date1)
 
         document.getElementById("detailTableDataout").innerHTML = table_row_detail

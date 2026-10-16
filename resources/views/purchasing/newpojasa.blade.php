@@ -48,6 +48,15 @@
 {{-- Modal pemilih (Perkiraan/Barang/Supplier/Customer/dst.) disamakan persis dengan modal pemilih menu Kas - lihat public/css/picker-kas.css. --}}
 <link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
   <style>
+  /* Tombol browse (kaca pembesar) tetap menempel ke input, tapi sudutnya membulat - disamakan
+     dengan purchaseOrder.blade.php. !important untuk menimpa inline style="border-radius:0". */
+  .btn-chip-biru:has(> .bi-search) {
+    border-radius: 6px !important;
+  }
+  .form-control:has(+ .btn > .bi-search) {
+    border-top-right-radius: 6px !important;
+    border-bottom-right-radius: 6px !important;
+  }
   .btn .bi-plus {
     font-size: 1.5rem;
     line-height: 0;
@@ -642,7 +651,7 @@ td input[type="checkbox"] {
 
       <div class="modal-footer">
         <button type="button" class="btn btn-sm btn-batal-add" data-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-sm btn-chip-biru" onclick="submitAdd()">Submit</button>
+        <button type="button" class="btn btn-sm btn-chip-biru" onclick="submitAdd()">Simpan</button>
       </div>
     </div>
   </div>
@@ -828,7 +837,7 @@ td input[type="checkbox"] {
         <div class="container-fluid p-0 mt-2">
           <div class="row ">
             <div class="col-md-12 text-right">
-            <button type="button" class="btn btn-sm btn-chip-biru" onclick="showPembelianAdd()">Add Item</button>
+            <button type="button" class="btn btn-sm btn-chip-biru" onclick="showPembelianAdd()">Tambah Item</button>
             <button type="button" class="btn btn-sm btn-chip-biru" onclick="saveKetFaktur()">Save Faktur & Ket</button>
         </div>
 
@@ -870,7 +879,7 @@ td input[type="checkbox"] {
       <div id="formPembelianAdd" class="container-fluid showhide mt-3">
           <div class="row mb-3">
             <div class="col-12">
-              <h4>Add Item</h4>
+              <h4>Tambah Item</h4>
             </div>
           </div>
 
@@ -885,8 +894,8 @@ td input[type="checkbox"] {
                     {{-- <select onchange="changeSelectBarang()" id="editPembelianAddSelect" class="form-control form-select"></select> --}}
                     <div class="input-group">
                       <input id="editPembelianAddSelect" type="text" class="form-control text-center" placeholder="Kode Barang" onkeypress="onKeyPressBarang(event)" disabled>
-                      <button type="button" onclick="buttonAddListBarang()" class="btn btn-primary btn-sm rounded-end shadow-sm" style="height:32px;">
-                        <i class="bi bi-plus"></i>
+                      <button type="button" onclick="buttonAddListBarang()" class="btn btn-chip-biru btn-sm" title="Cari" style="height:32px; border-radius:0;">
+                        <i class="bi bi-search"></i>
                       </button>
                     </div>
                   </div>
@@ -965,7 +974,7 @@ td input[type="checkbox"] {
 
               <!-- Tombol -->
               <div class="mt-4 text-right">
-                <button type="button" class="btn btn-sm btn-chip-biru" onclick="submitPembelianAdd()">Add Item</button>
+                <button type="button" class="btn btn-sm btn-chip-biru" onclick="submitPembelianAdd()">Simpan</button>
                 <button type="button" class="btn btn-sm btn-batal-add me-2" onclick="buttonBatalShowHide()">Batal</button>
               </div>
 
@@ -1047,7 +1056,7 @@ td input[type="checkbox"] {
               </div>
               <!-- Tombol -->
                 <div class="mt-4 text-right">
-                  <button type="button" class="btn btn-sm btn-chip-biru" onclick="submitPembelianEdit()">Edit Item</button>
+                  <button type="button" class="btn btn-sm btn-chip-biru" onclick="submitPembelianEdit()">Simpan</button>
                   <button type="button" class="btn btn-sm btn-batal-add" onclick="buttonBatalShowHide()">Batal</button>
                 </div>
               </div>
@@ -1057,12 +1066,12 @@ td input[type="checkbox"] {
       </div>{{-- /#formBsGrid --}}
           <!-- <div class="modal-footer showhide">
             <button type="button" class="btn btn-secondary" data-dismiss="" >Batal</button>
-            <button type="button" class="btn btn-primary" onclick="">Submit</button>
+            <button type="button" class="btn btn-primary" onclick="">Simpan</button>
           </div>
 
           <div class="modal-footer showhide">
             <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button>
-            <button type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button>
+            <button type="button" class="btn btn-primary" onclick="submitAdd()">Simpan</button>
           </div> -->
           <!-- <div class="modal-footer">
             <button type="button" class="btn btn-primary" onclick="saveKetFaktur()">Save1</button>

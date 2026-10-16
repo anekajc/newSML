@@ -3019,10 +3019,14 @@ function refreshDataTableAdd (NOBUKTI = "") {
             // $("#form").modal('toggle')
             buttonCloseForm()
           } else {
-            dataBarang = res
+            // getDetail memakai left join ke dbRBeliDet: dokumen yang header-nya ada tapi belum
+            // punya barang tetap mengembalikan satu baris dengan kolom barang null. Baris itu
+            // hanya dipakai untuk isi header, jangan ditampilkan sebagai barang.
+            let items = res.filter((item) => item.Urut !== null && item.Urut !== undefined)
+            dataBarang = items
 
-            let rowTable = ""
-            res.forEach((item, i) => {
+            let rowTable = items.length ? "" : `<tr><td colspan="9" class="text-center">Belum ada barang</td></tr>`
+            items.forEach((item, i) => {
 
               rowTable += `<tr>
               <td>${item.KodeBrg}</td>
@@ -3032,9 +3036,9 @@ function refreshDataTableAdd (NOBUKTI = "") {
               <td class="text-center">${item.Satuan ? item.Satuan : item.Satuan}</td>
               <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
               
-              <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
+              <td class="text-right">${item.DiscTot ? formatAngka(parseFloat(item.DiscTot).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
-              <td>${item.NoPPL ? item.NoPPL : ''}</td>
+              <td>${item.NoPRB ? item.NoPRB : ''}</td>
               <td class="text-center">
                 <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
                 <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})"><i class="bi bi-trash"></i></button>
@@ -3068,9 +3072,10 @@ function refreshDataTableAdd (NOBUKTI = "") {
 
             document.getElementById("input_add_nobukti").value = res[0].NoBukti
             document.getElementById("input_add_nourut").value = res[0].NoUrut
+            if (res[0].Tanggal) { document.getElementById("input_add_tanggal").value = String(res[0].Tanggal).substr(0, 10) }
 
             // Total = jumlah Subtotal (Total) seluruh item.
-            document.getElementById('input_add_total').value = formatAngka(res.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2));
+            document.getElementById('input_add_total').value = formatAngka(items.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2));
             document.getElementById('input_add_grandtotal').value = formatAngka(parseFloat(res[0].TotalNetto || 0).toFixed(2));
             document.getElementById('input_add_ppnTotal').value = formatAngka(parseFloat(res[0].TotalPPn || 0).toFixed(2));
             document.getElementById('input_add_dpp').value = formatAngka(parseFloat(res[0].TotalDPP || 0).toFixed(2));
@@ -3120,8 +3125,10 @@ function buttonDetail (nobukti) {
         console.log('res' , res)
 
           if(res.length) {
-            let rowTable = ""
-            res.forEach((item, i) => {
+            // Baris tanpa barang (Urut null, hasil left join dbRBeliDet) - lihat refreshDataTableAdd.
+            let items = res.filter((item) => item.Urut !== null && item.Urut !== undefined)
+            let rowTable = items.length ? "" : `<tr><td colspan="8" class="text-center">Belum ada barang</td></tr>`
+            items.forEach((item, i) => {
 
               rowTable += `<tr>
               <td>${item.KodeBrg}</td>
@@ -3131,9 +3138,9 @@ function buttonDetail (nobukti) {
               <td class="text-center">${item.Satuan ? item.Satuan : item.Satuan}</td>
               <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
               
-              <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
+              <td class="text-right">${item.DiscTot ? formatAngka(parseFloat(item.DiscTot).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
-              <td>${item.NoPPL ? item.NoPPL : ''}</td>
+              <td>${item.NoPRB ? item.NoPRB : ''}</td>
 
               </tr>`
             });
@@ -3162,9 +3169,10 @@ function buttonDetail (nobukti) {
 
             document.getElementById("input_detail_nobukti").value = res[0].NoBukti
             document.getElementById("input_detail_nourut").value = res[0].NoUrut
+            if (res[0].Tanggal) { document.getElementById("input_detail_tanggal").value = String(res[0].Tanggal).substr(0, 10) }
 
             // Total = jumlah Subtotal (Total) seluruh item.
-            document.getElementById('input_detail_total').value = formatAngka(res.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
+            document.getElementById('input_detail_total').value = formatAngka(items.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
             document.getElementById('input_detail_grandtotal').value = formatAngka(parseFloat(res[0].TotalNetto || 0).toFixed(2))
             document.getElementById('input_detail_ppnTotal').value = formatAngka(parseFloat(res[0].TotalPPn || 0).toFixed(2))
             document.getElementById('input_detail_dpp').value = formatAngka(parseFloat(res[0].TotalDPP || 0).toFixed(2))
