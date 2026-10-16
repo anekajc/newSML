@@ -3001,8 +3001,11 @@ $(document).ready(function(){
 
 });
 
-function buttonOtorisasi (nobukti) {
-  console.log(nobukti)
+// isoto1 = status otorisasi level 1 dokumen (0/1). Wajib dikirim sebagai isoto1oto, sama seperti
+// purchaseOrder.blade.php: POController@updateOtorisasi memakainya di jalur Direktur - tanpa itu
+// server membalas 3 tanpa mengubah apa pun.
+function buttonOtorisasi (nobukti, isoto1 = 0) {
+  console.log(nobukti, isoto1)
 
   let akses = $("#akses_isotorisasi1").val();
   if (!Number(akses)) {
@@ -3018,13 +3021,21 @@ function buttonOtorisasi (nobukti) {
     async: false,
     data: {
       _token,
-      nobukti
-
+      nobukti,
+      isoto1oto: Number(isoto1) ? 1 : 0
     },
     success: function(res) {
       if (res && res.pesan) {
         alertify.warning(res.pesan)
         loadAll()
+        return
+      }
+      if (res == 2) {
+        alertify.warning("Melebihi plafon")
+        return
+      }
+      if (res == 3) {
+        alertify.warning("Diperlukan otorisasi 1 terlebih dahulu")
         return
       }
       alertify.success('Berhasil update otorisasi')
@@ -6079,12 +6090,19 @@ function renderTabelPO (pakaiCache) {
     render : function (data, type, item) {
       let tombolAksiPO = `<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail('${item.NoBukti}')"><i class="bi bi-info"></i></button>`
       if (Number(item.IsOtorisasi1)) {
+        // Level 1 sudah terisi tapi level otorisasinya belum lengkap (mis. PO > 200 jt yang
+        // diotorisasi Dept. Head) - tombol Otorisasi tetap tampil supaya Direktur bisa mengisi
+        // level 2. Edit tetap tidak ditampilkan.
+        if (Number(item.NeedOtorisasi)) {
+          tombolAksiPO += `
+          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi Level 2" onclick="buttonOtorisasi('${item.NoBukti}', 1)"><i class="bi bi-key"></i></button>`
+        }
         tombolAksiPO += `
           <button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
           <button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="submitPrintcopy('${item.NoBukti}')"><i class="bi bi-printer"></i></button>`
       } else {
         tombolAksiPO += `
-          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
+          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}', 0)"><i class="bi bi-key"></i></button>
           <button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit('${item.NoBukti}')"><i class="bi bi-pen"></i></button>`
       }
       return tombolAksiPO

@@ -1457,6 +1457,7 @@ function formatAngka (angkaString) {
       $("#editPembelianInputAddKode").val("");
       $("#editPembelianInputAddNamaBarang").val("");
       $("#editPembelianInputAddQtyPO").val("0.00");
+      $("#editPembelianInputAddQtyOS").val("0.00");
       $("#editPembelianInputAddSatuan").val("");
       $("#editPembelianInputAddQty").val("0.00");
 
@@ -1497,6 +1498,7 @@ function formatAngka (angkaString) {
       document.getElementById("editPembelianInputEditKode").value = dataEditPembelianEdit[indexBarang].KodeBrg
       document.getElementById("editPembelianInputEditNamaBarang").value = dataEditPembelianEdit[indexBarang].namabrgx
       document.getElementById("editPembelianInputEditQtyPO").value = formatAngka(dataEditPembelianEdit[indexBarang].QNTPO)
+      document.getElementById("editPembelianInputEditQtyOS").value = formatAngka(dataEditPembelianEdit[indexBarang].QNTOUT)
       document.getElementById("editPembelianInputEditSatuan").value = dataEditPembelianEdit[indexBarang].Satuan
       document.getElementById("editPembelianInputEditQty").value = formatAngka(dataEditPembelianEdit[indexBarang].Qnt)
       $('#formPembelianEdit').show();
