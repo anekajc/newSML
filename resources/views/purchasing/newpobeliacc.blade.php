@@ -749,7 +749,7 @@ td input[type="checkbox"] {
             <div class="col-md-3">
               <div class="form-group">
                 <label>Qty</label>
-                <input id="editPembelianInputAddQty" type="number" value="0.00" class="form-control">
+                <input id="editPembelianInputAddQty" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)">
               </div>
             </div>
           </div>
@@ -812,7 +812,7 @@ td input[type="checkbox"] {
               </div>
               <div class="pba-f">
                 <label>Qty</label>
-                <input id="editPembelianInputEditQty" type="number" value="0.00" class="form-control">
+                <input id="editPembelianInputEditQty" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)">
               </div>
             </div>
 
@@ -2330,6 +2330,7 @@ function detailPembelian1(index) {
         document.getElementById("editPembelianInputEditDisc").value = dataEditPembelianEdit[indexBarang].DiscP1
         document.getElementById("editPembelianInputEditDiscRp").value = dataEditPembelianEdit[indexBarang].DiscTot
         document.getElementById("editPembelianInputEditHarga").value = dataEditPembelianEdit[indexBarang].Harga
+        formatRibuan(document.getElementById("editPembelianInputEditQty"))
         formatRibuan(document.getElementById("editPembelianInputEditDiscRp"))
         formatRibuan(document.getElementById("editPembelianInputEditHarga"))
 
@@ -2375,6 +2376,21 @@ function detailPembelian1(index) {
           pos++
         }
         el.setSelectionRange(pos, pos)
+      }
+
+      // Disc Rp per unit = Harga x Disc % / 100 (sama dengan DISCTOT di dbBeliDET)
+      function onChangeInputAddAddDisc() {
+        let harga = Number($("#editPembelianInputEditHarga").val().replace(/,/g, '')) || 0
+        let disc = Number($("#editPembelianInputEditDisc").val()) || 0
+        let elDiscRp = document.getElementById("editPembelianInputEditDiscRp")
+        elDiscRp.value = (harga * disc / 100).toFixed(2)
+        formatRibuan(elDiscRp)
+      }
+
+      function onChangeInputAddAddDiscRp() {
+        let harga = Number($("#editPembelianInputEditHarga").val().replace(/,/g, '')) || 0
+        let discRp = Number($("#editPembelianInputEditDiscRp").val().replace(/,/g, '')) || 0
+        document.getElementById("editPembelianInputEditDisc").value = harga ? (discRp / harga * 100).toFixed(2) : "0.00"
       }
 
       function loadAll1 () {
@@ -2925,7 +2941,7 @@ function formatAngkaX (angka) {
         let _token = $("#_token").val();
         let choice = "U"
         let dataLPBEdit = dataEditPembelianEdit[indexEditPembelianEdit]
-        let reqQtyTerima = $("#editPembelianInputEditQty").val();
+        let reqQtyTerima = $("#editPembelianInputEditQty").val().replace(/,/g, '');
         let reqDisc = $("#editPembelianInputEditDisc").val();
         let reqHarga = $("#editPembelianInputEditHarga").val().replace(/,/g, '');
         let reqDiscRp = $("#editPembelianInputEditDiscRp").val().replace(/,/g, '');
@@ -3097,7 +3113,7 @@ function formatAngkaX (angka) {
           // console.log(dataEditPembelianAddIndex)
           let data = dataEditPembelianAdd[dataEditPembelianAddIndex]
           console.log(data)
-          let reqQtyTerima = $("#editPembelianInputAddQty").val()
+          let reqQtyTerima = $("#editPembelianInputAddQty").val().replace(/,/g, '')
           if (Number(reqQtyTerima) > Number(data.OSPO)) {
             alertify.warning("Qty melebihi Qty OS");
             console.log('error')
