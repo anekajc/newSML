@@ -245,6 +245,13 @@ public function onChangeHeader (Request $req) {
     $username = \Auth::user()->username;
     $nobukti = $req->nobukti;
 
+    // Dokumen yang hanya punya header (belum ada barang di dbRBeliDet) tidak boleh
+    // diotorisasi - kalau lolos, posting hutang/jurnal jalan dengan nilai 0.
+    $adaBarang = DB::connection('SML')->select("select top 1 1 x from DBRBELIDET where NOBUKTI = :nobukti", ["nobukti" => $nobukti]);
+    if (!count($adaBarang)) {
+      return $this->tolak('Retur ' . $nobukti . ' belum punya barang, tidak bisa diotorisasi.');
+    }
+
     return DB::connection('SML')->transaction(function () use ($tanggal, $periode, $username, $nobukti) {
       // hanya baris yang belum diotorisasi yang boleh diproses - mencegah posting dobel
       // saat tombol Otorisasi diklik lebih dari sekali.
