@@ -8604,6 +8604,13 @@ if (baris2) {
     render : function (data, type, item) {
       let tombolAksiPO = `<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail('${item.NoBukti}')"><i class="bi bi-info"></i></button>`
       if (Number(item.IsOtorisasi1)) {
+        // Level 1 sudah terisi tapi level otorisasinya belum lengkap (mis. PO > 200 jt yang
+        // diotorisasi Dept. Head) - tombol Otorisasi tetap tampil supaya Direktur bisa mengisi
+        // level 2. Edit tetap tidak ditampilkan.
+        if (Number(item.NeedOtorisasi)) {
+          tombolAksiPO += `
+          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi Level 2" onclick="buttonOtorisasi('${item.NoBukti}' , ${item.IsOtorisasi1})"><i class="bi bi-key"></i></button>`
+        }
         tombolAksiPO += `
           <button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
           <button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="openPrintModal('${item.NoBukti}')"><i class="bi bi-printer"></i></button>`
