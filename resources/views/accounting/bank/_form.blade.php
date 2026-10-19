@@ -282,9 +282,13 @@
                                                     </div>
 
                                                     <div class="col-md-5">
+                                                        {{-- Lawan bisa diketik lalu Enter: kode persis cocok -> langsung
+                                                             dipilih, selain itu daftar Lawan dibuka dan disaring dengan teks
+                                                             tsb - lihat onKeyPressLawan() di public/js/bank.js. --}}
                                                         <div class="input-group form-group">
                                                             <input id="AddAddLawan" type="text"
-                                                                class="form-control" disabled>
+                                                                class="form-control" onkeypress="onKeyPressLawan(event)"
+                                                                oninput="onInputLawan()">
                                                             <input id="AddAddKodeLawan" type="hidden"
                                                                 class="form-control" disabled>
                                                             <button id="buttonAddListLawan" type="button"
