@@ -1347,6 +1347,12 @@ function submitAddAdd () {
     return
   }
 
+  // Lawan diketik tapi belum dipilih (Enter / daftar) - lihat onInputLawan().
+  if (!$("#AddAddKeteranganLawan").val()) {
+    alertify.warning("Lawan belum dipilih, tekan Enter atau pilih dari daftar")
+    return
+  }
+
   if (Number(jumlah) <= 0) {
     alertify.warning("Jumlah <= 0")
     return
@@ -2784,20 +2790,17 @@ function buttonAddPickInvoice () {
 
 }
 
-function buttonAddListLawan () {
-  listLawan = []
-
-  console.log('buttonAddListLawan')
-
-
+// Ambil daftar Lawan untuk perkiraan header. null = gagal / perkiraan belum dipilih.
+function muatLawan () {
   let _token = $("#_token").val();
   let perkiraan = $("#input_add_kodeperkiraan").val();
   let transaksi = $("#input_add_transaksi").val();
   if(!perkiraan ) {
     alertify.warning("Pilih perkiraan terlebih dahulu")
-    return
+    return null
   }
 
+  let rows = null
   $.ajax({
     url: KAS_ROUTES.kaslistlawan,
     type: "post",
@@ -2809,42 +2812,7 @@ function buttonAddListLawan () {
     },
     success: function(res) {
       console.log(res)
-      listLawan  = res
-      let rowTable = ``
-      res.forEach((item, i) => {
-        rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickLawan(${i},'${item.Perkiraan}' , '${item.Keterangan}' , '${item.Simbol}', '${item.Kode}', '${item.iscost}' , '${item.IsLokalOrExim}' )">
-        <td>${item.Perkiraan}</td>
-        <td>${item.Keterangan}</td>
-        <td>${item.Simbol}</td>
-        </tr>`
-      });
-
-
-
-
-
-
-      // if(!res.length) {
-      //   rowTable= `<tr><td class="text-center" colspan=5>Tidak ada data</td></tr>`
-      // }
-
-      document.getElementById("tabel_data_add_list_lawan").innerHTML = rowTable
-
-      kasInitPicker('tabel_add_list_lawan', {
-        columnDefs: [{ type: 'string', targets: 0 }]
-      });
-
-      if (res.length) {
-
-        $('.showhidemodalbodyadd').hide();
-        kasBukaPane('modalAddListLawan');
-        $("#form").modal('toggle')
-      } else {
-        alertify.warning("Perkiraan tidak ditemukkan")
-      }
-
-
+      rows = res
     },
     error: function (err) {
       console.log(err)
@@ -2852,8 +2820,87 @@ function buttonAddListLawan () {
     }
 
   })
+  return rows
+}
 
+// cari: teks awal kotak Search DataTables ('' = tampilkan semua).
+function bukaListLawan (rows, cari) {
+  if (rows === null) {
+    return
+  }
 
+  listLawan  = rows
+  let rowTable = ``
+  rows.forEach((item, i) => {
+    rowTable += `
+        <tr class="pick-row" onclick="buttonAddPickLawan(${i},'${item.Perkiraan}' , '${item.Keterangan}' , '${item.Simbol}', '${item.Kode}', '${item.iscost}' , '${item.IsLokalOrExim}' )">
+        <td>${item.Perkiraan}</td>
+        <td>${item.Keterangan}</td>
+        <td>${item.Simbol}</td>
+        </tr>`
+  });
+
+  document.getElementById("tabel_data_add_list_lawan").innerHTML = rowTable
+
+  kasInitPicker('tabel_add_list_lawan', {
+    columnDefs: [{ type: 'string', targets: 0 }]
+  });
+  if (cari) {
+    $('#tabel_add_list_lawan').DataTable().search(cari).draw()
+  }
+
+  if (rows.length) {
+    $('.showhidemodalbodyadd').hide();
+    kasBukaPane('modalAddListLawan');
+    $("#form").modal('toggle')
+  } else {
+    alertify.warning("Perkiraan tidak ditemukkan")
+  }
+}
+
+function buttonAddListLawan () {
+  listLawan = []
+
+  console.log('buttonAddListLawan')
+
+  bukaListLawan(muatLawan(), '')
+}
+
+// Enter: kosong -> daftar lengkap; kode Perkiraan persis cocok -> langsung dipilih (alur
+// buttonAddPickLawan tetap jalan, mis. Aktiva/DPH/Titipan membuka modal lanjutannya); selain itu
+// -> daftar disaring dengan teks yang diketik. Sama seperti onKeyPressNoTitipan().
+function onKeyPressLawan (e) {
+  if (e.which !== 13) {
+    return
+  }
+  e.preventDefault()
+
+  let cari = ($("#AddAddLawan").val() || '').trim()
+  let rows = muatLawan()
+  if (rows === null) {
+    return
+  }
+
+  if (cari) {
+    let idx = rows.findIndex(item => String(item.Perkiraan || '').trim().toLowerCase() === cari.toLowerCase())
+    if (idx !== -1) {
+      let item = rows[idx]
+      listLawan = rows
+      // String(...) supaya argumennya sama dengan yang dikirim onclick baris di bukaListLawan().
+      buttonAddPickLawan(idx, String(item.Perkiraan), String(item.Keterangan), String(item.Simbol),
+        String(item.Kode), String(item.iscost), String(item.IsLokalOrExim))
+      return
+    }
+  }
+
+  bukaListLawan(rows, cari)
+}
+
+// Teks Lawan diubah: kode & keterangan Lawan lama tidak berlaku lagi sampai dipilih ulang
+// (Enter / daftar). submitAddAdd() menolak Lawan tanpa keterangan.
+function onInputLawan () {
+  document.getElementById("AddAddKodeLawan").value = ''
+  document.getElementById("AddAddKeteranganLawan").value = ''
 }
 
 function modalDPP (dataLawan) {
@@ -5662,6 +5709,7 @@ function lockFormAdd () {
 
 function lockFormAddAdd () {
   document.getElementById("buttonAddListDepartemen").disabled = true
+  document.getElementById("AddAddLawan").disabled = true
   document.getElementById("buttonAddListLawan").disabled = true
   document.getElementById("AddAddValas").disabled = true
   document.getElementById("AddAddKodeDevisi").disabled = true
@@ -5670,6 +5718,7 @@ function lockFormAddAdd () {
 
 function unlockFormAddAdd () {
   document.getElementById("buttonAddListDepartemen").disabled = false
+  document.getElementById("AddAddLawan").disabled = false
   document.getElementById("buttonAddListLawan").disabled = false
   document.getElementById("AddAddValas").disabled = false
   document.getElementById("AddAddKodeDevisi").disabled = false
