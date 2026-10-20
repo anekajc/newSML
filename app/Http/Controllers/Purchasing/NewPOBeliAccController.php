@@ -91,7 +91,6 @@ class NewPOBeliAccController extends Controller
       $r->{'Jenis'} = ($r->TipeBayar == 1)
         ? ($pjasa == 1 ? 'Jasa Kredit' : 'Kredit')
         : ($pjasa == 1 ? 'Jasa Tunai'  : 'Tunai');
-      $r->{'Hutang'} = $r->hutang ?? null;
       $r->{'Stock'} = ($pjasa == 1) ? 'Non Stock' : 'Stock';
       $r->{'No Bukti'}      = $r->NoBukti;
       $r->{'Tanggal'}       = $r->TglBeli ? date('Y-m-d', strtotime($r->TglBeli)) : null;

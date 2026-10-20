@@ -1001,6 +1001,20 @@ class HeaderTableController extends Controller
         $headerisshown = json_decode($headertable[0]->isshown);
         $isparsed = 0;
 
+        // Kolom Hutang sudah digantikan Lunas (isinya sama). Susunan kolom tersimpan yang
+        // masih memuatnya dibuang kolomnya, supaya tidak tampil dua kali.
+        if (is_array($headertablevalue)) {
+          foreach (array_keys($headertablevalue) as $i) {
+            if (strtolower($headertablevalue[$i]) === 'hutang') {
+              unset($headertablevalue[$i], $headertableheader[$i], $headerisshown[$i], $isnumberheadertable[$i]);
+            }
+          }
+          $headertablevalue    = array_values($headertablevalue);
+          $headertableheader   = array_values($headertableheader);
+          $headerisshown       = array_values($headerisshown);
+          $isnumberheadertable = array_values($isnumberheadertable);
+        }
+
         // Kolom Lunas ditambahkan belakangan (lihat $default di bawah). Susunan kolom yang
         // sudah tersimpan milik user tidak memuatnya, jadi ditambahkan di ujung kanan supaya
         // tetap muncul tanpa perlu mereset dbheadertable tiap user.
