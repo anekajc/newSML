@@ -81,14 +81,18 @@ class NewPOBeliAccController extends Controller
     // (0 Barang/1 Jasa). Satu tabel utuh (belum maupun sudah diotorisasi); penyaringan
     // Jenis & Otorisasi dikerjakan di browser lewat modal Filter, sama seperti Uang Muka Beli.
     //
-    // fnc_masterbeli hanya menerima bulan/tahun, jadi rentang tanggal bebas (boleh lintas
-    // bulan/tahun) dilayani dengan memanggilnya per bulan yang tersentuh rentang, lalu
-    // menyaring baris persis ke rentang tanggal lewat TglBeli di SQL.
-    $aliasRow = function ($r, $pjasa) {
+    // WHERE di dalam fnc_masterbeli dikomentari, jadi parameter bulan/tahun/pjasa diabaikan
+    // dan fungsi selalu mengembalikan semua pembelian. Karena itu fungsi dipanggil sekali saja,
+    // disaring ke rentang tanggal lewat TglBeli, dan jenis diambil dari kolom pJasa milik baris.
+    // (Dulu dipanggil per bulan x pjasa 0/1, sehingga tiap nobukti muncul ganda: Kredit & Jasa Kredit.)
+    $aliasRow = function ($r) {
+      $pjasa = (int) $r->pJasa;
       $r->pJasa = $pjasa;
       $r->{'Jenis'} = ($r->TipeBayar == 1)
         ? ($pjasa == 1 ? 'Jasa Kredit' : 'Kredit')
         : ($pjasa == 1 ? 'Jasa Tunai'  : 'Tunai');
+      $r->{'Hutang'} = $r->hutang ?? null;
+      $r->{'Stock'} = ($pjasa == 1) ? 'Non Stock' : 'Stock';
       $r->{'No Bukti'}      = $r->NoBukti;
       $r->{'Tanggal'}       = $r->TglBeli ? date('Y-m-d', strtotime($r->TglBeli)) : null;
       $r->{'Nama Supplier'} = $r->NAMACUSTSUPP;
@@ -99,25 +103,18 @@ class NewPOBeliAccController extends Controller
       $r->{'DPP'}           = $r->TotDPP;
       $r->{'PPN'}           = $r->TotPPN;
       $r->{'Total'}         = $r->TotNet;
+      // 'Lunas'/'Belum' dari kolom hutang fnc_masterbeli.
+      $r->{'Lunas'}         = $r->hutang ?? null;
       return $r;
     };
 
     $tempData = [];
-    $cursor = date('Y-m-01', strtotime($tglawal));
-    $batas  = date('Y-m-01', strtotime($tglakhir));
-    while ($cursor <= $batas) {
-      $bulan = (int) date('n', strtotime($cursor));
-      $tahun = (int) date('Y', strtotime($cursor));
-      foreach ([0, 1] as $pjasa) {
-        $rows = DB::connection("SML")->select(
-          "select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa)
-           where TglBeli between :tglawal and :tglakhir",
-          ["bulan" => $bulan, "tahun" => $tahun, "pjasa" => $pjasa, "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
-        foreach ($rows as $r) {
-          array_push($tempData, $aliasRow($r, $pjasa));
-        }
-      }
-      $cursor = date('Y-m-01', strtotime($cursor . ' +1 month'));
+    $rows = DB::connection("SML")->select(
+      "select * from dbo.fnc_masterbeli ( :bulan , :tahun, 0)
+       where TglBeli between :tglawal and :tglakhir",
+      ["bulan" => (int) date('n', strtotime($tglawal)), "tahun" => (int) date('Y', strtotime($tglawal)), "tglawal" => $tglawal, "tglakhir" => $tglakhir]);
+    foreach ($rows as $r) {
+      array_push($tempData, $aliasRow($r));
     }
 
     // Terbaru di atas - digabung dari beberapa pemanggilan fungsi jadi diurutkan di PHP.

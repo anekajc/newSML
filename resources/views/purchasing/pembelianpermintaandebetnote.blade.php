@@ -561,8 +561,8 @@ td input[type="checkbox"] {
             </div>
             <div class="col-md-8" style="margin-top:-10px;">
               <div class="input-group mb-3">
-                <input type="text" class="form-control text-left" id="input_add_kodecustomer" placeholder="" disabled>
-                <button type="button" id="buttonAddListCustomer" onclick="buttonAddListCustomer()" class="btn btn-chip-biru btn-sm" style="height:32px; border-radius:0;"><i class="bi bi-search"></i></button>
+                <input type="text" class="form-control text-left" id="input_add_kodecustomer" placeholder="Kode Supplier">
+                <button type="button" id="buttonAddListCustomer" onclick="performSearchSupplier()" class="btn btn-chip-biru btn-sm" style="height:32px; border-radius:0;"><i class="bi bi-search"></i></button>
               </div>
             </div>
           </div>
@@ -1592,6 +1592,7 @@ function buttonAddPickInvoice () {
             alertify.success('DN telah ditambah');
             loadAll()
             tipeform = 'edit'
+            document.getElementById("input_add_kodecustomer").disabled = true
             document.getElementById("buttonAddListCustomer").disabled = true
             document.getElementById("input_add_tanggal").disabled = true
 
@@ -1627,7 +1628,9 @@ function buttonAddListInvoice () {
   let _token = $("#_token").val();
   let kodecustsupp = $("#input_add_kodecustomer").val();
 
-  if (!kodecustsupp  ) {
+  // Kode supplier bisa diketik; yang dianggap terpilih hanya yang diambil dari modal
+  // pemilih (nama supplier ikut terisi).
+  if (!kodecustsupp || !$("#input_add_namacustomer").val()) {
     alertify.warning("Pilih Supplier terlebih dahulu")
     return
   }
@@ -1944,6 +1947,7 @@ function buttonKoreksi (nobukti ) {
   }
   tipeform = 'edit'
   cleanFormAdd()
+  document.getElementById("input_add_kodecustomer").disabled = true
   document.getElementById("buttonAddListCustomer").disabled = true
   document.getElementById("input_add_tanggal").disabled = true
 
@@ -1971,6 +1975,7 @@ function buttonAdd (nobukti) {
     return
   }
   document.getElementById("input_add_tanggal").disabled = false
+  document.getElementById("input_add_kodecustomer").disabled = false
   document.getElementById("buttonAddListCustomer").disabled = false
   document.getElementById("addTableData").innerHTML = `<tr><td colspan=9 class="text-center">Belum ada data</td></tr>`
   tipeform = 'add'
@@ -2089,5 +2094,32 @@ function formatAngka (angkaString) {
   temp1 += '.' + tempAngka[1]
   return temp1
 }
+
+// Kode supplier bisa diketik seperti menu Purchase Order: Enter / tombol browse membuka
+// modal pemilih yang langsung terfilter dengan teks ketikan.
+function performSearchSupplier () {
+  const searchValue = document.getElementById('input_add_kodecustomer').value.trim();
+
+  buttonAddListCustomer();
+
+  if ($.fn.DataTable.isDataTable('#tabel_add_list_customer')) {
+    $('#tabel_add_list_customer').DataTable().search(searchValue).draw();
+  }
+}
+
+$(function () {
+  document.getElementById('input_add_kodecustomer').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      performSearchSupplier();
+    }
+  });
+
+  // Kode diubah dengan mengetik = supplier yang tadi dipilih tidak berlaku lagi.
+  document.getElementById('input_add_kodecustomer').addEventListener('input', function() {
+    document.getElementById('input_add_namacustomer').value = ''
+    document.getElementById('input_add_alamatcustomer').value = ''
+  });
+})
 </script>
 @endsection

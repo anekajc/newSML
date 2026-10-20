@@ -4031,7 +4031,7 @@ if (pcekglobal) {
             pjasa: DataPjasa
           },
           success: function(res) {
-              console.log('======xxxxx==========')
+            console.log('======xxxxx==========')
             console.log(res)
 
             detail_row_data = res

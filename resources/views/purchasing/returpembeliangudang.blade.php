@@ -1573,7 +1573,7 @@ function buttonAdd (NOBUKTI) {
       qntos = parseFloat(item.QntOUt).toFixed(2)
     }
     rowTable += `<tr class="text-left">
-    <td class="text-center"><input class="" type="checkbox" value="" id="add_checkbox${i}"></td>
+    <td class="text-center"><input class="" type="checkbox" value="" id="add_checkbox${i}" onchange="isiQntKirimAdd(${qntos}, ${i})"></td>
     <td>${item.NOBUKTI}</td>
     <td>${item.Kodebrg}</td>
     <td>${item.namaBrg}</td>
@@ -1588,6 +1588,13 @@ function buttonAdd (NOBUKTI) {
   $("#form").modal('show')
 
 
+}
+
+// Mode Add: centang baris = Qty Kirim langsung diisi sisa outstanding (Qty OS = qty PRB
+// dikurangi yang sudah diretur), centang dilepas = kembali 0.00. Masih bisa diketik ulang.
+function isiQntKirimAdd (qntos, urut) {
+  let checked = document.getElementById('add_checkbox' + urut).checked
+  document.getElementById('input_add_qntTerima' + urut).value = checked ? parseFloat(qntos).toFixed(2) : '0.00'
 }
 
   let stateQnt = 0
@@ -2050,6 +2057,15 @@ function submitAdd () {
     alertify.warning("Tidak ada item dipilih");
     return
   }
+
+  // Satu retur hanya boleh dari satu No PRB - sebelumnya No Out selalu PRB baris pertama
+  // walaupun yang dicentang item PRB lain, sehingga yang tersimpan item/PRB yang salah.
+  let noPRBDipilih = tempData[0].NOBUKTI
+  if (tempData.some((item) => item.NOBUKTI !== noPRBDipilih)) {
+    alertify.warning("Item yang dicentang harus dari satu No PRB yang sama");
+    return
+  }
+  document.getElementById("input_add_noout").value = noPRBDipilih
 
   let flag = false
   tempData.forEach((item, i) => {

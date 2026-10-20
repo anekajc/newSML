@@ -1000,6 +1000,16 @@ class HeaderTableController extends Controller
         $headertableheader = json_decode($headertable[0]->header);
         $headerisshown = json_decode($headertable[0]->isshown);
         $isparsed = 0;
+
+        // Kolom Lunas ditambahkan belakangan (lihat $default di bawah). Susunan kolom yang
+        // sudah tersimpan milik user tidak memuatnya, jadi ditambahkan di ujung kanan supaya
+        // tetap muncul tanpa perlu mereset dbheadertable tiap user.
+        if (is_array($headertablevalue) && !in_array('Lunas', $headertablevalue)) {
+          $headertablevalue[]    = 'Lunas';
+          $headertableheader[]   = 'Lunas';
+          $headerisshown[]       = 1;
+          $isnumberheadertable[] = 0;
+        }
       } else {
         $isparsed = 1;
         // Sama seperti cabang 'uangmukabeli' - kolom default DITULIS EKSPLISIT supaya
@@ -1017,6 +1027,7 @@ class HeaderTableController extends Controller
           'DPP'           => 1,
           'PPN'           => 1,
           'Total'         => 1,
+          'Lunas'         => 0,
         ];
         foreach ($default as $key => $tipe) {
           array_push($headertablevalue, $key);

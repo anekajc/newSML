@@ -211,10 +211,37 @@ AND a.KODESUPP=:nobukti
 
         $tempValues = [$norpb, $nourut,$date,$data[0]['Kodegdg'], $noout,"","",0,0, $username];
         DB::connection('SML')->statement('exec sp_InsertOutRbeli ?,?,?,?,?,?,?,?,?,?', $tempValues);
+
+        // sp_InsertOutRbeli tetap membuat header walaupun tidak ada barang yang masuk ke
+        // dbRBeliDet - hasilnya dokumen retur kosong (tombol Detail tidak menampilkan apa pun).
+        $jmlDetail = DB::connection('SML')->select('select count(*) n from dbRBeliDet where NOBUKTI = ?', [$norpb]);
+        if (!$jmlDetail || (int) $jmlDetail[0]->n === 0) {
+          throw new \RuntimeException('DETAIL_KOSONG');
+        }
+
+        // sp_InsertOutRbeli mengisi header dbRBeli dari "top 1" LPB milik PRB tanpa melihat
+        // supplier - kalau satu PRB berisi item dari beberapa supplier/LPB, header retur bisa
+        // jatuh ke supplier lain (lalu terbawa ke Invoice Retur Beli). Header disamakan dengan
+        // supplier & LPB item yang dicentang.
+        $kodesupp = $data[0]['KODESUPP'];
+        $nopbl = $data[0]['noPBL'];
+        $lpb = DB::connection('SML')->select('select top 1 NOBUKTI from DBBELI where NOBUKTI = ? and KODESUPP = ?', [$nopbl, $kodesupp]);
+        if ($lpb) {
+          DB::connection('SML')->update("update R set R.KODESUPP = B.KODESUPP, R.TglJatuhTempo = R.TANGGAL + B.HARI,
+                R.KODEVLS = B.KODEVLS, R.KURS = B.KURS, R.PPN = B.PPN, R.TIPEBAYAR = B.TIPEBAYAR, R.HARI = B.HARI,
+                R.TipeDisc = B.TipeDisc, R.DISC = B.Disc, R.DISCRP = B.DISCRP, R.Flagtipe = B.Flagtipe
+              from dbRBeli R, DBBELI B
+              where R.NOBUKTI = ? and B.NOBUKTI = ?", [$norpb, $nopbl]);
+        } else {
+          DB::connection('SML')->update('update dbRBeli set KODESUPP = ? where NOBUKTI = ?', [$kodesupp, $norpb]);
+        }
       });
     } catch (\RuntimeException $e) {
       if ($e->getMessage() === 'STOK_TIDAK_CUKUP') {
         return 3;
+      }
+      if ($e->getMessage() === 'DETAIL_KOSONG') {
+        return $this->tolak('Tidak ada barang yang tersimpan untuk retur ini, penyimpanan dibatalkan. Tutup form lalu buka lagi.');
       }
       if (strpos($e->getMessage(), 'SISA_PRB|') === 0) {
         [, $kodebrg, $sisa] = explode('|', $e->getMessage());
