@@ -3147,16 +3147,20 @@ function ipInitReportTableSekali () {
   });
 }
 
-// tambahan = <th> kolom tetap di ujung kanan (di luar susunan kolom roda gigi),
-// mis. kolom Piutang tab Invoice.
-function tulisTheadHeaderIP (tableSel, cols, tambahan) {
+// tambahan = <th> kolom tetap (di luar susunan kolom roda gigi), mis. kolom
+// Piutang tab Invoice; posisi = banyaknya kolom cols di sebelah kirinya.
+function tulisTheadHeaderIP (tableSel, cols, tambahan, posisi) {
   let thead = document.querySelector(tableSel + ' thead')
   if (!thead || !window.ReportTable) { return; }
   let headRowHtml = ReportTable.headHtml(cols)
-    .replace('<tr>', '<tr><th style="padding: 4px 12px;">Actions</th>')
-    .replace('</tr>', (tambahan || '') + '</tr>');
+    .replace('<tr>', '<tr><th style="padding: 4px 12px;">Actions</th>');
   thead.setAttribute('style', 'white-space:nowrap;');
   thead.innerHTML = headRowHtml;
+  if (tambahan) {
+    // th ke-0 = Actions, jadi kolom cols ke-(posisi-1) ada di th ke-posisi.
+    let ths = thead.querySelectorAll('tr > th');
+    ths[Math.min(posisi, ths.length - 1)].insertAdjacentHTML('afterend', tambahan);
+  }
 }
 
 // Isi sel per kolom untuk render DataTables (mode data). col[5] (desimal)
@@ -3277,9 +3281,12 @@ function ipGambarTabel (urut, rows) {
 
   if ($.fn.DataTable.isDataTable(id)) { $(id).DataTable().clear().destroy(); }
   $(id + ' tbody').empty()
-  // Tab Invoice: kolom Piutang kolom tetap (tidak bisa digeser/disembunyikan)
-  // di ujung kanan, sama seperti kolom Hutang menu Penerimaan ACC.
-  tulisTheadHeaderIP(id, cols, urut === 2 ? '<th style="padding: 4px 12px;">Piutang</th>' : '')
+  // Tab Invoice: kolom Piutang kolom tetap (tidak bisa digeser/disembunyikan),
+  // sama seperti kolom Hutang menu Penerimaan ACC. Letaknya tepat di kanan kolom
+  // Total; kalau Total disembunyikan lewat roda gigi, di ujung kanan.
+  let posPiutang = cols.findIndex(function (c) { return String(c[0]).toLowerCase() === 'totnet'; }) + 1
+  if (posPiutang === 0) { posPiutang = cols.length }
+  tulisTheadHeaderIP(id, cols, urut === 2 ? '<th style="padding: 4px 12px;">Piutang</th>' : '', posPiutang)
 
   let columns = [{
     data : null, orderable : false, className : 'text-center',
@@ -3292,7 +3299,8 @@ function ipGambarTabel (urut, rows) {
     })
   })
   if (urut === 2) {
-    columns.push({
+    // +1 karena columns[0] = Actions.
+    columns.splice(posPiutang + 1, 0, {
       data : null, className : 'text-center',
       render : function (d, t, row) { return ipBadgePiutang(row) }
     })

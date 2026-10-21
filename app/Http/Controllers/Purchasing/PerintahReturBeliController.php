@@ -442,9 +442,11 @@ where NObukti= :kodeJual", ['kodeJual'=>$req->kodeJual]);
     return $listData;
   }
 
+  // NAMABRG di DBBELIDET sering kosong (kebanyakan pembelian 2024 ke atas), jadi kalau
+  // kosong nama diambil dari DBBARANG - dulu nama barang di modal browse tampil null.
   public function listBarangBeliTanpaJual (Request $req)
   {
-    $listData = DB::connection('SML')->select("Select A.URUT, A.KODEBRG, A.NAMABRG, A.NOSAT, A.ISI, A.SATUAN, A.QntTerima,
+    $listData = DB::connection('SML')->select("Select A.URUT, A.KODEBRG, isnull(nullif(A.NAMABRG,''), Br.NAMABRG) NAMABRG, A.NOSAT, A.ISI, A.SATUAN, A.QntTerima,
        A.QntTerima-Sum(Case when A.NOSAT=1 then Case when B.NOSAT=1 then B.QntReject
                                                      when B.NOSAT=2 then B.QntReject*Br.ISI2
                                                      else 0
@@ -486,7 +488,7 @@ from (Select urut, kodebrg, namabrg, QNT, QntTerima,Qnt1Terima, Qnt2Terima, NOSA
                        from DBPRRBELIDET x
                        group by x.NOPBL, x.URUTPBL) D on D.NOPBL=A.NOBUKTI and D.URUTPBL=A.URUT
 where A.NoBukti= :noBeli  and Isnull(A.Isjasa,0)=0
-Group by A.URUT, A.KODEBRG, A.NAMABRG, A.NOSAT, A.ISI, A.SATUAN, Br.NFix, A.QntTerima, A.Qnt1Terima, A.Qnt2Terima,D.Qnt,D.Qnt1, D.Qnt2,Br.ISI1,Br.ISI2,Br.ISI3
+Group by A.URUT, A.KODEBRG, A.NAMABRG, Br.NAMABRG, A.NOSAT, A.ISI, A.SATUAN, Br.NFix, A.QntTerima, A.Qnt1Terima, A.Qnt2Terima,D.Qnt,D.Qnt1, D.Qnt2,Br.ISI1,Br.ISI2,Br.ISI3
 Having A.QntTerima-Sum(Case when A.NOSAT=1 then Case when B.NOSAT=1 then B.QntReject
                                                      when B.NOSAT=2 then B.QntReject*Br.ISI2
                                                      else 0
@@ -508,7 +510,7 @@ from (
 
 select  A.KODEBRG,A.NamaBrg,a.SATUAN,A.QntTerima,A.NOSAT,A.URUT,a.ISI1,a.ISI2,a.ISI3,A.UrutPbl,A.UrutPrj
 from (
-Select A.URUT, A.KODEBRG, A.NAMABRG, A.NOSAT, A.ISI, A.SATUAN, A.QntTerima,
+Select A.URUT, A.KODEBRG, isnull(nullif(A.NAMABRG,''), Br.NAMABRG) NAMABRG, A.NOSAT, A.ISI, A.SATUAN, A.QntTerima,
        A.QntTerima-Sum(Case when A.NOSAT=1 then Case when B.NOSAT=1 then B.QntReject
                                                      when B.NOSAT=2 then B.QntReject*Br.ISI2
                                                      else 0
@@ -550,7 +552,7 @@ from (Select urut, kodebrg, namabrg, QNT, QntTerima,Qnt1Terima, Qnt2Terima, NOSA
                        from DBPRRBELIDET x
                        group by x.NOPBL, x.URUTPBL) D on D.NOPBL=A.NOBUKTI and D.URUTPBL=A.URUT
 where A.NoBukti= :noBeli  and Isnull(A.Isjasa,0)=0
-Group by A.URUT, A.KODEBRG, A.NAMABRG, A.NOSAT, A.ISI, A.SATUAN, Br.NFix, A.QntTerima, A.Qnt1Terima, A.Qnt2Terima,D.Qnt,D.Qnt1, D.Qnt2,Br.ISI1,Br.ISI2,Br.ISI3,A.UrutPbl
+Group by A.URUT, A.KODEBRG, A.NAMABRG, Br.NAMABRG, A.NOSAT, A.ISI, A.SATUAN, Br.NFix, A.QntTerima, A.Qnt1Terima, A.Qnt2Terima,D.Qnt,D.Qnt1, D.Qnt2,Br.ISI1,Br.ISI2,Br.ISI3,A.UrutPbl
 Having A.QntTerima-Sum(Case when A.NOSAT=1 then Case when B.NOSAT=1 then B.QntReject
                                                      when B.NOSAT=2 then B.QntReject*Br.ISI2
                                                      else 0

@@ -822,7 +822,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       </div>
 
       <div class="col-md-4">
-        <input id="AddAddInputQty" type="number" value='0.00' class="form-control text-right" onchange="onChangeQty()">
+        <input id="AddAddInputQty" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeQty()">
       </div>
 
       <div class="col-md-2">
@@ -850,7 +850,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       </div>
 
       <div class="input-group col-md-4">
-        <input id="AddAddInputQty1" type="number" value='0.00' class="form-control text-right" disabled style="width: 75%">
+        <input id="AddAddInputQty1" type="text" value='0.00' class="form-control text-right" disabled style="width: 75%">
 
         <input id="AddAddInputSat1" type="text" value='PCS' class="form-control text-center" disabled style="width: 25%">
 
@@ -865,7 +865,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       </div>
 
       <div class="input-group col-md-4">
-        <input id="AddAddInputQty2" type="number" value='0.00' class="form-control text-right" disabled style="width: 75%">
+        <input id="AddAddInputQty2" type="text" value='0.00' class="form-control text-right" disabled style="width: 75%">
 
         <input id="AddAddInputSat2" type="text" value='BOX' class="form-control text-center" disabled style="width: 25%">
 
@@ -1003,17 +1003,17 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-                <input type="number" min="1" max="100" class="form-control text-right" id="input_add_add_discpersen1" value="0.00" tabindex="8">
+                <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" class="form-control text-right" id="input_add_add_discpersen1" value="0.00" tabindex="8">
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                <input type="number" min="1" max="100" class="form-control text-right" id="input_add_add_discpersen2" value="0.00" tabindex="9">
+                <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" class="form-control text-right" id="input_add_add_discpersen2" value="0.00" tabindex="9">
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group">
-                <input type="number" min="1" max="100" class="form-control text-right" id="input_add_add_discpersen3" value="0.00" tabindex="10">
+                <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" class="form-control text-right" id="input_add_add_discpersen3" value="0.00" tabindex="10">
               </div>
             </div>
           </div>
@@ -1056,7 +1056,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
         </div>
         <div class="col-md-4" style="margin-top:-10px">
           <div class="form-group">
-            <input id="AddEditInputQty" type="number" value='0.00' class="form-control text-right" onchange="onChangeQtyEdit()">
+            <input id="AddEditInputQty" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeQtyEdit()">
           </div>
         </div>
         <div class="col-md-2" style="margin-top:-10px">
@@ -1066,7 +1066,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
         </div>
         <div class="col-md-4" style="margin-top:-10px">
           <div class="form-group">
-            <input id="AddEditHarga" type="text" value='0.00' class="form-control text-right">
+            <input id="AddEditHarga" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right">
           </div>
         </div>
       </div>
@@ -1082,7 +1082,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       </div>
     </div>
     <div class="input-group col-md-4">
-      <input id="AddEditInputQty1" type="number" value='0.00' class="form-control text-right" disabled style="width: 75%">
+      <input id="AddEditInputQty1" type="text" value='0.00' class="form-control text-right" disabled style="width: 75%">
       <input id="AddEditInputSat1" type="text" value='PCS' class="form-control text-center" disabled style="width: 25%">
     </div>
     <div class="col-md-2">
@@ -1091,7 +1091,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       </div>
     </div>
     <div class="input-group col-md-4">
-      <input id="AddEditInputQty2" type="number" value='0.00' class="form-control text-right" disabled style="width: 75%">
+      <input id="AddEditInputQty2" type="text" value='0.00' class="form-control text-right" disabled style="width: 75%">
       <input id="AddEditInputSat2" type="text" value='BOX' class="form-control text-center" disabled style="width: 25%">
     </div>
   </div>
@@ -1130,7 +1130,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       <div class="col">
         <div class="form-group">
           <label>Disc %</label>
-          <input type="text" class="form-control text-right" id="input_add_disc" onblur="onChangeInputAddDisc()" value="0.00">
+          <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" class="form-control text-right" id="input_add_disc" onblur="formatRibuan(this); onChangeInputAddDisc()" value="0.00">
         </div>
       </div>
 
@@ -1138,7 +1138,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
       <div class="col">
         <div class="form-group">
           <label>DiscRp</label>
-          <input type="text" class="form-control text-right" id="input_add_discrp" onblur="onChangeInputAddDiscRp()" value ="0.00" >
+          <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" class="form-control text-right" id="input_add_discrp" onblur="formatRibuan(this); onChangeInputAddDiscRp()" value ="0.00" >
         </div>
       </div>
 
@@ -2301,9 +2301,9 @@ function submitAddEdit () {
   let jmlrecord = 1
   let nobukti  = $("#input_add_nobukti").val()
 
-  let DISCP = $("#input_add_add_discpersen1").val();
-  let DiscP2 = $("#input_add_add_discpersen2").val();
-  let DiscP3 = $("#input_add_add_discpersen3").val();
+  let DISCP = bersihkanAngka($("#input_add_add_discpersen1").val());
+  let DiscP2 = bersihkanAngka($("#input_add_add_discpersen2").val());
+  let DiscP3 = bersihkanAngka($("#input_add_add_discpersen3").val());
   let harga = bersihkanAngka($("#AddEditHarga").val());
 
   // Catatan: field Qty/Nosat pada form ini disabled (lihat buttonAddEditItem) dan
@@ -2460,7 +2460,7 @@ function submitAddAdd () {
   let urutbeli = $("#AddAddUrutBeli").val()
   let namabrg = $("#AddAddNamaBrg").val();
   let kodebrg = $("#AddAddKodeBrg").val();
-  let qnt = $("#AddAddInputQty").val();
+  let qnt = bersihkanAngka($("#AddAddInputQty").val());
 
   let nosat = $("#AddAddInputNosat").val();
   let isi = 0
@@ -2470,9 +2470,9 @@ function submitAddAdd () {
     isi = barang.Isi2
   }
   let urutinvoice = barang.Urut
-  let qnt1 = $("#AddAddInputQty1").val();
+  let qnt1 = bersihkanAngka($("#AddAddInputQty1").val());
   let sat1 = $("#AddAddInputSat1").val();
-  let qnt2 = $("#AddAddInputQty2").val();
+  let qnt2 = bersihkanAngka($("#AddAddInputQty2").val());
   let sat2 = $("#AddAddInputSat2").val();
 
   let ketdet = $("#AddAddKeterangan").val();
@@ -2856,7 +2856,7 @@ function onChangeQtyEdit () {
   console.log('onChangeQtyEdit')
   console.log('tempBarangAddEdit' , tempBarangAddEdit)
 
-  let qty = $("#AddEditInputQty").val();
+  let qty = bersihkanAngka($("#AddEditInputQty").val());
   let nosat = $("#AddEditInputNosat").val();
   if (jQuery.isEmptyObject(tempBarangAddEdit)) {
     console.log('g ada barang')
@@ -2867,8 +2867,8 @@ function onChangeQtyEdit () {
     console.log(tempIsi)
     let tempTotalQty = Number(tempIsi) * Number(qty)
 
-    document.getElementById("AddEditInputQty1").value = tempTotalQty / tempBarangAddEdit.ISI1
-    document.getElementById("AddEditInputQty2").value = tempTotalQty / tempBarangAddEdit.ISI2
+    document.getElementById("AddEditInputQty1").value = ribuanTanpaBulat(tempTotalQty / tempBarangAddEdit.ISI1)
+    document.getElementById("AddEditInputQty2").value = ribuanTanpaBulat(tempTotalQty / tempBarangAddEdit.ISI2)
 
 
   }
@@ -2878,7 +2878,7 @@ function onChangeQty () {
 
   console.log('onChangeQty')
   console.log('tempBarangAddAdd' , tempBarangAddAdd)
-  let qty = $("#AddAddInputQty").val();
+  let qty = bersihkanAngka($("#AddAddInputQty").val());
   let nosat = $("#AddAddInputNosat").val();
   console.log('qty' , qty)
   console.log('nosat' , nosat)
@@ -2892,8 +2892,8 @@ function onChangeQty () {
     console.log(tempIsi)
     let tempTotalQty = Number(tempIsi) * Number(qty)
 
-    document.getElementById("AddAddInputQty1").value = tempTotalQty / tempBarangAddAdd.Isi1
-    document.getElementById("AddAddInputQty2").value = tempTotalQty / tempBarangAddAdd.Isi2
+    document.getElementById("AddAddInputQty1").value = ribuanTanpaBulat(tempTotalQty / tempBarangAddAdd.Isi1)
+    document.getElementById("AddAddInputQty2").value = ribuanTanpaBulat(tempTotalQty / tempBarangAddAdd.Isi2)
 
 
   }
@@ -2907,9 +2907,9 @@ function buttonAddPickBarang (index) {
   console.log('tempBarangAddAdd', tempBarangAddAdd)
   document.getElementById("AddAddKodeBrg").value = tempBarangAddAdd.KodeBrg
   document.getElementById("AddAddNamaBrg").value = tempBarangAddAdd.NamaBrg ? tempBarangAddAdd.NamaBrg : tempBarangAddAdd.NamaBrgx
-  document.getElementById("AddAddInputQty").value = tempBarangAddAdd.QntSisa
-  document.getElementById("AddAddInputQty1").value = tempBarangAddAdd.Qnt1Sisa
-  document.getElementById("AddAddInputQty2").value = tempBarangAddAdd.Qnt2Sisa
+  document.getElementById("AddAddInputQty").value = formatAngka(parseFloat(tempBarangAddAdd.QntSisa || 0).toFixed(2))
+  document.getElementById("AddAddInputQty1").value = ribuanTanpaBulat(tempBarangAddAdd.Qnt1Sisa)
+  document.getElementById("AddAddInputQty2").value = ribuanTanpaBulat(tempBarangAddAdd.Qnt2Sisa)
 
   document.getElementById("AddAddInputSat1").value = tempBarangAddAdd.SAT1
   document.getElementById("AddAddInputSat2").value = tempBarangAddAdd.SAT2
@@ -3339,10 +3339,10 @@ function buttonAddEditItem (i) {
   document.getElementById("AddEditNoBeli").value = tempBarangAddEdit.NoPBL
   document.getElementById("AddEditUrutBeli").value = tempBarangAddEdit.UrutPBL
   document.getElementById("AddEditNamaBrg").value = tempBarangAddEdit.NamaBrg
-  document.getElementById("AddEditInputQty").value = parseFloat(tempBarangAddEdit.Qnt).toFixed(2)
+  document.getElementById("AddEditInputQty").value = formatAngka(parseFloat(tempBarangAddEdit.Qnt).toFixed(2))
 
-  document.getElementById("AddEditInputQty1").value = parseFloat(tempBarangAddEdit.qnt1).toFixed(2)
-  document.getElementById("AddEditInputQty2").value = parseFloat(tempBarangAddEdit.qnt2).toFixed(2)
+  document.getElementById("AddEditInputQty1").value = formatAngka(parseFloat(tempBarangAddEdit.qnt1).toFixed(2))
+  document.getElementById("AddEditInputQty2").value = formatAngka(parseFloat(tempBarangAddEdit.qnt2).toFixed(2))
   document.getElementById("AddEditInputSat1").value = tempBarangAddEdit.sat1
   document.getElementById("AddEditInputSat2").value = tempBarangAddEdit.sat2
 
@@ -3711,6 +3711,49 @@ function buttonOtorisasi (nobukti) {
 // dikirim ke server - kalau tidak, parseFloat('50,000.00') hanya terbaca 50.
 function bersihkanAngka (nilai) {
   return parseFloat(String(nilai == null ? '' : nilai).replace(/,/g, '')) || 0
+}
+
+// Qty1/Qty2 (dihitung otomatis, ikut disimpan): separator hanya di bagian ribuan, desimal
+// dibiarkan apa adanya supaya nilai yang terkirim ke server tidak ikut terbulatkan.
+function ribuanTanpaBulat (nilai) {
+  let n = parseFloat(String(nilai == null ? '' : nilai).replace(/,/g, ''))
+  if (!isFinite(n)) { return '' }
+  let parts = String(n).split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return parts.join('.')
+}
+
+// Input Qty / Harga / Disc diketik dengan separator ribuan (koma) - pola sama dengan
+// newpo.blade.php. Nilainya dibaca lewat bersihkanAngka() di atas.
+function formatRibuan (el) {
+  let raw = String(el.value).replace(/,/g, '')
+  if (raw === '' || isNaN(Number(raw))) return
+  let parts = Number(raw).toFixed(2).split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = parts.join('.')
+}
+
+function formatRibuanLive (el) {
+  let cursorPos = el.selectionStart
+  let digitsBeforeCursor = el.value.slice(0, cursorPos).replace(/[^0-9]/g, '').length
+
+  let raw = el.value.replace(/,/g, '')
+  if (raw !== '' && isNaN(Number(raw))) {
+    raw = raw.replace(/[^0-9.]/g, '')
+  }
+  if (raw === '') { el.value = ''; return }
+
+  let parts = raw.split('.')
+  if (parts.length > 1) parts[1] = parts[1].slice(0, 2)
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0]
+
+  let pos = 0, digitCount = 0
+  while (pos < el.value.length && digitCount < digitsBeforeCursor) {
+    if (/[0-9]/.test(el.value[pos])) digitCount++
+    pos++
+  }
+  el.setSelectionRange(pos, pos)
 }
 
 function onChangeInputAddDisc () {

@@ -65,7 +65,7 @@ Catatan ini mendaftar perubahan database DBSMLBARU dari pekerjaan menu **marketi
 
 ## Invoice Penjualan — kolom Piutang (21 Oktober 2026, tanpa perubahan database)
 
-- Tab **Invoice** menu Invoice Penjualan (`invoicepenjualan`) mendapat kolom tetap **Piutang** di ujung kanan, berisi badge **Lunas** (hijau) / **Belum** (merah). Tampilannya sama dengan kolom Hutang menu Penerimaan ACC (`newpobeliacc`), hanya versi piutang.
+- Tab **Invoice** menu Invoice Penjualan (`invoicepenjualan`) mendapat kolom tetap **Piutang** tepat di kanan kolom Total (kalau Total disembunyikan, di ujung kanan), berisi badge **Lunas** (hijau) / **Belum** (merah). Tampilannya sama dengan kolom Hutang menu Penerimaan ACC (`newpobeliacc`), hanya versi piutang.
 - **Tidak ada objek database yang diubah** (tidak ada view/fungsi/SP baru), jadi tidak ada skrip yang perlu dijalankan di server client. Yang berubah hanya query di `InvoicePenjualanController@sqlInvoicePenjualan`. Query ini hanya membaca tabel yang sudah ada (`DBHUTPIUT`).
 - Tambahan pada query (dari user):
   - kolom: `case when isnull(h.piutang,0)=0 then 'Lunas' else 'Belum' end Piutang`;
