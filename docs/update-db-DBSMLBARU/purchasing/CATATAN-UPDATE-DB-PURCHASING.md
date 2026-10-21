@@ -14,7 +14,7 @@ Catatan ini mendaftar semua perubahan database DBSMLBARU dari upgrade menu **pur
 9. Invoice Pembelian (`invoicepembelian`) (5 Oktober 2026, tanpa perubahan database)
 10. Perintah Retur Beli (`perintahreturbeli`) (5 Oktober 2026)
 11. Retur Pembelian Gudang (`returbeli`) dan Invoice Retur Beli (`invoicereturbeli`) (5 Oktober 2026, tanpa perubahan database)
-12. Penerimaan ACC gabungan (`newpobeliacc`), gabungan dari `newpobeliacc`, `newpobeliacctunai`, `newpobeliaccbiayatunai`, dan `newpobeliaccbiayakredit` (5 Oktober 2026, tanpa perubahan database). Kolom `fnc_masterbeli`/`fnc_Tampilbeli` di DBSMLBARU sudah sama dengan DBSMLNEW, dan menu web `0304 newpobeliacc` sudah ada di `02_menu_web.sql`.
+12. Penerimaan ACC gabungan (`newpobeliacc`), gabungan dari `newpobeliacc`, `newpobeliacctunai`, `newpobeliaccbiayatunai`, dan `newpobeliaccbiayakredit` (5 Oktober 2026, tanpa perubahan database). Kolom `fnc_masterbeli`/`fnc_Tampilbeli` di DBSMLBARU sudah sama dengan DBSMLNEW, dan menu web `0304 newpobeliacc` sudah ada di `02_menu_web.sql`. **Tambahan 20 Oktober 2026:** kolom badge Hutang butuh `20_fnc_masterbeli_kolom_hutang.sql`, lihat bagian 20 di bawah.
 
 **Script umum (bukan hanya purchasing):** `../umum/02_menu_web.sql` membuat menu web dan hak aksesnya untuk **semua** menu. Cukup dijalankan sekali. Kalau sudah dijalankan untuk modul lain, tidak perlu diulang.
 
@@ -34,6 +34,8 @@ Buka di SSMS, lalu jalankan berurutan:
 | 4 | `04_vwoutporp_uang_muka_beli.sql` | Perbaiki rumus view VWOUTPORP (menu Uang Muka Beli) | Ya, kalau menu Uang Muka Beli dipakai |
 | 5 | `05_purchase_order.sql` | Tambah 2 kolom di vwMasterPO, alias kolom tabel Outstanding PR | Ya. Tanpa ini tab Purchase Order error |
 | 6 | `06_perintah_retur_beli.sql` | Buat view vwBrowsPrRBeli (kolom Status PRB) | Ya. Tanpa ini tabel Perintah Retur Beli error |
+| 7 | `07_debetnote_akun_bd.sql` | Akun posting `DBPOSTHUTPIUT` Kode `BD` (Debet Note) | Ya, kalau menu Debet Note dipakai |
+| 20 | `20_fnc_masterbeli_kolom_hutang.sql` | Tambah kolom `hutang` (Lunas/Belum) di fungsi `fnc_MasterBeli` | Ya. Tanpa ini kolom badge Hutang di menu Penerimaan ACC kosong |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -162,3 +164,17 @@ Jalan keluarnya, pilih salah satu:
 - Detail Debet Note tidak punya kolom `perkHP`, jadi tidak ada masalah simpan item seperti di Kredit Note.
 - Hanya **menambah** satu baris konfigurasi; aman dijalankan ulang.
 - Sudah dijalankan langsung di DBSMLBARU (server 36.88.190.218) pada 14 Oktober 2026 atas izin user.
+
+---
+
+## 20 — fnc_MasterBeli: kolom hutang untuk menu Penerimaan ACC (20 Oktober 2026)
+
+- Menu Penerimaan ACC gabungan (`newpobeliacc`) punya kolom tetap **Hutang** berisi badge **Lunas** (hijau) / **Belum** (merah). Nilainya diambil dari kolom baru `hutang` di fungsi `dbo.fnc_MasterBeli`.
+- Perubahan fungsi (hanya menambah, kolom lama tidak berubah):
+  - join `(select nofaktur, sum(kredit-debet) lunas from DBHUTPIUT group by nofaktur) g3 on a.NOBUKTI = g3.NoFaktur`;
+  - kolom `case when ISNULL(lunas,0)=0 then 'Lunas' else 'Belum' end hutang` di akhir SELECT;
+  - `g3.lunas` ditambahkan di GROUP BY.
+- Artinya: sisa hutang per nobukti pembelian di `DBHUTPIUT` = 0 → **Lunas**, selain itu **Belum**. Pembelian yang belum punya baris di `DBHUTPIUT` (mis. belum diotorisasi) juga tampil **Lunas**.
+- Tanpa skrip ini menu Penerimaan ACC tetap jalan, tetapi kolom Hutang kosong (controller memakai `$r->hutang ?? null`).
+- Skrip berisi `ALTER FUNCTION` dengan definisi lengkap, jadi aman dijalankan ulang. Definisi di DBSMLBARU dan DBSMLNEW sudah sama persis.
+- Sudah dijalankan langsung di DBSMLBARU dan DBSMLNEW (server 36.88.190.218) pada 20 Oktober 2026. Untuk server client, jalankan `20_fnc_masterbeli_kolom_hutang.sql`.

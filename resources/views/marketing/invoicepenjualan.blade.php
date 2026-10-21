@@ -3147,11 +3147,14 @@ function ipInitReportTableSekali () {
   });
 }
 
-function tulisTheadHeaderIP (tableSel, cols) {
+// tambahan = <th> kolom tetap di ujung kanan (di luar susunan kolom roda gigi),
+// mis. kolom Piutang tab Invoice.
+function tulisTheadHeaderIP (tableSel, cols, tambahan) {
   let thead = document.querySelector(tableSel + ' thead')
   if (!thead || !window.ReportTable) { return; }
   let headRowHtml = ReportTable.headHtml(cols)
-    .replace('<tr>', '<tr><th style="padding: 4px 12px;">Actions</th>');
+    .replace('<tr>', '<tr><th style="padding: 4px 12px;">Actions</th>')
+    .replace('</tr>', (tambahan || '') + '</tr>');
   thead.setAttribute('style', 'white-space:nowrap;');
   thead.innerHTML = headRowHtml;
 }
@@ -3176,6 +3179,16 @@ function ipNilaiSel (row, col) {
       : '<i class="bi bi-x text-danger" style="-webkit-text-stroke-width: 2px;"></i>';
   }
   return (raw !== undefined && raw !== null) ? raw : '';
+}
+
+// Kolom Piutang ('Lunas'/'Belum') - badge disamakan dengan kolom Hutang menu
+// Penerimaan ACC (pbaBadgeHutang di newpobeliacc.blade.php, .sp-badge di
+// po-table-header.css): Lunas hijau, selain itu merah.
+function ipBadgePiutang (row) {
+  let nilai = ipPickCI(row, 'Piutang');
+  if (nilai === null || nilai === undefined || nilai === '') { return ''; }
+  let kelas = String(nilai).trim().toLowerCase() === 'lunas' ? 'is-active' : 'is-inactive';
+  return '<span class="sp-badge ' + kelas + '">' + nilai + '</span>';
 }
 
 function ipKelasSel (col) {
@@ -3264,7 +3277,9 @@ function ipGambarTabel (urut, rows) {
 
   if ($.fn.DataTable.isDataTable(id)) { $(id).DataTable().clear().destroy(); }
   $(id + ' tbody').empty()
-  tulisTheadHeaderIP(id, cols)
+  // Tab Invoice: kolom Piutang kolom tetap (tidak bisa digeser/disembunyikan)
+  // di ujung kanan, sama seperti kolom Hutang menu Penerimaan ACC.
+  tulisTheadHeaderIP(id, cols, urut === 2 ? '<th style="padding: 4px 12px;">Piutang</th>' : '')
 
   let columns = [{
     data : null, orderable : false, className : 'text-center',
@@ -3276,6 +3291,12 @@ function ipGambarTabel (urut, rows) {
       render : function (d, t, row) { return ipNilaiSel(row, col) }
     })
   })
+  if (urut === 2) {
+    columns.push({
+      data : null, className : 'text-center',
+      render : function (d, t, row) { return ipBadgePiutang(row) }
+    })
+  }
 
   let sumber = urut === 2 ? {
     serverSide : true,

@@ -331,8 +331,24 @@
   {{-- SIDEBAR --}}
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo" onclick="goHome()" style="cursor:pointer;">
-      <div class="logo-icon">SPL</div>
-      <span class="logo-text">PT. SPL</span>
+      {{-- Sama seperti newmasterTest: ikon = Logo NPWP 1 dan nama = Inisial Perusahaan (DBNOMOR.ALIAS)
+           dari menu Set Nomor Transaksi. Belum ada logo / query gagal = teks lama. --}}
+      @php
+        $fileLogoSidebar = \App\Http\Controllers\Berkas\SetNomorTransaksiController::fileLogoSidebar();
+        try {
+          $inisialPerusahaan = trim((string) (\DB::connection('SML')->select('select top 1 ALIAS from DBNOMOR')[0]->ALIAS ?? ''));
+        } catch (\Throwable $e) {
+          $inisialPerusahaan = '';
+        }
+      @endphp
+      @if ($fileLogoSidebar)
+        <div class="logo-icon" style="background:#fff; overflow:hidden;">
+          <img src="{{ url('setnomortransaksilogo') }}?v={{ @filemtime($fileLogoSidebar) }}" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
+        </div>
+      @else
+        <div class="logo-icon">SPL</div>
+      @endif
+      <span class="logo-text">{{ $inisialPerusahaan !== '' ? $inisialPerusahaan : 'PT. SPL' }}</span>
     </div>
     <nav class="sidebar-nav" id="nav"></nav>
 

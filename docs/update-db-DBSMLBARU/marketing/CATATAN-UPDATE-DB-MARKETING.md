@@ -60,3 +60,42 @@ Catatan ini mendaftar perubahan database DBSMLBARU dari pekerjaan menu **marketi
 - Skrip hanya **menambah** (constraint default + 1 baris konfigurasi) dan aman dijalankan ulang.
 - Sudah dijalankan langsung di DBSMLBARU (server 36.88.190.218) pada 14 Oktober 2026.
 - Catatan: Debet Note memakai Kode `'BD'` yang juga belum ada di `DBPOSTHUTPIUT`. Ini belum diubah karena di luar menu Kredit Note.
+
+---
+
+## Invoice Penjualan — kolom Piutang (21 Oktober 2026, tanpa perubahan database)
+
+- Tab **Invoice** menu Invoice Penjualan (`invoicepenjualan`) mendapat kolom tetap **Piutang** di ujung kanan, berisi badge **Lunas** (hijau) / **Belum** (merah). Tampilannya sama dengan kolom Hutang menu Penerimaan ACC (`newpobeliacc`), hanya versi piutang.
+- **Tidak ada objek database yang diubah** (tidak ada view/fungsi/SP baru), jadi tidak ada skrip yang perlu dijalankan di server client. Yang berubah hanya query di `InvoicePenjualanController@sqlInvoicePenjualan`. Query ini hanya membaca tabel yang sudah ada (`DBHUTPIUT`).
+- Tambahan pada query (dari user):
+  - kolom: `case when isnull(h.piutang,0)=0 then 'Lunas' else 'Belum' end Piutang`;
+  - join: `left outer join (select nofaktur,SUM(debet-kredit) piutang from DBHUTPIUT group by nofaktur)h on h.nofaktur=a.nobukti`.
+- Artinya: sisa piutang per nobukti invoice di `DBHUTPIUT` = 0 → **Lunas**, selain itu **Belum**. Invoice yang belum punya baris di `DBHUTPIUT` (mis. belum diotorisasi) juga tampil **Lunas**. Logika ini sama dengan kolom `hutang` di `fnc_MasterBeli` (lihat `../purchasing/20_fnc_masterbeli_kolom_hutang.sql`).
+- Kecepatan diukur di DBSMLBARU (September 2026, 1.011 invoice): 1 halaman tabel 0,2–1 detik.
+- Query lengkap tab Invoice sesudah perubahan:
+
+```sql
+select  A.NoBukti, A.Tanggal, F.NAMACUSTSUPP NamaCustSupp,
+        B.NoSPB, D.Tanggal TglSPB,
+        Isnull(A.IsOtorisasi1,0) IsOtorisasi1, A.OtoUser1, A.TglOto1,
+        Isnull(A.IsBatal,0) Isbatal, A.userBatal, A.tglBatal, A.NoPajak,
+        E.NOBUKTI NOSO, E.TANGGAL TGLSO, E.NoPesanan,
+        G.totdpp, G.totppn, G.totnet,
+        case when isnull(h.piutang,0)=0 then 'Lunas' else 'Belum' end Piutang
+from    dbo.dbInvoicePL A WITH(NOLOCK)
+Left Outer join (Select x.NoBukti, x.NoSPB
+                 from dbo.dbInvoicePLDet x WITH(NOLOCK)
+                 Group by x.NoBukti, x.NoSPB) B on B.NoBukti=A.NoBukti
+LEFT OUTER JOIN (SELECT NOBUKTI,NoSO FROM dbo.dbSPBDet WITH(NOLOCK) GROUP BY NoBukti,NoSO) C ON B.NoSPB=c.NoBukti
+LEFT OUTER JOIN dbo.dbSPB D WITH(NOLOCK) ON C.NoBukti=D.NoBukti
+left Outer join dbo.dbSO E WITH(NOLOCK) on E.Nobukti=C.NoSO
+left outer join dbo.DBCUSTSUPP F WITH(NOLOCK) on F.KODECUSTSUPP=A.KodeCustSupp
+left outer join vwRpDetInvoicePL G on A.NoBukti=G.NoBukti
+left outer join (select nofaktur,SUM(debet-kredit) piutang from DBHUTPIUT group by nofaktur)h on h.nofaktur=a.nobukti
+where   A.Tanggal between ? and ?
+and isnull(A.FlagKasir,0)=0
+And Isnull(A.pJasa,0)=0
+and ( (? = 0)
+   or (? = 1 and isnull(A.IsOtorisasi1,0) = 0)
+   or (? = 2 and isnull(A.IsOtorisasi1,0) <> 0) )
+```
