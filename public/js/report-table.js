@@ -687,6 +687,24 @@
     return (col && (col[3] === "float" || col[3] === "int"));
   }
 
+  /* Judul kolom pajak/total yang masih memakai nama field mentah (TotDPPRp, TNPPN,
+     TotNetRp, "DPP Rp", ...) ditampilkan sebagai DPP / PPN / Total. Hanya aktif di
+     halaman yang memasang window.RT_LABEL_PAJAK = true (menu purchasing & marketing),
+     supaya halaman modul lain yang juga memuat file ini tidak ikut berubah. Hanya
+     tampilan - isi cart (field, header tersimpan) tidak disentuh. */
+  function labelKolom(label) {
+    if (window.RT_LABEL_PAJAK !== true || label == null) { return label; }
+    var k = String(label).toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (/^(tot|total|t|n|tn)?dpp(rp)?$/.test(k)) { return "DPP"; }
+    if (/^(tot|total|t|n|tn)?ppn(rp)?$/.test(k)) { return "PPN"; }
+    // Grand Total berbeda dengan Total - "Grand Total Rp" cukup dibuang Rp-nya.
+    if (k === "grandtotalrp") { return "Grand Total"; }
+    if (k === "tsubtotal") { return "Sub Total"; }
+    if (/^(tot|total|t|n|tn)?(net|netto|nnet)(rp)?$/.test(k) || k === "totalrp") { return "Total"; }
+    return label;
+  }
+  window.rtLabelKolom = labelKolom;
+
   function closestEl(node, sel) {
     return (node && node.closest) ? node.closest(sel) : null;
   }
@@ -729,7 +747,7 @@
       html += '<th class="rt-th' + (num ? " num" : "") + '" data-gidx="' + g + '">';
       html += '  <div class="th-inner" draggable="true">';
       html += '    <span class="th-grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>';
-      html += '    <span class="th-label">' + c[1] + "</span>";
+      html += '    <span class="th-label">' + labelKolom(c[1]) + "</span>";
       html += '    <button type="button" class="th-gear' + (openGidx === g ? " active" : "") +
               '" data-rtgear="' + g + '" title="Setting kolom"><i class="bi bi-gear"></i></button>';
       html += "  </div>";
@@ -1027,7 +1045,7 @@
     var items = "";
     if (hidden.length) {
       hidden.forEach(function (h) {
-        items += '<div class="rt-drop-item" data-rtshow="' + h.idx + '"><span>' + h.col[1] +
+        items += '<div class="rt-drop-item" data-rtshow="' + h.idx + '"><span>' + labelKolom(h.col[1]) +
                  '</span><small>tampilkan</small></div>';
       });
     } else {

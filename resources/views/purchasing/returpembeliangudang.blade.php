@@ -1449,6 +1449,7 @@ td input[type="checkbox"] {
 <script src="{!! URL::asset('js/ajc-func-core.js') !!}"></script>
 {{-- Header tabel interaktif (drag kolom + roda gigi + bar kolom tersembunyi + tombol
      "Reset kolom"), sama dengan newpo.blade.php / uangmukabeli.blade.php. --}}
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
 

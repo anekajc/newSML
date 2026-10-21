@@ -1001,28 +1001,44 @@ class HeaderTableController extends Controller
         $headerisshown = json_decode($headertable[0]->isshown);
         $isparsed = 0;
 
-        // Kolom Hutang sudah digantikan Lunas (isinya sama). Susunan kolom tersimpan yang
-        // masih memuatnya dibuang kolomnya, supaya tidak tampil dua kali.
+        // Susunan kolom tersimpan bisa berasal dari versi lama halaman ini:
+        // - nama field mentah fnc_masterbeli (TotDPPRp, TotPPNRp, TotNetRp, NoBukti, ...)
+        //   -> diganti ke nama kolom sekarang (DPP, PPN, Total, No Bukti, ...);
+        // - kolom Hutang/Lunas -> dibuang. Hutang sekarang kolom tetap (tidak bisa digeser
+        //   atau disembunyikan) yang dipasang langsung di newpobeliacc.blade.php sebelum
+        //   kolom Oto, sama seperti kolom otorisasi - jadi tidak ikut susunan kolom ini.
+        // Kolom yang jadi kembar sesudah diganti namanya disisakan yang pertama. Array tipe
+        // (desimal) tersimpan ikut disusun ulang supaya desimal tiap kolom tidak bergeser.
         if (is_array($headertablevalue)) {
+          $namaLama = [
+            'totdpprp' => ['DPP', 1], 'totdpp' => ['DPP', 1],
+            'totppnrp' => ['PPN', 1], 'totppn' => ['PPN', 1],
+            'totnetrp' => ['Total', 1], 'totnet' => ['Total', 1],
+            'nobukti' => ['No Bukti', 0], 'tanggal' => ['Tanggal', 2], 'tglbeli' => ['Tanggal', 2],
+            'namacustsupp' => ['Nama Supplier', 0], 'keterangan' => ['Keterangan', 0],
+            'nopo' => ['No PO', 0], 'namagudang' => ['Gudang', 0], 'faktursupp' => ['Faktur Supp', 0],
+          ];
+          $tipeTersimpan = json_decode($headertable[0]->tipe);
+          $v = []; $h = []; $s = []; $n = []; $t = [];
           foreach (array_keys($headertablevalue) as $i) {
-            if (strtolower($headertablevalue[$i]) === 'hutang') {
-              unset($headertablevalue[$i], $headertableheader[$i], $headerisshown[$i], $isnumberheadertable[$i]);
-            }
+            $kunci = strtolower(trim((string) $headertablevalue[$i]));
+            if (in_array($kunci, ['hutang', 'lunas'])) { continue; }
+            $nama = $headertablevalue[$i];
+            $tipe = $isnumberheadertable[$i] ?? 0;
+            if (isset($namaLama[$kunci])) { list($nama, $tipe) = $namaLama[$kunci]; }
+            if (in_array($nama, $v)) { continue; }
+            $v[] = $nama;
+            $h[] = isset($namaLama[$kunci]) ? $nama : ($headertableheader[$i] ?? $nama);
+            $s[] = $headerisshown[$i] ?? 1;
+            $n[] = $tipe;
+            $t[] = (is_array($tipeTersimpan) && isset($tipeTersimpan[$i])) ? $tipeTersimpan[$i] : null;
           }
-          $headertablevalue    = array_values($headertablevalue);
-          $headertableheader   = array_values($headertableheader);
-          $headerisshown       = array_values($headerisshown);
-          $isnumberheadertable = array_values($isnumberheadertable);
-        }
 
-        // Kolom Lunas ditambahkan belakangan (lihat $default di bawah). Susunan kolom yang
-        // sudah tersimpan milik user tidak memuatnya, jadi ditambahkan di ujung kanan supaya
-        // tetap muncul tanpa perlu mereset dbheadertable tiap user.
-        if (is_array($headertablevalue) && !in_array('Lunas', $headertablevalue)) {
-          $headertablevalue[]    = 'Lunas';
-          $headertableheader[]   = 'Lunas';
-          $headerisshown[]       = 1;
-          $isnumberheadertable[] = 0;
+          $headertablevalue    = $v;
+          $headertableheader   = $h;
+          $headerisshown       = $s;
+          $isnumberheadertable = $n;
+          $headertable[0]->tipe = json_encode($t);
         }
       } else {
         $isparsed = 1;
@@ -1041,7 +1057,6 @@ class HeaderTableController extends Controller
           'DPP'           => 1,
           'PPN'           => 1,
           'Total'         => 1,
-          'Lunas'         => 0,
         ];
         foreach ($default as $key => $tipe) {
           array_push($headertablevalue, $key);

@@ -2398,7 +2398,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
           <th style="padding: 4px 12px;" scope="col">Sat</th>
           <th style="padding: 4px 12px;" scope="col">Harga</th>
           <th style="padding: 4px 12px;" scope="col">Diskon</th>
-          <th style="padding: 4px 12px;" scope="col">NDPP</th>
+          <th style="padding: 4px 12px;" scope="col">DPP</th>
           <!-- <th scope="col">Actions</th> -->
 
         </tr>
@@ -2530,6 +2530,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 {{-- window.ReportTable: header tabel interaktif (drag kolom, roda gigi, bar kolom
      tersembunyi, tombol "Reset kolom"). File-nya berupa IIFE ber-guard, aman meski
      dimuat lebih dari sekali. --}}
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 
 <script type="text/javascript">

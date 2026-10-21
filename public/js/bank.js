@@ -6788,8 +6788,12 @@ function buttonBatalOtorisasi (nobukti) {
 
 
 
-  alertify.confirm('Batal Otorisasi', 'Batal Otorisasi Bank ' + nobukti + ' ?',
-      function() {
+  alertify.prompt('Batal Otorisasi', 'Masukkan alasan batal otorisasi Bank ' + nobukti, '',
+      function(evt, value) {
+        if (!value || value.trim() == '') {
+          alertify.warning('Alasan harus diisi.');
+          return false;
+        }
         let _token = $("#_token").val();
 
         $.ajax({
@@ -6798,7 +6802,8 @@ function buttonBatalOtorisasi (nobukti) {
           async: false,
           data: {
             _token,
-            nobukti
+            nobukti,
+            pket: value.trim()
 
           },
           success: function(res) {

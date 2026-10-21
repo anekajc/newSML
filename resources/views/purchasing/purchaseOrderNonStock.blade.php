@@ -2765,7 +2765,7 @@
           <th style="padding: 4px 12px;" scope="col">Sat</th>
           <th style="padding: 4px 12px;" scope="col">Harga</th>
           <th style="padding: 4px 12px;" scope="col">Diskon</th>
-          <th style="padding: 4px 12px;" scope="col">NDPP</th>
+          <th style="padding: 4px 12px;" scope="col">DPP</th>
           <!-- <th scope="col">Actions</th> -->
 
         </tr>
@@ -2898,6 +2898,7 @@
 {{-- window.ReportTable: header tabel interaktif (drag kolom, roda gigi, bar kolom
      tersembunyi, tombol "Reset kolom"). File-nya berupa IIFE ber-guard, aman meski
      dimuat lebih dari sekali. --}}
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
 {{-- Modal pemilih (purchasing/modals/modalPONonStockAdd, #form) disamakan persis dengan modal

@@ -2908,7 +2908,7 @@
                   <th scope="col">Sat</th>
                   <th scope="col">Harga</th>
                   <th scope="col">Diskon</th>
-                  <th scope="col">NDPP</th>
+                  <th scope="col">DPP</th>
 
 
                 </tr>
@@ -3238,6 +3238,7 @@
 
 @section('js')
 @include('marketing.partials.tampilan-purchasing-js')
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{{ asset('js/report-table.js') }}"></script>
 <script type="text/javascript">
 

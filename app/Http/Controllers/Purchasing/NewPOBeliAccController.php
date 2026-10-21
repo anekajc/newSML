@@ -102,8 +102,8 @@ class NewPOBeliAccController extends Controller
       $r->{'DPP'}           = $r->TotDPP;
       $r->{'PPN'}           = $r->TotPPN;
       $r->{'Total'}         = $r->TotNet;
-      // 'Lunas'/'Belum' dari kolom hutang fnc_masterbeli.
-      $r->{'Lunas'}         = $r->hutang ?? null;
+      // Status 'Lunas'/'Belum' dari kolom hutang fnc_masterbeli (ditampilkan sebagai badge).
+      $r->{'Hutang'}        = $r->hutang ?? null;
       return $r;
     };
 

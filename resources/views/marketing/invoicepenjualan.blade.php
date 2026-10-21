@@ -2890,6 +2890,7 @@
      default. Without this tag, tulisTheadHeaderIP() below no-ops on every call
      (its own guard is `if (!thead || !window.ReportTable) return`), which is
      why the column headers never appeared. --}}
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{{ asset('js/report-table.js') }}"></script>
 <script type="text/javascript">
 

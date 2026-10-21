@@ -3407,7 +3407,7 @@ td input[type="checkbox"] {
           <th style="padding: 4px 12px;" scope="col">Sat</th>
           <th style="padding: 4px 12px;" scope="col">Harga</th>
           <th style="padding: 4px 12px;" scope="col">Diskon</th>
-          <th style="padding: 4px 12px;" scope="col">NDPP</th>
+          <th style="padding: 4px 12px;" scope="col">DPP</th>
           <!-- <th scope="col">Actions</th> -->
 
         </tr>
@@ -3606,6 +3606,7 @@ td input[type="checkbox"] {
 @endsection
 
 @section('js')
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
 {{-- Modal pemilih bersama (purchasing/modals/modalPOAdd, #form) disamakan persis dengan modal
@@ -5982,9 +5983,9 @@ function psoDefaultCart (urut) {
       ['Tanggal',      'Tanggal',            1, 'date',    0, 0],
       ['NamaCustSupp', 'Customer',           1, 'varchar', 0, 0],
       ['NOSO',         'No. SO',             1, 'varchar', 0, 0],
-      ['TotDPPRp',     'DPP Rp',             1, 'float',   0, 2],
-      ['TotPPNRp',     'PPN Rp',             1, 'float',   0, 2],
-      ['TotNetRp',     'Grand Total Rp',     1, 'float',   0, 2],
+      ['TotDPPRp',     'DPP',             1, 'float',   0, 2],
+      ['TotPPNRp',     'PPN',             1, 'float',   0, 2],
+      ['TotNetRp',     'Grand Total',      1, 'float',   0, 2],
       ['IsOtorisasi1', 'Oto1',               1, 'bool',    0, 0],
       ['OtoUser1',     'User Oto1',          1, 'varchar', 0, 0],
       ['TglOto1',      'Tgl Oto1',           1, 'date',    0, 0],
@@ -6020,9 +6021,9 @@ function psoDefaultCart (urut) {
     ['Tanggal',      'Tanggal',             1, 'date',    0, 0],
     ['NamaCustSupp', 'Customer',            1, 'varchar', 0, 0],
     ['NOSO',         'No. SO',              1, 'varchar', 0, 0],
-    ['TotDPPRp',     'DPP Rp',              1, 'float',   0, 2],
-    ['TotPPNRp',     'PPN Rp',              1, 'float',   0, 2],
-    ['TotNetRp',     'Grand Total Rp',      1, 'float',   0, 2],
+    ['TotDPPRp',     'DPP',              1, 'float',   0, 2],
+    ['TotPPNRp',     'PPN',              1, 'float',   0, 2],
+    ['TotNetRp',     'Grand Total',       1, 'float',   0, 2],
     ['IsOtorisasi1', 'Authorized 1',        1, 'bool',    0, 0],
     ['OtoUser1',     'Authorized User',     1, 'varchar', 0, 0],
     ['TglOto1',      'Authorized Date 1',   1, 'date',    0, 0],
