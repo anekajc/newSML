@@ -2648,6 +2648,13 @@ function onChangeCatatan () {
     return
   }
 
+  // Add baru: header dbPRRBeli baru dibuat saat item pertama disimpan (submitAddAdd
+  // ikut mengirim Keterangan), jadi sebelum ada item tidak ada yang perlu di-update.
+  // Dulu tetap dikirim sehingga muncul "Perintah retur ... tidak ditemukan".
+  if (!dataTableAdd.length) {
+    return
+  }
+
   let value = $("#input_add_keterangan").val()
   let _token = $("#_token").val()
 
@@ -6443,8 +6450,9 @@ if (isEmpty(kodeBeli)){
 
       renderModalPickTable(
         ['Kode Barang', 'Nama Barang'],
-        dataRefresh.map(item => [item.KODEBRG, item.NAMABRG]),
-        dataRefresh.map(item => () => buttonSelectBarang(item.KODEBRG, item.NAMABRG, item.QntTerima, item.SATUAN, item.NOSAT, item.ISI1, item.ISI2, item.URUT, '0'))
+        // prblistbarangJualDanBeli mengembalikan NamaBrg / UrutPbl / UrutPrj (bukan NAMABRG / URUT).
+        dataRefresh.map(item => [item.KODEBRG, item.NamaBrg]),
+        dataRefresh.map(item => () => buttonSelectBarang(item.KODEBRG, item.NamaBrg, item.QntTerima, item.SATUAN, item.NOSAT, item.ISI1, item.ISI2, item.UrutPbl, item.UrutPrj))
       );
     },
   });
