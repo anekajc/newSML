@@ -25,7 +25,7 @@
           <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
         </svg>
       </div>
-      <p class="brand-name">SPL</p>
+      <p class="brand-name">SML</p>
       <p class="brand-subtitle">ERP</p>
       {{-- <div class="feature-list">
         <div class="feature-item">
