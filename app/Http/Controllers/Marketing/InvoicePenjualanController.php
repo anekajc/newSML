@@ -97,7 +97,8 @@ order by A.NoBukti
                 Isnull(A.IsOtorisasi1,0) IsOtorisasi1, A.OtoUser1, A.TglOto1,
                 Isnull(A.IsBatal,0) Isbatal, A.userBatal, A.tglBatal, A.NoPajak,
                 E.NOBUKTI NOSO, E.TANGGAL TGLSO, E.NoPesanan,
-                G.totdpp, G.totppn, G.totnet
+                G.totdpp, G.totppn, G.totnet,
+                case when isnull(h.piutang,0)=0 then 'Lunas' else 'Belum' end Piutang
         from	dbo.dbInvoicePL A WITH(NOLOCK)
         Left Outer join (Select x.NoBukti, x.NoSPB
                          from dbo.dbInvoicePLDet x  WITH(NOLOCK)
@@ -107,6 +108,7 @@ order by A.NoBukti
         left Outer join dbo.dbSO E WITH(NOLOCK) on E.Nobukti=C.NoSO
         left outer join dbo.DBCUSTSUPP F WITH(NOLOCK) on F.KODECUSTSUPP=A.KodeCustSupp
         left outer join vwRpDetInvoicePL G on A.NoBukti=G.NoBukti
+        left outer join (select nofaktur,SUM(debet-kredit) piutang from DBHUTPIUT group by nofaktur)h on h.nofaktur=a.nobukti
         where	A.Tanggal between ? and ?
         and isnull(A.FlagKasir,0)=0
         And Isnull(A.pJasa,0)=0
