@@ -1893,6 +1893,7 @@
 
 @section('js')
 @include('marketing.partials.tampilan-purchasing-js')
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{{ asset('js/report-table.js') }}"></script>
 <script src="{{ asset('js/headerEngine.js') }}?v={{ filemtime(public_path('js/headerEngine.js')) }}"></script>
 <script type="text/javascript">

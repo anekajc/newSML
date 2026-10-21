@@ -513,6 +513,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 {{-- window.ReportTable: header tabel interaktif (drag kolom, roda gigi, bar kolom
      tersembunyi, tombol "Reset kolom"). File-nya berupa IIFE ber-guard, aman meski
      dimuat lebih dari sekali. --}}
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 
 <script type="text/javascript">

@@ -7062,8 +7062,12 @@ function buttonBatalOtorisasi (nobukti) {
   // Kelas 'ajs-app-buttons' + 'is-danger' ditempel ke root dialog supaya CSS tombol
   // OK/Cancel di public/css/report-table.css (blok "gaya bersama") ikut jalan;
   // 'is-danger' bikin tombol OK merah karena batal otorisasi aksi merusak.
-  var dlgBatalOtorisasi = alertify.confirm('Batal Otorisasi', 'Batal Otorisasi Kas ' + nobukti + ' ?',
-      function() {
+  var dlgBatalOtorisasi = alertify.prompt('Batal Otorisasi', 'Masukkan alasan batal otorisasi Kas ' + nobukti, '',
+      function(evt, value) {
+        if (!value || value.trim() == '') {
+          alertify.warning('Alasan harus diisi.');
+          return false;
+        }
         let _token = $("#_token").val();
 
         $.ajax({
@@ -7072,7 +7076,8 @@ function buttonBatalOtorisasi (nobukti) {
           async: false,
           data: {
             _token,
-            nobukti
+            nobukti,
+            pket: value.trim()
 
           },
           success: function(res) {

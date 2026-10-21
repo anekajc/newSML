@@ -1803,6 +1803,7 @@ td input[type="checkbox"] {
 @section('js')
 {{-- Header tabel interaktif (drag kolom + roda gigi + bar kolom tersembunyi + tombol
      "Reset kolom"), disamakan dengan newpo.blade.php. --}}
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
   <script type="text/javascript">
 
@@ -2473,7 +2474,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
 
     // Field dari vwBrowsOutBeli/vwTransInvoice tidak semuanya ramah dibaca - label yang
     // tampil ke user dipasang di sini, bukan lewat DBHEADERTABLEALIAS (kosong untuk href ini).
-    const IPB_LABEL_1 = { NoBukti: 'No. Bukti', TANGGAL: 'Tanggal', KODECUSTSUPP: 'Kode Supp', NAMACUSTSUPP: 'Nama Supplier', NoPO: 'No. PO', TNDPP: 'DPP', TNPPN: 'PPN', TSUBTOTAL: 'Total' }
+    const IPB_LABEL_1 = { NoBukti: 'No. Bukti', TANGGAL: 'Tanggal', KODECUSTSUPP: 'Kode Supp', NAMACUSTSUPP: 'Nama Supplier', NoPO: 'No. PO', TNDPP: 'DPP', TNPPN: 'PPN', TSUBTOTAL: 'Sub Total' }
     const IPB_LABEL_2 = { NoBukti: 'No. Bukti', Tanggal: 'Tanggal', KODECUSTSUPP: 'Kode Supp', NamaCustSupp: 'Nama Supplier', NoPO: 'No. PO', TotDPPRp: 'DPP', TotPPNRp: 'PPN', TotNetRp: 'Total', OtoUser1: 'User Oto 1', TglOto1: 'Tgl Oto 1' }
 
     window.g_href = IPB_HREF

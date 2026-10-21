@@ -985,6 +985,7 @@ WHERE KODESUPP= :custsupp and IDuser= :username", ["custsupp" => $req->custsupp 
   public function spBatalOtorisasi (Request $req) {
     $tanggal = date('Y-m-d H:i:s');
     $res = DB::connection('SML')->update("update dbtrans set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti", [ "nobukti" => $req->nobukti]);
+    app('App\Http\Controllers\GlobalController')->LoggingData('btloto', 'BANK', $req->nobukti, $req->pket, 0, 'dbtrans');
     return $res;
   }
 

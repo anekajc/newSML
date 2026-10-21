@@ -1224,9 +1224,9 @@ td input[type="checkbox"] {
                         <th style="padding: 4px 12px; " scope="col">Tanggal Kirim</th>
                         <th style="padding: 4px 12px; " scope="col">No. SO</th>
                         <th style="padding: 4px 12px; " scope="col">PO. Cust</th>
-                        <th style="padding: 4px 12px; " scope="col">DPP Rp</th>
-                        <th style="padding: 4px 12px; " scope="col">PPN Rp</th>
-                        <th style="padding: 4px 12px; " scope="col">Grand Total Rp</th>
+                        <th style="padding: 4px 12px; " scope="col">DPP</th>
+                        <th style="padding: 4px 12px; " scope="col">PPN</th>
+                        <th style="padding: 4px 12px; " scope="col">Grand Total</th>
                         <th style="padding: 4px 12px; " scope="col">Oto1</th>
                         <th style="padding: 4px 12px; " scope="col">User Oto1</th>
                         <th style="padding: 4px 12px; " scope="col">Tgl Oto1</th>
@@ -1394,9 +1394,9 @@ td input[type="checkbox"] {
                         <th style="padding: 4px 12px; " scope="col">Tanggal Kirim</th>
                         <th style="padding: 4px 12px; " scope="col">No. SO</th>
                         <th style="padding: 4px 12px; " scope="col">PO. Cust</th>
-                        <th style="padding: 4px 12px; " scope="col">DPP Rp</th>
-                        <th style="padding: 4px 12px; " scope="col">PPN Rp</th>
-                        <th style="padding: 4px 12px; " scope="col">Grand Total Rp</th>
+                        <th style="padding: 4px 12px; " scope="col">DPP</th>
+                        <th style="padding: 4px 12px; " scope="col">PPN</th>
+                        <th style="padding: 4px 12px; " scope="col">Grand Total</th>
                         <th style="padding: 4px 12px; " scope="col">Authorized 1</th>
                         <th style="padding: 4px 12px; " scope="col">Authorized User</th>
                         <th style="padding: 4px 12px; " scope="col">Authorized Date 1</th>
@@ -3348,7 +3348,7 @@ td input[type="checkbox"] {
           <th style="padding: 4px 12px;" scope="col">Sat</th>
           <th style="padding: 4px 12px;" scope="col">Harga</th>
           <th style="padding: 4px 12px;" scope="col">Diskon</th>
-          <th style="padding: 4px 12px;" scope="col">NDPP</th>
+          <th style="padding: 4px 12px;" scope="col">DPP</th>
           <!-- <th scope="col">Actions</th> -->
 
         </tr>
@@ -3990,6 +3990,7 @@ td input[type="checkbox"] {
      tersembunyi, tombol "Reset kolom"). Dimuat di halaman ini saja, bukan di layout
      purchasing/newmasterx, supaya halaman purchasing yang lain tidak ikut terpengaruh.
      File-nya berupa IIFE ber-guard, jadi aman meski dimuat lebih dari sekali. --}}
+<script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
 {{-- Modal pemilih bersama (purchasing/modals/modalPOAdd, #form) disamakan persis dengan modal
