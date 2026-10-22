@@ -141,6 +141,13 @@ order by a.urut" , ["nobukti" => $req->nobukti, "nobukti2" => $req->nobukti]);
     return '';
   }
 
+  // Input angka di form tampil dengan separator ribuan (koma); dibersihkan lagi di sini -
+  // (float) '1,000.00' terbaca 1, sehingga cekNilai bisa salah menilai.
+  private function angka ($nilai) {
+    $bersih = str_replace(',', '', trim((string) $nilai));
+    return is_numeric($bersih) ? (float) $bersih : 0;
+  }
+
   private function tanggalServer () {
     return DB::connection('SML')->select("select convert(varchar(10), getdate(), 23) tanggal")[0]->tanggal;
   }
@@ -310,7 +317,7 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
           return ["status" => 0, "pesan" => "Invoice " . $noinv . " sudah dipakai di KN " . $dipakai[0]->NoBukti];
         }
         $infoInv[$noinv] = $this->infoInvoice($noinv);
-        $salah = $this->cekNilai($noinv, $d['KodeVls'] ?? '', $d['inputNilai'] ?? 0, $d['inputKurs'] ?? 0, $infoInv[$noinv]);
+        $salah = $this->cekNilai($noinv, $d['KodeVls'] ?? '', $this->angka($d['inputNilai'] ?? 0), $this->angka($d['inputKurs'] ?? 0), $infoInv[$noinv]);
         if ($salah !== '') {
           return ["status" => 0, "pesan" => $salah];
         }
@@ -350,10 +357,10 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
           0,
           $d['NoFaktur'],
           $req->kodecustsupp,
-          $d['inputNilai'],
+          $this->angka($d['inputNilai'] ?? 0),
           $d['KodeVls'],
-          $d['inputKurs'],
-          $d['inputNilaiRp'],
+          $this->angka($d['inputKurs'] ?? 0),
+          $this->angka($d['inputNilaiRp'] ?? 0),
           $req->nourut
 
 
@@ -390,7 +397,7 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
       return ["status" => 0, "pesan" => "Item KN tidak ditemukan, mungkin sudah dihapus"];
     }
     if ($req->choice == 'U') {
-      $salah = $this->cekNilai($item[0]->NoInv, $item[0]->KodeVLS, $req->nilai, $req->kurs, $this->infoInvoice($item[0]->NoInv));
+      $salah = $this->cekNilai($item[0]->NoInv, $item[0]->KodeVLS, $this->angka($req->nilai), $this->angka($req->kurs), $this->infoInvoice($item[0]->NoInv));
       if ($salah !== '') {
         return ["status" => 0, "pesan" => $salah];
       }
@@ -406,10 +413,10 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
       // Rp dihitung ulang dengan rumus yang sama seperti di browser (nilai x kurs).
       $item[0]->NoInv,
       $req->kodecustsupp,
-      $req->nilai ?: 0,
+      $this->angka($req->nilai),
       $item[0]->KodeVLS,
-      $req->kurs ?: 0,
-      round((float) $req->nilai * (float) $req->kurs, 2),
+      $this->angka($req->kurs),
+      round($this->angka($req->nilai) * $this->angka($req->kurs), 2),
 
     ]);
 

@@ -214,3 +214,14 @@ Jalan keluarnya, pilih salah satu:
 - **Hasil uji langsung** (jumlah invoice hutang yang tampil, semua supplier): DBSMLNEW 828 → 516, DBSMLBARU 1.004 → 678. Supplier 165: `123123` tidak tampil lagi, `SML/LPB/00050–00053/0526` tetap tampil di DBSMLNEW (belum ada pelunasan) dan tidak tampil di DBSMLBARU (sudah lunas). Supplier K015 di DBSMLNEW tinggal 1 invoice.
 - **Sisa pembulatan dianggap lunas** (keputusan user 22 Oktober 2026): invoice tampil hanya kalau sisanya **>= 1** (IDR atau valas). Sisa di belakang koma tidak ditampilkan, contohnya `PI201500842.` (M037, 0,03), `SML/LPB/00216/0824` (0,07), dan `SML/LPB/00224/0724` (0,04) milik C023. Data `DBHUTPIUT`-nya tidak diubah. Dengan batas ini, Debet Note tampil 513 invoice di DBSMLNEW dan 675 di DBSMLBARU.
 - Modal Invoice juga dirapikan (kolom cari terpotong header). Ini hanya perubahan tampilan.
+
+---
+
+## 23 — Debet Note: Otorisasi memposting ke DBHUTPIUT & jurnal + separator angka (22 Oktober 2026, tanpa perubahan database)
+
+- **Gejala:** Debet Note tidak pernah masuk `DBHUTPIUT`/`DBJurnalOto`.
+- **Penyebab:** `PembelianPermintaanDebetNoteController::updateOtorisasi` hanya mengubah flag `IsOtorisasi1`, tanpa memanggil `sp_ProsesPostingHutPiut` / `sp_ProsesPostingJurnalOto`. Kredit Note sudah memanggilnya. SP dan `vwPostHutPiut` bagian DN sudah benar: tabel `DBDEBETNOTE` dipetakan ke jenis `DN`, dan baris yang diambil hanya DN dengan `IsOtorisasi1 = 1`.
+- **Perubahan (controller):** Otorisasi menjalankan kedua SP dengan TipeProses 1 (`'', 'DBDEBETNOTE', bulan, tahun, nobukti, 1`). Batal Otorisasi menjalankan kedua SP dengan TipeProses 0 untuk menghapus posting. DN tetap masuk `DBHUTPIUT` saat **diotorisasi**, bukan saat dibuat, sama seperti KN, pembelian, dan desktop.
+- **Uji (di-ROLLBACK) di DBSMLNEW** dengan `SML/DN/00001/1026` (M028, invoice `SML/LPB/00133/0326`, 2 USD × 18.000). Hasilnya 1 baris `DBHUTPIUT` HT 21201 dengan Debet 36.000 dan DebetD 2, sehingga saldo invoice turun dari 1.046.932 menjadi 1.010.932. Jurnal yang terbentuk: 21201 / lawan 51300 sebesar 36.000.
+- **Data lama:** saat dicek, DN di DBSMLNEW (`SML/DN/00001/0926`, `SML/DN/00001/1026`) belum diotorisasi, dan DBSMLBARU belum punya DN. Jadi tidak ada data yang perlu diposting ulang.
+- **Separator:** tabel Add/Edit/Detail, modal Invoice, dan form Edit Item diberi separator ribuan. Input Nilai/Kurs diketik dengan separator, lalu dikirim sebagai angka bersih. Controller juga membuang koma (`angka()`). Kolom **Nilai Inv** untuk invoice valas sekarang menampilkan `SaldoD` (dulu `Saldo` Rp, mis. 1,046,932.00 untuk invoice USD 60). Hapus item memakai data item itu sendiri, bukan isi form Edit. `formatAngka` lama yang salah untuk angka minus (`-,360,000.00`) juga diperbaiki.
