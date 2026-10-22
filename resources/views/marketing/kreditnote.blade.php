@@ -135,6 +135,23 @@
 .data-table td {
   white-space: nowrap;
 }
+
+#input_search_invoice_kreditnote {
+  width: 260px;
+  max-width: 100%;
+  font-size: 13px;
+  padding: 7px 10px 7px 32px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236b7280' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+}
+#input_search_invoice_kreditnote:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px #e8edff;
+}
 </style>
 @include('marketing.partials.tampilan-purchasing-css')
 @endsection
@@ -1295,15 +1312,13 @@
       <div id="" class="">
       <div class="modal-body">
 
-        <div class="container-fluid mt-4" >
-          <div class="row">
-            <div class="col-12">
-              <h3>Invoice</h3>
-            </div>
+        <div class="container-fluid" >
+          {{-- Judul "Invoice" ganda + margin-top:-60px diganti kotak cari (sama dengan Debet Note). --}}
+          <div class="d-flex justify-content-end mb-3">
+            <input id="input_search_invoice_kreditnote" type="search" class="form-control" placeholder="Cari data" onkeyup="searchInvoiceKreditNote(event)">
           </div>
-          <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
           <div class="row">
-            <div class="col-12" style="overflow:auto; margin-top:-60px; ">
+            <div class="col-12" style="overflow:auto;">
             <!-- <div class="container-fluid"> -->
 
 
@@ -2127,8 +2142,17 @@ function buttonAddPickInvoice () {
 }
 
 
+function searchInvoiceKreditNote (event) {
+  let keyword = event.target.value.toLowerCase()
+  $('#tabel_data_add_list_invoice tr').each(function () {
+    let text = $(this).text().toLowerCase()
+    $(this).toggle(text.indexOf(keyword) > -1)
+  })
+}
+
 function buttonAddListInvoice () {
   listInvoice = []
+  $('#input_search_invoice_kreditnote').val('')
 
   console.log('buttonAddListInvoice')
 

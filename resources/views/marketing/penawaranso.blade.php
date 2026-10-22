@@ -944,7 +944,6 @@ td input[type="checkbox"] {
       <div class="card-body">
         <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
           <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true">Penawaran SO</a>
-          <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">Otorisasi</a>
         </div>
       </div>
     </div>
@@ -966,12 +965,12 @@ td input[type="checkbox"] {
                         <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Kode Barang</th>
                         <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Nama Barang</th>
                         <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Sat</th>
-                        <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Qnt</th>
-                        <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Qnt PO</th>
+                        <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Qty</th>
+                        <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Qty PO</th>
                         <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Sisa PR</th>
                         <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Keterangan</th>
                         <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Out. SO</th>
-                        <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Qnt Stock</th>
+                        <th style="padding: 4px 12px; white-space:nowrap;" scope="col">Qty Stock</th>
 
                       </tr>
                     </thead>
@@ -1019,44 +1018,18 @@ td input[type="checkbox"] {
                     <div class="po-len-wrap"><label for="psoLen1">Tampilkan</label>
                       <select id="psoLen1" class="po-len-inp"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="-1">Semua</option></select>
                     </div>
+                    <button class="po-btn-filter" type="button" onclick="$('#modalFilterPSO').modal('show')">
+                      <i class="bi bi-funnel"></i> Filter
+                    </button>
                     <div class="po-toolbar-act">
                       <button id='AddVisibility' class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
                     </div>
                   </div>
-                  <div id="rtBarTabel2"></div>
-                  <table id="tabel2" class="data-table po-aksi-hover">
-                    <thead class="text-center " style="white-space:nowrap;"></thead>
-                    <tbody id="tabel2_data" class="text-left"></tbody>
-                  </table>
-                  <div class="po-rt-hint"><i class="bi bi-info-circle"></i> Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom untuk menyembunyikan kolom atau mengatur jumlah desimal.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-            <div class="row">
-              <div class="col-md-12">
-                <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
-                  <div class="po-toolbar">
-                    <div class="po-filter-wrap">
-                      <label>Periode</label>
-                      <input type="date" onchange="onChangePeriodePSO2()" class="po-filter-inp" id="input_tanggalawal_pso2" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->startOfMonth()->format('Y-m-d') !!}">
-                      <span class="po-filter-sep">s/d</span>
-                      <input type="date" onchange="onChangePeriodePSO2()" class="po-filter-inp" id="input_tanggalakhir_pso2" value="{!! \Carbon\Carbon::now()->month((int) $periode->bulan)->endOfMonth()->format('Y-m-d') !!}">
-                    </div>
-                    <input type="search" id="psoSearch2" class="po-search-inp" placeholder="Cari data">
-                    <div class="po-len-wrap"><label for="psoLen2">Tampilkan</label>
-                      <select id="psoLen2" class="po-len-inp"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="-1">Semua</option></select>
-                    </div>
-                    <button class="po-btn-filter" type="button" onclick="$('#modalFilterPSO').modal('show')">
-                      <i class="bi bi-funnel"></i> Filter
-                    </button>
-                  </div>
 
                   {{-- Filter modal: so.blade.php's exact modalFilter markup/classes (rt-filter,
                        rt-section, rt-active-badge, rt-footer-buttons, rt-btn), just one Status
-                       Otorisasi field instead of SO's multi-field filter. --}}
+                       Otorisasi field instead of SO's multi-field filter. Tab Otorisasi lama sudah
+                       digabung ke tab ini; data sudah/belum otorisasi dipilih lewat filter ini. --}}
                   <div class="modal fade rt-filter" id="modalFilterPSO">
                     <div class="modal-dialog modal-md">
                       <div class="modal-content">
@@ -1078,8 +1051,8 @@ td input[type="checkbox"] {
                               <div>
                                 <label class="rt-field-label" for="psoStatusOtorisasi">Otorisasi</label>
                                 <select class="rt-native" id="psoStatusOtorisasi">
-                                  <option value="0">Semua</option>
-                                  <option value="2" selected>Sudah</option>
+                                  <option value="0" selected>Semua</option>
+                                  <option value="2">Sudah</option>
                                   <option value="1">Belum</option>
                                 </select>
                               </div>
@@ -1100,10 +1073,10 @@ td input[type="checkbox"] {
                     </div>
                   </div>
 
-                  <div id="rtBarTabel3"></div>
-                  <table id="tabel3" class="data-table po-aksi-hover">
+                  <div id="rtBarTabel2"></div>
+                  <table id="tabel2" class="data-table po-aksi-hover">
                     <thead class="text-center " style="white-space:nowrap;"></thead>
-                    <tbody id="tabel3_data" class="text-left"></tbody>
+                    <tbody id="tabel2_data" class="text-left"></tbody>
                   </table>
                   <div class="po-rt-hint"><i class="bi bi-info-circle"></i> Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom untuk menyembunyikan kolom atau mengatur jumlah desimal.</div>
                 </div>
@@ -1326,7 +1299,7 @@ td input[type="checkbox"] {
 
                 <div class="col-md-6" style="margin-top:-10px;">
               <div class="form-group">
-                <input type="number" class="form-control text-right" onchange="onChangeFreight()" id="input_add_freight"  placeholder="0.00">
+                <input type="text" inputmode="decimal" class="form-control text-right pso-angka" onchange="onChangeFreight()" id="input_add_freight" placeholder="0.00">
               </div>
             </div>
 
@@ -1814,18 +1787,16 @@ td input[type="checkbox"] {
                 <tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
-                  <th style="padding: 4px 12px;" scope="col">Qnt</th>
+                  <th style="padding: 4px 12px;" scope="col">Qty</th>
                   <th style="padding: 4px 12px;" scope="col">Sat</th>
                   <th style="padding: 4px 12px;" scope="col">Harga</th>
                   <th style="padding: 4px 12px;" scope="col">Diskon</th>
                   <th style="padding: 4px 12px;" scope="col">Sub Total</th>
-                  <th style="padding: 4px 12px;" scope="col">No. PR</th>
                   <th style="padding: 4px 12px;" scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody id="tabel_data_add" class="text-left" >
                 <tr>
-                  <td>1</td>
                   <td>1</td>
                   <td>1</td>
                   <td>1</td>
@@ -1937,7 +1908,7 @@ td input[type="checkbox"] {
                   </div>
                   <div class="col-md-6">
                     <div class="form-group">
-                      <input type="number" class="form-control text-right" id="input_add_add_qty" onblur="cekQntStock()" value="0.00" >
+                      <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_qty" onblur="cekQntStock()" value="0.00" >
                     </div>
                   </div>
                 </div>
@@ -2060,7 +2031,7 @@ td input[type="checkbox"] {
                         </div>
                         <div class="col-md-6">
                           <div class="form-group">
-                            <input type="number" class="form-control text-right" onchange="onChangeInputAddAddHarga()" id="input_add_add_harga" value="0.00" >
+                            <input type="text" inputmode="decimal" class="form-control text-right pso-angka" onchange="onChangeInputAddAddHarga()" id="input_add_add_harga" value="0.00" >
                           </div>
                         </div>
                       </div>
@@ -2077,7 +2048,7 @@ td input[type="checkbox"] {
 
                         <div class="col-md-6">
                           <div class="form-group">
-                            <input type="number" class="form-control text-right" id="input_add_add_isi" value="0.00" >
+                            <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_isi" value="0.00" >
                            <!-- <input type="number" class="form-control text-right" id="input_add_add_discrp" onchange="reverseCalculateDiscPercent()" tabindex="7"> -->
                           </div>
                         </div>
@@ -2135,7 +2106,7 @@ td input[type="checkbox"] {
 
                     <div class="col-md-3" style="margin-top:-17px;">
                       <div class="form-group">
-                       <input type="number" min="1" max="100" class="form-control text-right" id="input_add_add_discpersen1" value=0 onChange='calculateDiscRp()' >
+                       <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_discpersen1" value="0.00" onChange="calculateDiscRp()" >
 
                       </div>
                     </div>
@@ -2152,7 +2123,7 @@ td input[type="checkbox"] {
                         <div class="col-md-6">
                           <div class="form-group">
                             <input type="hidden" class="form-control text-right" id="input_add_add_hargaAwal" value="0.00">
-                           <input type="number" class="form-control text-right" id="input_add_add_discrp" onchange="reverseCalculateDiscPercent()" >
+                           <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_discrp" onchange="reverseCalculateDiscPercent()" value="0.00" >
                           </div>
                         </div>
                       </div>
@@ -2510,7 +2481,7 @@ td input[type="checkbox"] {
           <thead class="text-center">
             <tr>
               <th scope="col">Tanggal</th>
-              <th scope="col">Qnt</th>
+              <th scope="col">Qty</th>
               <th scope="col">Satuan</th>
               <th scope="col">Valas</th>
               <th scope="col">Kurs</th>
@@ -2738,7 +2709,7 @@ td input[type="checkbox"] {
     <div class="col">
       <div class="form-group">
         <label>Disc %</label>
-        <input type="number" class="form-control text-right" id="input_add_disc" onblur="onChangeInputAddDisc()" value="0.00">
+        <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_disc" onblur="onChangeInputAddDisc()" value="0.00">
       </div>
     </div>
 
@@ -2746,7 +2717,7 @@ td input[type="checkbox"] {
     <div class="col">
       <div class="form-group">
         <label>DiscRp</label>
-        <input type="number" class="form-control text-right" id="input_add_discrp" onblur="onChangeInputAddDiscRp()" value ="0.00" >
+        <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_discrp" onblur="onChangeInputAddDiscRp()" value="0.00" >
       </div>
     </div>
 
@@ -3666,9 +3637,21 @@ console.log('==========cccc=========');
   });
 
 
+  // Nilai input berpemisah ribuan ("1,250,000.00") -> angka. Sama seperti formatAngkaVal di purchaseOrder.
   function formatAngkaVal (angka) {
-    return Number(angka.split(',').join(''))
+    return Number(String(angka == null ? '' : angka).split(',').join('')) || 0
   }
+
+  // Input angka (qty, harga, isi, diskon item, Disc %/DiscRp header) memakai kelas pso-angka:
+  // hanya menerima digit, titik, koma; saat ditinggalkan langsung diberi pemisah ribuan.
+  // Pembacaan nilainya selalu lewat formatAngkaVal() supaya koma pemisah tidak ikut terkirim.
+  $(document).on('input', '.pso-angka', function () {
+    let bersih = this.value.replace(/[^0-9.,]/g, '')
+    if (bersih !== this.value) { this.value = bersih }
+  })
+  $(document).on('focusout', '.pso-angka', function () {
+    this.value = formatAngka(formatAngkaVal(this.value))
+  })
 
 function openPrintModal(nobukti) {
   selectedNoBukti = nobukti
@@ -3720,7 +3703,7 @@ function choosePrint(type) {
 //         rows += `<tr>
 //           <td>${item.KodeBrg}</td>
 //           <td>${item.NamaBrg}</td>
-//           <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+//           <td class="text-right">${item.Qnt ? formatAngka(item.Qnt) : '0.00'}</td>
 //           <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
 //           <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
 //           <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
@@ -4028,7 +4011,7 @@ function onChangeKetrevisi () {
 
 function onChangeFreight () {
   if (tipeform == 'edit') {
-    let value  = $("#input_add_freight").val()
+    let value  = formatAngkaVal($("#input_add_freight").val())
     onChangeHeader('freight' , value)
   }
 }
@@ -4122,8 +4105,10 @@ function onChangeHari () {
 }
 
 // ---- Diskon header (DBPENAWARANSO.DISC = persen, DISCRP = rupiah) ----
-// Hanya disimpan & ditampilkan; rumus NDPP/NPPN/NNET di DBPENAWARANSODET memakai 0 untuk
-// diskon header, jadi DPP/PPN/Grand Total tidak ikut berubah. Disc % adalah acuannya:
+// Sama seperti Purchase Order: DISC header disalin ke DBPENAWARANSODET.DISC oleh
+// refreshUpdateHeader() (Sp_UpdatePenawaranSO), lalu computed column NDISKON/NDPP/NPPN/NNET
+// menghitung DPP = Total - diskon header, PPN = DPP x NILAIPPN %, Grand Total = DPP + PPN
+// (PPN include: DPP = (Total - diskon) / (1 + NILAIPPN %)). Disc % adalah acuannya:
 // DiscRp = Total (jumlah Sub Total item) x Disc % / 100.
 function totalItemPenawaran () {
   if (!dataTableAdd || !dataTableAdd.length) { return 0 }
@@ -4161,8 +4146,8 @@ function simpanDiscHeader (disc, discrp) {
 function tampilDiscHeader () {
   let disc = parseFloat(dataHeaderAdd.Disc) || 0
   let discrp = hitungDiscRpHeader(disc)
-  document.getElementById("input_add_disc").value = disc.toFixed(2)
-  document.getElementById("input_add_discrp").value = discrp.toFixed(2)
+  document.getElementById("input_add_disc").value = formatAngka(disc.toFixed(2))
+  document.getElementById("input_add_discrp").value = formatAngka(discrp.toFixed(2))
   if (tipeform == 'edit' && Math.abs((parseFloat(dataHeaderAdd.DiscRpHeader) || 0) - discrp) >= 0.005) {
     simpanDiscHeader(disc, discrp)
   }
@@ -4170,13 +4155,13 @@ function tampilDiscHeader () {
 
 function onChangeInputAddDisc () {
     console.log('onChangeDisc')
-    let disc = parseFloat($("#input_add_disc").val()) || 0
+    let disc = parseFloat(formatAngkaVal($("#input_add_disc").val())) || 0
     if (disc < 0 || disc > 100) {
       alertify.warning('Disc % harus antara 0 - 100')
       disc = 0
     }
-    document.getElementById("input_add_disc").value = disc.toFixed(2)
-    document.getElementById("input_add_discrp").value = hitungDiscRpHeader(disc).toFixed(2)
+    document.getElementById("input_add_disc").value = formatAngka(disc.toFixed(2))
+    document.getElementById("input_add_discrp").value = formatAngka(hitungDiscRpHeader(disc).toFixed(2))
 
     // Mode add sebelum item pertama tersimpan: header belum ada di DB, nilai disimpan
     // sesudah item pertama berhasil disimpan (lihat submitAddAdd).
@@ -4190,7 +4175,7 @@ function onChangeInputAddDisc () {
 
 function onChangeInputAddDiscRp () {
     console.log('onChangeDiscRp')
-    let discrp = parseFloat($("#input_add_discrp").val()) || 0
+    let discrp = parseFloat(formatAngkaVal($("#input_add_discrp").val())) || 0
     let total = totalItemPenawaran()
     let disc = 0
     if (discrp && !total) {
@@ -4202,8 +4187,8 @@ function onChangeInputAddDiscRp () {
     } else if (total) {
       disc = discrp / total * 100
     }
-    document.getElementById("input_add_disc").value = disc.toFixed(2)
-    document.getElementById("input_add_discrp").value = discrp.toFixed(2)
+    document.getElementById("input_add_disc").value = formatAngka(disc.toFixed(2))
+    document.getElementById("input_add_discrp").value = formatAngka(discrp.toFixed(2))
 
     if (tipeform == 'edit') {
       if (simpanDiscHeader(disc, discrp)) { alertify.success('update DiscRp berhasil') }
@@ -4213,12 +4198,15 @@ function onChangeInputAddDiscRp () {
     }
 }
 
+// Salin PPN/Disc %/Kurs header ke tiap item (Sp_UpdatePenawaranSO) supaya DPP, PPN, dan
+// Grand Total dihitung ulang DB - sama seperti Sp_UpdatePO di Purchase Order. Sebelumnya
+// memanggil pospupdatepo (Sp_UpdatePO) yang hanya bekerja di DBPO, jadi tidak berpengaruh.
 function refreshUpdateHeader ()
 {
   let _token  = $("#_token").val()
   let nobukti = $("#input_add_nobukti").val()
   $.ajax({
-    url: "{!! url('pospupdatepo') !!}",
+    url: "{!! url('penawaransospupdate') !!}",
     type: "post",
     async: false,
     data: {
@@ -4355,18 +4343,18 @@ console.log(choice,nobukti,urut,$purut)
 
 
     let kodebrg =  $("#input_add_add_kodebarang").val()
-    let qnt =  $("#input_add_add_qty").val()
+    let qnt =  formatAngkaVal($("#input_add_add_qty").val())
     let nosat =  $("#input_add_add_nosat").val()
 
-    let harga = $("#input_add_add_harga").val()
-    let discp1 = $("#input_add_add_discpersen1").val()
-    let disctot = $("#input_add_add_discrp").val()
+    let harga = formatAngkaVal($("#input_add_add_harga").val())
+    let discp1 = formatAngkaVal($("#input_add_add_discpersen1").val())
+    let disctot = formatAngkaVal($("#input_add_add_discrp").val())
     let noppl = $("#input_add_add_noPPL").val()
     let urutppl = $("#input_add_add_urutPPL").val()
     
 
-    let discpdet2 = $("#input_add_add_discpersen2").val()
-    let discpdet3 = $("#input_add_add_discpersen3").val()
+    let discpdet2 = formatAngkaVal($("#input_add_add_discpersen2").val())
+    let discpdet3 = formatAngkaVal($("#input_add_add_discpersen3").val())
 
     let namabrg =  $("#input_add_add_namabarang").val()
 
@@ -4386,7 +4374,7 @@ console.log(choice,nobukti,urut,$purut)
 
     let namapic2 =$("#input_add_up2").val()
 
-    let freight =$("#input_add_freight").val()
+    let freight =formatAngkaVal($("#input_add_freight").val())
     let ketrevisi =$("#input_add_ketrevisi").val()
     let namacustomer =$("#input_add_namasupplier").val()
     let idmaster=0
@@ -4426,7 +4414,7 @@ console.log(choice,nobukti,urut,$purut)
 
     if (kodebrg== '-')
     {nosat=1 
-     isi= $("#input_add_add_isi").val()
+     isi= formatAngkaVal($("#input_add_add_isi").val())
 
     }
     else {
@@ -4477,7 +4465,7 @@ freight , ketrevisi , tglrevisi , tglprcust , kodekebunh , urut
       xppn= harga * 0.1
   } 
 
- xharga= harga -  $("#input_add_discrp").val() - xppn
+ xharga= harga -  formatAngkaVal($("#input_add_discrp").val()) - xppn
 
 
 
@@ -4505,7 +4493,7 @@ freight , ketrevisi , tglrevisi , tglprcust , kodekebunh , urut
 
       // Disc % header yang diisi sebelum item pertama tersimpan (header baru masuk DB
       // bersama item pertama) disimpan sekarang; DiscRp-nya disamakan oleh tampilDiscHeader().
-      let discHeaderBaru = tipeform == 'add' ? (parseFloat($("#input_add_disc").val()) || 0) : 0
+      let discHeaderBaru = tipeform == 'add' ? (parseFloat(formatAngkaVal($("#input_add_disc").val())) || 0) : 0
 
       loadAll()
       tipeform = 'edit'
@@ -4516,7 +4504,7 @@ freight , ketrevisi , tglrevisi , tglprcust , kodekebunh , urut
       $('#divStockProyeksi').hide();
       cleanFormAddAdd()
 
-      if (discHeaderBaru) { simpanDiscHeader(discHeaderBaru, 0) }
+      if (discHeaderBaru) { simpanDiscHeader(discHeaderBaru, 0); refreshUpdateHeader() }
       refreshDataTableAdd(nobukti)
       if (choice == 'U'){
       $('.showhide').hide();
@@ -4584,13 +4572,13 @@ function submitAddEdit () {
   //DiscRp
   let Urut = tempAddEdit.Urut
   let KodeBrg =  $("#input_add_add_kodebarang").val()
-  let Qnt =  $("#input_add_add_qty").val()
+  let Qnt =  formatAngkaVal($("#input_add_add_qty").val())
   let NoSat =  $("#input_add_add_nosat").val()
   //satuan
   //isi teko dbbarang
-  let Harga = $("#input_add_add_harga").val()
-  let DiscP = $("#input_add_add_discpersen1").val()
-  let DiscTot = $("#input_add_add_discrp").val()
+  let Harga = formatAngkaVal($("#input_add_add_harga").val())
+  let DiscP = formatAngkaVal($("#input_add_add_discpersen1").val())
+  let DiscTot = formatAngkaVal($("#input_add_add_discrp").val())
   let NoPPL = $("#input_add_add_noPPL").val()
   //isclose kosong
   //isCloseD kosong
@@ -4599,8 +4587,8 @@ function submitAddEdit () {
   //Tolerate kosong
   let UrutPPL = $("#input_add_add_urutPPL").val()
   // let Kodegdg = $("#input_add_kodealamatkirim").val()
-  let Discpdet2 = $("#input_add_add_discpersen2").val()
-  let Discpdet3 = $("#input_add_add_discpersen3").val()
+  let Discpdet2 = formatAngkaVal($("#input_add_add_discpersen2").val())
+  let Discpdet3 = formatAngkaVal($("#input_add_add_discpersen3").val())
   //discpdet4 kosong
   //discpdet5 kosong
   //flagtipe 1
@@ -4622,7 +4610,7 @@ function submitAddEdit () {
   //pph21
   // let NOPNw = $("#input_add_add_nopnwpo").val()
   let UrutPNW = 0
-  let HrgAwal = $("#input_add_add_hargaAwal").val()
+  let HrgAwal = formatAngkaVal($("#input_add_add_hargaAwal").val())
   let KeteranganBarang = $("#input_add_add_keteranganbarang").val()
 
   // console.log(kodesupplier,'*')
@@ -4755,7 +4743,7 @@ function submitAddEdit () {
   if  ( $("#input_add_tipeppn").val()==2) {
       xppn= Harga * 0.1
   } 
- xharga= Harga -  $("#input_add_discrp").val() - xppn
+ xharga= Harga -  formatAngkaVal($("#input_add_discrp").val()) - xppn
   // console.log(kodebarang,tanggal,xharga,nosat,choice)
    console.log(KodeBrg,Noso,xharga,NoSat)
 
@@ -5040,28 +5028,28 @@ function onChangeInputAddPembayaran () {
 
 function onChangeInputAddAddDisc () {
   console.log("onChangeInputAddAddDisc")
-  let harga = $("#input_add_add_harga").val();
+  let harga = formatAngkaVal($("#input_add_add_harga").val());
 
   if (!Number(harga)) {
 
-    document.getElementById("input_add_add_discrp").value = '0.00'
+    document.getElementById("input_add_add_discrp").value = formatAngka('0.00')
     return
   }
 
   let disc = $("#input_add_add_disc").val();
   let discRp = Number(harga) * Number(disc) / 100
-  document.getElementById("input_add_add_discrp").value = parseFloat(discRp).toFixed(2)
+  document.getElementById("input_add_add_discrp").value = formatAngka(parseFloat(discRp).toFixed(2))
 
 }
 
 function onChangeInputAddAddHarga () {
-  document.getElementById("input_add_add_discrp").value = '0.00'
-  document.getElementById("input_add_add_discpersen1").value = '0.00'
-  document.getElementById("input_add_add_discpersen2").value = '0.00'
-  document.getElementById("input_add_add_discpersen3").value = '0.00'
+  document.getElementById("input_add_add_discrp").value = formatAngka('0.00')
+  document.getElementById("input_add_add_discpersen1").value = formatAngka('0.00')
+  document.getElementById("input_add_add_discpersen2").value = formatAngka('0.00')
+  document.getElementById("input_add_add_discpersen3").value = formatAngka('0.00')
 
 
-  document.getElementById("input_add_add_hargaAwal").value = document.getElementById("input_add_add_harga").value
+  document.getElementById("input_add_add_hargaAwal").value = formatAngkaVal(document.getElementById("input_add_add_harga").value)
 }
 
 function onChangeInputAddEditHarga () {
@@ -5071,7 +5059,7 @@ function onChangeInputAddEditHarga () {
 
 function onChangeInputAddAddDiscRp () {
   console.log("onChangeInputAddAddDiscRp")
-  let harga = $("#input_add_add_harga").val();
+  let harga = formatAngkaVal($("#input_add_add_harga").val());
 
   if (!Number(harga)) {
 
@@ -5079,7 +5067,7 @@ function onChangeInputAddAddDiscRp () {
     return
   }
 
-  let discRp = $("#input_add_add_discrp").val();
+  let discRp = formatAngkaVal($("#input_add_add_discrp").val());
   let disc = Number(discRp) / Number(harga) * 100
   document.getElementById("input_add_add_disc").value = parseFloat(disc).toFixed(2)
 }
@@ -5092,6 +5080,7 @@ function buttonAddAddItem () {
   $('#divStockProyeksi').hide();
 
   cleanFormAddAdd()
+  document.getElementById("input_add_add_kodebarang").disabled = false
   document.getElementById("buttonAddAddListBarang").disabled = false
   $('#h4AddAddItem').show();
   $('#h4AddEditItem').hide();
@@ -5172,17 +5161,21 @@ function buttonAddEditItem (i) {
    $purut  = tempAddEdit.Urut
   document.getElementById("input_add_add_jasa").value = tempAddEdit.Isjasa
   document.getElementById("input_add_add_foc").value = tempAddEdit.PFOC
-  document.getElementById("input_add_add_isi").value = tempAddEdit.Isi
+  document.getElementById("input_add_add_isi").value = formatAngka(tempAddEdit.Isi)
   document.getElementById("input_add_add_kodebarang").value = tempAddEdit.KodeBrg
+  // Kode barang item yang sudah tersimpan tidak boleh diganti saat edit item; hapus item lalu
+  // Tambah Item kalau barangnya salah. Dibuka lagi di buttonAddAddItem().
+  document.getElementById("input_add_add_kodebarang").disabled = true
+  document.getElementById("buttonAddAddListBarang").disabled = true
   document.getElementById("input_add_add_namabarangasli").value = tempAddEdit.NamaBrg
   document.getElementById("input_add_add_namabarang").value = tempAddEdit.NamaBrg
-  document.getElementById("input_add_add_discpersen1").value = Number(tempAddEdit.DiscP1) ?  tempAddEdit.DiscP1 : '0.00'
-  document.getElementById("input_add_add_discpersen2").value = Number(tempAddEdit.Discp2) ?  tempAddEdit.Discp2 : '0.00'
-  document.getElementById("input_add_add_discpersen3").value = Number(tempAddEdit.Discp3) ?  tempAddEdit.Discp3 : '0.00'
-  document.getElementById("input_add_add_qty").value = parseFloat(tempAddEdit.Qnt).toFixed(2)
+  document.getElementById("input_add_add_discpersen1").value = formatAngka(Number(tempAddEdit.DiscP1) ?  tempAddEdit.DiscP1 : '0.00')
+  document.getElementById("input_add_add_discpersen2").value = formatAngka(Number(tempAddEdit.Discp2) ?  tempAddEdit.Discp2 : '0.00')
+  document.getElementById("input_add_add_discpersen3").value = formatAngka(Number(tempAddEdit.Discp3) ?  tempAddEdit.Discp3 : '0.00')
+  document.getElementById("input_add_add_qty").value = formatAngka(parseFloat(tempAddEdit.Qnt).toFixed(2))
   document.getElementById("input_add_add_nosat").innerHTML = selectOption
-  document.getElementById("input_add_add_harga").value = Number(tempAddEdit.Harga) ? parseFloat(tempAddEdit.Harga).toFixed(2) : '0.00'
-  document.getElementById("input_add_add_discrp").value = Number(tempAddEdit.DISCTOT) ? parseFloat(tempAddEdit.DISCTOT).toFixed(2) : '0.00'
+  document.getElementById("input_add_add_harga").value = formatAngka(Number(tempAddEdit.Harga) ? parseFloat(tempAddEdit.Harga).toFixed(2) : '0.00')
+  document.getElementById("input_add_add_discrp").value = formatAngka(Number(tempAddEdit.DISCTOT) ? parseFloat(tempAddEdit.DISCTOT).toFixed(2) : '0.00')
   document.getElementById("input_add_add_noPPL").value = tempAddEdit.NoPPL
   document.getElementById("input_add_add_urutPPL").value = tempAddEdit.UrutPPL
   document.getElementById("input_add_add_keteranganbarang").value = tempAddEdit.KeteranganBarang
@@ -5223,7 +5216,7 @@ console.log('zzzzzzzzzz',tempAddEdit.KodeBrg,tempAddEdit.Nosat,tempAddEdit.KodeS
           <td>${item.namacustsupp}</td>
           <td>${item.tanggal}</td>
           <td>${item.nobukti}</td>
-          <td class="text-right">${Number(item.HARGA) ? parseFloat(item.HARGA).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${Number(item.HARGA) ? formatAngka(item.HARGA) : '0.00'}</td>
         </tr>`
       });
 
@@ -5890,15 +5883,15 @@ function onChangeInputAddAddNosat () {
         console.log(tempAddAdd[`Hrg${nosat}_1`])
         if (res.length && res[0].Xharga) {
           console.log('if1')
-          document.getElementById("input_add_add_harga").value = res[0].Xharga
+          document.getElementById("input_add_add_harga").value = formatAngka(res[0].Xharga)
         } else {
           console.log('else1')
           if (tempAddAdd[`Hrg${nosat}_1`]) {
             console.log('if2')
-            document.getElementById("input_add_add_harga").value = tempAddAdd[`Hrg${nosat}_1`]
+            document.getElementById("input_add_add_harga").value = formatAngka(tempAddAdd[`Hrg${nosat}_1`])
           } else {
             console.log('else2')
-            document.getElementById("input_add_add_harga").value = '0.00'
+            document.getElementById("input_add_add_harga").value = formatAngka('0.00')
           }
         }
       } else {
@@ -5953,10 +5946,9 @@ function onChangeInputAddAddNosat () {
 
 /* ============ Header tabel interaktif (window.ReportTable) ============
  * Port 1:1 dari poCart/poAktifkanTabel milik purchaseOrder.blade.php, sama
- * seperti so/invoicejasa/.../closingso. Dua tabel real -- tabel2 (urut 1) =
- * Penawaran SO (belum fully-otorisasi), tabel3 (urut 2) = Otorisasi (sudah
- * fully-otorisasi) -- masing-masing Actions kolom pertama, port 1:1 dari
- * markup lama. Kolom Oto2..Oto5/UserOto2..5/TglOto2..5 di tabel2 cuma
+ * seperti so/invoicejasa/.../closingso. Satu tabel -- tabel2 (urut 1) =
+ * Penawaran SO; status otorisasi disaring lewat #modalFilterPSO (tab Otorisasi
+ * lama/urut 2 sudah digabung ke sini). Kolom Oto2..Oto5/UserOto2..5/TglOto2..5 di tabel2 cuma
  * dimasukkan ke default cart kalau level otorisasi user (#level, dari
  * $akses->OL) cukup tinggi, sama seperti kondisi "level > N" di markup lama.
  */
@@ -6049,7 +6041,7 @@ function psoAktifkanTabel (urut) {
 }
 
 function psoOnChangeAktif () {
-  if (psoActiveUrut === 2) { reinitTabel3(); } else { reinitTabel2(); }
+  reinitTabel2();
 }
 
 window.g_href = PSO_HREF
@@ -6099,8 +6091,8 @@ window.doSetHeader = function (mode, reset) {
   })
 }
 
+// Tab Otorisasi sudah digabung ke tab Penawaran SO, jadi hanya ada satu tabel (urut 1).
 function activeVisibleTabKeyPSO () {
-  if ($('#nav-profile-tab').hasClass('active')) { return 2; }
   return 1;
 }
 
@@ -6111,17 +6103,10 @@ let psoRtSudahInit = false
 function psoInitReportTableSekali () {
   if (psoRtSudahInit || typeof ReportTable === 'undefined') { return }
   psoRtSudahInit = true
-  let urutAktif = activeVisibleTabKeyPSO()
-  let idTabel = { 1 : '#tabel2', 2 : '#tabel3' }
-  let idBar = { 1 : '#rtBarTabel2', 2 : '#rtBarTabel3' }
-  Object.keys(idTabel).forEach((u) => {
-    if (Number(u) === urutAktif) { return }
-    ReportTable.init({ table: idTabel[u], bar: idBar[u], onChange: psoOnChangeAktif })
-  });
   ReportTable.init({ table: PSO_SELEKTOR_TABEL_AKTIF, bar: PSO_SELEKTOR_BAR_AKTIF, onChange: psoOnChangeAktif })
 
   let psoGuardUlangKlik = false;
-  ['#tabel2', '#tabel3'].forEach((sel) => {
+  ['#tabel2'].forEach((sel) => {
     let thead = document.querySelector(sel + ' thead')
     if (!thead) { return }
     thead.addEventListener('click', function (e) {
@@ -6160,30 +6145,25 @@ function psoValueCell (row, col) {
   if (type === 'float') {
     let dp = Number(col[5]) || 0;
     let n = (raw !== undefined && raw !== null && raw !== '') ? Number(raw) : 0;
-    return '<td class="text-right">' + formatAngka(n.toFixed(dp)) + '</td>';
+    return '<td class="text-right">' + (isNaN(n) ? 0 : n).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) + '</td>';
   }
   return '<td>' + (raw !== undefined && raw !== null ? raw : '') + '</td>';
 }
 
-// Tombol yang tampil tetap sama seperti markup lama (Details/Edit/Otorisasi/Print);
-// warna, ikon, dan tooltip disamakan dengan tombol aksi tab Purchase Order. Tombolnya baru
-// muncul saat baris di-hover lewat kelas po-aksi-hover pada <table>.
+// Tombol per baris mengikuti status otorisasinya, sama seperti Purchase Order:
+// belum terotorisasi penuh (NeedOtorisasi = 1) -> Detail/Otorisasi/Edit/Print,
+// sudah terotorisasi -> Detail/Batal Otorisasi/Print (tidak bisa diedit lagi).
+// Tombolnya baru muncul saat baris di-hover lewat kelas po-aksi-hover pada <table>.
 function tabel2ActionsCell (row) {
   let nobukti = psoPickCI(row, 'NoBukti');
   let html = '<td class="text-center">';
   html += '<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
-  html += '<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button>';
-  html += '<button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
-  html += '</td>';
-  return html;
-}
-
-function tabel3ActionsCell (row) {
-  let nobukti = psoPickCI(row, 'NoBukti');
-  let html = '<td class="text-center">';
-  html += '<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+  if (Number(psoPickCI(row, 'NeedOtorisasi'))) {
+    html += '<button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+    html += '<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button>';
+  } else {
+    html += '<button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+  }
   html += '<button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
   html += '</td>';
   return html;
@@ -6207,25 +6187,11 @@ function renderTabel2Rows (rows) {
   tulisTheadHeaderPSO('#tabel2', cols, true);
 }
 
-function renderTabel3Rows (rows) {
-  window.gcart_header = psoCart[2]
-  let cols = (psoCart[2].length ? psoCart[2] : gcart_header).filter(function (c) { return c[2] === 1; });
-  let html = "";
-  (rows || []).forEach(function (row) {
-    html += '<tr>' + tabel3ActionsCell(row);
-    cols.forEach(function (col) { html += psoValueCell(row, col); });
-    html += '</tr>';
-  });
-  document.getElementById('tabel3_data').innerHTML = html;
-  tulisTheadHeaderPSO('#tabel3', cols, true);
-}
-
 let lastTabel2Rows = []
-let lastTabel3Rows = []
-let psoPanjangHalaman = { 1 : 10, 2 : 10 }
+let psoPanjangHalaman = { 1 : 10 }
 
 function psoIkatSearch (urut) {
-  let ids = { 1 : ['psoSearch1', 'tabel2'], 2 : ['psoSearch2', 'tabel3'] }
+  let ids = { 1 : ['psoSearch1', 'tabel2'] }
   let input = document.getElementById(ids[urut][0])
   let idTabel = ids[urut][1]
   if (!input || input.dataset.rtBound) { return }
@@ -6241,7 +6207,7 @@ function psoIkatSearch (urut) {
 }
 
 function psoIkatPanjangHalaman (urut) {
-  let ids = { 1 : ['psoLen1', 'tabel2'], 2 : ['psoLen2', 'tabel3'] }
+  let ids = { 1 : ['psoLen1', 'tabel2'] }
   let sel = document.getElementById(ids[urut][0])
   let idTabel = ids[urut][1]
   if (!sel || sel.dataset.rtBound) { return }
@@ -6323,16 +6289,6 @@ function reinitTabel2 () {
   } catch (e) { console.error('reinitTabel2 failed:', e); alertify.error('Gagal memperbarui tabel: ' + e.message); }
 }
 
-function reinitTabel3 () {
-  try {
-    if ($.fn.DataTable.isDataTable('#tabel3')) { $('#tabel3').DataTable().destroy(); }
-    $('#tabel3_data').find('[data-toggle="tooltip"]').tooltip('dispose')
-    renderTabel3Rows(lastTabel3Rows);
-    $('#tabel3').DataTable(psoOpsiTabel(2, '#tabel3'));
-    psoIkatSearch(2); psoIkatPanjangHalaman(2); psoPerluGambar[2] = false;
-  } catch (e) { console.error('reinitTabel3 failed:', e); alertify.error('Gagal memperbarui tabel: ' + e.message); }
-}
-
 let psoTimerResize = null
 $(window).on('resize', function () {
   if (psoTimerResize) { clearTimeout(psoTimerResize) }
@@ -6355,12 +6311,10 @@ function psoSetupSekali () {
   psoSetupSudahJalan = true
 
   psoAktifkanTabel(1); window.doSetHeader(1, false);
-  psoAktifkanTabel(2); window.doSetHeader(2, false);
 
   psoInitReportTableSekali();
 
   $('#nav-home-tab').on('shown.bs.tab', function () { psoAktifkanTabel(1); if (typeof ReportTable !== 'undefined') { ReportTable.refresh(); } if (psoPerluGambar[1]) { reinitTabel2(); } else { psoAturTinggiTabel(); } });
-  $('#nav-profile-tab').on('shown.bs.tab', function () { psoAktifkanTabel(2); if (typeof ReportTable !== 'undefined') { ReportTable.refresh(); } if (psoPerluGambar[2]) { reinitTabel3(); } else { psoAturTinggiTabel(); } });
 }
 
 $(document).ready(function(){
@@ -6371,17 +6325,13 @@ function onChangePeriodePSO1 () {
   loadAll();
 }
 
-function onChangePeriodePSO2 () {
-  loadAll();
-}
-
 function psoResetFilterFieldsPSO () {
-  $('#psoStatusOtorisasi').val('2');
+  $('#psoStatusOtorisasi').val('0');
 }
 
 function psoUpdateFilterBadgePSO () {
   let n = Number($('#psoStatusOtorisasi').val());
-  $('#psoFilterBadge').text(n === 2 ? '0 aktif' : '1 aktif');
+  $('#psoFilterBadge').text(n === 0 ? '0 aktif' : '1 aktif');
 }
 
 function buttonFilterPSO () {
@@ -6399,21 +6349,11 @@ function loadAll () {
     data: {
       tglawal: $('#input_tanggalawal_pso1').val(),
       tglakhir: $('#input_tanggalakhir_pso1').val(),
-      tglawal2: $('#input_tanggalawal_pso2').val(),
-      tglakhir2: $('#input_tanggalakhir_pso2').val(),
       statusOtorisasi: $('#psoStatusOtorisasi').val(),
     },
     success: function(res) {
-      lastTabel2Rows = res.tempOutstanding3 || []
-      lastTabel3Rows = res.tempOutstanding5 || []
+      lastTabel2Rows = res.tempOutstanding || []
       reinitTabel2()
-      reinitTabel3()
-      // renderTabel2Rows()/renderTabel3Rows() masing-masing menimpa window.gcart_header
-      // supaya th-nya sendiri dapat data-gidx yang benar -- begitu keduanya selesai,
-      // gcart_header tertinggal di cart tabel yang digambar TERAKHIR (tabel3), padahal
-      // tab yang kelihatan di layar bisa saja tabel2. drag-reorder & menu roda gigi
-      // sama-sama baca window.gcart_header saat diklik, jadi disamakan lagi di sini ke
-      // cart milik tab yang benar-benar aktif.
       psoAktifkanTabel(activeVisibleTabKeyPSO());
       console.log('loadall selesai');
     },
@@ -6464,7 +6404,7 @@ function buttonAddAddPickBarangAll (kodebrg) {
       document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
       document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
       document.getElementById("input_add_add_disc").value = '0.00'
-      document.getElementById("input_add_add_discrp").value = '0.00'
+      document.getElementById("input_add_add_discrp").value = formatAngka('0.00')
       let selectOption = ''
 
       if (tempAddAdd.Sat1) {
@@ -6496,7 +6436,7 @@ function buttonAddAddPickBarangAll (kodebrg) {
         <td>${item.SATUAN}</td>
         <td>-</td>
         <td>-</td>
-        <td class="text-right">${Number(item.Xharga) ? parseFloat(item.Xharga).toFixed(2) : '0.00'}</td>
+        <td class="text-right">${Number(item.Xharga) ? formatAngka(item.Xharga) : '0.00'}</td>
         <td>-</td>
         <td>-</td>
 
@@ -6506,12 +6446,12 @@ function buttonAddAddPickBarangAll (kodebrg) {
       document.getElementById("tabel_data_add_harga_terakhir").innerHTML = rowTable
 
       if (res.harga.length && Number(res.harga[0].Xharga)) {
-        document.getElementById("input_add_add_harga").value = parseFloat(res.harga[0].Xharga).toFixed(2)
+        document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(res.harga[0].Xharga).toFixed(2))
       } else {
         if (Number(tempAddAdd.Hrg1_1)) {
-          document.getElementById("input_add_add_harga").value = parseFloat(tempAddAdd.Hrg1_1).toFixed(2)
+          document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(tempAddAdd.Hrg1_1).toFixed(2))
         } else {
-          document.getElementById("input_add_add_harga").value = '0.00'
+          document.getElementById("input_add_add_harga").value = formatAngka('0.00')
         }
       }
 
@@ -6591,7 +6531,7 @@ function buttonAddAddPickBarangFOCPlus (index , pEdit = 0) {
           <td>${item.SATUAN}</td>
           <td>-</td>
           <td>-</td>
-          <td class="text-right">${Number(item.Xharga) ? parseFloat(item.Xharga).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${Number(item.Xharga) ? formatAngka(item.Xharga) : '0.00'}</td>
           <td>-</td>
           <td>-</td>
 
@@ -6601,12 +6541,12 @@ function buttonAddAddPickBarangFOCPlus (index , pEdit = 0) {
       document.getElementById("tabel_data_add_harga_terakhir").innerHTML = rowTable
 
       if (res.length && Number(res[0].Xharga)) {
-        document.getElementById("input_add_add_harga").value = parseFloat(res[0].Xharga).toFixed(2)
+        document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(res[0].Xharga).toFixed(2))
       } else {
         if (Number(tempAddAdd.Hrg1_1)) {
-          document.getElementById("input_add_add_harga").value = parseFloat(tempAddAdd.Hrg1_1).toFixed(2)
+          document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(tempAddAdd.Hrg1_1).toFixed(2))
         } else {
-          document.getElementById("input_add_add_harga").value = '0.00'
+          document.getElementById("input_add_add_harga").value = formatAngka('0.00')
         }
       }
 
@@ -6663,7 +6603,7 @@ function buttonAddAddPickBarangNonFOC (index , pEdit = 0) {
   document.getElementById("input_add_add_kodebarang").value = tempAddAdd.KodeBrg
   document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
   document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
-  document.getElementById("input_add_add_qty").value = tempAddAdd.SisaPPL
+  document.getElementById("input_add_add_qty").value = formatAngka(tempAddAdd.SisaPPL)
   console.log(tempAddAdd.SisaPPL,'===================================')
   document.getElementById("input_add_add_noPPL").value = tempAddAdd.NoBukti
   document.getElementById("input_add_add_urutPPL").value = tempAddAdd.Urut
@@ -6707,22 +6647,22 @@ function buttonAddAddPickBarangNonFOC (index , pEdit = 0) {
           <td>${item.SATUAN}</td>
           <td>${item.KODEVLS}</td>
           <td>${item.KURS}</td>
-          <td class="text-right">${Number(item.HARGA) ? parseFloat(item.HARGA).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${Number(item.HARGA) ? formatAngka(item.HARGA) : '0.00'}</td>
           <td>${item.DISCRP}</td>
-          <td class="text-right">${Number(item.HrgNetto) ? parseFloat(item.HrgNetto).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${Number(item.HrgNetto) ? formatAngka(item.HrgNetto) : '0.00'}</td>
         </tr>`
       });
 
       document.getElementById("tabel_data_add_harga_terakhir").innerHTML = rowTable
 
       if (res.length && Number(res[0].HARGA)) {
-        document.getElementById("input_add_add_harga").value = parseFloat(res[0].HARGA).toFixed(2)
+        document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(res[0].HARGA).toFixed(2))
         document.getElementById("input_add_add_hargaAwal").value = parseFloat(res[0].HARGA).toFixed(2)
       } else {
         if (Number(tempAddAdd.Hrg1_1)) {
-          document.getElementById("input_add_add_harga").value = parseFloat(tempAddAdd.Hrg1_1).toFixed(2)
+          document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(tempAddAdd.Hrg1_1).toFixed(2))
         } else {
-          document.getElementById("input_add_add_harga").value = '0.00'
+          document.getElementById("input_add_add_harga").value = formatAngka('0.00')
         }
       }
 
@@ -6751,7 +6691,7 @@ function buttonAddAddPickBarangNonFOCPlus (index , pEdit = 0) {
   document.getElementById("input_add_add_kodebarang").value = tempAddAdd.KodeBrg
   document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
   document.getElementById("input_add_add_namabarangasli").value = tempAddAdd.NamaBrg
-  document.getElementById("input_add_add_qty").value = tempAddAdd.Qnt
+  document.getElementById("input_add_add_qty").value = formatAngka(tempAddAdd.Qnt)
   document.getElementById("input_add_add_noPPL").value = tempAddAdd.NoBukti
   document.getElementById("input_add_add_urutPPL").value = tempAddAdd.Urut
   // document.getElementById("input_add_add_discrp").value = '0.00'
@@ -6795,21 +6735,21 @@ function buttonAddAddPickBarangNonFOCPlus (index , pEdit = 0) {
           <td>${item.SATUAN}</td>
           <td>${item.KODEVLS}</td>
           <td>${item.KURS}</td>
-          <td class="text-right">${Number(item.HARGA) ? parseFloat(item.HARGA).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${Number(item.HARGA) ? formatAngka(item.HARGA) : '0.00'}</td>
           <td>${item.DISCRP}</td>
-          <td class="text-right">${Number(item.HrgNetto) ? parseFloat(item.HrgNetto).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${Number(item.HrgNetto) ? formatAngka(item.HrgNetto) : '0.00'}</td>
         </tr>`
       });
 
       document.getElementById("tabel_data_add_harga_terakhir").innerHTML = rowTable
 
       if (res.length && Number(res[0].HARGA)) {
-        document.getElementById("input_add_add_harga").value = parseFloat(res[0].HARGA).toFixed(2)
+        document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(res[0].HARGA).toFixed(2))
       } else {
         if (Number(tempAddAdd.Hrg1_1)) {
-          document.getElementById("input_add_add_harga").value = parseFloat(tempAddAdd.Hrg1_1).toFixed(2)
+          document.getElementById("input_add_add_harga").value = formatAngka(parseFloat(tempAddAdd.Hrg1_1).toFixed(2))
         } else {
-          document.getElementById("input_add_add_harga").value = '0.00'
+          document.getElementById("input_add_add_harga").value = formatAngka('0.00')
         }
       }
 
@@ -7083,15 +7023,15 @@ function cleanFormAddAdd () {
   document.getElementById("input_add_add_tipeso").value = ''
   document.getElementById("input_add_add_merkso").value = ''
   document.getElementById("input_add_add_satminus").value = ''
-  document.getElementById("input_add_add_qty").value = '0.00'
+  document.getElementById("input_add_add_qty").value = formatAngka('0.00')
   document.getElementById("input_add_add_nosat").innerHTML = '<option value=0 selected>Pilih Satuan</option>'
   // document.getElementById("input_add_add_satuanproduk").value = ''
-  document.getElementById("input_add_add_harga").value = '0.00'
+  document.getElementById("input_add_add_harga").value = formatAngka('0.00')
   // document.getElementById("input_add_add_disc").value = '0.00'
-  document.getElementById("input_add_add_discrp").value = '0.00'
-  document.getElementById("input_add_add_discpersen1").value = '0.00'
-  document.getElementById("input_add_add_discpersen2").value = '0.00'
-  document.getElementById("input_add_add_discpersen3").value = '0.00'
+  document.getElementById("input_add_add_discrp").value = formatAngka('0.00')
+  document.getElementById("input_add_add_discpersen1").value = formatAngka('0.00')
+  document.getElementById("input_add_add_discpersen2").value = formatAngka('0.00')
+  document.getElementById("input_add_add_discpersen3").value = formatAngka('0.00')
   document.getElementById("input_add_add_hargaAwal").value = '0.00'
   // document.getElementById("input_add_add_tambahkepo").value = 0
 
@@ -7287,7 +7227,7 @@ function cleanFormAdd () {
   document.getElementById("input_add_kodebackoffice").value = ''
   document.getElementById("input_add_namabackoffice").value = ''
   document.getElementById("input_add_tipeppn").value = 0
-   document.getElementById("input_add_freight").value = 0
+   document.getElementById("input_add_freight").value = formatAngka(0)
   document.getElementById("input_add_pembayaran").value = 0
   document.getElementById("input_add_kodesales").value = ''
   document.getElementById("input_add_namasales").value = ''
@@ -7327,8 +7267,8 @@ function cleanFormAdd () {
   document.getElementById("input_add_disc").disabled = false
   document.getElementById("input_add_discrp").disabled = false
 
-  document.getElementById("input_add_disc").value = '0.00'
-  document.getElementById("input_add_discrp").value = '0.00'
+  document.getElementById("input_add_disc").value = formatAngka('0.00')
+  document.getElementById("input_add_discrp").value = formatAngka('0.00')
   document.getElementById("input_add_total").value = '0.00'
   document.getElementById("input_add_ppn").value = '0.00'
   document.getElementById("input_add_dpp").value = '0.00'
@@ -7595,7 +7535,7 @@ function refreshDataTableAdd (NOBUKTI) {
 
     // if(!dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="9">Belum ada barang</td>
+      <td class="text-center" colspan="8">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -7632,12 +7572,11 @@ function refreshDataTableAdd (NOBUKTI) {
             `<tr>
               <td>${item.KodeBrg}</td>
               <td>${item.NamaBrg}</td>
-              <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+              <td class="text-right">${formatAngka(item.Qnt)}</td>
               <td class="text-center">${item.Satuan}</td>
               <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
-              <td>${item.NoPPL ? item.NoPPL : ''}</td>
               <td class="text-center">
                 ${tipeform == 'edit' ?
                 `<button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
@@ -7650,7 +7589,7 @@ function refreshDataTableAdd (NOBUKTI) {
 
           if(!dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="9">Belum ada barang</td>
+            <td class="text-center" colspan="8">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -7708,12 +7647,11 @@ function refreshDataTableAdd (NOBUKTI) {
             `<tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
-                  <th style="padding: 4px 12px;" scope="col">Qnt</th>
+                  <th style="padding: 4px 12px;" scope="col">Qty</th>
                   <th style="padding: 4px 12px;" scope="col">Sat</th>
                   <th style="padding: 4px 12px;" scope="col">Harga</th>
                   <th style="padding: 4px 12px;" scope="col">Diskon</th>
                   <th style="padding: 4px 12px;" scope="col">Sub Total</th>
-                  <th style="padding: 4px 12px;" scope="col">No. PR</th>
                   <th style="padding: 4px 12px;" scope="col">Actions</th>
             </tr>`
 
@@ -7728,7 +7666,7 @@ function refreshDataTableEdit (NOBUKTI) {
 
     // if(!dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="9">Belum ada barang</td>
+      <td class="text-center" colspan="8">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -7765,12 +7703,11 @@ function refreshDataTableEdit (NOBUKTI) {
             `<tr>
               <td>${item.KodeBrg}</td>
               <td>${item.NamaBrg}</td>
-              <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+              <td class="text-right">${formatAngka(item.Qnt)}</td>
               <td class="text-center">${item.Satuan}</td>
               <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
-              <td>${item.NoPPL ? item.NoPPL : ''}</td>
               <td class="text-center">
                 ${tipeform == 'edit' ?
                 `<button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
@@ -7783,7 +7720,7 @@ function refreshDataTableEdit (NOBUKTI) {
 
           if(!dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="9">Belum ada barang</td>
+            <td class="text-center" colspan="8">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -7796,7 +7733,7 @@ function refreshDataTableEdit (NOBUKTI) {
 
 
           document.getElementById("input_add_kodesupplier").value = dataHeaderAdd.KodeSupp
-          document.getElementById("input_add_freight").value = parseFloat(dataHeaderAdd.freight).toFixed(2)
+          document.getElementById("input_add_freight").value = formatAngka(dataHeaderAdd.freight)
           document.getElementById("input_add_alamatsupplier").value = dataHeaderAdd.Keterangan
           document.getElementById("input_add_valas").value = dataHeaderAdd.KodeVls
           document.getElementById("input_add_kurs").value = dataHeaderAdd.Kurs
@@ -7849,12 +7786,11 @@ function refreshDataTableEdit (NOBUKTI) {
             `<tr>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
-                  <th style="padding: 4px 12px;" scope="col">Qnt</th>
+                  <th style="padding: 4px 12px;" scope="col">Qty</th>
                   <th style="padding: 4px 12px;" scope="col">Sat</th>
                   <th style="padding: 4px 12px;" scope="col">Harga</th>
                   <th style="padding: 4px 12px;" scope="col">Diskon</th>
                   <th style="padding: 4px 12px;" scope="col">Sub Total</th>
-                  <th style="padding: 4px 12px;" scope="col">No. PR</th>
                   <th style="padding: 4px 12px;" scope="col">Actions</th>
             </tr>`
 
@@ -7869,7 +7805,7 @@ function refreshDataTableDetail (NOBUKTI) {
 
     // if(!dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="9">Belum ada barang</td>
+      <td class="text-center" colspan="8">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -7907,18 +7843,17 @@ function refreshDataTableDetail (NOBUKTI) {
               <td>${item.KodeBrg}</td>
               <td>${item.NamaBrg}</td>
               <td>${item.KeteranganBarang || ''}</td>
-              <td class="text-right">${item.Qnt ? parseFloat(item.Qnt).toFixed(2) : '0.00'}</td>
+              <td class="text-right">${formatAngka(item.Qnt)}</td>
               <td class="text-center">${item.Satuan}</td>
               <td class="text-right">${item.Harga ? formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.DISCTOT ? formatAngka(parseFloat(item.DISCTOT).toFixed(2)) : '0.00'}</td>
               <td class="text-right">${item.Total ? formatAngka(parseFloat(item.Total).toFixed(2)) : '0.00'}</td>
-              <td>${item.NoPPL ? item.NoPPL : ''}</td>
             </tr>`
           });
 
           if(!dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="9">Belum ada barang</td>
+            <td class="text-center" colspan="8">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("tabel_data_add").innerHTML = rowTable
@@ -7975,12 +7910,11 @@ function refreshDataTableDetail (NOBUKTI) {
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Keterangan</th>
-                  <th style="padding: 4px 12px;" scope="col">Qnt</th>
+                  <th style="padding: 4px 12px;" scope="col">Qty</th>
                   <th style="padding: 4px 12px;" scope="col">Sat</th>
                   <th style="padding: 4px 12px;" scope="col">Harga</th>
                   <th style="padding: 4px 12px;" scope="col">Diskon</th>
                   <th style="padding: 4px 12px;" scope="col">Sub Total</th>
-                  <th style="padding: 4px 12px;" scope="col">No. PR</th>
                 </tr>
             </tr>`
 
@@ -8219,7 +8153,7 @@ function submitPrint (nobukti) {
 
             <td style="width: 5%; text-align: left; font-size: 10px;">${itemSub.namamerkso ?? ''}</td>
 
-            <td style="width: 6%; text-align: right; font-size: 10px;">${itemSub.QNT ? parseFloat(itemSub.QNT).toFixed(2) : ''}</td>
+            <td style="width: 6%; text-align: right; font-size: 10px;">${itemSub.QNT ? formatAngka(itemSub.QNT) : ''}</td>
 
             <td style="width: 4%; text-align: center; font-size: 10px;">${itemSub.SATUAN}</td>
 
@@ -8934,7 +8868,7 @@ tempPrintStr += `
   <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 35%;">${itemSub.NAMABRG}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: center;">${itemSub.PartNumber}</td>
   <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 10%;">${itemSub.NAMAMERK ?? ''}</td>
-  <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? parseFloat(itemSub.QNT).toFixed(2) : ''}</td>
+  <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? formatAngka(itemSub.QNT) : ''}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.SATUAN}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 10%; text-align: right;">${formatAngka(parseFloat(itemSub.harga).toFixed(2))}</td>
   <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: right;">${formatAngka(parseFloat(itemSub.SUBTOTALRp).toFixed(2))}</td>
@@ -9243,29 +9177,38 @@ function searchBarangAll (e) {
 
 }
 
+// Angka -> teks 2 desimal berpemisah ribuan ("1,250,000.00"). Disamakan dengan formatAngka di
+// purchaseOrder: menerima angka maupun teks, nilai kosong/bukan angka jadi '0.00', negatif tetap benar.
 function formatAngka (angkaString) {
-  // console.log('formatAngka' , angkaString);
-  let tempAngka = angkaString.split('.')
+  if (angkaString === null || angkaString === undefined || angkaString === '') {
+    return '0.00'
+  }
+  if (isNaN(Number(angkaString))) {
+    return '0.00'
+  }
+  let teks = parseFloat(angkaString).toFixed(2)
+  let minus = teks[0] === '-'
+  if (minus) { teks = teks.substring(1) }
+  let tempAngka = teks.split('.')
   let temp1 = ''
   for (let i = 0; i < tempAngka[0].length; i++) {
     if (i != 0 && i % 3 == 0) {
       temp1 = ',' + temp1
     }
     temp1 = tempAngka[0][tempAngka[0].length - i -1] + temp1
-    // console.log(i, temp1)
   }
   temp1 += '.' + tempAngka[1]
-  return temp1
+  return (minus ? '-' : '') + temp1
 };
 
 function reverseCalculateDiscPercent() {
-  let harga = parseFloat($('#input_add_add_harga').val()) || 0;
-  let discRp = parseFloat(document.getElementById('input_add_add_discrp').value) || 0;
+  let harga = parseFloat(formatAngkaVal($('#input_add_add_harga').val())) || 0;
+  let discRp = parseFloat(formatAngkaVal(document.getElementById('input_add_add_discrp').value)) || 0;
 
   // Clear all discount percentage fields first
-  document.getElementById('input_add_add_discpersen1').value = 0;
-  document.getElementById('input_add_add_discpersen2').value = 0;
-  document.getElementById('input_add_add_discpersen3').value = 0;
+  document.getElementById('input_add_add_discpersen1').value = formatAngka(0)
+  document.getElementById('input_add_add_discpersen2').value = formatAngka(0)
+  document.getElementById('input_add_add_discpersen3').value = formatAngka(0)
 
   // If harga is 0, we can't calculate percentage
   if (harga === 0) {
@@ -9278,20 +9221,20 @@ function reverseCalculateDiscPercent() {
   // Validate that discount doesn't exceed 100%
   if (discPercent > 100) {
     alert("Diskon tidak boleh melebihi harga");
-    document.getElementById('input_add_add_discrp').value = "";
+    document.getElementById('input_add_add_discrp').value = formatAngka("")
     return;
   }
 
   // Set the first discount percentage field
-  document.getElementById('input_add_add_discpersen1').value = discPercent.toFixed(2);
+  document.getElementById('input_add_add_discpersen1').value = formatAngka(discPercent.toFixed(2))
 }
 
 function calculateDiscRp() {
-  let disc1 = document.getElementById('input_add_add_discpersen1').value
-  let disc2 = document.getElementById('input_add_add_discpersen2').value
-  let disc3 = document.getElementById('input_add_add_discpersen3').value
+  let disc1 = formatAngkaVal(document.getElementById('input_add_add_discpersen1').value)
+  let disc2 = formatAngkaVal(document.getElementById('input_add_add_discpersen2').value)
+  let disc3 = formatAngkaVal(document.getElementById('input_add_add_discpersen3').value)
 
-  let discRp = $('#input_add_add_harga').val()
+  let discRp = formatAngkaVal($('#input_add_add_harga').val())
 
   disc1 = parseFloat(disc1) || 0
   disc2 = parseFloat(disc2) || 0
@@ -9300,17 +9243,17 @@ function calculateDiscRp() {
 
   if (disc1 > 100) {
     alert("Diskon tidak boleh melebihi angka 100")
-    document.getElementById('input_add_add_discpersen1').value = ""
+    document.getElementById('input_add_add_discpersen1').value = formatAngka("")
     return
   }
   if (disc2 > 100) {
     alert("Diskon tidak boleh melebihi angka 100")
-    document.getElementById('input_add_add_discpersen2').value = ""
+    document.getElementById('input_add_add_discpersen2').value = formatAngka("")
     return
   }
   if (disc3 > 100) {
     alert("Diskon tidak boleh melebihi angka 100")
-    document.getElementById('input_add_add_discpersen3').value = ""
+    document.getElementById('input_add_add_discpersen3').value = formatAngka("")
     return
   }
 
@@ -9335,7 +9278,7 @@ function calculateDiscRp() {
     totalDiscount += afterDiskon3
   }
 
-  document.getElementById('input_add_add_discrp').value = totalDiscount
+  document.getElementById('input_add_add_discrp').value = formatAngka(totalDiscount)
 }
 
 function LockFreeOfCharge(){
@@ -9348,11 +9291,11 @@ function LockFreeOfCharge(){
     document.getElementById('input_add_add_discpersen2').disabled = true;
     document.getElementById('input_add_add_discpersen3').disabled = true;
 
-    document.getElementById('input_add_add_harga').value = 0,00 ;
-    document.getElementById('input_add_add_discrp').value = 0,00 ;
-    document.getElementById('input_add_add_discpersen1').value = 0 ;
-    document.getElementById('input_add_add_discpersen2').value = 0 ;
-    document.getElementById('input_add_add_discpersen3').value = 0 ;
+    document.getElementById('input_add_add_harga').value = formatAngka(0)
+    document.getElementById('input_add_add_discrp').value = formatAngka(0)
+    document.getElementById('input_add_add_discpersen1').value = formatAngka(0)
+    document.getElementById('input_add_add_discpersen2').value = formatAngka(0)
+    document.getElementById('input_add_add_discpersen3').value = formatAngka(0)
   } else {
     document.getElementById('input_add_add_harga').disabled = false;
     document.getElementById('input_add_add_discrp').disabled = false;

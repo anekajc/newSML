@@ -920,11 +920,10 @@ td input[type="checkbox"] {
           </button>
         </div>
         <div class="modal-body">
-          <div class="container-fluid mt-4">
-            <div class="row mb-2" style="margin-top:-30px;">
-              <div class="col-12 d-flex justify-content-end" style="padding-right: 0px;">
+          <div class="container-fluid">
+            {{-- Dulu baris ini ditarik ke atas (margin-top:-30px) sehingga kotak cari terpotong header modal. --}}
+            <div class="d-flex justify-content-end mb-3">
                 <input id="input_search_invoice_debetnote" type="search" class="form-control" placeholder="Cari data" onkeyup="searchInvoiceDebetNote(event)">
-              </div>
             </div>
             <div class="table-responsive">
               <table id="tabel_add_list_invoice" class="data-table">
@@ -1625,6 +1624,7 @@ function searchInvoiceDebetNote (event) {
 
 function buttonAddListInvoice () {
   listInvoice = []
+  $('#input_search_invoice_debetnote').val('')
 
   let _token = $("#_token").val();
   let kodecustsupp = $("#input_add_kodecustomer").val();

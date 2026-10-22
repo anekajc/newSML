@@ -56,6 +56,7 @@ Route::post('/penawaransocekotorisasi', [PenawaranSOController::class, 'cekOtori
 Route::post('/penawaransoupdateotorisasi', [PenawaranSOController::class, 'updateOtorisasi']);
 Route::post('/penawaransoupdatebatalotorisasi', [PenawaranSOController::class, 'updateBatalOtorisasi']);
 Route::post('/penawaransospupdatepo', [PenawaranSOController::class, 'spUpdatePO']);
+Route::post('/penawaransospupdate', [PenawaranSOController::class, 'spUpdatePenawaranSO']);
 Route::post('/penawaransoonchangeheader', [PenawaranSOController::class, 'onChangeHeader']);
 Route::post('/penawaransolistbarangnosominusallso', [PenawaranSOController::class, 'listBarangNonFOC1AllSO']);
 Route::get('/penawaransolistvalas', [PenawaranSOController::class, 'listValas']);
