@@ -12,6 +12,7 @@ Catatan ini mendaftar perubahan database DBSMLBARU dari pekerjaan menu **marketi
 | 10 | `10_perbaiki_qnt_prj_00001_0916.sql` | Isi QNT1/QNT2 yang kosong di PRJ lama `SML/PRJ/00001/0916` | Ya, supaya data PRJ konsisten |
 | 11 | `11_kreditnote_perkhp_dan_akun_bk.sql` | Default `''` untuk `DBKreditNoteDET.perkHP` + akun posting `DBPOSTHUTPIUT` Kode `BK` = 41200 | **Wajib**, tanpa ini item Kredit Note tidak tersimpan dan akun debet jurnal KN kosong |
 | 22 | `22_penawaranso_disc_header_nilaippn.sql` | Penawaran SO: kolom `DISC` & `NILAIPPN` di `DBPENAWARANSODET`, rumus DPP/PPN/Net ikut Disc header, SP `Sp_UpdatePenawaranSO` | **Wajib** sebelum kode Penawaran SO versi 22 Oktober 2026 dipasang, tanpa ini simpan item gagal (SP tidak ditemukan) |
+| 23 | `23_vwposthutpiut_kreditnote_valas.sql` | `vwPostHutPiut` bagian Kredit Note: nilai valas masuk `KreditD` (dulu `DebetD`) | **Wajib** kalau ada Kredit Note valas, tanpa ini KN valas malah menambah saldo valas piutang |
 
 **Sebelum mulai:** backup database DBSMLBARU di server.
 
@@ -127,3 +128,16 @@ and ( (? = 0)
 - **Revisi 22 Oktober 2026 (sore):** `NILAIPPN` detail kini diisi dari `DBNILAIPPN` sesuai tanggal dokumen, baik oleh `Sp_UpdatePenawaranSO` maupun penyelarasan data lama (semua dokumen). Alasannya DBSMLNEW selama ini menghitung PPN 10% padahal `DBNILAIPPN` 2025–2050 = 11%. Form Penawaran SO juga menghitung DPP/PPN/Grand Total sendiri dengan rumus yang sama (tarif dari `getDetail` → `NilaiPPNHeader`), jadi tampilan form sudah benar walau skrip belum dijalankan; daftar & cetakan baru benar setelah skrip dijalankan.
 - Controller kini tidak lagi gagal kalau `Sp_UpdatePenawaranSO` belum ada (dibungkus try/catch + `report()`), karena sebelumnya simpan/koreksi/hapus item tampil "Terjadi kesalahan" walau itemnya sudah tersimpan.
 - Belum disentuh: `sp_cetakpenawaranso` masih menulis tarif 11 untuk harga satuan include PPN di cetakan; total di cetakan memakai `NDPP/NNET` sehingga ikut rumus baru.
+
+---
+
+## 23 — Kredit Note: posting valas ke KreditD + separator angka (22 Oktober 2026)
+
+- **Laporan user:** transaksi Debet Note / Kredit Note tidak masuk `DBHUTPIUT`.
+- **Cara posting KN (tidak berubah):** KN masuk `DBHUTPIUT` (NOINVOICE `KN`, NOPAJAK = no KN) dan `DBJurnalOto` saat **Otorisasi** lewat `sp_ProsesPostingHutPiut` / `sp_ProsesPostingJurnalOto`. `vwPostHutPiut` hanya mengambil KN dengan `IsOtorisasi1 = 1`, sama seperti desktop dan menu lain. KN yang baru dibuat (belum diotorisasi) memang belum ada di `DBHUTPIUT`. Batal Otorisasi menghapus posting itu lagi.
+- **Bug yang ditemukan:** di `vwPostHutPiut` bagian Kredit Note, nilai valas diisi ke `DebetD`. Untuk Tipe `PT`, `SaldoD = DebetD - KreditD`, jadi KN valas malah **menambah** saldo valas piutang. Uji (di-ROLLBACK): KN 5 USD menghasilkan SaldoD +5. Kolom Rupiah (`Kredit`) sudah benar.
+- **Perubahan:** `23_vwposthutpiut_kreditnote_valas.sql` mengganti satu fragmen di bagian KN menjadi `0.00 DebetD, case when B.KodeVLS='IDR' then 0 else sum(B.Nilai) end KreditD`, lalu menjalankannya sebagai `ALTER VIEW`. Bagian lain view tidak berubah. Skrip tidak mengubah apa pun kalau sudah pernah dijalankan.
+- **Dry run (di-ROLLBACK) 22 Oktober 2026** di DBSMLBARU dan DBSMLNEW: KN 5 USD menjadi `KreditD 5`, `SaldoD -5`. View tetap bisa dibaca (210.775 baris DBSMLBARU, 192.584 DBSMLNEW).
+- **Sudah dijalankan langsung di DBSMLBARU dan DBSMLNEW** (server 36.88.190.218) pada 22 Oktober 2026 atas izin user. Dijalankan ulang untuk cek: keluar pesan "sudah benar, tidak ada yang diubah". Untuk server client, jalankan skrip ini setelah backup. Untuk DBSMLNEW pakai `newProgramAJC/docs/update-db-DBSMLNEW/marketing/23_vwposthutpiut_kreditnote_valas.sql`.
+- Saat dicek, belum ada data KN di kedua DB, jadi tidak ada data lama yang perlu diposting ulang.
+- **Kode (tanpa perubahan database):** menu Kredit Note diberi separator ribuan di tabel Add/Edit/Detail, modal Invoice, dan form Edit Item. Input Nilai/Kurs diketik dengan separator (`formatRibuanLive`/`formatRibuan`), lalu dikirim sebagai angka bersih. Controller juga membuang koma (`angka()`), supaya `(float) '1,000.00'` tidak terbaca 1 di `cekNilai`. Kolom **Nilai Inv** untuk invoice valas sekarang menampilkan `SaldoD` (dulu `Saldo` Rp).

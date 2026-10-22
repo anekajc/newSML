@@ -840,7 +840,7 @@
   </div>
   </div>
   <div class="col-md-8">
-    <input id="AddEditKurs" type="number" value="1.00" class="form-control text-right" onBlur="onChangeNilaiKursItem()">
+    <input id="AddEditKurs" type="text" inputmode="decimal" value="1.00" class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKursItem()" onblur="formatRibuan(this); onChangeNilaiKursItem()">
   </div>
 
 </div>
@@ -859,7 +859,7 @@
   </div>
   </div>
   <div class="col-md-8">
-    <input id="AddEditNilai" type="number" value="0.00" class="form-control text-right" onBlur="onChangeNilaiKursItem()">
+    <input id="AddEditNilai" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKursItem()" onblur="formatRibuan(this); onChangeNilaiKursItem()">
   </div>
 
 </div>
@@ -872,7 +872,7 @@
 
 
 <div class="col-md-8">
-  <input id="AddEditNilaiRp" type="number" value="0.00" class="form-control text-right" disabled>
+  <input id="AddEditNilaiRp" type="text" value="0.00" class="form-control text-right" disabled>
 </div>
 
 </div>
@@ -891,7 +891,7 @@
   </div>
   </div>
   <div class="col-md-8">
-    <input id="AddEditNilaiInv" type="number" value="0.00" class="form-control text-right" disabled>
+    <input id="AddEditNilaiInv" type="text" value="0.00" class="form-control text-right" disabled>
   </div>
 
 </div>
@@ -904,7 +904,7 @@
 
 
 <div class="col-md-8">
-  <input id="AddEditNilaiInvRp" type="number" value="0.00" class="form-control text-right" disabled>
+  <input id="AddEditNilaiInvRp" type="text" value="0.00" class="form-control text-right" disabled>
 </div>
 
 </div>
@@ -1148,7 +1148,7 @@
                 <th style="padding: 4px 12px;" scope="col">Nilai Inv</th>
                 <th style="padding: 4px 12px;" scope="col">Valas</th>
                 <th style="padding: 4px 12px;" scope="col">Kurs</th>
-                <th style="padding: 4px 12px;" scope="col">Nilai Kredit Note</th>
+                <th style="padding: 4px 12px;" scope="col">Nilai KN Rp</th>
                 <th style="padding: 4px 12px;" scope="col">Nilai Invoice Rp</th>
 
 
@@ -1830,10 +1830,10 @@ function submitAddEdit () {
   let nobukti  = $("#input_add_nobukti").val()
   let tanggal  = $("#input_add_tanggal").val()
   let noinvoice  = $("#AddEditNoInv").val()
-  let nilai  = $("#AddEditNilai").val()
-  let nilairp  = $("#AddEditNilaiRp").val()
+  let nilai  = bersihkanAngka($("#AddEditNilai").val())
+  let nilairp  = bersihkanAngka($("#AddEditNilaiRp").val())
   let kodevls  = $("#AddEditValas").val()
-  let kurs  = $("#AddEditKurs").val()
+  let kurs  = bersihkanAngka($("#AddEditKurs").val())
   let keterangan  = $("#AddEditKeterangan").val()
 
   // return
@@ -2043,9 +2043,10 @@ function buttonAddPickInvoice () {
       console.log(document.getElementById(`add_checkbox${i}`).checked)
       if (document.getElementById(`add_checkbox${i}`).checked) {
 
-        let checkNilai = $(`#add_inputQnt${i}`).val();
-        let checkKurs = $(`#add_inputKurs${i}`).val();
-        let checkNilaiRp = $(`#add_inputQntRp${i}`).val();
+        // Input tampil dengan separator ribuan, yang dikirim angka bersih.
+        let checkNilai = bersihkanAngka($(`#add_inputQnt${i}`).val());
+        let checkKurs = bersihkanAngka($(`#add_inputKurs${i}`).val());
+        let checkNilaiRp = bersihkanAngka($(`#add_inputQntRp${i}`).val());
         // add_inputKeterangan
         listInvoice[i].Keterangan = $(`#add_inputKeterangan${i}`).val();
         listInvoice[i].inputNilai = checkNilai
@@ -2185,10 +2186,10 @@ function buttonAddListInvoice () {
         <td>${formatDate(item.Tanggal,'/')}</td>
         <td>${formatDate(item.JatuhTempo,'/')}</td>
         <td>${item.KodeVls}</td>
-        <td><input id="add_inputQnt${i}" style="height:30px; min-width: 130px" type="number" value='0.00' class="form-control text-right" onBlur="onChangeNilaiKurs(${i})"></td>
+        <td><input id="add_inputQnt${i}" style="height:30px; min-width: 130px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
 
-        <td><input id="add_inputKurs${i}" style="height:30px; min-width: 90px" type="number" value='1.00' class="form-control text-right" onBlur="onChangeNilaiKurs(${i})"></td>
-        <td><input style="height:30px; min-width: 130px" id="add_inputQntRp${i}" type="number" value='0.00' class="form-control text-right"  disabled></td>
+        <td><input id="add_inputKurs${i}" style="height:30px; min-width: 90px" type="text" inputmode="decimal" value='1.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
+        <td><input style="height:30px; min-width: 130px" id="add_inputQntRp${i}" type="text" value='0.00' class="form-control text-right"  disabled></td>
 
         <td class="text-right">${formatAngka(parseFloat(item.SaldoD).toFixed(2))}</td>
         <td class="text-right">${formatAngka(parseFloat(item.Saldo).toFixed(2))}</td>
@@ -2299,19 +2300,19 @@ function buttonAddListNoBeli () {
 
 function onChangeNilaiKursItem () {
   console.log('onChangeNilaiKursItem' )
-  let onChangeQnt = $(`#AddEditNilai`).val();
-  let onChangeKurs = $(`#AddEditKurs`).val();
+  let onChangeQnt = bersihkanAngka($(`#AddEditNilai`).val());
+  let onChangeKurs = bersihkanAngka($(`#AddEditKurs`).val());
 
-  document.getElementById(`AddEditNilaiRp`).value = parseFloat(Number(onChangeQnt) * Number(onChangeKurs)).toFixed(2)
+  document.getElementById(`AddEditNilaiRp`).value = formatAngka((onChangeQnt * onChangeKurs).toFixed(2))
 
 }
 
 function onChangeNilaiKurs (index) {
   console.log('onChangeNilaiKurs' , index)
-  let onChangeQnt = $(`#add_inputQnt${index}`).val();
-  let onChangeKurs = $(`#add_inputKurs${index}`).val();
+  let onChangeQnt = bersihkanAngka($(`#add_inputQnt${index}`).val());
+  let onChangeKurs = bersihkanAngka($(`#add_inputKurs${index}`).val());
 
-  document.getElementById(`add_inputQntRp${index}`).value = parseFloat(Number(onChangeQnt) * Number(onChangeKurs)).toFixed(2)
+  document.getElementById(`add_inputQntRp${index}`).value = formatAngka((onChangeQnt * onChangeKurs).toFixed(2))
 
 }
 
@@ -2699,13 +2700,13 @@ function refreshDataTable (nobukti) {
                 <tr>
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
-                  <td class="text-right">${item.Nilai ? formatAngka(parseFloat(item.Nilai).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
+                  <td class="text-right">${angkaTampil(item.Nilai)}</td>
+                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
 
                   <td>${item.kodeVls}</td>
-                  <td class="text-right">${item.Kurs ?  formatAngka(parseFloat(item.Kurs).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.NilaiRp ? formatAngka(parseFloat(item.NilaiRp).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
+                  <td class="text-right">${angkaTampil(item.Kurs)}</td>
+                  <td class="text-right">${angkaTampil(item.NilaiRp)}</td>
+                  <td class="text-right">${angkaTampil(item.Saldo)}</td>
 
 
                   <td class="text-center">
@@ -2818,13 +2819,13 @@ function buttonDetail (nobukti) {
                 <tr>
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
-                  <td class="text-right">${item.Nilai ? formatAngka(parseFloat(item.Nilai).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
+                  <td class="text-right">${angkaTampil(item.Nilai)}</td>
+                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
 
                   <td>${item.kodeVls}</td>
-                  <td class="text-right">${item.Kurs ?  formatAngka(parseFloat(item.Kurs).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.NilaiRp ? formatAngka(parseFloat(item.NilaiRp).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
+                  <td class="text-right">${angkaTampil(item.Kurs)}</td>
+                  <td class="text-right">${angkaTampil(item.NilaiRp)}</td>
+                  <td class="text-right">${angkaTampil(item.Saldo)}</td>
 
 
 
@@ -2899,13 +2900,13 @@ function buttonOtorisasi (nobukti) {
                 <tr>
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
-                  <td class="text-right">${item.Nilai ? formatAngka(parseFloat(item.Nilai).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
+                  <td class="text-right">${angkaTampil(item.Nilai)}</td>
+                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
 
                   <td>${item.kodeVls}</td>
-                  <td class="text-right">${item.Kurs ?  formatAngka(parseFloat(item.Kurs).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.NilaiRp ? formatAngka(parseFloat(item.NilaiRp).toFixed(2)) : '0.00'}</td>
-                  <td class="text-right">${item.Saldo ?  formatAngka(parseFloat(item.Saldo).toFixed(2)) : '0.00'}</td>
+                  <td class="text-right">${angkaTampil(item.Kurs)}</td>
+                  <td class="text-right">${angkaTampil(item.NilaiRp)}</td>
+                  <td class="text-right">${angkaTampil(item.Saldo)}</td>
 
 
 
@@ -3081,14 +3082,14 @@ function buttonAddEditItem (i) {
   console.log(tempBarangAddEdit)
   document.getElementById("AddEditNoInv").value = tempBarangAddEdit.NoInv
   document.getElementById("AddEditValas").value = tempBarangAddEdit.kodeVls
-  document.getElementById("AddEditKurs").value = tempBarangAddEdit.Kurs
-  document.getElementById("AddEditNilai").value = tempBarangAddEdit.Nilai
+  document.getElementById("AddEditKurs").value = angkaTampil(tempBarangAddEdit.Kurs)
+  document.getElementById("AddEditNilai").value = angkaTampil(tempBarangAddEdit.Nilai)
 
   document.getElementById("AddEditKeterangan").value = tempBarangAddEdit.Keterangan
 
-  document.getElementById("AddEditNilaiRp").value = tempBarangAddEdit.NilaiRp
-  document.getElementById("AddEditNilaiInv").value = tempBarangAddEdit.Saldo
-  document.getElementById("AddEditNilaiInvRp").value = tempBarangAddEdit.Saldo
+  document.getElementById("AddEditNilaiRp").value = angkaTampil(tempBarangAddEdit.NilaiRp)
+  document.getElementById("AddEditNilaiInv").value = angkaTampil(nilaiInvoice(tempBarangAddEdit))
+  document.getElementById("AddEditNilaiInvRp").value = angkaTampil(tempBarangAddEdit.Saldo)
 
   // document.getElementById("AddEditKodeBrg").value = tempBarangAddEdit.KODEBRG
   // document.getElementById("AddEditReturSupp").value = tempBarangAddEdit.FlagKembali
@@ -3235,6 +3236,57 @@ function formatAngka (angkaString) {
   }
   temp1 += '.' + tempAngka[1]
   return temp1
+}
+
+// Separator ribuan (koma) - pola sama dengan invoicereturbeli.blade.php / newpo.blade.php.
+// Angka dari server -> teks ber-separator 2 desimal (null/kosong = 0.00).
+function angkaTampil (nilai) {
+  let n = Number(String(nilai == null || nilai === '' ? 0 : nilai).replace(/,/g, ''))
+  return isNaN(n) ? String(nilai) : formatAngka(n.toFixed(2))
+}
+
+// Nilai invoice dalam mata uang invoice: valas = SaldoD, IDR = Saldo (dulu selalu Saldo Rp,
+// sehingga kolom Nilai Inv invoice valas tampil nilai rupiahnya).
+function nilaiInvoice (item) {
+  let vls = String(item.kodeVls || item.KodeVls || 'IDR').trim().toUpperCase()
+  return (vls === 'IDR' || vls === '') ? item.Saldo : item.SaldoD
+}
+
+// Nilai input ber-separator dibersihkan dulu sebelum dihitung / dikirim ke server -
+// parseFloat('50,000.00') hanya terbaca 50.
+function bersihkanAngka (nilai) {
+  return parseFloat(String(nilai == null ? '' : nilai).replace(/,/g, '')) || 0
+}
+
+function formatRibuan (el) {
+  let raw = String(el.value).replace(/,/g, '')
+  if (raw === '' || isNaN(Number(raw))) return
+  let parts = Number(raw).toFixed(2).split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = parts.join('.')
+}
+
+function formatRibuanLive (el) {
+  let cursorPos = el.selectionStart
+  let digitsBeforeCursor = el.value.slice(0, cursorPos).replace(/[^0-9]/g, '').length
+
+  let raw = el.value.replace(/,/g, '')
+  if (raw !== '' && isNaN(Number(raw))) {
+    raw = raw.replace(/[^0-9.]/g, '')
+  }
+  if (raw === '') { el.value = ''; return }
+
+  let parts = raw.split('.')
+  if (parts.length > 1) parts[1] = parts[1].slice(0, 2)
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0]
+
+  let pos = 0, digitCount = 0
+  while (pos < el.value.length && digitCount < digitsBeforeCursor) {
+    if (/[0-9]/.test(el.value[pos])) digitCount++
+    pos++
+  }
+  el.setSelectionRange(pos, pos)
 }
 
 

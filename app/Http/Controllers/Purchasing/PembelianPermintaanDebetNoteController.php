@@ -23,6 +23,13 @@ class PembelianPermintaanDebetNoteController extends Controller
     return [ date('Y-m-01', $stamp), date('Y-m-t', $stamp) ];
   }
 
+  // Input angka di form tampil dengan separator ribuan (koma); dibersihkan lagi di sini
+  // supaya '1,000.00' tidak gagal dikonversi ke Numeric oleh Sp_DebetNote.
+  private function angka ($nilai) {
+    $bersih = str_replace(',', '', trim((string) $nilai));
+    return is_numeric($bersih) ? (float) $bersih : 0;
+  }
+
   public function index(Request $req) {
     $kodemenu = '0307';
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
@@ -186,8 +193,21 @@ public function updateOtorisasi(Request $req) {
             "nobukti" => $req->nobukti
         ]
     );
+    // Dulu otorisasi hanya mengubah flag, DN tidak pernah masuk DBHUTPIUT/jurnal. Posting sama
+    // seperti Kredit Note & desktop: vwPostHutPiut hanya mengambil DN yang IsOtorisasi1 = 1.
+    if ($res > 0) {
+      $this->postingDN($req->nobukti, 1);
+    }
     return response()->json(['success' => $res > 0]);
 }
+
+  // TipeProses 1 = posting DBHUTPIUT (NOINVOICE 'DN', NOPAJAK = no DN) + DBJurnalOto, 0 = hapus posting.
+  private function postingDN ($nobukti, $tipeProses) {
+    $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+    $values = ['', 'DBDEBETNOTE', $periode->bulan, $periode->tahun, $nobukti, $tipeProses];
+    DB::connection('SML')->statement('exec sp_ProsesPostingHutPiut ?,?,?,?,?,?', $values);
+    DB::connection('SML')->statement('exec sp_ProsesPostingJurnalOto ?,?,?,?,?,?', $values);
+  }
 
 
 public function updateBatalOtorisasi(Request $req) {
@@ -220,6 +240,9 @@ public function updateBatalOtorisasi(Request $req) {
             "nobukti" => $req->nobukti
         ]
     );
+    if ($res > 0) {
+      $this->postingDN($req->nobukti, 0);
+    }
 
     app('App\Http\Controllers\GlobalController')->LoggingData('btloto', 'DN', $req->nobukti, $req->pket, 0, 'dbdebetnote');
     return $res;
@@ -267,10 +290,10 @@ public function updateBatalOtorisasi(Request $req) {
             0,
             $d['NoFaktur'],
             $req->kodecustsupp,
-            $d['inputNilai'],
+            $this->angka($d['inputNilai'] ?? 0),
             $d['KodeVls'],
-            $d['inputKurs'],
-            $d['inputNilaiRp'],
+            $this->angka($d['inputKurs'] ?? 0),
+            $this->angka($d['inputNilaiRp'] ?? 0),
             $req->nourut
           ]);
 
@@ -309,10 +332,10 @@ public function updateBatalOtorisasi(Request $req) {
       $req->urut,
       $req->noinvoice,
       $req->kodecustsupp,
-      $req->nilai,
+      $this->angka($req->nilai),
       $req->kodevls,
-      $req->kurs,
-      $req->nilairp,
+      $this->angka($req->kurs),
+      $this->angka($req->nilairp),
       $req->nourut,
     ]);
 
