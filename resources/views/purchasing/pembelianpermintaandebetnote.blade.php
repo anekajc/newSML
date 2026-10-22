@@ -627,84 +627,76 @@ td input[type="checkbox"] {
         </div>
       </div>
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
           <div class="row">
-            <div class="col-md-3" style="margin-top:5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>No Inv</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditNoInv" type="text" class="form-control" disabled>
               </div>
             </div>
           </div>
-          <div class="row" style="margin-top:-15px;">
-            <div class="col-md-3" style="margin-top:5px;">
+          <div class="row" style="margin-top:-5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>Ket.</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:580px;">
               <div class="form-group">
                 <input id="AddEditKeterangan" type="text" class="form-control">
               </div>
             </div>
           </div>
-          <div class="row" style="margin-top:-15px;">
-            <div class="col-md-3" style="margin-top:5px;">
+          <div class="row" style="margin-top:-5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>Valas</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditValas" type="text" class="form-control" disabled>
               </div>
             </div>
-          </div>
-          <div class="row" style="margin-top:-15px;">
-            <div class="col-md-3" style="margin-top:5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>Kurs</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditKurs" type="text" inputmode="decimal" value="1.00" class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKursItem()" onblur="formatRibuan(this); onChangeNilaiKursItem()">
               </div>
             </div>
           </div>
-        </div>
-        <div class="col-md-6">
-          <div class="row">
-            <div class="col-md-3" style="margin-top:5px;">
+          <div class="row" style="margin-top:-5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>Nilai</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditNilai" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKursItem()" onblur="formatRibuan(this); onChangeNilaiKursItem()">
               </div>
             </div>
-          </div>
-          <div class="row" style="margin-top:-15px;">
-            <div class="col-md-3" style="margin-top:5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>Nilai (Rp)</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditNilaiRp" type="text" value="0.00" class="form-control text-right" disabled>
               </div>
             </div>
           </div>
-          <div class="row" style="margin-top:-15px;">
-            <div class="col-md-3" style="margin-top:5px;">
+          <div class="row" style="margin-top:-5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>Nilai Inv</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditNilaiInv" type="text" value="0.00" class="form-control text-right" disabled>
               </div>
             </div>
-          </div>
-          <div class="row" style="margin-top:-15px;">
-            <div class="col-md-3" style="margin-top:5px;">
+            <div class="col-auto" style="width:140px; margin-top:5px;">
               <div class="form-group"><label>Nilai Inv (Rp)</label></div>
             </div>
-            <div class="col-md-8">
+            <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditNilaiInvRp" type="text" value="0.00" class="form-control text-right" disabled>
               </div>
