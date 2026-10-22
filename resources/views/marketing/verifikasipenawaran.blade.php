@@ -1944,8 +1944,8 @@ function setDefaultHeaderTabel() {
     ['tipe',         'Tipe',      1, 'varchar', 0, 0],
     ['NamaMerk',     'Merk',      1, 'varchar', 0, 0],
     ['ketdet',       'Ket',       1, 'varchar', 0, 0],
-    ['QNT',          'Qnt',       1, 'float',   0, 2],
-    ['QntSO',        'Qnt SO',    1, 'float',   0, 2],
+    ['QNT',          'Qty',       1, 'float',   0, 2],
+    ['QntSO',        'Qty SO',    1, 'float',   0, 2],
     ['Sisa',         'Sisa',      1, 'float',   0, 2]
   ];
 }

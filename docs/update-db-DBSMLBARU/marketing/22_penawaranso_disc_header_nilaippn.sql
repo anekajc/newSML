@@ -93,19 +93,21 @@ CREATE PROCEDURE dbo.Sp_UpdatePenawaranSO
 AS
 SET NOCOUNT ON
 
-update A set A.PPN = isnull(B.PPN, 0), A.DISC = isnull(B.DISC, 0), A.KURS = isnull(B.KURS, 1)
+-- NILAIPPN = tarif dari DBNILAIPPN sesuai tanggal dokumen (sama dengan yang dipakai form).
+update A set A.PPN = isnull(B.PPN, 0), A.DISC = isnull(B.DISC, 0), A.KURS = isnull(B.KURS, 1),
+       A.NILAIPPN = isnull((select top 1 N.NilaiPPN from dbo.DBNILAIPPN N
+                            where B.TANGGAL between N.TglAwal and N.TglAkhir order by N.Urut desc), 11)
 from dbo.DBPENAWARANSODET A
 inner join dbo.DBPENAWARANSO B on B.NOBUKTI = A.NOBUKTI
 where A.NOBUKTI = @NOBUKTI
 GO
 
--- 4. Selaraskan data lama sekali ------------------------------------------------------------------
-update A set A.PPN = isnull(B.PPN, 0), A.DISC = isnull(B.DISC, 0), A.KURS = isnull(B.KURS, 1)
+-- 4. Selaraskan data lama sekali (semua dokumen) --------------------------------------------------
+update A set A.PPN = isnull(B.PPN, 0), A.DISC = isnull(B.DISC, 0), A.KURS = isnull(B.KURS, 1),
+       A.NILAIPPN = isnull((select top 1 N.NilaiPPN from dbo.DBNILAIPPN N
+                            where B.TANGGAL between N.TglAwal and N.TglAkhir order by N.Urut desc), 11)
 from dbo.DBPENAWARANSODET A
 inner join dbo.DBPENAWARANSO B on B.NOBUKTI = A.NOBUKTI
-where isnull(A.DISC, 0) <> isnull(B.DISC, 0)
-   or isnull(A.PPN, 0) <> isnull(B.PPN, 0)
-   or isnull(A.KURS, 1) <> isnull(B.KURS, 1)
 GO
 
 -- DBPENAWARANSO.DISCRP (rupiah) disamakan dengan Total x Disc % / 100, sama seperti yang

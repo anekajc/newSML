@@ -297,7 +297,7 @@ order by NoBukti" , ["tglawal" => $tglawal , "tglakhir" => $tglakhir]);
   
 
         $res = DB::connection('SML')->update("update dbpenawaranso set isOtorisasi1 = 1, maxol = :maxol , OtoUser1= :username , TglOto1 = :tanggal where nobukti = :nobukti", ["username" => \Auth::user()->username ,"maxol" => $maxOL[0]->OL , "tanggal" => $tanggal , "nobukti" => $req->nobukti]);
-         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'oto','PNW',$req->nobukti,'',0,'DBPENAWARANSO');
+         $this->catatLog('oto','PNW',$req->nobukti,'',0,'DBPENAWARANSO');
 
 return $res;
   }
@@ -312,7 +312,7 @@ return $res;
     $tanggal = date('Y-m-d H:i:s');
     // return [$req->pket,$req->nobukti];
         $res = DB::connection('SML')->update("update dbpenawaranso set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL where nobukti = :nobukti", ["nobukti" => $req->nobukti]);
-        $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'btloto','PNW',$req->nobukti,$req->pket,0,'DBPENAWARANSO');
+        $this->catatLog('btloto','PNW',$req->nobukti,$req->pket,0,'DBPENAWARANSO');
 
 
 
@@ -339,9 +339,26 @@ return $res;
   // tiap baris DBPENAWARANSODET supaya DPP/PPN/Grand Total (computed column) ikut diskon header.
   // Lihat docs/update-db-DBSMLBARU/marketing/22_penawaranso_disc_header_nilaippn.sql.
   public function spUpdatePenawaranSO (Request $req) {
-    $res = DB::connection('SML')->update('exec Sp_UpdatePenawaranSO ?', [$req->nobukti]);
+    return $this->selaraskanDetail($req->nobukti) ? 1 : 0;
+  }
 
-    return $res;
+  // Log aktivitas (dbLogFile) - kalau gagal dicatat, proses utama (hapus/otorisasi) tetap jalan.
+  private function catatLog ($aktivitas, $sumber, $nobukti, $keterangan, $urut, $table) {
+    try {
+      app('App\Http\Controllers\GlobalController')->LoggingData($aktivitas, $sumber, $nobukti, $keterangan, $urut, $table);
+    } catch (\Throwable $e) {
+      report($e);
+    }
+  }
+
+  private function selaraskanDetail ($nobukti) {
+    try {
+      DB::connection('SML')->update('exec Sp_UpdatePenawaranSO ?', [$nobukti]);
+      return true;
+    } catch (\Throwable $e) {
+      report($e);
+      return false;
+    }
   }
 
   public function getNoBukti (Request $req) {
@@ -595,7 +612,8 @@ and ((KodeBrg like '%" . $req->input('search') . "%') or (NamaBrg like '%" . $re
         $xurut= $purut[0]->xurut;
         }else {
             // return 'mmm';
-            $xurut = $req->Urut;
+            // Form simpan & tombol hapus mengirim "urut" (huruf kecil).
+            $xurut = $req->urut ?? $req->Urut;
         }
 
     }else{
@@ -605,7 +623,7 @@ and ((KodeBrg like '%" . $req->input('search') . "%') or (NamaBrg like '%" . $re
     // return ["asd" => $xurut] ;
 
     if ($choice =='D'){
-      $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'PO',$nobukti,'',$xurut,'dbpenawaransodet');
+      $this->catatLog($choice,'PO',$nobukti,'',$xurut,'dbpenawaransodet');
       }
 
 
@@ -679,7 +697,9 @@ and ((KodeBrg like '%" . $req->input('search') . "%') or (NamaBrg like '%" . $re
       //  return "end sp ===========";
 
       // Item baru/terkoreksi ikut Disc header & PPN header (lihat spUpdatePenawaranSO).
-      DB::connection('SML')->update('exec Sp_UpdatePenawaranSO ?', [$nobukti]);
+      // Item sudah tersimpan oleh SP_Penawaranso; penyelarasan ini tidak boleh membuat simpan/
+      // koreksi/hapus dianggap gagal (mis. SP belum dibuat di DB).
+      $this->selaraskanDetail($nobukti);
 
 	// if ($choice !='D'){
   //     $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'PO',$nobukti,'',$xurut,'dbpodet');
@@ -836,7 +856,8 @@ and ((KodeBrg like '%" . $req->input('search') . "%') or (NamaBrg like '%" . $re
 Select 	A.NoBukti, A.Tanggal,  A.KODECUST KodeSupp, A.namacustomer NamaCustSupp, C.Alamat1, C.Alamat2, C.Kota,
         C.Alamat1+Char(13)+C.Alamat2+Char(13)+C.kota Alamat,
 	 A.Keterangan,
-	A.KodeVls, D.NamaVls, A.Kurs, A.PPN, A.TipeBayar, A.Hari, A.Disc, A.DISCRP DiscRpHeader, B.KETDET KeteranganBarang, 
+	A.KodeVls, D.NamaVls, A.Kurs, A.PPN, A.TipeBayar, A.Hari, A.Disc, A.DISCRP DiscRpHeader, B.KETDET KeteranganBarang,
+	isnull((select top 1 N.NilaiPPN from DBNILAIPPN N where A.Tanggal between N.TglAwal and N.TglAkhir order by N.Urut desc), 11) NilaiPPNHeader,
 	B.Urut, B.KodeBrg, case when B.NAMABRG='' then E.NAMABRG else B.NamaBrg End NamaBrg, B.nmsat Satuan, B.Qnt, B.Nosat, B.Isi,
         B.Harga, B.DISCP1 DISCP, B.DISCTOT,
         case when A.Kurs=1 then 0.0 else B.SubTotal end TotalUSD,a.KodeExp,C.NAMACUSTSUPP NamaExp,

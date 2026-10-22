@@ -2031,7 +2031,7 @@ td input[type="checkbox"] {
                         </div>
                         <div class="col-md-6">
                           <div class="form-group">
-                            <input type="text" inputmode="decimal" class="form-control text-right pso-angka" onchange="onChangeInputAddAddHarga()" id="input_add_add_harga" value="0.00" >
+                            <input type="text" inputmode="decimal" class="form-control text-right pso-angka" oninput="onChangeInputAddAddHarga()" onchange="onChangeInputAddAddHarga()" id="input_add_add_harga" value="0.00" >
                           </div>
                         </div>
                       </div>
@@ -2106,7 +2106,7 @@ td input[type="checkbox"] {
 
                     <div class="col-md-3" style="margin-top:-17px;">
                       <div class="form-group">
-                       <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_discpersen1" value="0.00" onChange="calculateDiscRp()" >
+                       <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_discpersen1" value="0.00" oninput="calculateDiscRp()" onchange="calculateDiscRp()" >
 
                       </div>
                     </div>
@@ -2123,7 +2123,7 @@ td input[type="checkbox"] {
                         <div class="col-md-6">
                           <div class="form-group">
                             <input type="hidden" class="form-control text-right" id="input_add_add_hargaAwal" value="0.00">
-                           <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_discrp" onchange="reverseCalculateDiscPercent()" value="0.00" >
+                           <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_add_discrp" oninput="reverseCalculateDiscPercent()" onchange="reverseCalculateDiscPercent()" value="0.00" >
                           </div>
                         </div>
                       </div>
@@ -2709,7 +2709,7 @@ td input[type="checkbox"] {
     <div class="col">
       <div class="form-group">
         <label>Disc %</label>
-        <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_disc" onblur="onChangeInputAddDisc()" value="0.00">
+        <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_disc" oninput="hitungDiscHeaderLokal('disc')" onchange="onChangeInputAddDisc()" value="0.00">
       </div>
     </div>
 
@@ -2717,7 +2717,7 @@ td input[type="checkbox"] {
     <div class="col">
       <div class="form-group">
         <label>DiscRp</label>
-        <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_discrp" onblur="onChangeInputAddDiscRp()" value="0.00" >
+        <input type="text" inputmode="decimal" class="form-control text-right pso-angka" id="input_add_discrp" oninput="hitungDiscHeaderLokal('discrp')" onchange="onChangeInputAddDiscRp()" value="0.00" >
       </div>
     </div>
 
@@ -3642,12 +3642,52 @@ console.log('==========cccc=========');
     return Number(String(angka == null ? '' : angka).split(',').join('')) || 0
   }
 
-  // Input angka (qty, harga, isi, diskon item, Disc %/DiscRp header) memakai kelas pso-angka:
-  // hanya menerima digit, titik, koma; saat ditinggalkan langsung diberi pemisah ribuan.
+  // Notifikasi gagal AJAX berisi penyebabnya (pesan server / sesi habis), bukan pesan umum saja.
+  function pesanGagalServer (err) {
+    console.log(err)
+    let status = err && err.status
+    if (status == 419 || status == 401) {
+      alertify.warning('Sesi login habis, silahkan refresh browser lalu login ulang')
+      return
+    }
+    let pesan = err && err.responseJSON && err.responseJSON.message ? err.responseJSON.message : ''
+    alertify.warning('Terjadi kesalahan' + (status ? ' (' + status + ')' : '') + (pesan ? ': ' + pesan : ', silahkan refresh browser'))
+  }
+
+  // Input angka (qty, harga, isi, freight, Disc %/DiscRp item & header) memakai kelas pso-angka:
+  // pemisah ribuan langsung muncul SAAT MENGETIK ("1250000" -> "1,250,000"), titik = desimal
+  // (maks 2 digit), posisi kursor dijaga. Saat ditinggalkan dibulatkan ke format "1,250,000.00".
   // Pembacaan nilainya selalu lewat formatAngkaVal() supaya koma pemisah tidak ikut terkirim.
+  function formatAngkaKetik (el) {
+    let teks = el.value
+    let kursor = el.selectionStart == null ? teks.length : el.selectionStart
+    // jumlah karakter bermakna (digit / titik) di kiri kursor - koma diabaikan
+    let posisi = teks.substring(0, kursor).replace(/[^0-9.]/g, '').length
+
+    let bersih = teks.replace(/[^0-9.]/g, '')
+    let titik = bersih.indexOf('.')
+    let bulat = titik >= 0 ? bersih.substring(0, titik) : bersih
+    let desimal = titik >= 0 ? bersih.substring(titik + 1).replace(/\./g, '').substring(0, 2) : ''
+    bulat = bulat.replace(/^0+(?=\d)/, '')
+    if (bulat === '' && titik >= 0) { bulat = '0' }
+    let hasil = bulat.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (titik >= 0 ? '.' + desimal : '')
+    if (hasil === el.value) { return }
+    el.value = hasil
+
+    let i = 0
+    let n = 0
+    while (i < hasil.length && n < posisi) {
+      if (hasil[i] !== ',') { n++ }
+      i++
+    }
+    try { el.setSelectionRange(i, i) } catch (e) {}
+  }
   $(document).on('input', '.pso-angka', function () {
-    let bersih = this.value.replace(/[^0-9.,]/g, '')
-    if (bersih !== this.value) { this.value = bersih }
+    formatAngkaKetik(this)
+  })
+  $(document).on('focus', '.pso-angka', function () {
+    let el = this
+    setTimeout(function () { try { el.select() } catch (e) {} }, 0)
   })
   $(document).on('focusout', '.pso-angka', function () {
     this.value = formatAngka(formatAngkaVal(this.value))
@@ -3883,8 +3923,7 @@ function buttonOtorisasi (nobukti) {
 
           },
           error: function (err) {
-            console.log(err)
-            alertify.warning('Terjadi kesalahan silahkan refresh browser')
+            pesanGagalServer(err)
           }
 
         })
@@ -3912,7 +3951,7 @@ function buttonBatalOtorisasi (nobukti) {
 
      if (xpket==''){
           alertify.warning('Keterangan harus diisi.');
-          $.abort();
+          return;
         }
         let _token = $("#_token").val();
 
@@ -3932,8 +3971,7 @@ function buttonBatalOtorisasi (nobukti) {
 
           },
           error: function (err) {
-            console.log(err)
-            alertify.warning('Terjadi kesalahan silahkan refresh browser')
+            pesanGagalServer(err)
           }
 
         })
@@ -4058,6 +4096,8 @@ function onChangeTipePPN () {
     refreshUpdateHeader()
     let nobukti = $("#input_add_nobukti").val()
     refreshDataTableAdd(nobukti)
+  } else {
+    hitungTotalHeader()
   }
 
 
@@ -4105,18 +4145,82 @@ function onChangeHari () {
 }
 
 // ---- Diskon header (DBPENAWARANSO.DISC = persen, DISCRP = rupiah) ----
-// Sama seperti Purchase Order: DISC header disalin ke DBPENAWARANSODET.DISC oleh
-// refreshUpdateHeader() (Sp_UpdatePenawaranSO), lalu computed column NDISKON/NDPP/NPPN/NNET
-// menghitung DPP = Total - diskon header, PPN = DPP x NILAIPPN %, Grand Total = DPP + PPN
-// (PPN include: DPP = (Total - diskon) / (1 + NILAIPPN %)). Disc % adalah acuannya:
-// DiscRp = Total (jumlah Sub Total item) x Disc % / 100.
+// Rumus (sama dengan computed column DBPENAWARANSODET & Purchase Order):
+//   Total       = jumlah Sub Total item (Qty x (Harga - Disc item)) x Kurs
+//   DiscRp      = Total x Disc % / 100            (Disc % = DiscRp / Total x 100)
+//   Non PPN (0) : DPP = Total - DiscRp,                   PPN = 0
+//   Exclude (1) : DPP = Total - DiscRp,                   PPN = DPP x tarif PPN
+//   Include (2) : DPP = (Total - DiscRp) / (1 + tarif),   PPN = DPP x tarif
+//   Grand Total = DPP + PPN
+// Tarif PPN diambil dari DBNILAIPPN sesuai tanggal dokumen (getDetail -> NilaiPPNHeader).
+// Nilai di form dihitung di sini supaya langsung benar & ikut berubah saat mengetik; DB
+// menyamakan DBPENAWARANSODET lewat Sp_UpdatePenawaranSO (refreshUpdateHeader).
 function totalItemPenawaran () {
   if (!dataTableAdd || !dataTableAdd.length) { return 0 }
   return dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0)
 }
 
+function bulat2 (angka) {
+  return Math.round((Number(angka) || 0) * 100) / 100
+}
+
 function hitungDiscRpHeader (disc) {
-  return Math.round(totalItemPenawaran() * disc) / 100
+  return bulat2(totalItemPenawaran() * disc / 100)
+}
+
+function tarifPPNPenawaran () {
+  let tarif = parseFloat(dataHeaderAdd && dataHeaderAdd.NilaiPPNHeader)
+  return isNaN(tarif) ? 11 : tarif
+}
+
+// DPP / PPN / Grand Total dari Total, DiscRp header, dan tipe PPN yang sedang dipilih.
+function hitungTotalHeader (discrp) {
+  let total = totalItemPenawaran()
+  if (discrp === undefined) { discrp = hitungDiscRpHeader(parseFloat(formatAngkaVal($("#input_add_disc").val())) || 0) }
+  let setelahDisc = total - discrp
+  // Tipe PPN: pilihan di select; kalau select tidak punya opsi itu (opsinya dibentuk ulang saat
+  // pilih customer), pakai PPN header dari DB.
+  let pilihanPPN = $("#input_add_tipeppn").val()
+  let tipePPN = Number(pilihanPPN !== null && pilihanPPN !== undefined ? pilihanPPN : (dataHeaderAdd && dataHeaderAdd.PPN)) || 0
+  let tarif = tarifPPNPenawaran() / 100
+  let dpp = tipePPN == 2 ? setelahDisc / (1 + tarif) : setelahDisc
+  let ppn = tipePPN == 0 ? 0 : dpp * tarif
+  dpp = bulat2(dpp)
+  ppn = bulat2(ppn)
+
+  document.getElementById("input_add_total").value = formatAngka(bulat2(total))
+  document.getElementById("input_add_dpp").value = formatAngka(dpp)
+  document.getElementById("input_add_ppn").value = formatAngka(ppn)
+  document.getElementById("input_add_grandtotal").value = formatAngka(bulat2(dpp + ppn))
+}
+
+// Ambil Disc % & DiscRp header dari input (sumber = field yang sedang diisi), saling
+// mengisi satu sama lain. Nilai di luar batas dipotong diam-diam (tanpa notifikasi).
+function bacaDiscHeader (sumber) {
+  let total = totalItemPenawaran()
+  let disc = parseFloat(formatAngkaVal($("#input_add_disc").val())) || 0
+  let discrp = parseFloat(formatAngkaVal($("#input_add_discrp").val())) || 0
+  if (sumber == 'discrp') {
+    if (discrp < 0) { discrp = 0 }
+    if (discrp > total) { discrp = total }
+    disc = total ? discrp / total * 100 : 0
+  } else {
+    if (disc < 0) { disc = 0 }
+    if (disc > 100) { disc = 100 }
+    discrp = hitungDiscRpHeader(disc)
+  }
+  return { disc, discrp: bulat2(discrp) }
+}
+
+// Saat mengetik: isi pasangan field-nya + DPP/PPN/Grand Total, belum simpan ke DB.
+function hitungDiscHeaderLokal (sumber) {
+  let d = bacaDiscHeader(sumber)
+  if (sumber == 'discrp') {
+    document.getElementById("input_add_disc").value = formatAngka(d.disc)
+  } else {
+    document.getElementById("input_add_discrp").value = formatAngka(d.discrp)
+  }
+  hitungTotalHeader(d.discrp)
 }
 
 function simpanDiscHeader (disc, discrp) {
@@ -4136,66 +4240,60 @@ function simpanDiscHeader (disc, discrp) {
       }
     })
   });
-  if (!berhasil) { alertify.warning('Gagal menyimpan diskon, silahkan refresh browser') }
   return berhasil
 }
 
-// Dipanggil refreshDataTableAdd/Edit/Detail: tampilkan diskon header dari DB, dan kalau
-// DiscRp tersimpan sudah tidak cocok dengan Total sekarang (item ditambah/diubah/dihapus),
-// samakan lagi di DB - hanya di mode edit.
+// Dipanggil refreshDataTableAdd/Edit/Detail: tampilkan diskon header dari DB + hitung ulang
+// DPP/PPN/Grand Total. Kalau DiscRp tersimpan sudah tidak cocok dengan Total sekarang (item
+// ditambah/diubah/dihapus), samakan lagi di DB - hanya di mode edit.
+// Sama seperti Purchase Order (refreshDataTableAdd di purchaseOrder): DiscRp, DPP, PPN, dan
+// Grand Total yang tampil = jumlah per item dari DB (TotDiskon/TotDPP/TotPPN/TotNet = sum
+// NDISKON/NDPP/NPPN/NNET, rumus computed column identik DBPODET). Hitungan lokal hanya
+// dipakai kalau nilai DB belum ada.
 function tampilDiscHeader () {
   let disc = parseFloat(dataHeaderAdd.Disc) || 0
   let discrp = hitungDiscRpHeader(disc)
-  document.getElementById("input_add_disc").value = formatAngka(disc.toFixed(2))
-  document.getElementById("input_add_discrp").value = formatAngka(discrp.toFixed(2))
+  document.getElementById("input_add_disc").value = formatAngka(disc)
+
+  let adaTotalDB = dataTableAdd && dataTableAdd.length && dataHeaderAdd.TotNet !== null && dataHeaderAdd.TotNet !== undefined
+  if (adaTotalDB) {
+    document.getElementById("input_add_total").value = formatAngka(parseFloat(totalItemPenawaran()).toFixed(2))
+    document.getElementById("input_add_discrp").value = formatAngka(parseFloat(dataHeaderAdd.TotDiskon || 0).toFixed(2))
+    document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP || 0).toFixed(2))
+    document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN || 0).toFixed(2))
+    document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet || 0).toFixed(2))
+  } else {
+    document.getElementById("input_add_discrp").value = formatAngka(discrp)
+    hitungTotalHeader(discrp)
+  }
+
   if (tipeform == 'edit' && Math.abs((parseFloat(dataHeaderAdd.DiscRpHeader) || 0) - discrp) >= 0.005) {
     simpanDiscHeader(disc, discrp)
   }
 }
 
-function onChangeInputAddDisc () {
-    console.log('onChangeDisc')
-    let disc = parseFloat(formatAngkaVal($("#input_add_disc").val())) || 0
-    if (disc < 0 || disc > 100) {
-      alertify.warning('Disc % harus antara 0 - 100')
-      disc = 0
-    }
-    document.getElementById("input_add_disc").value = formatAngka(disc.toFixed(2))
-    document.getElementById("input_add_discrp").value = formatAngka(hitungDiscRpHeader(disc).toFixed(2))
+function simpanDiscHeaderDariInput (sumber) {
+  let d = bacaDiscHeader(sumber)
+  document.getElementById("input_add_disc").value = formatAngka(d.disc)
+  document.getElementById("input_add_discrp").value = formatAngka(d.discrp)
+  hitungTotalHeader(d.discrp)
 
-    // Mode add sebelum item pertama tersimpan: header belum ada di DB, nilai disimpan
-    // sesudah item pertama berhasil disimpan (lihat submitAddAdd).
-    if (tipeform == 'edit') {
-      if (simpanDiscHeader(disc, hitungDiscRpHeader(disc))) { alertify.success('update Disc berhasil') }
-      refreshUpdateHeader()
-      let nobukti = $("#input_add_nobukti").val()
-      refreshDataTableAdd(nobukti)
-    }
+  // Mode add sebelum item pertama tersimpan: header belum ada di DB, nilai disimpan
+  // sesudah item pertama berhasil disimpan (lihat submitAddAdd).
+  if (tipeform == 'edit') {
+    simpanDiscHeader(d.disc, d.discrp)
+    refreshUpdateHeader()
+    let nobukti = $("#input_add_nobukti").val()
+    refreshDataTableAdd(nobukti)
+  }
+}
+
+function onChangeInputAddDisc () {
+  simpanDiscHeaderDariInput('disc')
 }
 
 function onChangeInputAddDiscRp () {
-    console.log('onChangeDiscRp')
-    let discrp = parseFloat(formatAngkaVal($("#input_add_discrp").val())) || 0
-    let total = totalItemPenawaran()
-    let disc = 0
-    if (discrp && !total) {
-      alertify.warning('Tambahkan item terlebih dahulu sebelum mengisi DiscRp')
-      discrp = 0
-    } else if (discrp < 0 || discrp > total) {
-      alertify.warning('DiscRp harus antara 0 dan Total')
-      discrp = 0
-    } else if (total) {
-      disc = discrp / total * 100
-    }
-    document.getElementById("input_add_disc").value = formatAngka(disc.toFixed(2))
-    document.getElementById("input_add_discrp").value = formatAngka(discrp.toFixed(2))
-
-    if (tipeform == 'edit') {
-      if (simpanDiscHeader(disc, discrp)) { alertify.success('update DiscRp berhasil') }
-      refreshUpdateHeader()
-      let nobukti = $("#input_add_nobukti").val()
-      refreshDataTableAdd(nobukti)
-    }
+  simpanDiscHeaderDariInput('discrp')
 }
 
 // Salin PPN/Disc %/Kurs header ke tiap item (Sp_UpdatePenawaranSO) supaya DPP, PPN, dan
@@ -4219,8 +4317,8 @@ function refreshUpdateHeader ()
       console.log('check')
 
     },error: function (err) {
+      // Penyelarasan di belakang layar - tidak perlu notifikasi ke user.
       console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
     }
   })
 }
@@ -4521,8 +4619,7 @@ freight , ketrevisi , tglrevisi , tglprcust , kodekebunh , urut
 
   },
   error: function (err) {
-    console.log(err)
-    alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    pesanGagalServer(err)
   }
 
 })
@@ -5042,14 +5139,10 @@ function onChangeInputAddAddDisc () {
 
 }
 
+// Harga berubah: DiscRp item dihitung ulang dari Disc % yang sudah diisi (tidak lagi direset ke 0).
 function onChangeInputAddAddHarga () {
-  document.getElementById("input_add_add_discrp").value = formatAngka('0.00')
-  document.getElementById("input_add_add_discpersen1").value = formatAngka('0.00')
-  document.getElementById("input_add_add_discpersen2").value = formatAngka('0.00')
-  document.getElementById("input_add_add_discpersen3").value = formatAngka('0.00')
-
-
   document.getElementById("input_add_add_hargaAwal").value = formatAngkaVal(document.getElementById("input_add_add_harga").value)
+  calculateDiscRp()
 }
 
 function onChangeInputAddEditHarga () {
@@ -7626,9 +7719,6 @@ function refreshDataTableAdd (NOBUKTI) {
           document.getElementById("input_add_tglrevisi").value = dataHeaderAdd.tglrevisi ? formatDate(dataHeaderAdd.tglrevisi) : ""
           document.getElementById("input_add_total").value = formatAngka(dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
           tampilDiscHeader()
-          document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP).toFixed(2))
-          document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN).toFixed(2))
-          document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet).toFixed(2))
 
 
         }
@@ -7758,9 +7848,6 @@ function refreshDataTableEdit (NOBUKTI) {
           document.getElementById("input_add_tglrevisi").value = dataHeaderAdd.tglrevisi ? formatDate(dataHeaderAdd.tglrevisi) : ""
           document.getElementById("input_add_total").value = formatAngka(dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
           tampilDiscHeader()
-          document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP).toFixed(2))
-          document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN).toFixed(2))
-          document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet).toFixed(2))
 
 
 
@@ -7887,9 +7974,6 @@ function refreshDataTableDetail (NOBUKTI) {
           document.getElementById("input_add_tglrevisi").value = dataHeaderAdd.tglrevisi ? formatDate(dataHeaderAdd.tglrevisi) : ""
           document.getElementById("input_add_total").value = formatAngka(dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
           tampilDiscHeader()
-          document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP).toFixed(2))
-          document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN).toFixed(2))
-          document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet).toFixed(2))
 
         }
 
@@ -9139,8 +9223,7 @@ function buttonAddDeleteItem (i) {
 
           },
           error: function (err) {
-            console.log(err)
-            alertify.warning('Terjadi kesalahan silahkan refresh browser')
+            pesanGagalServer(err)
           }
 
         })
@@ -9201,32 +9284,28 @@ function formatAngka (angkaString) {
   return (minus ? '-' : '') + temp1
 };
 
+// Diskon per item: DiscRp (per satuan) <-> Disc % terhadap Harga, saling mengisi saat diketik.
+// Nilai di luar batas dipotong diam-diam (tanpa notifikasi): Disc % maks 100, DiscRp maks Harga.
 function reverseCalculateDiscPercent() {
+  let elDiscRp = document.getElementById('input_add_add_discrp')
   let harga = parseFloat(formatAngkaVal($('#input_add_add_harga').val())) || 0;
-  let discRp = parseFloat(formatAngkaVal(document.getElementById('input_add_add_discrp').value)) || 0;
+  let discRp = parseFloat(formatAngkaVal(elDiscRp.value)) || 0;
 
-  // Clear all discount percentage fields first
-  document.getElementById('input_add_add_discpersen1').value = formatAngka(0)
   document.getElementById('input_add_add_discpersen2').value = formatAngka(0)
   document.getElementById('input_add_add_discpersen3').value = formatAngka(0)
 
-  // If harga is 0, we can't calculate percentage
-  if (harga === 0) {
+  if (harga <= 0) {
+    document.getElementById('input_add_add_discpersen1').value = formatAngka(0)
     return;
   }
 
-  // Calculate the discount percentage
+  if (discRp > harga) {
+    discRp = harga
+    elDiscRp.value = formatAngka(discRp)
+  }
+
   let discPercent = (discRp / harga) * 100;
-
-  // Validate that discount doesn't exceed 100%
-  if (discPercent > 100) {
-    alert("Diskon tidak boleh melebihi harga");
-    document.getElementById('input_add_add_discrp').value = formatAngka("")
-    return;
-  }
-
-  // Set the first discount percentage field
-  document.getElementById('input_add_add_discpersen1').value = formatAngka(discPercent.toFixed(2))
+  document.getElementById('input_add_add_discpersen1').value = formatAngka(discPercent)
 }
 
 function calculateDiscRp() {
@@ -9236,25 +9315,13 @@ function calculateDiscRp() {
 
   let discRp = formatAngkaVal($('#input_add_add_harga').val())
 
-  disc1 = parseFloat(disc1) || 0
-  disc2 = parseFloat(disc2) || 0
-  disc3 = parseFloat(disc3) || 0
+  disc1 = Math.min(parseFloat(disc1) || 0, 100)
+  disc2 = Math.min(parseFloat(disc2) || 0, 100)
+  disc3 = Math.min(parseFloat(disc3) || 0, 100)
   discRp = parseFloat(discRp) || 0
 
-  if (disc1 > 100) {
-    alert("Diskon tidak boleh melebihi angka 100")
-    document.getElementById('input_add_add_discpersen1').value = formatAngka("")
-    return
-  }
-  if (disc2 > 100) {
-    alert("Diskon tidak boleh melebihi angka 100")
-    document.getElementById('input_add_add_discpersen2').value = formatAngka("")
-    return
-  }
-  if (disc3 > 100) {
-    alert("Diskon tidak boleh melebihi angka 100")
-    document.getElementById('input_add_add_discpersen3').value = formatAngka("")
-    return
+  if ((parseFloat(formatAngkaVal(document.getElementById('input_add_add_discpersen1').value)) || 0) > 100) {
+    document.getElementById('input_add_add_discpersen1').value = formatAngka(100)
   }
 
   let currentAmount = discRp
@@ -9278,7 +9345,7 @@ function calculateDiscRp() {
     totalDiscount += afterDiskon3
   }
 
-  document.getElementById('input_add_add_discrp').value = formatAngka(totalDiscount)
+  document.getElementById('input_add_add_discrp').value = formatAngka(bulat2(totalDiscount))
 }
 
 function LockFreeOfCharge(){
