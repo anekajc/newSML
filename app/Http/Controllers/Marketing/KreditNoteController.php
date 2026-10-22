@@ -191,22 +191,29 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
   public function listInvoice (Request $req) {
 
     // Isi vwHutPiut ditulis langsung dengan filter customer di tabel dasar: di view kolomnya
-    // upper(KodeCustSupp) sehingga index tidak terpakai (customer besar 0,7 - 11 dtk). Hasil
-    // dicek identik dengan query lama (EXCEPT dua arah).
-    $listData = DB::connection('SML')->select("
-    select Cast(1 as Bit) Pilih,Convert(Numeric(18,2),0) Nilai, a.Valas KodeVls, a.Kurs, a.NoFaktur,Min(a.Tanggal) Tanggal, Min(a.JatuhTempo) JatuhTempo,
-           SUM(a.Saldo) Saldo, SUM(A.SaldoD) SaldoD
-    from DBHUTPIUT a
-    Left Outer Join dbInvoicePL b on a.NoFaktur=b.NoBukti
-    Left Outer join DBSO C on b.NoSPP=C.NOBUKTI
-    Left outer join DBKEBUNCUSTSUPP d on c.KODECUST=d.KODECUSTSUPP
-      and d.KODEKEBUN=case when isnull(A.Kodekebun,'')='' then ISnull(C.KODEKEBUN,'') else ISnull(A.Kodekebun,'') End
-    left outer join DBPICCUSTSUPP E ON C.KodePF=E.KODEPIC AND C.KODECUST=e.KODECUSTSUPP
-    where a.KodeCustSupp = cast(:kodecustsupp as varchar(15)) and a.Tipe='PT'
-      and not exists (select 1 from dbKreditNoteDet k where k.NoInv=a.NoFaktur)
-    Group by a.NoFaktur,a.Valas, a.Kurs
-    Having SUM(a.Saldo)<>0 or SUM(A.SaldoD)<>0
-    Order by a.Nofaktur
+    // upper(KodeCustSupp) sehingga index tidak terpakai. Join view (invoice PL/SO/kebun/PIC)
+    // tidak dipakai kolomnya, jadi dilepas.
+    // Hanya invoice yang belum lunas. Saldo dijumlah per NoFaktur saja (sama dengan
+    // infoInvoice/cekNilai): dulu per NoFaktur+Valas+Kurs, sehingga pelunasan valas dengan
+    // kurs lain dan baris selisih kurs jadi kelompok sendiri dan invoice lunas tetap tampil.
+    // Lunas dinilai per mata uang invoice (IDR: Saldo, valas: SaldoD). Sisa < 1 (hanya selisih
+    // pembulatan di belakang koma, mis. 0,07) dianggap lunas, keputusan user 22 Okt 2026.
+    $listData = DB::connection('SML')->select("declare @awal Varchar(15)
+    Select @Awal= cast(:kodecustsupp as varchar(15))
+    select Cast(1 as Bit) Pilih,Convert(Numeric(18,2),0) Nilai, isnull(v.Valas,'IDR') KodeVls, isnull(v.Kurs,1) Kurs, s.NoFaktur, s.Tanggal, s.JatuhTempo,
+           s.Saldo, s.SaldoD
+    from (select a.NoFaktur, Min(a.Tanggal) Tanggal, Min(a.JatuhTempo) JatuhTempo, SUM(a.Saldo) Saldo, SUM(a.SaldoD) SaldoD,
+                 nullif(max(case when isnull(a.Valas,'') not in ('','IDR') then a.Valas else '' end),'') ValasAsing
+          from DBHUTPIUT a
+          where a.KodeCustSupp=@Awal and a.Tipe='PT'
+            and not exists (select 1 from dbKreditNoteDet k where k.NoInv=a.NoFaktur)
+          Group by a.NoFaktur) s
+    outer apply (select top 1 h.Valas, h.Kurs from DBHUTPIUT h
+                 where h.NoFaktur=s.NoFaktur and h.KodeCustSupp=@Awal and h.Tipe='PT'
+                   and isnull(h.Valas,'IDR')=isnull(s.ValasAsing,'IDR')
+                 order by h.Tanggal, h.Urut) v
+    where case when s.ValasAsing is null then s.Saldo else s.SaldoD end >= 1
+    Order by s.Nofaktur
 " , ["kodecustsupp" => (string) $req->kodecustsupp]);
     return $listData;
 

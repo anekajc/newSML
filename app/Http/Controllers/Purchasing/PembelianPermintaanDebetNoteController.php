@@ -141,16 +141,28 @@ class PembelianPermintaanDebetNoteController extends Controller
 
   public function listInvoice (Request $req) {
 
+    // Hanya invoice yang belum lunas. Saldo dijumlah per NoFaktur saja: dulu dikelompokkan
+    // per NoFaktur+Valas+Kurs, sehingga pelunasan valas dengan kurs lain (dan baris selisih
+    // kurs IDR) jadi kelompok sendiri dan invoice lunas tetap tampil (mis. supplier K015).
+    // Lunas dinilai per mata uang invoice (IDR: Saldo, valas: SaldoD). Sisa < 1 (hanya selisih
+    // pembulatan di belakang koma, mis. 0,07) dianggap lunas, keputusan user 22 Okt 2026.
+    // Valas/Kurs diambil dari baris pertama invoice dengan valas tsb.
     $listData = DB::connection('SML')->select("declare @awal Varchar(15)
     Select @Awal= :kodecustsupp
-    select Cast(1 as Bit) Pilih,Convert(Numeric(18,2),0) Nilai, a.Valas KodeVls, a.Kurs, a.NoFaktur,Min(a.Tanggal) Tanggal, Min(a.JatuhTempo) JatuhTempo,
-           SUM(a.Saldo) Saldo, SUM(A.SaldoD) SaldoD
-    from dbo.vwHutPiut a
-         left outer join (select NoInv from dbdebetNoteDet) b on b.NoInv=a.NoFaktur
-    where a.KodeCustSupp=@Awal and B.NoInv is null and a.Tipe='HT'
-    Group by a.NoFaktur,a.Valas, a.Kurs
-    Having SUM(a.Saldo)<>0 or SUM(A.SaldoD)<>0
-    Order by a.Nofaktur" , ["kodecustsupp" => $req->kodecustsupp]);
+    select Cast(1 as Bit) Pilih,Convert(Numeric(18,2),0) Nilai, isnull(v.Valas,'IDR') KodeVls, isnull(v.Kurs,1) Kurs, s.NoFaktur, s.Tanggal, s.JatuhTempo,
+           s.Saldo, s.SaldoD
+    from (select a.NoFaktur, Min(a.Tanggal) Tanggal, Min(a.JatuhTempo) JatuhTempo, SUM(a.Saldo) Saldo, SUM(a.SaldoD) SaldoD,
+                 nullif(max(case when isnull(a.Valas,'') not in ('','IDR') then a.Valas else '' end),'') ValasAsing
+          from DBHUTPIUT a
+          where a.KodeCustSupp=@Awal and a.Tipe='HT'
+            and not exists (select 1 from dbdebetNoteDet b where b.NoInv=a.NoFaktur)
+          Group by a.NoFaktur) s
+    outer apply (select top 1 h.Valas, h.Kurs from DBHUTPIUT h
+                 where h.NoFaktur=s.NoFaktur and h.KodeCustSupp=@Awal and h.Tipe='HT'
+                   and isnull(h.Valas,'IDR')=isnull(s.ValasAsing,'IDR')
+                 order by h.Tanggal, h.Urut) v
+    where case when s.ValasAsing is null then s.Saldo else s.SaldoD end >= 1
+    Order by s.Nofaktur" ,["kodecustsupp" => $req->kodecustsupp]);
     return $listData;
 
   }

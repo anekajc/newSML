@@ -36,6 +36,7 @@ Buka di SSMS, lalu jalankan berurutan:
 | 6 | `06_perintah_retur_beli.sql` | Buat view vwBrowsPrRBeli (kolom Status PRB) | Ya. Tanpa ini tabel Perintah Retur Beli error |
 | 7 | `07_debetnote_akun_bd.sql` | Akun posting `DBPOSTHUTPIUT` Kode `BD` (Debet Note) | Ya, kalau menu Debet Note dipakai |
 | 20 | `20_fnc_masterbeli_kolom_hutang.sql` | Tambah kolom `hutang` (Lunas/Belum) di fungsi `fnc_MasterBeli` | Ya. Tanpa ini kolom badge Hutang di menu Penerimaan ACC kosong |
+| 21 | `21_vwposthutpiut_jurnaloto_tanpa_qc.sql` | Posting hutang (`vwPostHutPiut`) & jurnal (`vwPostJurnalOto`) pembelian barang tidak menunggu QC, disamakan dengan DBSMLNEW | Ya. Tanpa ini pembelian yang di-ACC sebelum QC tidak masuk `DBHUTPIUT`/jurnal dan kolom Hutang tampil Lunas |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -178,3 +179,38 @@ Jalan keluarnya, pilih salah satu:
 - Tanpa skrip ini menu Penerimaan ACC tetap jalan, tetapi kolom Hutang kosong (controller memakai `$r->hutang ?? null`).
 - Skrip berisi `ALTER FUNCTION` dengan definisi lengkap, jadi aman dijalankan ulang. Definisi di DBSMLBARU dan DBSMLNEW sudah sama persis.
 - Sudah dijalankan langsung di DBSMLBARU dan DBSMLNEW (server 36.88.190.218) pada 20 Oktober 2026. Untuk server client, jalankan `20_fnc_masterbeli_kolom_hutang.sql`.
+
+---
+
+## 21 — vwPostHutPiut & vwPostJurnalOto: posting hutang tidak menunggu QC (21 Oktober 2026)
+
+- **Gejala:** di menu Penerimaan ACC (`newpobeliacc`) kolom **Hutang** tampil **Lunas** untuk pembelian yang sudah diotorisasi, dan pembeliannya tidak ada di `DBHUTPIUT`. Di DBSMLNEW (newProgramAJC) sudah benar.
+- **Penyebab:** tombol Otorisasi menjalankan `sp_ProsesPostingHutPiut` dan `sp_ProsesPostingJurnalOto` (prosedurnya sama di kedua DB). Sumber datanya, view `vwPostHutPiut` dan `vwPostJurnalOto`, di DBSMLBARU masih memuat syarat QC:
+  - `vwPostHutPiut`: `where ISNULL(pqc,0) = case when ISNULL(pJasa,0)=0 then 1 else 0 End`
+  - `vwPostJurnalOto`: `where (ISNULL(pQC,0)=1 Or isnull(a.pJasa,0)<>0)`
+
+  Pembelian barang yang di-ACC sebelum QC tidak ikut diposting, dan `Sp_QC` tidak memposting ulang sesudah QC, jadi hutang & jurnalnya tidak pernah terbentuk.
+- **Perubahan** (definisi view disalin persis dari DBSMLNEW, nama & urutan kolom tidak berubah):
+  - kedua syarat QC di atas dinonaktifkan (jadi komentar);
+  - tanggal hutang/jurnal pembelian = `A.TANGGAL` (tanggal LPB), bukan lagi `TglQC`; jatuh tempo = `A.TANGGAL + A.HARI`.
+- **Catatan perilaku:** posting yang sudah ada tidak diubah. Hanya pembelian yang diotorisasi/diposting ulang setelah skrip ini yang memakai tanggal LPB.
+- **Posting ulang data:** `SML/LPB/00016/1026` (kredit, B088) dan `SML/LPB/00017/1026` (tunai) diposting ulang dengan `sp_ProsesPostingHutPiut` + `sp_ProsesPostingJurnalOto` ('', 'dbbeli', 10, 2026, nobukti, 1). Hasilnya: baris `DBHUTPIUT` BPL dan `DBJurnalOto` sudah ada, kolom Hutang tampil **Belum**.
+- Pembelian tunai September 2026 (LPB/0926, sudah QC) yang belum punya baris `DBHUTPIUT` tidak disentuh, karena penyebabnya bukan syarat QC (dari alur lama).
+- View lain yang masih berbeda dengan DBSMLNEW soal QC/tanggal (`vwMasterBeli`, `vwTampilBeli`, `vwKartuStock`, `vwReportBeliGudang`, `vwOutPenerimaanBrg`, `vwOutPOSblmQC`, `vwMasterPenawaran`) **tidak** diubah.
+- Sudah dijalankan langsung di DBSMLBARU (server 36.88.190.218) pada 21 Oktober 2026. Untuk server client, jalankan `21_vwposthutpiut_jurnaloto_tanpa_qc.sql`. Aman dijalankan ulang.
+
+---
+
+## 22 — Debet Note: daftar invoice hanya yang belum lunas (22 Oktober 2026, tanpa perubahan database)
+
+- **Gejala:** modal Invoice di menu Debet Note masih menampilkan invoice yang sudah lunas. Dua penyebab:
+  1. **Invoice IDR dengan sisa `SaldoD`.** Contoh di DBSMLNEW: `123123` (supplier 165) sudah dilunasi (baris LNS -1.000.000), tapi baris LNS mengisi `SaldoD` = 0 sehingga `SaldoD` tersisa 1.000.000. Filter lama `Having SUM(Saldo)<>0 or SUM(SaldoD)<>0` tetap menampilkannya.
+  2. **Invoice valas dilunasi dengan kurs lain.** Query lama mengelompokkan per `NoFaktur, Valas, Kurs`. Contoh supplier K015 (KINGOYA ENTERPRISE SDN BHD, RM): `SML/LPB/00004/0521` dicatat kurs 3527,29 (+3.750 RM), pelunasannya kurs 3545 (-3.750 RM), ditambah baris selisih kurs (IDR). Ketiganya jadi kelompok terpisah, sehingga invoice lunas tampil sebagai belum lunas. Di DBSMLNEW K015 tampil 72 invoice, padahal yang belum lunas hanya 1 (`SML/LPB/00005/1026`, IDR 9.200.000).
+- **Perubahan (hanya di controller `PembelianPermintaanDebetNoteController::listInvoice`):**
+  - Saldo dijumlah per `NoFaktur` saja, langsung dari `DBHUTPIUT` (sebelumnya `vwHutPiut`; kolom view yang dipakai sama, dan filter `KodeCustSupp` di tabel dasar bisa memakai index).
+  - Invoice dianggap valas kalau ada baris ber-valas selain IDR. Lunas dinilai per mata uang itu (IDR: `Saldo`, valas: `SaldoD`), dan hanya sisa > 0 yang tampil (saldo minus/lebih bayar ikut tersaring).
+  - `KodeVls`/`Kurs` diambil dari baris pertama invoice dengan valas tersebut (`outer apply ... order by Tanggal, Urut`).
+- **Tidak ada skrip SQL.**
+- **Hasil uji langsung** (jumlah invoice hutang yang tampil, semua supplier): DBSMLNEW 828 → 516, DBSMLBARU 1.004 → 678. Supplier 165: `123123` tidak tampil lagi, `SML/LPB/00050–00053/0526` tetap tampil di DBSMLNEW (belum ada pelunasan) dan tidak tampil di DBSMLBARU (sudah lunas). Supplier K015 di DBSMLNEW tinggal 1 invoice.
+- **Sisa pembulatan dianggap lunas** (keputusan user 22 Oktober 2026): invoice tampil hanya kalau sisanya **>= 1** (IDR atau valas). Sisa di belakang koma tidak ditampilkan, contohnya `PI201500842.` (M037, 0,03), `SML/LPB/00216/0824` (0,07), dan `SML/LPB/00224/0724` (0,04) milik C023. Data `DBHUTPIUT`-nya tidak diubah. Dengan batas ini, Debet Note tampil 513 invoice di DBSMLNEW dan 675 di DBSMLBARU.
+- Modal Invoice juga dirapikan (kolom cari terpotong header). Ini hanya perubahan tampilan.

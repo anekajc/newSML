@@ -11,6 +11,7 @@ Catatan ini mendaftar perubahan database DBSMLBARU dari pekerjaan menu **marketi
 | 9 | `09_perbaiki_qnt1_prj_00001_0416.sql` | Perbaiki QNT1 salah ketik PRJ lama `SML/PRJ/00001/0416` | Ya, supaya PRJ itu tidak terus tampil di Outstanding PRJ |
 | 10 | `10_perbaiki_qnt_prj_00001_0916.sql` | Isi QNT1/QNT2 yang kosong di PRJ lama `SML/PRJ/00001/0916` | Ya, supaya data PRJ konsisten |
 | 11 | `11_kreditnote_perkhp_dan_akun_bk.sql` | Default `''` untuk `DBKreditNoteDET.perkHP` + akun posting `DBPOSTHUTPIUT` Kode `BK` = 41200 | **Wajib**, tanpa ini item Kredit Note tidak tersimpan dan akun debet jurnal KN kosong |
+| 22 | `22_penawaranso_disc_header_nilaippn.sql` | Penawaran SO: kolom `DISC` & `NILAIPPN` di `DBPENAWARANSODET`, rumus DPP/PPN/Net ikut Disc header, SP `Sp_UpdatePenawaranSO` | **Wajib** sebelum kode Penawaran SO versi 22 Oktober 2026 dipasang, tanpa ini simpan item gagal (SP tidak ditemukan) |
 
 **Sebelum mulai:** backup database DBSMLBARU di server.
 
@@ -99,3 +100,28 @@ and ( (? = 0)
    or (? = 1 and isnull(A.IsOtorisasi1,0) = 0)
    or (? = 2 and isnull(A.IsOtorisasi1,0) <> 0) )
 ```
+
+---
+
+## 12 — Kredit Note: daftar invoice hanya yang belum lunas (22 Oktober 2026, tanpa perubahan database)
+
+- Sama dengan Debet Note (lihat `../purchasing/CATATAN-UPDATE-DB-PURCHASING.md` bagian 22). Query `KreditNoteController::listInvoice` sebelumnya mengelompokkan per `NoFaktur, Valas, Kurs` dengan `Having SUM(Saldo)<>0 or SUM(SaldoD)<>0`. Akibatnya, invoice IDR yang lunas tapi `SaldoD`-nya tersisa, serta pelunasan valas dengan kurs lain, membuat invoice lunas tetap tampil.
+- **Perubahan (hanya di controller):** saldo dijumlah per `NoFaktur` saja (sama dengan `infoInvoice`/`cekNilai` saat simpan). Lunas dinilai per mata uang invoice (IDR: `Saldo`, valas: `SaldoD`). Invoice tampil hanya kalau sisanya >= 1. Sisa di belakang koma dianggap lunas (keputusan user 22 Oktober 2026); di data piutang saat ini tidak ada invoice seperti itu. `KodeVls`/`Kurs` diambil dari baris pertama invoice. Join view (invoice PL/SO/kebun/PIC) yang kolomnya tidak dipakai dilepas.
+- **Tidak ada skrip SQL.**
+- **Hasil uji langsung** (semua customer): DBSMLNEW 2.962 → 2.953, DBSMLBARU 2.660 → 2.655. Yang tersaring: invoice lunas dengan sisa `SaldoD` serta saldo minus (retur IVRJ, uang muka UMB, lebih bayar kecil). Customer terbesar (CP004) ±0,15–0,25 detik.
+- Modal Invoice diberi kolom cari dan judul ganda/`margin-top:-60px` dihapus. Ini hanya perubahan tampilan.
+
+---
+
+## 22 — Penawaran SO: Disc header ikut DPP/PPN/Grand Total, PPN pakai NILAIPPN (22 Oktober 2026)
+
+- **Masalah:** computed column `NDISKON/NDPP/NDPPRP/NPPN/NPPNRP/NNET/NNETRP` di `DBPENAWARANSODET` menulis mati diskon header = 0 dan PPN = 11% (`NDPPRP` malah membagi 1.1, tidak sama dengan `NDPP` yang membagi 1.11). Disc %/DiscRp di form Penawaran SO tidak pernah mengurangi DPP, PPN, dan Grand Total. Selain itu form memanggil `pospupdatepo` (`Sp_UpdatePO`), yang hanya bekerja di `DBPO`, jadi tidak ada yang menghitung ulang.
+- **Perubahan (disamakan dengan `DBPODET` + `Sp_UpdatePO` di Purchase Order):**
+  - `DBPENAWARANSODET` tambah `DISC float NOT NULL default 0` (Disc % header) dan `NILAIPPN int NOT NULL default 11` (tarif PPN). Default 11 = tarif lama, jadi nilai data lama tidak berubah.
+  - Computed column di atas dibuat ulang memakai `DISC` dan `NILAIPPN`, rumusnya persis `DBPODET`. `HRGNETTO`, `SUBTOTAL`, `SUBTOTALRP` tidak diubah.
+  - SP baru `Sp_UpdatePenawaranSO @NOBUKTI` menyalin `PPN`, `DISC`, `KURS` header ke semua baris detail. Dipanggil di `PenawaranSOController::spAdd` (setiap item disimpan) dan route `penawaransospupdate` (setiap Disc %/DiscRp/PPN/Kurs/header diubah, lewat `refreshUpdateHeader()`).
+  - Data lama diselaraskan sekali; `DBPENAWARANSO.DISCRP` disamakan dengan total `NDISKON` untuk penawaran yang punya Disc header. View yang membaca tabel ini di-`sp_refreshview`.
+- **Uji coba (dry run, di-ROLLBACK):** dijalankan di DBSMLBARU dalam satu transaksi lalu di-rollback pada 22 Oktober 2026, tanpa error. Contoh `0013/SML/PNW/X/2026` (PPN exclude, Disc 5%): Total 364.550.000 → Diskon 18.227.500, DPP 346.322.500, PPN 11% 38.095.475, Grand Total 384.417.975. Penawaran tanpa Disc header nilainya tetap sama dengan sebelumnya.
+- **Belum dijalankan permanen di server.** Jalankan skrip ini (setelah backup) sebelum kode Penawaran SO versi ini dipakai.
+- DBSMLNEW (newProgramAJC) memakai skrip yang sama dengan default `NILAIPPN` **10** (rumus lama di sana 10%): `newProgramAJC/docs/update-db-DBSMLNEW/marketing/22_penawaranso_disc_header_nilaippn.sql` (juga sudah di-dry-run + rollback).
+- Belum disentuh: `sp_cetakpenawaranso` masih menulis tarif 11 untuk harga satuan include PPN di cetakan; total di cetakan memakai `NDPP/NNET` sehingga ikut rumus baru.
