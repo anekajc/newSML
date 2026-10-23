@@ -349,6 +349,18 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
   justify-content: center;
 }
 
+/* ---------- Modal Invoice dilebarkan (hampir selebar layar) supaya kolom Keterangan langsung
+   kelihatan tanpa scroll ke kanan. Selector dibuat lebih spesifik dari picker-kas.css
+   (yang mengunci modal-dialog ke 1140px). ---------- */
+.modal.picker-kas.modal-invoice-lebar:is(.picker-kas, #pk#pk#pk) .modal-dialog {
+  max-width: min(1320px, 96vw) !important;
+  width: 96vw !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+#tabel_add_list_invoice th { white-space: normal; padding-left: 6px !important; padding-right: 6px !important; }
+#tabel_add_list_invoice td { white-space: nowrap; padding-left: 6px !important; padding-right: 6px !important; }
+
 /* ---------- Modal lookup Supplier/Invoice (#form) - baris supplier diklik langsung
    (tidak ada tombol Actions), disalin dari #formAddListItem di pembelianpermintaanagen. ---------- */
 #tabel_add_list_customer tbody tr.pick-row {
@@ -491,7 +503,7 @@ td input[type="checkbox"] {
             <th style="padding: 4px 12px;" scope="col">Tanggal</th>
             <th style="padding: 4px 12px;" scope="col">Kode Supp</th>
             <th style="padding: 4px 12px;" scope="col">Supplier</th>
-            <th style="padding: 4px 12px;" scope="col">Nilai DN</th>
+            <th style="padding: 4px 12px;" scope="col">Debet Note</th>
           </tr>
         </thead>
         <tbody id="tabel_data" class="text-left">
@@ -602,12 +614,12 @@ td input[type="checkbox"] {
             <tr>
               <th scope="col">No Inv</th>
               <th scope="col">Keterangan</th>
-              <th scope="col">Nilai Debet Note</th>
-              <th scope="col">Nilai Inv</th>
+              <th scope="col">Debet Note</th>
               <th scope="col">Valas</th>
               <th scope="col">Kurs</th>
-              <th scope="col">Nilai DN Rp</th>
-              <th scope="col">Nilai Invoice Rp</th>
+              <th scope="col">Debet Note Rp</th>
+              <th scope="col">Invoice</th>
+              <th scope="col">Invoice Rp</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
@@ -635,6 +647,27 @@ td input[type="checkbox"] {
             <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditNoInv" type="text" class="form-control" disabled>
+              </div>
+            </div>
+            {{-- Nilai Inv & Nilai Inv (Rp) sebaris dengan No Inv supaya form lebih pendek dan
+                 tombol Simpan/Batal terlihat tanpa scroll. Spacer menggeser Nilai Inv ke kolom
+                 ke-3 (setelah ujung kanan Ket.), Nilai Inv (Rp) di kolom ke-4. Spacer fleksibel
+                 (basis 0, maks 360px) supaya di layar sempit menyusut, bukan membuat baris turun. --}}
+            <div class="col-auto" style="flex:1 1 0; max-width:360px; padding:0;"></div>
+            <div class="col-auto" style="width:120px; margin-top:5px; white-space:nowrap;">
+              <div class="form-group"><label>Nilai Inv</label></div>
+            </div>
+            <div class="col-auto" style="width:200px;">
+              <div class="form-group">
+                <input id="AddEditNilaiInv" type="text" value="0.00" class="form-control text-right" disabled>
+              </div>
+            </div>
+            <div class="col-auto" style="width:120px; margin-top:5px; white-space:nowrap;">
+              <div class="form-group"><label>Nilai Inv (Rp)</label></div>
+            </div>
+            <div class="col-auto" style="width:200px;">
+              <div class="form-group">
+                <input id="AddEditNilaiInvRp" type="text" value="0.00" class="form-control text-right" disabled>
               </div>
             </div>
           </div>
@@ -684,27 +717,9 @@ td input[type="checkbox"] {
               </div>
             </div>
           </div>
-          <div class="row" style="margin-top:-5px;">
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Nilai Inv</label></div>
-            </div>
-            <div class="col-auto" style="width:220px;">
-              <div class="form-group">
-                <input id="AddEditNilaiInv" type="text" value="0.00" class="form-control text-right" disabled>
-              </div>
-            </div>
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Nilai Inv (Rp)</label></div>
-            </div>
-            <div class="col-auto" style="width:220px;">
-              <div class="form-group">
-                <input id="AddEditNilaiInvRp" type="text" value="0.00" class="form-control text-right" disabled>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
-      <div class="row mt-2">
+      <div class="row">
         <div class="col-md-12 text-right">
           <button type="button" class="btn btn-batal-add" onclick="buttonAddBatal()">Batal</button>
           <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-chip-biru">Simpan</button>
@@ -794,12 +809,12 @@ td input[type="checkbox"] {
             <tr>
               <th scope="col">No Inv</th>
               <th scope="col">Keterangan</th>
-              <th scope="col">Nilai Debet Note</th>
-              <th scope="col">Nilai Inv</th>
+              <th scope="col">Debet Note</th>
               <th scope="col">Valas</th>
               <th scope="col">Kurs</th>
-              <th scope="col">Nilai DN Rp</th>
-              <th scope="col">Nilai Invoice Rp</th>
+              <th scope="col">Debet Note Rp</th>
+              <th scope="col">Invoice</th>
+              <th scope="col">Invoice Rp</th>
             </tr>
           </thead>
           <tbody id="detailTableData">
@@ -926,9 +941,9 @@ td input[type="checkbox"] {
                     <th scope="col">Tanggal</th>
                     <th scope="col">Jatuh Tempo</th>
                     <th scope="col">Valas</th>
-                    <th scope="col">Nilai Debet Note</th>
+                    <th scope="col">Debet Note</th>
                     <th scope="col">Kurs</th>
-                    <th scope="col">Nilai DN (Rp)</th>
+                    <th scope="col">Debet Note (Rp)</th>
                     <th scope="col">Hutang (Valas)</th>
                     <th scope="col">Hutang (Rp)</th>
                     <th scope="col">Keterangan</th>
@@ -984,6 +999,8 @@ function dnBuatCart (headers, values, isnumerics, isshowns, desimals, aliasorder
     if (aliasordered && aliasordered[i] && aliasordered[i].alias) {
       label = aliasordered[i].alias
     }
+    // Field data tetap 'Nilai DN' (alias query loadAll), yang diganti hanya judul kolomnya.
+    if (label === 'Nilai DN') { label = 'Debet Note' }
     let des = (desimals && desimals[i] !== undefined && desimals[i] !== null)
       ? Number(desimals[i])
       : (tipe === 1 ? 2 : 0)
@@ -1650,10 +1667,10 @@ function buttonAddListInvoice () {
         <td>${formatDate(item.Tanggal,'-').split('-').reverse().join('/')}</td>
         <td>${formatDate(item.JatuhTempo,'-').split('-').reverse().join('/')}</td>
         <td>${item.KodeVls}</td>
-        <td><input id="add_inputQnt${i}" style="height:30px; min-width: 130px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
+        <td><input id="add_inputQnt${i}" style="height:30px; width: 115px; min-width: 115px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
 
-        <td><input id="add_inputKurs${i}" style="height:30px; min-width: 90px" type="text" inputmode="decimal" value='1.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
-        <td><input style="height:30px; min-width: 130px" id="add_inputQntRp${i}" type="text" value='0.00' class="form-control text-right"  disabled></td>
+        <td><input id="add_inputKurs${i}" style="height:30px; width: 85px; min-width: 85px" type="text" inputmode="decimal" value='1.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
+        <td><input style="height:30px; width: 120px; min-width: 120px" id="add_inputQntRp${i}" type="text" value='0.00' class="form-control text-right"  disabled></td>
 
         <td class="text-right">${formatAngka(parseFloat(item.SaldoD).toFixed(2))}</td>
         <td class="text-right">${formatAngka(parseFloat(item.Saldo).toFixed(2))}</td>
@@ -1668,6 +1685,7 @@ function buttonAddListInvoice () {
       if (res.length) {
         $('.showhidemodalbodyadd').hide();
         $('#modalAddListInvoice').show();
+        $('#form').addClass('modal-invoice-lebar')
         $("#form").modal('toggle')
       } else {
         alertify.warning("Tidak ada invoice untuk ditambah")
@@ -1785,11 +1803,10 @@ function refreshDataTable (nobukti) {
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
                   <td class="text-right">${angkaTampil(item.Nilai)}</td>
-                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
-
                   <td>${item.kodeVls}</td>
                   <td class="text-right">${angkaTampil(item.Kurs)}</td>
                   <td class="text-right">${angkaTampil(item.NilaiRp)}</td>
+                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
                   <td class="text-right">${angkaTampil(item.Saldo)}</td>
                   <td class="text-center">
                     <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
@@ -1868,10 +1885,10 @@ function buttonDetail (nobukti) {
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
                   <td class="text-right">${angkaTampil(item.Nilai)}</td>
-                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
                   <td>${item.kodeVls}</td>
                   <td class="text-right">${angkaTampil(item.Kurs)}</td>
                   <td class="text-right">${angkaTampil(item.NilaiRp)}</td>
+                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
                   <td class="text-right">${angkaTampil(item.Saldo)}</td>
                 </tr>`
       });
@@ -2110,24 +2127,37 @@ function formatRibuan (el) {
   el.value = parts.join('.')
 }
 
+// Modal Supplier kembali ke ukuran normal; lebar penuh hanya untuk daftar Invoice.
+$(function () {
+  $('#form').on('hidden.bs.modal', function () { $(this).removeClass('modal-invoice-lebar') })
+})
+
+// Posisi kursor dihitung dari jumlah karakter bermakna (angka, titik desimal, minus) di
+// depannya. Dulu hanya angka yang dihitung, sehingga setelah "147." diketik kursor kembali
+// ke depan titik dan angka berikutnya masuk sebelum titik (147.5 jadi 1475.).
 function formatRibuanLive (el) {
   let cursorPos = el.selectionStart
-  let digitsBeforeCursor = el.value.slice(0, cursorPos).replace(/[^0-9]/g, '').length
+  let sebelum = el.value.slice(0, cursorPos).replace(/[^0-9.\-]/g, '')
 
-  let raw = el.value.replace(/,/g, '')
-  if (raw !== '' && isNaN(Number(raw))) {
-    raw = raw.replace(/[^0-9.]/g, '')
-  }
-  if (raw === '') { el.value = ''; return }
+  let raw = el.value.replace(/[^0-9.\-]/g, '')
+  let negatif = raw.charAt(0) === '-'
+  raw = raw.replace(/-/g, '')
+  if (raw === '' && !negatif) { el.value = ''; return }
 
-  let parts = raw.split('.')
-  if (parts.length > 1) parts[1] = parts[1].slice(0, 2)
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-  el.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0]
+  let titik = raw.indexOf('.')
+  let bulat = titik >= 0 ? raw.slice(0, titik) : raw
+  let desimal = titik >= 0 ? raw.slice(titik + 1).replace(/\./g, '').slice(0, 2) : null
+  bulat = bulat.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = (negatif ? '-' : '') + bulat + (desimal !== null ? '.' + desimal : '')
 
-  let pos = 0, digitCount = 0
-  while (pos < el.value.length && digitCount < digitsBeforeCursor) {
-    if (/[0-9]/.test(el.value[pos])) digitCount++
+  // Titik / minus ganda yang dibuang tidak ikut dihitung
+  let jumlahTitik = (sebelum.match(/\./g) || []).length
+  let jumlahMinus = (sebelum.match(/-/g) || []).length
+  let target = sebelum.length - Math.max(0, jumlahTitik - 1) - Math.max(0, jumlahMinus - (negatif ? 1 : 0))
+
+  let pos = 0, hitung = 0
+  while (pos < el.value.length && hitung < target) {
+    if (el.value[pos] !== ',') hitung++
     pos++
   }
   el.setSelectionRange(pos, pos)
