@@ -60,7 +60,10 @@ class KreditNoteController extends Controller
   private function queryKreditNote ($tglawal, $tglakhir, $filterkn) {
     return DB::connection("SML")->select("
       select * from (
-        select a.* , b.NAMACUSTSUPP from dbkreditnote a join DBCUSTSUPP b on a.KodeSupp = b.KODECUSTSUPP
+        select a.* , b.NAMACUSTSUPP, isnull(d.NilaiRp,0) NILAIKN
+        from dbkreditnote a join DBCUSTSUPP b on a.KodeSupp = b.KODECUSTSUPP
+        left outer join (select NoBukti, Sum(NilaiRp) NilaiRp from dbKreditNoteDet group by NoBukti) d
+               on d.NoBukti = a.NoBukti
         where a.Tanggal between ? and ?
       ) x
       where (? = 0)
