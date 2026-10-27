@@ -2305,8 +2305,7 @@ select
 @harga hargaso, XTABLE.hrgmin hargaakhir,
 XTABLE.hrgmin + (XTABLE.hrgmin * 0.1 )  hrgminbeli,
 XTABLE.hrgmin + (XTABLE.hrgmin * 1.00 ) hrgmaxbeli,
- case when @harga < XTABLE.hrgmin + (XTABLE.hrgmin * 0.1 )  then 'harga lebih kecil dari pada harga min SO'
-  when @harga >= XTABLE.hrgmin + (XTABLE.hrgmin * 1.00 ) then 'Margin  Lebih dari 100%'
+ case when @harga < XTABLE.hrgmin + (XTABLE.hrgmin * 0.1 )  then 'Harga lebih kecil dari harga min SO'
 else
 'lanjut' End ket
 from (

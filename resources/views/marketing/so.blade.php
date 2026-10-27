@@ -10,7 +10,6 @@
 
   <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
 
-  {{-- Modal pemilih (Pelanggan/Supplier/dst.) disamakan persis dengan modal pemilih menu Kas - lihat public/css/picker-kas.css. --}}
   <link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
 
   <style>
@@ -5153,7 +5152,7 @@ console.log('xhargacek:', xhargacek)
     url: "{!! url('socheckhargaddd') !!}",
     type: "get",
     async: false,
-    data: { Tanggal,KodeBrg,xhargacek,NoSat,choice
+    data: { Tanggal, KodeBrg, xharga: xhargacek, NoSat, choice
     },
     success: function(res) {
       console.log ('=============================>',res,draftpo)
@@ -5161,6 +5160,11 @@ console.log('xhargacek:', xhargacek)
       if (draftpo==1) {
       flagharga='lanjut'
       }
+      // Harga di bawah harga min SO cuma peringatan -- item tetap disimpan.
+      if (flagharga && flagharga != 'lanjut') {
+        alertify.warning(flagharga)
+      }
+      flagharga = 'lanjut'
 
       console.log ('=============================>',flagharga)
       if (flagharga !='lanjut'){
@@ -5477,7 +5481,18 @@ function submitAddEdit () {
 console.log(!kodepelanggan ,kodesales ,kodebackoffice ,kodesattax ,draftpo ,nobukti ,valas ,kodealamatkirim ,kodelokasipenerima ,nopo)
 
 if (!kodepelanggan || !kodesales || !kodebackoffice || !kodesattax || !draftpo || !nobukti || !valas || !kodealamatkirim || !kodelokasipenerima || !nopo) {
-	alertify.warning("Data tidak lengkap")
+    let kosong = []
+    if (!kodepelanggan) kosong.push('Pelanggan')
+    if (!kodesales) kosong.push('Sales')
+    if (!kodebackoffice) kosong.push('Back Office')
+    if (!kodesattax) kosong.push('Satuan Tax')
+    if (!draftpo) kosong.push('Draft PO')
+    if (!nobukti) kosong.push('No Bukti')
+    if (!valas) kosong.push('Valas')
+    if (!kodealamatkirim) kosong.push('Alamat Kirim')
+    if (!kodelokasipenerima) kosong.push('Lokasi Penerima')
+    if (!nopo) kosong.push('No PO')
+    alertify.warning("Data tidak lengkap: " + kosong.join(', '))
     return
 }
 
@@ -5589,209 +5604,106 @@ if (!kodepelanggan || !kodesales || !kodebackoffice || !kodesattax || !draftpo |
     return
   }
 
-let xppn=0
-  let xharga=0
-  if  ( $("#input_add_tipeppn").val()==2) {
-      xppn= $("#input_add_add_harga").val() * 0.1
+  // Cek harga min SO cuma peringatan -- simpan item tetap jalan.
+  // Harga dibandingkan setelah Disc Rp item (bukan Disc Rp header) dan tanpa PPN.
+  let xppn = 0
+  if (Number(tipeppn) == 2) {
+    xppn = harga * 0.1
+  }
+  let xharga = harga - discrpDet - xppn
+  if (tambahkepo != 1 && Number(draftpo) != 1) {
+    $.ajax({
+      url: "{!! url('socheckhargaddd') !!}",
+      type: "get",
+      async: false,
+      data: { tanggal, kodebarang, xharga, nosat, choice },
+      success: function (res) {
+        if (res && res != 'lanjut') {
+          alertify.warning(res)
+        }
+      },
+      error: function (err) {
+        console.log(err)
+      }
+    })
   }
 
- xharga= harga -  discrp - xppn
-  console.log(kodebarang,tanggal,xharga,nosat,choice)
- $.ajax({
-    url: "{!! url('socheckhargaddd') !!}",
-    type: "get",
+  let tglkirimdet = $("#input_add_add_tglkirim").val() || tanggalkirim
+
+  $.ajax({
+    url: "{!! url('sospadd') !!}",
+    type: "post",
     async: false,
-    data: { tanggal,kodebarang,xharga,nosat,choice
+    data: {
+      _token,
+      disc,
+      discrp,
+      tipediskon,
+      refpr,
+      nopenyerahan,
+      kodebarang,
+      namaproduk,
+      qty,
+      nosat,
+      satuanproduk,
+      harga,
+      discDet,
+      discrpDet,
+      tambahkepo,
+      booking,
+      urgent,
+      urut,
+      qnt1,
+      isi,
+      satuan,
+      pppn,
+      choice,
+      nobukti,
+      nourut,
+      kodepelanggan,
+      kodesales,
+      tanggal,
+      kodealamatkirim,
+      alamatkirim,
+      kodepic,
+      kodelokasipenerima,
+      catatan,
+      valas,
+      kurs,
+      dp,
+      pembayaran,
+      hari,
+      tipeppn,
+      draftpo,
+      nopo,
+      tanggalpo,
+      tanggalkirim,
+      kodebackoffice,
+      tanggaljatuhtempo,
+      jmlrecord,
+      idpocust,
+      kodesattax,
+      statuspengiriman,
+      tglkirimdet
     },
     success: function(res) {
-      console.log ('=============================>',res,draftpo)
-      flagharga = res
-      if (tambahkepo==1) {
-      flagharga='lanjut';
+      console.log('resspsoaddedit', res)
+      if (res != 1) {
+        alertify.warning('Gagal edit item')
+        return
       }
 
-      console.log ('=============================>',flagharga)
-      if (flagharga !='lanjut'){
-         alertify.confirm('' + flagharga + ' ?',
+      loadAll()
+      $('.showhide').hide();
+      refreshDataTableAdd(nobukti)
 
-
-          function() {
-
-
-                    // return
-                    $.ajax({
-                      url: "{!! url('sospadd') !!}",
-                      type: "post",
-                      async: false,
-                      data: {
-                        _token,
-                        disc,
-                        discrp,
-                        tipediskon,
-                        refpr,
-                        nopenyerahan,
-                        kodebarang,
-                        namaproduk,
-                        qty,
-                        nosat,
-                        satuanproduk,
-                        harga,
-                        discDet,
-                        discrpDet,
-                        tambahkepo,
-                        booking,
-                        urgent,
-                        urut,
-                        qnt1,
-                        isi,
-                        satuan,
-                        pppn,
-                        choice,
-                        nobukti,
-                        nourut,
-                        kodepelanggan,
-                        kodesales,
-                        tanggal,
-                        kodealamatkirim,
-                        alamatkirim,
-                        kodepic,
-                        kodelokasipenerima,
-                        catatan,
-                        valas,
-                        kurs,
-                        dp,
-                        pembayaran,
-                        hari,
-                        tipeppn,
-                        draftpo,
-                        nopo,
-                        tanggalpo,
-                        tanggalkirim,
-                        kodebackoffice,
-                        tanggaljatuhtempo,
-                        jmlrecord,
-
-                        kodesattax ,
-                         refpr,
-
-                        nopenyerahan ,
-                        statuspengiriman,
-
-                      },
-                      success: function(res) {
-                        console.log('resspsoaddedit', res)
-
-                        loadAll()
-
-                        // lockFormAdd()
-                        $('.showhide').hide();
-                        refreshDataTableAdd(nobukti)
-
-                        alertify.success('Berhasil edit item')
-
-                      },
-                      error: function (err) {
-                        console.log(err)
-                        alertify.warning('Terjadi kesalahan silahkan refresh browser')
-                      }
-
-                    })
-                }
-               ,function(){
-              console.log(' cancel harga minimal')
-
-          return
-          });
-
-          } else
-          {
-
-            $.ajax({
-                      url: "{!! url('sospadd') !!}",
-                      type: "post",
-                      async: false,
-                      data: {
-                        _token,
-                        disc,
-                        discrp,
-                        tipediskon,
-                        refpr,
-                        nopenyerahan,
-                        kodebarang,
-                        namaproduk,
-                        qty,
-                        nosat,
-                        satuanproduk,
-                        harga,
-                        discDet,
-                        discrpDet,
-                        tambahkepo,
-                        booking,
-                        urgent,
-                        urut,
-                        qnt1,
-                        isi,
-                        satuan,
-                        pppn,
-                        choice,
-                        nobukti,
-                        nourut,
-                        kodepelanggan,
-                        kodesales,
-                        tanggal,
-                        kodealamatkirim,
-                        alamatkirim,
-                        kodepic,
-                        kodelokasipenerima,
-                        catatan,
-                        valas,
-                        kurs,
-                        dp,
-                        pembayaran,
-                        hari,
-                        tipeppn,
-                        draftpo,
-                        kodesattax,
-                        nopo,
-                        tanggalpo,
-                        tanggalkirim,
-                        kodebackoffice,
-                        tanggaljatuhtempo,
-                        jmlrecord
-
-                      },
-                      success: function(res) {
-                        console.log('resspsoaddedit', res)
-
-                        loadAll()
-
-                        // lockFormAdd()
-                        $('.showhide').hide();
-                        refreshDataTableAdd(nobukti)
-
-                        alertify.success('Berhasil edit item')
-
-                      },
-                      error: function (err) {
-                        console.log(err)
-                        alertify.warning('Terjadi kesalahan silahkan refresh browser')
-                      }
-
-                    })
-
-
-
-          }
-
-
-        }
-
-
-
-
-}
- )
-
+      alertify.success('Berhasil edit item')
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal edit item: ' + ((err.responseJSON && err.responseJSON.message) || err.statusText))
+    }
+  })
 }
 
 
@@ -5868,9 +5780,9 @@ function onChangeInputAddAddDisc () {
     return
   }
 
-  let disc = $("#input_add_add_disc").val();
-  let discRp = Number(harga) * Number(disc) / 100
-  document.getElementById("input_add_add_discrp").value = formatAngka(parseFloat(discRp).toFixed(2))
+  let disc = Number(($("#input_add_add_disc").val() || '0').replace(/,/g, '')) || 0
+  let discRp = Number(harga) * disc / 100
+  document.getElementById("input_add_add_discrp").value = formatAngka((discRp || 0).toFixed(2))
 
 }
 
@@ -5896,9 +5808,9 @@ function onChangeInputAddAddDiscRp () {
     return
   }
 
-  let discRp = formatAngkaVal($("#input_add_add_discrp").val());
+  let discRp = formatAngkaVal($("#input_add_add_discrp").val() || '0') || 0;
   let disc = Number(discRp) / Number(harga) * 100
-  document.getElementById("input_add_add_disc").value = parseFloat(disc).toFixed(2)
+  document.getElementById("input_add_add_disc").value = (disc || 0).toFixed(2)
 }
 
 
@@ -6070,8 +5982,8 @@ if (tempAddEdit.nopl != '') {
   document.getElementById("input_add_add_satuanproduk").value = tempAddEdit.sATx
 
   // console.log(Number(tempAddEdit.DiscP1))
-  document.getElementById("input_add_add_disc").value = Number(tempAddEdit.DiscP1) ?  tempAddEdit.DiscP1 : '0.00'
-  document.getElementById("input_add_add_discrp").value = formatAngka(parseFloat(tempAddEdit.DiscRp1).toFixed(2))
+  document.getElementById("input_add_add_disc").value = (Number(tempAddEdit.DiscP1) || 0).toFixed(2)
+  document.getElementById("input_add_add_discrp").value = formatAngka((Number(tempAddEdit.DiscRp1) || 0).toFixed(2))
 
   document.getElementById("input_add_add_tambahkepo").value = tempAddEdit.IsPO
   document.getElementById("input_add_add_booking").value = tempAddEdit.Pbooking
@@ -9092,6 +9004,7 @@ function buttonCloseForm () {
   $('#page3').hide();
   $('#page2').hide();
   $('#page1').show();
+  loadAll(true)
 
 }
 
