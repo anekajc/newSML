@@ -649,7 +649,7 @@
       </div>
       <!-- <div class="col-4 text-right">
 
-          <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary" >+</button>
+          <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary"><i class="bi bi-plus"></i></button>
         </div> -->
       <div class="col-md-4">
         <select id="AddAddReturSupp" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example" onchange="onChangePPN('ppn' , 'input_add_tipeppn')">
@@ -676,7 +676,7 @@
       </div>
       <!-- <div class="col-4 text-right">
 
-          <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary" >+</button>
+          <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary"><i class="bi bi-plus"></i></button>
         </div> -->
       <div class="col-md-6">
         <input id="AddAddKeterangan" type="text" class="form-control" >

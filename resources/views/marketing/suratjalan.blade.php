@@ -3672,7 +3672,7 @@ function renderTabelRows(rows) {
 function tabel2ActionsCell(row) {
   var nobukti = sjPickCI(row, 'NOBUKTI');
   return '<td class="text-center"><div class="action-buttons-wrap">'
-    + '<button class="btn btn-success btn-sm" title="Buat Surat Jalan" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>'
+    + '<button class="btn btn-primary btn-sm" title="Buat Surat Jalan" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus"></i></button>'
     + '</div></td>';
 }
 

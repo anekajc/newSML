@@ -780,7 +780,7 @@ function tabelActionsCell (row) {
   let nopajak = fpPickCI(row, 'NoPajak') || '';
   let tglfpj = fpPickCI(row, 'TglFPJ') || '';
   let html = '<div class="action-buttons-wrap">';
-  html += '<button class="btn btn-success btn-sm" title="Buat Faktur Pajak" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + nopajak + '\' , \'' + tglfpj + '\')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" title="Buat Faktur Pajak" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + nopajak + '\' , \'' + tglfpj + '\')"><i class="bi bi-plus"></i></button>';
   html += '<button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="buttonDelete(\'' + nobukti + '\')"><i class="bi bi-trash"></i></button>';
   html += '</div>';
   return html;

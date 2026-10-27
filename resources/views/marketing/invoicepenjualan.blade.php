@@ -3205,7 +3205,7 @@ function tabelActionsCell (row) {
   let nobukti = ipPickCI(row, 'NoBukti');
   let html = '<div class="action-buttons-wrap">';
   html += '<button data-trigger="hover" class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonAddDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button data-trigger="hover" class="btn btn-success btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd(\'' + ipPickCI(row, 'Noso') + '\' , \'' + ipPickCI(row, 'NamaCustSupp') + '\' , \'' + ipPickCI(row, 'KodeCustSupp') + '\' , \'' + ipPickCI(row, 'TglSO') + '\' , \'' + ipPickCI(row, 'PPNCUST') + '\')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button data-trigger="hover" class="btn btn-primary btn-sm" title="Buat Invoice" type="button" onclick="buttonAdd(\'' + ipPickCI(row, 'Noso') + '\' , \'' + ipPickCI(row, 'NamaCustSupp') + '\' , \'' + ipPickCI(row, 'KodeCustSupp') + '\' , \'' + ipPickCI(row, 'TglSO') + '\' , \'' + ipPickCI(row, 'PPNCUST') + '\')"><i class="bi bi-plus"></i></button>';
   html += '</div>';
   return html;
 }

@@ -2917,7 +2917,7 @@ function nrpValueCell (row, col) {
 function tabelActionsCell (row) {
   let nobukti = nrpPickCI(row, 'NOBUKTI');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-success btn-sm" title="Buat Nota Retur" type="button" onclick="submitAddAllNew(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" title="Buat Nota Retur" type="button" onclick="submitAddAllNew(\'' + nobukti + '\')"><i class="bi bi-plus"></i></button>';
   html += '</div></td>';
   return html;
 }

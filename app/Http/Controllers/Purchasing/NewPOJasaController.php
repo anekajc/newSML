@@ -48,7 +48,8 @@ class NewPOJasaController extends Controller
     // $testesbeli = DB::connection("SML")->select('select * from VWtampilbeli where Bulan = :bulan and Tahun = :tahun' ,['bulan' => $periode->bulan , 'tahun' => $periode->tahun ]);
     // $testesbeli1 = $testesbeli->groupBy('NoBukti');
 
-    $pembelian = DB::connection("SML")->select("select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa)" , ["bulan" => $periode->bulan, "tahun" => $periode->tahun , "pjasa" => 1]);
+    // fnc_masterbeli (~40rb baris, ~40 detik) tidak lagi dijalankan di sini - tabel Pembelian diambil
+    // lewat AJAX getAllPembelianjasa; query ini tidak dipakai blade dan membuat halaman timeout (502).
 
     // Blade sekarang menggambar kedua tabel lewat AJAX (getAllPOjasa/getAllPembelianjasa) saat
     // load - $po/$poGroup/$tempPo tidak lagi dipakai untuk merender tabel awal, sama seperti
@@ -68,7 +69,7 @@ class NewPOJasaController extends Controller
       // "tesMax" => $tesMax
       "gudang" => $gudang,
       // "pembelian" => $pembelian,
-      "tempPembelian1" => $pembelian,
+      "tempPembelian1" => [],
       "npoTglAwal" => $npoTglAwal,
       "npoTglAkhir" => $npoTglAkhir,
       "akses" => $akses

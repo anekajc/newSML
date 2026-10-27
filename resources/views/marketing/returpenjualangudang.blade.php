@@ -865,7 +865,7 @@
         </div>
         <!-- <div class="col-4 text-right">
 
-            <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary" >+</button>
+            <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary"><i class="bi bi-plus"></i></button>
           </div> -->
         <div class="col-md-4">
           <select id="KoreksiEditReturSupp" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example">
@@ -1428,7 +1428,7 @@ function tabelActionsCell (row) {
   let ppn = rpgPickCI(row, 'PPN');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" title="Detail" type="button" onclick="buttonDetail(\'' + nobukti + '\' , \'' + (namacustsupp || '').replace(/'/g, "\\'") + '\' , ' + Number(ppn || 0) + ')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-success btn-sm" title="Buat Retur" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + (namacustsupp || '').replace(/'/g, "\\'") + '\' , ' + Number(ppn || 0) + ')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" title="Buat Retur" type="button" onclick="buttonAdd(\'' + nobukti + '\' , \'' + (namacustsupp || '').replace(/'/g, "\\'") + '\' , ' + Number(ppn || 0) + ')"><i class="bi bi-plus"></i></button>';
   html += '</div></td>';
   return html;
 }

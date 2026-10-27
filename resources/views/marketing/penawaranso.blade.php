@@ -979,8 +979,8 @@ td input[type="checkbox"] {
                       <tr>
 
                          <td class="text-center">
-                            <button class="btn btn-success btn-sm" type="button" title="Details" onclick="buttonAdd('{{ $OutPR->Nobukti }}')">
-                              <i class="bi bi-plus-lg"></i>
+                            <button class="btn btn-primary btn-sm" type="button" title="Details" onclick="buttonAdd('{{ $OutPR->Nobukti }}')">
+                              <i class="bi bi-plus"></i>
                             </button>
                         </td>
                         <td style='white-space:nowrap;'>{{ $OutPR->Nobukti }}</td>

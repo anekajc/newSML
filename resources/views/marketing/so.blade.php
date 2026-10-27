@@ -9340,11 +9340,11 @@ function refreshDataTableAdd (NOBUKTI = "") {
           document.getElementById("input_add_tanggalpo").value = formatDate(dataHeaderAdd.TglPO)
           document.getElementById("input_add_tanggalkirim").value = formatDate(dataHeaderAdd.TglKirim)
           document.getElementById("input_add_totalDisplay").value = formatAngka(parseFloat(totalDisplayNumber).toFixed(2))
-          document.getElementById("input_add_disc").value = formatAngka(parseFloat(dataHeaderAdd.Disc).toFixed(2))
-          document.getElementById("input_add_discrp").value = formatAngka(parseFloat(dataHeaderAdd.TotDiskon).toFixed(2))
-          document.getElementById("input_add_dpp").value = formatAngka(parseFloat(dataHeaderAdd.TotDPP).toFixed(2))
-          document.getElementById("input_add_ppn").value = formatAngka(parseFloat(dataHeaderAdd.TotPPN).toFixed(2))
-          document.getElementById("input_add_grandtotal").value = formatAngka(parseFloat(dataHeaderAdd.TotNet).toFixed(2))
+          document.getElementById("input_add_disc").value = formatAngkaX(dataHeaderAdd.Disc)
+          document.getElementById("input_add_discrp").value = formatAngkaX(dataHeaderAdd.TotDiskon)
+          document.getElementById("input_add_dpp").value = formatAngkaX(dataHeaderAdd.TotDPP)
+          document.getElementById("input_add_ppn").value = formatAngkaX(dataHeaderAdd.TotPPN)
+          document.getElementById("input_add_grandtotal").value = formatAngkaX(dataHeaderAdd.TotNet)
 
         }
 
