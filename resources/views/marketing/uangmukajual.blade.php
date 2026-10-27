@@ -417,7 +417,7 @@
         </div>
         <div class="form-field">
           <label>DPP</label>
-          <input type="text" class="form-control text-right" id="input_add_dppx" onblur="onChangeDPP()" value="0.00">
+          <input type="text" class="form-control text-right input-partial-number" data-a-sign="" data-a-dec="." data-a-sep="," id="input_add_dppx" onblur="onChangeDPP()" value="0.00">
         </div>
         <div class="form-field">
           <label>PPN</label>
@@ -941,6 +941,10 @@ function onChangePeriodeUMJ1 () {
   buttonFilterUMJ1()
 }
 
+jQuery(function($) {
+  $('.input-partial-number').autoNumeric('init', { minimumValue : '0' });
+});
+
 $(document).ready(function(){
       umjAktifkanTabel(1); window.doSetHeader(1, false);
       lastTabelRows = @json($tempOutstanding);
@@ -1175,6 +1179,7 @@ function buttonDetail (NOBUKTI) {
 
       document.getElementById("input_detail_noso").value = NOBUKTI
       document.getElementById("input_detail_customer").value = tempAdd.NamaCust
+      document.getElementById("input_detail_tanggal").value = tempAdd.Tanggal ? String(tempAdd.Tanggal).substring(0, 10) : formatDate(new Date())
 
       document.getElementById("input_detail_valas").value = tempAdd.kodevls
       document.getElementById("input_detail_kurs").value = tempAdd.kurs ? formatAngka(parseFloat(tempAdd.kurs).toFixed(2)) : '0.00'
@@ -1494,7 +1499,7 @@ function buttonDetailKoreksi (NOBUKTI, NOSO) {
       document.getElementById("input_detail_noso").value = NOSO
       document.getElementById("input_detail_nobukti").value = NOBUKTI
       document.getElementById("input_detail_customer").value = tempAdd.NamaCust
-      document.getElementById("input_detail_tanggal").value = formatDate(new Date(tempDetail.TANGGAL))
+      document.getElementById("input_detail_tanggal").value = tempDetail.TANGGAL ? String(tempDetail.TANGGAL).substring(0, 10) : ''
       document.getElementById("input_detail_valas").value = tempAdd.kodevls
       document.getElementById("input_detail_kurs").value = tempAdd.kurs ? formatAngka(parseFloat(tempAdd.kurs).toFixed(2)) : '0.00'
       document.getElementById("input_detail_dpp").value = tempAdd.TotDPP ? formatAngka(parseFloat(tempAdd.TotDPP).toFixed(2)) : '0.00'
