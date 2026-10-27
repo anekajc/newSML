@@ -20,13 +20,15 @@ class PerformanceController extends Controller
   // "Perintah Uang Muka" (OtoPerf=1) digabung jadi satu daftar dengan filter status
   // (0=Semua,1=Belum,2=Sudah), sama seperti kreditnote/perintahreturjual.
   private function queryPerformance ($tglawal, $tglakhir, $filterperf) {
-    // "Belum" = SO CBD (tipebayar=0) seperti index() programajcSML; kondisi DP>0 di sana
-    // sengaja dikomentari (loadAll programajcSML masih DP>0 = sisa lama, tidak diikuti).
+    // "Belum" = SO CBD (tipebayar=0, index() programajcSML) ATAU SO yang punya uang muka
+    // (DP>0, loadAll() programajcSML). Tanpa DP>0, SO ber-DP yang bukan CBD tidak pernah
+    // muncul di Performance walaupun sudah diotorisasi.
+    $belumCondition = "isnull(a.OtoPerf,0)=0 and (A.tipebayar=0 or isnull(A.DP,0)>0)";
     $statusCondition = $filterperf == 1
-      ? "isnull(a.OtoPerf,0)=0 and A.tipebayar=0"
+      ? $belumCondition
       : ($filterperf == 2
         ? "isnull(a.OtoPerf,0)=1"
-        : "(isnull(a.OtoPerf,0)=1 or (isnull(a.OtoPerf,0)=0 and A.tipebayar=0))");
+        : "(isnull(a.OtoPerf,0)=1 or ({$belumCondition}))");
 
     return DB::connection("SML")->select("
 declare @Awal date, @Akhir date

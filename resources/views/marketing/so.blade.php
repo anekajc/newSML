@@ -638,12 +638,12 @@
                   <label class="rt-field-label" for="input_filterso">Status</label>
                   <select class="rt-native" id="input_filterso">
                     <option value=0 selected>Semua</option>
+                    <option value=5>Sudah</option>
+                    <option value=3>Belum</option>
+                    <option value=4>Sebagian</option>
+                    <option value=6>Batal</option>
                     <option value=1>Belum Otorisasi</option>
                     <option value=2>Sudah Otorisasi</option>
-                    <option value=3>Belum proses</option>
-                    <option value=4>Proses Sebagian</option>
-                    <option value=5>Full supply</option>
-                    <option value=6>Terclose</option>
                   </select>
                 </div>
                 <div>
@@ -2214,7 +2214,7 @@
             </div>
             <div class="row">
               <div class="col-12" style="overflow:auto; margin-top:-30px;">
-                <table id="tabel_add_list_barangall" class="data-table">
+                <table id="tabel_add_list_barangall" class="data-table" data-pk-search="false">
                   <thead class="text-center">
                     <tr>
                       <th style="padding: 4px 12px;" scope="col">Kode</th>
@@ -2986,10 +2986,10 @@ function tabelActionsCell(row) {
 // #tabel's money columns default to 0dp, #tabel7's qty columns to 2dp.
 // Warna badge Status SO, disamakan dengan badge Status di purchaseOrder.
 const SO_BADGE_STATUS = {
-  'Full supply'     : 'is-active',
-  'Belum proses'    : 'is-user',
-  'Proses Sebagian' : 'is-supervisor',
-  'Terclose'        : 'is-inactive'
+  'Sudah'    : 'is-active',
+  'Belum'    : 'is-user',
+  'Sebagian' : 'is-supervisor',
+  'Batal'    : 'is-inactive'
 }
 
 function tabelValueCell(row, col) {
@@ -3972,6 +3972,38 @@ console.log(kodecust , nopo)
     alertify.warning('Data tidak lengkap')
 return
   }
+
+  // SO belum tersimpan: header dibuat oleh SP dari data penawaran, jadi isian header
+  // di form ikut dikirim supaya tidak hilang setelah buttonEdit() memuat ulang dari DB.
+  let header = {}
+  if (tipeform == 'add') {
+    let hari = $("#input_add_hari").val()
+    let tanggaljatuhtempo = ''
+    if (tanggal) {
+      let jt = new Date(tanggal)
+      jt.setDate(jt.getDate() + Number(hari || 0))
+      tanggaljatuhtempo = formatDate(jt)
+    }
+    header = {
+      kodesales          : $("#input_add_kodesales").val(),
+      kodealamatkirim    : $("#input_add_kodealamatkirim").val(),
+      alamatkirim        : $("#input_add_alamatkirim").val(),
+      kodepic            : $("#input_add_kodepic").val(),
+      kodelokasipenerima : $("#input_add_kodelokasipenerima").val(),
+      catatan            : $("#input_add_catatan").val(),
+      valas              : $("#input_add_valas").val(),
+      kurs               : $("#input_add_kurs").val(),
+      dp                 : ($("#input_add_dp").val() || '').replace(/,/g, ''),
+      pembayaran         : $("#input_add_pembayaran").val(),
+      hari               : hari,
+      tipeppn            : ppn,
+      draftpo            : $("#input_add_draftpo").val(),
+      tanggalpo          : $("#input_add_tanggalpo").val(),
+      tanggalkirim       : $("#input_add_tanggalkirim").val(),
+      kodebackoffice     : $("#input_add_kodebackoffice").val(),
+      tanggaljatuhtempo  : tanggaljatuhtempo
+    }
+  }
   console.log({
   kodecust,
   nobukti,
@@ -3993,6 +4025,7 @@ return
       idpo,
       nopo,
       tanggal,
+      header,
       tempData: tempDataTableTambahSO
     },
     success: function(res) {
@@ -4063,7 +4096,7 @@ let nopo = $("#input_add_nopo").val()
             <td>${item.CATATAN}</td>
             <td>${item.KodeBrg}</td>
             <td>${item.NamaBrg}</td>
-            <td class="text-right">${item.Qnt ? formatAngka(parseFloat(item.Qnt).toFixed(2)) : '0.00'}</td>
+            <td class="text-right">${item.QntSisa ? formatAngka(parseFloat(item.QntSisa).toFixed(2)) : '0.00'}</td>
             <td>${item.Satuan}</td>
 
             </tr>`
@@ -4168,7 +4201,7 @@ console.log(NOBUKTI, ppn)
 
             <td>${item.KodeBrg}</td>
             <td>${item.NamaBrg}</td>
-            <td class="text-right">${item.Qnt ? formatAngka(parseFloat(item.Qnt).toFixed(2)) : '0.00'}</td>
+            <td class="text-right">${item.QntSisa ? formatAngka(parseFloat(item.QntSisa).toFixed(2)) : '0.00'}</td>
             <td>${item.Satuan}</td>
 
             </tr>`
@@ -9528,6 +9561,10 @@ function buttonAddDeleteItem (i) {
 }
 
 function formatDate(date) {
+    // Tanggal kosong (mis. TglPO/TglKirim null) jangan dijadikan 1970-01-01.
+    if (date === null || date === undefined || date === '') {
+        return '';
+    }
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
         day = '' + d.getDate(),

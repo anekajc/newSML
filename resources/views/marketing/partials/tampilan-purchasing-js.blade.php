@@ -153,7 +153,10 @@
     } else if (!$(tabel).find('tbody tr.pick-row').length) {
       return
     }
-    pickerKasInit(tabel.id, { _pk: true, search: { search: cari || '' } })
+    // data-pk-search="false": tabel punya kotak cari sendiri (cari ke server, mis. barang
+    // di SO), jadi kotak Search DataTables tidak ditambahkan supaya tidak dobel.
+    let pakaiSearch = $(tabel).data('pkSearch') !== false
+    pickerKasInit(tabel.id, { _pk: true, searching: pakaiSearch, search: { search: pakaiSearch ? (cari || '') : '' } })
   }
 
   $(document).on('init.dt', function (e, settings) {

@@ -747,9 +747,9 @@
           <tr>
             <th style="padding: 4px 12px;" scope="col">Kode Brg</th>
             <th style="padding: 4px 12px;" scope="col">Nama Brg</th>
-            <th style="padding: 4px 12px;" scope="col">Qty1</th>
+            <th style="padding: 4px 12px; text-align: center;" scope="col">Qty1</th>
             <th style="padding: 4px 12px;" scope="col">Sat1</th>
-            <th style="padding: 4px 12px;" scope="col">Qty2</th>
+            <th style="padding: 4px 12px; text-align: center;" scope="col">Qty2</th>
             <th style="padding: 4px 12px;" scope="col">Sat2</th>
             <th style="padding: 4px 12px;" scope="col">Actions</th>
           </tr>
@@ -1142,9 +1142,9 @@
           <tr>
             <th style="padding: 4px 12px;" scope="col">Kode Brg</th>
             <th style="padding: 4px 12px;" scope="col">Nama Brg</th>
-            <th style="padding: 4px 12px;" scope="col">Qty1</th>
+            <th style="padding: 4px 12px; text-align: center;" scope="col">Qty1</th>
             <th style="padding: 4px 12px;" scope="col">Sat1</th>
-            <th style="padding: 4px 12px;" scope="col">Qty2</th>
+            <th style="padding: 4px 12px; text-align: center;" scope="col">Qty2</th>
             <th style="padding: 4px 12px;" scope="col">Sat2</th>
           </tr>
         </thead>
@@ -1959,9 +1959,9 @@ function buttonOto (nobukti) {
           <tr class="text-left">
             <td>${item.KODEBRG}</td>
             <td>${item.NAMABRG}</td>
-            <td class='text-right'>${parseFloat(item.QNT).toFixed(2)}</td>
+            <td class='text-center'>${parseFloat(item.QNT).toFixed(2)}</td>
             <td>${item.SAT_1}</td>
-            <td class='text-right'>${parseFloat(item.QNT2).toFixed(2)}</td>
+            <td class='text-center'>${parseFloat(item.QNT2).toFixed(2)}</td>
             <td>${item.SAT_2}</td>
           </tr>
         `
@@ -2034,9 +2034,9 @@ function buttonDetail (nobukti) {
           <tr class="text-left">
             <td>${item.KODEBRG}</td>
             <td>${item.NAMABRG}</td>
-            <td class='text-right'>${parseFloat(item.QNT).toFixed(2)}</td>
+            <td class='text-center'>${parseFloat(item.QNT).toFixed(2)}</td>
             <td>${item.SAT_1}</td>
-            <td class='text-right'>${parseFloat(item.QNT2).toFixed(2)}</td>
+            <td class='text-center'>${parseFloat(item.QNT2).toFixed(2)}</td>
             <td>${item.SAT_2}</td>
           </tr>
         `
@@ -2131,9 +2131,9 @@ function refreshDataTableAdd (nobukti) {
           <tr class="text-left">
             <td>${item.KODEBRG}</td>
             <td>${item.NAMABRG}</td>
-            <td class='text-right'>${parseFloat(item.QNT).toFixed(2)}</td>
+            <td class='text-center'>${parseFloat(item.QNT).toFixed(2)}</td>
             <td>${item.SAT_1}</td>
-            <td class='text-right'>${parseFloat(item.QNT2).toFixed(2)}</td>
+            <td class='text-center'>${parseFloat(item.QNT2).toFixed(2)}</td>
             <td>${item.SAT_2}</td>
             <td class='text-center'>
               <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="buttonAddEdit(${i})"><i class="bi bi-pen"></i></button>
