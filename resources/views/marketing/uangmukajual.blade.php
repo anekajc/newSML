@@ -216,10 +216,10 @@
           <div class="po-toolbar">
             <div class="po-filter-wrap">
               <label>Periode</label>
-              {{-- Kosong = semua SO outstanding (seperti programajcSML); isi untuk menyaring per tanggal SO. --}}
-              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalawal_umj1" value="" title="Kosongkan untuk menampilkan semua SO outstanding">
+              {{-- Default bulan periode; kosongkan kedua tanggal untuk menampilkan semua SO outstanding. --}}
+              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalawal_umj1" value="{!! $tglawal !!}" title="Kosongkan untuk menampilkan semua SO outstanding">
               <span class="po-filter-sep">s/d</span>
-              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalakhir_umj1" value="" title="Kosongkan untuk menampilkan semua SO outstanding">
+              <input type="date" onchange="onChangePeriodeUMJ1()" class="po-filter-inp" id="input_tanggalakhir_umj1" value="{!! $tglakhir !!}" title="Kosongkan untuk menampilkan semua SO outstanding">
             </div>
             <input type="search" id="umjSearch1" class="po-search-inp" placeholder="Cari data">
             <div class="po-len-wrap"><label for="umjLen1">Tampilkan</label>

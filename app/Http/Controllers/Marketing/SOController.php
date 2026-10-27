@@ -241,7 +241,7 @@ foreach ($collection4 as $p) {
   }
 
   // Status proses SO per nobukti (total Qty SO vs Qty SPB), sama dengan pilihan di modal Filter.
-  // Terclose diutamakan: ada Qty batal di salah satu baris.
+  // Batal diutamakan: ada Qty batal di salah satu baris (label disamakan dengan status PO).
   // Satu query untuk seluruh SO di rentang tanggal, bukan subquery per baris: dbSPBDet tidak
   // punya index NoSo, jadi versi per baris memindai seluruh SPB untuk tiap SO (~5 detik
   // sebulan). OPTION (HASH JOIN) wajib -- tanpa itu SQL Server memilih nested loop yang sama
@@ -249,10 +249,10 @@ foreach ($collection4 as $p) {
   private function statusSO ($tglawal, $tglakhir) {
     $rows = DB::connection("SML")->select("
       select d.NoBukti,
-        case when sum(isnull(d.QNTBATAL,0))>0 then 'Terclose'
-             when sum(isnull(z.Qntspb,0))=0 then 'Belum proses'
-             when sum(isnull(z.Qntspb,0))<sum(isnull(d.QNT,0)) then 'Proses Sebagian'
-             else 'Full supply' end StatusSO
+        case when sum(isnull(d.QNTBATAL,0))>0 then 'Batal'
+             when sum(isnull(z.Qntspb,0))=0 then 'Belum'
+             when sum(isnull(z.Qntspb,0))<sum(isnull(d.QNT,0)) then 'Sebagian'
+             else 'Sudah' end StatusSO
       from dbSODet d
       join dbso so on so.NoBukti=d.NoBukti and so.TANGGAL between :tglawal and :tglakhir
       left outer join (select NoSo, UrutSo, SUM(QNT) Qntspb from dbSPBDet
@@ -1012,10 +1012,10 @@ public function getDetailTambahSOAll (Request $req) {
 
       union all
 
-      select B.Notawar,B.Uruttawar URUT, B.KODEBRG, B.NOSAT, 0.00 Qnt,
-          case when B.NOSAT=1 then Isnull(B.Qnt,0) when B.NOSAT=2 then Isnull(B.Qnt2,0)when B.NOSAT=3 then Isnull(B.Qnt2,0) End QntOut
+      select B.Notawar,B.Uruttawar URUT, C.KODEBRG, C.NOSAT, 0.00 Qnt,
+          -(case when B.NOSAT=1 then Isnull(B.Qnt,0) when B.NOSAT=2 then Isnull(B.Qnt2,0)when B.NOSAT=3 then Isnull(B.Qnt2,0) End) QntOut
       ,
-      A.KODeGDG
+      D.KODEGDG
       from dbso A, DBSODET B, DBPENAWARANSODET C ,DBPENAWARANSO D
       where A.NOBUKTI=B.Nobukti  AND B.NOTAWAR=C.NOBUKTI AND B.URUTTAWAR=C.URUT AND C.NOBUKTI=D.NOBUKTI --AND B.NOtawar=@NoBukti
 
@@ -1026,7 +1026,7 @@ public function getDetailTambahSOAll (Request $req) {
     where m1.KODECUSTSUPP = :kodecustsupp
     group by A.NOBUKTI,  A.KODEBRG, br.NAMABRG, A.NOSAT, Br.SAT1, Br.SAT2, Br.ISI1, Br.ISI2,
     Br.ISI3,br.SAT3,isnull(A.KodeGdg,''),a.urut,m2.KODECUST,m1.NAMACUSTSUPP, m2.CATATAN
-    HAVING sum(A.QntOut)<>0
+    HAVING sum(A.QntOut)>0
 
   order by URUT
   "  , ["username" => $username , "kodecustsupp" => $req->kodecust] ) ;
@@ -1078,10 +1078,10 @@ public function getDetailTambahSO (Request $req) {
 
       union all
 
-      select B.Notawar,B.Uruttawar URUT, B.KODEBRG, B.NOSAT, 0.00 Qnt,
-          case when B.NOSAT=1 then Isnull(B.Qnt,0) when B.NOSAT=2 then Isnull(B.Qnt2,0)when B.NOSAT=3 then Isnull(B.Qnt2,0) End QntOut
+      select B.Notawar,B.Uruttawar URUT, C.KODEBRG, C.NOSAT, 0.00 Qnt,
+          -(case when B.NOSAT=1 then Isnull(B.Qnt,0) when B.NOSAT=2 then Isnull(B.Qnt2,0)when B.NOSAT=3 then Isnull(B.Qnt2,0) End) QntOut
       ,
-      A.KODeGDG,A.KODECUST
+      D.KODEGDG,D.KODECUST
       from dbso A, DBSODET B, DBPENAWARANSODET C ,DBPENAWARANSO D
       where A.NOBUKTI=B.Nobukti  AND B.NOTAWAR=C.NOBUKTI AND B.URUTTAWAR=C.URUT AND C.NOBUKTI=D.NOBUKTI AND B.NOtawar=@NoBukti
 
@@ -1090,7 +1090,7 @@ public function getDetailTambahSO (Request $req) {
     left outer join DBCUSTSUPP m1 on a.KODECUST=m1.KODECUSTSUPP
     group by A.NOBUKTI,  A.KODEBRG, br.NAMABRG, A.NOSAT, Br.SAT1, Br.SAT2, Br.ISI1, Br.ISI2,
     Br.ISI3,br.SAT3,isnull(A.KodeGdg,''),a.urut,A.KODECUST,m1.NAMACUSTSUPP
-    HAVING sum(A.QntOut)<>0
+    HAVING sum(A.QntOut)>0
 
   order by URUT
   "  , ["username" => $username , "nobukti" => $req->nobukti] ) ;
@@ -1139,8 +1139,18 @@ $date = $req->input('tanggal');
   // return ["asd" => $noBukti[0]->Nobukti];
     // return [$data,$date,$nourut,$nosj,$norspb,$nooutso,$nopolkendaraan,$expedisi];
   // DB::connection('SML')->statement('delete	TempOutstanding where IDUser = :idUser',['idUser' => $username ]);
+
+  // SP_InsertPSOweb hanya membuat header DBSO kalau SO belum ada, dan header itu cuma
+  // diisi dari penawaran/customer -- isian header di form (Tgl PO, Tgl Kirim, sales, dst.)
+  // hilang. Dicatat dulu di sini supaya bisa disusulkan setelah insert.
+  $soBaru = empty(DB::connection('SML')->select('select 1 x from dbso where nobukti = ?', [$req->nobukti]));
+
   foreach ($data as $d) {
-    // return 4;
+    // Sisa qty penawaran dihitung ulang di server: daftar di modal bisa sudah basi.
+    $sisa = $this->sisaPenawaran($d['NoBukti'], $d['URUT']);
+    if ($sisa <= 0) {
+      continue;
+    }
 
     // $values = [$username, $nosj,'2023','4','SPB',$d['inputQntTerima'],$d['URUT']];
     $values1 = [
@@ -1158,11 +1168,87 @@ $d['URUT']
     ];
 
     DB::connection("SML")->statement('exec SP_InsertPSOweb ?,?,?,?,?,?,?,?,?,?,?',$values1);
+    $this->sesuaikanBarisPenawaran($req->nobukti, $d['NoBukti'], $d['URUT'], $sisa);
+  }
+
+  if ($soBaru) {
+    $this->isiHeaderDariForm($req->nobukti, $req->input('header', []));
   }
    DB::connection('SML')->update('exec Sp_UpdateSO ?', [$req->nobukti]);
 
 
 return 1;
+}
+
+// Qty penawaran (per baris) yang belum ditarik ke SO mana pun.
+private function sisaPenawaran ($noTawar, $urutTawar) {
+  $row = DB::connection('SML')->select("
+    select isnull(p.Qnt,0) - isnull((select sum(isnull(s.Qnt2,0)) from dbsodet s
+                                      where s.NOTAWAR = p.NOBUKTI and s.URUTTAWAR = p.URUT),0) Sisa
+    from DBPENAWARANSODET p
+    where p.NOBUKTI = ? and p.URUT = ?", [$noTawar, $urutTawar]);
+  return empty($row) ? 0 : (float) $row[0]->Sisa;
+}
+
+// SP_InsertPSOweb selalu menyalin qty penawaran penuh dan tidak mengisi DISCRP1
+// (kolom "Disc Rp" di grid SO), jadi baris yang baru masuk disesuaikan di sini:
+// qty = sisa penawaran, DISCRP1 = diskon Rp per unit dari penawaran (DISCTOT).
+private function sesuaikanBarisPenawaran ($noBukti, $noTawar, $urutTawar, $sisa) {
+  DB::connection('SML')->update("
+    update d set
+      Qnt2    = case when d.Qnt2 > :sisa then :sisa2 else d.Qnt2 end,
+      Qnt     = case when d.Qnt2 > :sisa3 then :sisa4 * isnull(d.ISI,1) else d.Qnt end,
+      DISCRP1 = case when isnull(d.DISCRP1,0) = 0 then isnull(d.DISCTOT,0) else d.DISCRP1 end
+    from dbsodet d
+    where d.NoBukti = :nobukti and d.NOTAWAR = :notawar and d.URUTTAWAR = :uruttawar
+      and d.Urut = (select max(x.Urut) from dbsodet x
+                    where x.NoBukti = :nobukti2 and x.NOTAWAR = :notawar2 and x.URUTTAWAR = :uruttawar2)",
+    ["sisa" => $sisa, "sisa2" => $sisa, "sisa3" => $sisa, "sisa4" => $sisa,
+     "nobukti" => $noBukti, "notawar" => $noTawar, "uruttawar" => $urutTawar,
+     "nobukti2" => $noBukti, "notawar2" => $noTawar, "uruttawar2" => $urutTawar]);
+}
+
+// Header SO yang baru dibuat SP_InsertPSOweb diisi dengan isian form header.
+// Hanya field yang diisi yang ditulis, sisanya tetap dari SP.
+private function isiHeaderDariForm ($noBukti, $header) {
+  if (!is_array($header) || empty($header)) {
+    return;
+  }
+  $kolom = [
+    'kodesales'          => 'KODESLS',
+    'kodealamatkirim'    => 'NoAlamatKirim',
+    'alamatkirim'        => 'AlamatKirim',
+    'kodepic'            => 'KodePF',
+    'kodelokasipenerima' => 'KODEKEBUN',
+    'catatan'            => 'CATATAN',
+    'valas'              => 'KODEVLS',
+    'kurs'               => 'KURS',
+    'dp'                 => 'DP',
+    'pembayaran'         => 'TIPEBAYAR',
+    'hari'               => 'HARI',
+    'tipeppn'            => ['TipePPn', 'PPN'],
+    'draftpo'            => 'pPO',
+    'tanggalpo'          => 'TglPO',
+    'tanggalkirim'       => 'TglKirim',
+    'kodebackoffice'     => 'BOffice',
+    'tanggaljatuhtempo'  => 'TGLJATUHTEMPO',
+  ];
+  $set = [];
+  $nilai = [];
+  foreach ($kolom as $field => $cols) {
+    if (!isset($header[$field]) || $header[$field] === '' || $header[$field] === null) {
+      continue;
+    }
+    foreach ((array) $cols as $col) {
+      $set[] = $col . ' = ?';
+      $nilai[] = $header[$field];
+    }
+  }
+  if (empty($set)) {
+    return;
+  }
+  $nilai[] = $noBukti;
+  DB::connection('SML')->update('update dbso set ' . implode(', ', $set) . ' where nobukti = ?', $nilai);
 }
 
 public function spAddTambahSO (Request $req) {
@@ -1217,7 +1303,10 @@ $date = $req->input('tanggal');
     // return [$data,$date,$nourut,$nosj,$norspb,$nooutso,$nopolkendaraan,$expedisi];
   // DB::connection('SML')->statement('delete	TempOutstanding where IDUser = :idUser',['idUser' => $username ]);
   foreach ($data as $d) {
-    // return 4;
+    $sisa = $this->sisaPenawaran($d['NoBukti'], $d['URUT']);
+    if ($sisa <= 0) {
+      continue;
+    }
 
     // $values = [$username, $nosj,'2023','4','SPB',$d['inputQntTerima'],$d['URUT']];
     $values1 = [
@@ -1235,6 +1324,7 @@ $d['URUT']
     ];
 
     DB::connection("SML")->statement('exec SP_InsertPSOweb ?,?,?,?,?,?,?,?,?,?,?',$values1);
+    $this->sesuaikanBarisPenawaran($noBukti[0]->Nobukti, $d['NoBukti'], $d['URUT'], $sisa);
   }
    DB::connection('SML')->update('exec Sp_UpdateSO ?', [$noBukti[0]->Nobukti]);
    $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData('I','SO',$noBukti[0]->Nobukti,'',0,'DBSO');

@@ -31,11 +31,11 @@ class UangMukaJualController extends Controller
 
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(4);
 
-    // Outstanding tanpa filter tanggal (semua SO yang belum dibuatkan uang muka),
-    // sama seperti programajcSML.
-    $tempOutstanding = $this->queryOutstandingUM(null, null);
-
+    // Filter tanggal Outstanding default ke bulan periode (sama dengan tab Uang Muka),
+    // supaya input tanggal tidak tampil kosong "dd/mm/yyyy".
     [$tglawal, $tglakhir] = $this->rentangPeriode($periode);
+    $tempOutstanding = $this->queryOutstandingUM($tglawal, $tglakhir);
+
     $tempOutstanding2 = $this->queryUangMuka($tglawal, $tglakhir, 0);
 
     return view('marketing.uangmukajual' , [

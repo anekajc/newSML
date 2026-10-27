@@ -7535,6 +7535,9 @@ function buttonCloseForm () {
   $('#page2').hide();
   $('#page1').show();
 
+  // Perubahan header di form (mis. PPN Exclude -> Include) langsung tersimpan ke DB
+  // lewat onChangeHeader(), jadi tabel depan perlu dimuat ulang saat form ditutup.
+  loadAll();
 }
 
 function buttonCloseFormDetail () {
