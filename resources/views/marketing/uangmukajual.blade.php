@@ -775,7 +775,7 @@ function tabelActionsCell (row) {
   let nobukti = umjPickCI(row, 'NoBukti');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
   html += '<button title="Detail" class="btn btn-warning btn-sm" type="button" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-success btn-sm" title="Buat Uang Muka" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" title="Buat Uang Muka" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus"></i></button>';
   html += '</div></td>';
   return html;
 }

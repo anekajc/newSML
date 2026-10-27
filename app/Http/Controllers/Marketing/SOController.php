@@ -1831,6 +1831,11 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
   }
 
   public function spAdd (Request $req) {
+    // Field angka bisa terkirim 'NaN'/kosong dari JS (mis. Disc header NULL pada SO dari
+    // penawaran) -- sp_SO menolak varchar->float, jadi paksa ke 0.
+    foreach (['disc', 'discrp', 'discDet', 'discrpDet', 'harga', 'qty', 'qnt1', 'isi', 'dp', 'kurs', 'hari'] as $k) {
+      if (!is_numeric($req->input($k))) { $req->merge([$k => 0]); }
+    }
     $nobukti = $req->nobukti;
     $username = \Auth::user()->username;
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();

@@ -1073,7 +1073,7 @@
             </div>
             <!-- <div class="col-md-4 text-right">
 
-            <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-chip-biru" >+</button>
+            <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary"><i class="bi bi-plus"></i></button>
             </div> -->
             <div class="col-md-8">
               <input id="AddAddKeterangan" type="text" class="form-control" >
@@ -1224,7 +1224,7 @@
             </div>
             <!-- <div class="col-md-4 text-right">
 
-            <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-chip-biru" >+</button>
+            <button type="button" onclick="buttonKoreksiListGudang()" class="btn btn-primary"><i class="bi bi-plus"></i></button>
             </div> -->
             <div class="col-md-4">
               <input id="AddEditKeterangan" type="text" class="form-control" >

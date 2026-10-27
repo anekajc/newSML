@@ -37,16 +37,9 @@ class NewPOController extends Controller
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(3);
     list($npoTglAwal, $npoTglAkhir) = $this->periodeRange($periode);
     // return $periode;
-    $pembelian = DB::connection("SML")->select("select * from dbo.fnc_masterbeli ( :bulan , :tahun, :pjasa)" , ["bulan" => $periode->bulan, "tahun" => $periode->tahun , "pjasa" => 0]);
-
-    // $po = vwOUtPOWMS::all();
-    $poGroup = vwOUtPOWMS::all()->sortBy('NoBukti')->sortBy('Urut')->groupBy('NoBukti');
-
-    $tempPo = [];
-    foreach ($poGroup as $pG) {
-      // code...
-      array_push($tempPo, $pG);
-    }
+    // Tabel PO & Pembelian digambar lewat AJAX (getAllPO/getAllPembelian) dengan filter tanggal.
+    // fnc_masterbeli (~40rb baris, ~40 detik) dan vwOUtPOWMS::all() tidak lagi dijalankan di sini
+    // karena tidak dipakai blade dan membuat halaman timeout (502).
 
     $gudang = DB::connection("SML")->select('select * from DBGUDANG where KODEGDG <> :id', ['id' => 'GTC']);
 
@@ -55,9 +48,9 @@ class NewPOController extends Controller
       "menul0" => $menul0,
       "po" => [],
       "poGroup" => [],
-      "tempPo" => $tempPo,
+      "tempPo" => [],
       "gudang" => $gudang,
-      "tempPembelian1" => $pembelian,
+      "tempPembelian1" => [],
       "npoTglAwal" => $npoTglAwal,
       "npoTglAkhir" => $npoTglAkhir,
       "akses" => $akses

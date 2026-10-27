@@ -110,6 +110,26 @@
     vertical-align: middle;
   }
 
+  /* Semua tombol "+" di menu marketing disamakan dengan purchasing: btn-primary biru soft
+     (palet #tabel td:first-child .btn-primary di purchasing/newpo.blade.php), bukan hijau. */
+  .btn.btn-primary:has(> .bi-plus) {
+    color: #2563eb;
+    border-color: #cfdcff;
+    background: #e8edff;
+    box-shadow: none;
+  }
+  .btn.btn-primary:has(> .bi-plus):hover,
+  .btn.btn-primary:has(> .bi-plus):focus {
+    color: #1d4ed8;
+    border-color: #b9c9ff;
+    background: #dce6ff;
+  }
+  .btn.btn-primary:has(> .bi-plus):active {
+    color: #1d4ed8 !important;
+    border-color: #a8bdff !important;
+    background: #cfdcff !important;
+  }
+
   .toolbar {
     display: flex;
     align-items: center;

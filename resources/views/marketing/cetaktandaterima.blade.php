@@ -1974,7 +1974,7 @@ function tabelActionsCell (row) {
   let nobukti = ctPickCI(r, 'nobukti');
   let kodecustsupp = ctPickCI(r, 'kodecustsupp');
   let html = '<td class="text-center"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-success btn-sm" type="button" title="Buat Tanda Terima" onclick="buttonAdd(\'' + kodecustsupp + '\')"><i class="bi bi-plus-lg"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" type="button" title="Buat Tanda Terima" onclick="buttonAdd(\'' + kodecustsupp + '\')"><i class="bi bi-plus"></i></button>';
   html += '</div></td>';
   return html;
 }

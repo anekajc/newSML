@@ -840,7 +840,7 @@
             <label class="form-label mb-0">Qty</label>
           </div>
           <div class="col-4">
-            <input id="AddAddInputQty" type="number" value='0.00' class="form-control text-right">
+            <input id="AddAddInputQty" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)">
           </div>
           <div class="col-2">
             <input id="AddAddInputSatuan" type="text" class="form-control" disabled>
@@ -933,7 +933,7 @@
             <label class="form-label mb-0">Qty</label>
           </div>
           <div class="col-4">
-            <input id="AddEditInputQty" type="number" value='0.00' class="form-control text-right">
+            <input id="AddEditInputQty" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)">
           </div>
           <div class="col-2">
             <input id="AddEditInputSatuan" type="text" class="form-control" disabled>
@@ -1371,6 +1371,56 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 </script>
 <script type="text/javascript">
+
+// Separator ribuan (koma) untuk input Qty - pola sama dengan kreditnote.blade.php.
+// Angka dari server -> teks ber-separator 2 desimal (null/kosong = 0.00).
+function angkaTampil (nilai) {
+  let n = Number(String(nilai == null || nilai === '' ? 0 : nilai).replace(/,/g, ''))
+  if (isNaN(n)) return String(nilai)
+  let parts = n.toFixed(2).split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return parts.join('.')
+}
+
+// Nilai input ber-separator dibersihkan dulu sebelum dihitung / dikirim ke server -
+// parseFloat('1,500.00') hanya terbaca 1.
+function bersihkanAngka (nilai) {
+  return parseFloat(String(nilai == null ? '' : nilai).replace(/,/g, '')) || 0
+}
+
+function formatRibuan (el) {
+  let raw = String(el.value).replace(/,/g, '')
+  if (raw === '' || isNaN(Number(raw))) return
+  el.value = angkaTampil(raw)
+}
+
+// Posisi kursor dihitung dari jumlah karakter bermakna (angka, titik desimal, minus) di depannya.
+function formatRibuanLive (el) {
+  let cursorPos = el.selectionStart
+  let sebelum = el.value.slice(0, cursorPos).replace(/[^0-9.\-]/g, '')
+
+  let raw = el.value.replace(/[^0-9.\-]/g, '')
+  let negatif = raw.charAt(0) === '-'
+  raw = raw.replace(/-/g, '')
+  if (raw === '' && !negatif) { el.value = ''; return }
+
+  let titik = raw.indexOf('.')
+  let bulat = titik >= 0 ? raw.slice(0, titik) : raw
+  let desimal = titik >= 0 ? raw.slice(titik + 1).replace(/\./g, '').slice(0, 2) : null
+  bulat = bulat.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = (negatif ? '-' : '') + bulat + (desimal !== null ? '.' + desimal : '')
+
+  let jumlahTitik = (sebelum.match(/\./g) || []).length
+  let jumlahMinus = (sebelum.match(/-/g) || []).length
+  let target = sebelum.length - Math.max(0, jumlahTitik - 1) - Math.max(0, jumlahMinus - (negatif ? 1 : 0))
+
+  let pos = 0, hitung = 0
+  while (pos < el.value.length && hitung < target) {
+    if (el.value[pos] !== ',') hitung++
+    pos++
+  }
+  el.setSelectionRange(pos, pos)
+}
 
 let listSJ = []
 let listBarang = []
@@ -1823,7 +1873,7 @@ function buttonAddPickBarang (index) {
   document.getElementById("AddAddKodeBrg").value = dataBarangAdd.kodebrg
   document.getElementById("AddAddNamaBrg").value = dataBarangAdd.Namabrg
   document.getElementById("AddAddInputSatuan").value = dataBarangAdd.Satuan
-  document.getElementById("AddAddInputQty").value = parseFloat(dataBarangAdd.Qty).toFixed(2)
+  document.getElementById("AddAddInputQty").value = angkaTampil(dataBarangAdd.Qty)
 
 
   buttonAddListBatal()
@@ -2167,7 +2217,7 @@ function submitAddEdit () {
   console.log(dataTableAddHeader)
   console.log(dataBarangEdit)
 
-  let tempQnt = $("#AddEditInputQty").val();
+  let tempQnt = bersihkanAngka($("#AddEditInputQty").val());
   console.log(tempQnt)
 
   if (Number(tempQnt) <= 0) {
@@ -2178,7 +2228,7 @@ function submitAddEdit () {
   // Batas = sisa SJ yang belum diretur + qty item ini sendiri (QtyMaks dari server).
   let qtyMaks = parseFloat(dataBarangEdit.QtyMaks) || 0
   if (Number(tempQnt) > qtyMaks + 0.0005) {
-    alertify.warning("Qty retur melebihi sisa surat jalan (maks " + qtyMaks.toFixed(2) + ")")
+    alertify.warning("Qty retur melebihi sisa surat jalan (maks " + angkaTampil(qtyMaks) + ")")
     return
   }
 
@@ -2312,7 +2362,7 @@ function submitAddAdd () {
   console.log(dataForm)
   console.log(dataBarangAdd)
 
-  let tempQnt = $("#AddAddInputQty").val();
+  let tempQnt = bersihkanAngka($("#AddAddInputQty").val());
   console.log(tempQnt)
 
   if (Number(tempQnt) <= 0) {
@@ -2323,7 +2373,7 @@ function submitAddAdd () {
   // dataBarangAdd.Qty = sisa SJ yang belum diretur, dalam satuan yang tampil di form.
   let qtySisa = parseFloat(dataBarangAdd.Qty) || 0
   if (Number(tempQnt) > qtySisa + 0.0005) {
-    alertify.warning("Qty retur melebihi sisa surat jalan (maks " + qtySisa.toFixed(2) + ")")
+    alertify.warning("Qty retur melebihi sisa surat jalan (maks " + angkaTampil(qtySisa) + ")")
     return
   }
 
@@ -2858,10 +2908,10 @@ function buttonAddEdit (i) {
   if (dataBarangEdit.NOSAT == 1) {
 
     document.getElementById("AddEditInputSatuan").value = dataBarangEdit.SAT_1
-    document.getElementById("AddEditInputQty").value = parseFloat(dataBarangEdit.QNT).toFixed(2)
+    document.getElementById("AddEditInputQty").value = angkaTampil(dataBarangEdit.QNT)
   } else {
     document.getElementById("AddEditInputSatuan").value = dataBarangEdit.SAT_2
-    document.getElementById("AddEditInputQty").value = parseFloat(dataBarangEdit.QNT2).toFixed(2)
+    document.getElementById("AddEditInputQty").value = angkaTampil(dataBarangEdit.QNT2)
   }
 
   $('.showhide').hide();
