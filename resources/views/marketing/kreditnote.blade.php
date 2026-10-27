@@ -271,7 +271,6 @@
 
   <div class="row">
     <div class="col-8 text-left">
-      <h2></h2>
     </div>
     <div class="col-4 text-right">
       <button type="button" class="btn btn-danger btn-lg" style="
@@ -891,9 +890,8 @@
   <div id="page3" style="display: none" class="mainpage container-fluid" >
 <div id="formBsGrid">
 
-    <div class="row" style="margin-top: -30px">
+    <div class="row">
       <div class="col-8 text-left">
-        <h2>Form Kredit Note</h2>
       </div>
       <div class="col-4 text-right">
         <button type="button" class="btn btn-danger btn-lg" style="
