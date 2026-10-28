@@ -37,7 +37,11 @@ class MasterCustomerController extends Controller
     $listDataGroup = DB::connection('SML')->select('SELECT * FROM DBGROUPCUSTSUPP');
     $listDataJenis = DB::connection('SML')->select('SELECT * FROM DBJENISCUSTSUPP');
     $listDataKota = DB::connection('SML')->select('SELECT * FROM DBKOTA');
-    return ["listDataGroup" => $listDataGroup , "listDataJenis" => $listDataJenis , "listDataKota" => $listDataKota];
+    // Sumber sama dengan dropdown Sales / Back Office di menu SO (solistsales / solistbackoffice),
+    // supaya KodeSls & BOffice yang diisi di sini langsung terbaca saat pilih pelanggan di SO.
+    $listDataSales = DB::connection('SML')->select('SELECT KeyNIK keynik, Nama nama FROM DBKARYAWAN where IsSales = 1 order by Nama');
+    $listDataBOffice = DB::connection('SML')->select('SELECT KeyNIK keynik, fullname FROM [user] order by fullname');
+    return ["listDataGroup" => $listDataGroup , "listDataJenis" => $listDataJenis , "listDataKota" => $listDataKota , "listDataSales" => $listDataSales , "listDataBOffice" => $listDataBOffice];
 
   }
 
@@ -57,7 +61,7 @@ class MasterCustomerController extends Controller
       return 'NPWP sudah ada di database';
     }
 
-    $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis, HARI, PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList ) VALUES (:usaha, :kode , :nama , :alamat , :kota , :kodepos ,  :negara, :telp,:fax , :email , :npph23 , :npph21 , :haripiutang, :isaktif , :att, :attphone ,:attdepart,  :npwp ,:namapkp ,:alamatpkp ,:kotapkp, :isppn , :jenis , :top , :plafon , :jeniscustomer, :groupcustomer, :intcode, :compcode, :custcode , :berikat, :blacklist)' , 
+    $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis, HARI, PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList, KodeSls, BOffice ) VALUES (:usaha, :kode , :nama , :alamat , :kota , :kodepos ,  :negara, :telp,:fax , :email , :npph23 , :npph21 , :haripiutang, :isaktif , :att, :attphone ,:attdepart,  :npwp ,:namapkp ,:alamatpkp ,:kotapkp, :isppn , :jenis , :top , :plafon , :jeniscustomer, :groupcustomer, :intcode, :compcode, :custcode , :berikat, :blacklist, :kodesls, :boffice)' , 
    
     ['usaha'=> $req->bentukusaha , 
     'kode' => $req->kode , 
@@ -90,7 +94,9 @@ class MasterCustomerController extends Controller
     'compcode' => $req->compcode, 
     'custcode' => $req->custcode , 
     'berikat' => $req->berikat, 
-    'blacklist' => $req->blacklist ]);
+    'blacklist' => $req->blacklist ,
+    'kodesls' => $req->kodesls ?: null ,
+    'boffice' => $req->boffice ?: null ]);
 
     return 1;
 
@@ -128,13 +134,13 @@ class MasterCustomerController extends Controller
   }
 
   public function spDetail (Request $req) {
-    $detail = DB::connection('SML')->select('SELECT USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, bank, NoAcc , ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis,HARI,PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList from DBCUSTSUPP where KODECUSTSUPP = :kode', ['kode' => $req->kode]);
+    $detail = DB::connection('SML')->select('SELECT USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, bank, NoAcc , ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis,HARI,PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList, KodeSls, BOffice from DBCUSTSUPP where KODECUSTSUPP = :kode', ['kode' => $req->kode]);
     // $listData = DB::connection('SML')->select('SELECT USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, bank, NoAcc , ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis from DBCUSTSUPP where Jenis = 0');
     return $detail;
   }
 
   public function spEdit (Request $req) {
-    $edit = DB::connection('SML')->update('update DBCUSTSUPP set HARI = :top ,PLAFON = :plafon , JenisCustSupp = :jeniscustomer , Agent = :groupcustomer , IntCode = :intcode , CompCode = :compcode , CustCode = :custcode , BERIKAT = :berikat , pBlackList = :blacklist ,  USAHA =:usaha , NAMACUSTSUPP = :nama ,  ALAMAT1 = :alamat, Kota = :kota, KODEPOS = :kodepos , NEGARA= :negara, TELPON = :telp , FAX  = :fax, EMAIL = :email, NPPH23 = :npph23, NPPH22 = :npph21, HARIHUTPIUT = :haripiutang , IsAktif = :isaktif, Att = :att , AttPhone = :attphone, AttDepart = :attdepart ,  NPWP = :npwp , NAMAPKP = :namapkp , ALAMATPKP1 = :alamatpkp , KOTAPKP = :kotapkp , IsPpn = :isppn  where KODECUSTSUPP = :kode' , ['top' => $req->top , 'plafon' => $req->plafon , 'jeniscustomer' => $req->jeniscustomer, 'groupcustomer' => $req->groupcustomer, 'intcode' => $req->intcomp , 'compcode' => $req->compcode, 'custcode' => $req->custcode , 'berikat' => $req->berikat, 'blacklist' => $req->blacklist ,'usaha'=> $req->bentukusaha , 'nama' => $req->nama , 'alamat' => $req->alamat , 'kota'=> $req->kota , 'kodepos' => $req->kodepos ,  'negara' => $req->negara, 'telp' => $req->telp ,'fax' => $req->fax , 'email' => $req->email , 'npph23' => $req->pph23 , 'npph21' => $req->pph21 , 'haripiutang' => $req->haripiutang , 'isaktif'=> $req->isaktif , 'att'=>$req->att, 'attphone'=> $req->attphone , 'attdepart'=>$req->attdepart,  'npwp' => $req->npwp , 'namapkp' => $req->namapkp ,'alamatpkp' => $req->alamatpkp , 'kotapkp' => $req->kotapkp , 'isppn'=> $req->isppn , 'kode' => $req->kode]);
+    $edit = DB::connection('SML')->update('update DBCUSTSUPP set HARI = :top ,PLAFON = :plafon , JenisCustSupp = :jeniscustomer , Agent = :groupcustomer , IntCode = :intcode , CompCode = :compcode , CustCode = :custcode , BERIKAT = :berikat , pBlackList = :blacklist , KodeSls = :kodesls , BOffice = :boffice ,  USAHA =:usaha , NAMACUSTSUPP = :nama ,  ALAMAT1 = :alamat, Kota = :kota, KODEPOS = :kodepos , NEGARA= :negara, TELPON = :telp , FAX  = :fax, EMAIL = :email, NPPH23 = :npph23, NPPH22 = :npph21, HARIHUTPIUT = :haripiutang , IsAktif = :isaktif, Att = :att , AttPhone = :attphone, AttDepart = :attdepart ,  NPWP = :npwp , NAMAPKP = :namapkp , ALAMATPKP1 = :alamatpkp , KOTAPKP = :kotapkp , IsPpn = :isppn  where KODECUSTSUPP = :kode' , ['top' => $req->top , 'plafon' => $req->plafon , 'jeniscustomer' => $req->jeniscustomer, 'groupcustomer' => $req->groupcustomer, 'intcode' => $req->intcomp , 'compcode' => $req->compcode, 'custcode' => $req->custcode , 'berikat' => $req->berikat, 'blacklist' => $req->blacklist , 'kodesls' => $req->kodesls ?: null , 'boffice' => $req->boffice ?: null ,'usaha'=> $req->bentukusaha , 'nama' => $req->nama , 'alamat' => $req->alamat , 'kota'=> $req->kota , 'kodepos' => $req->kodepos ,  'negara' => $req->negara, 'telp' => $req->telp ,'fax' => $req->fax , 'email' => $req->email , 'npph23' => $req->pph23 , 'npph21' => $req->pph21 , 'haripiutang' => $req->haripiutang , 'isaktif'=> $req->isaktif , 'att'=>$req->att, 'attphone'=> $req->attphone , 'attdepart'=>$req->attdepart,  'npwp' => $req->npwp , 'namapkp' => $req->namapkp ,'alamatpkp' => $req->alamatpkp , 'kotapkp' => $req->kotapkp , 'isppn'=> $req->isppn , 'kode' => $req->kode]);
 
     return $edit;
   }

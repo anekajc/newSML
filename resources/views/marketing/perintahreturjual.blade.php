@@ -1023,7 +1023,7 @@
                   <th style="padding: 4px 12px;" scope="col">Kode Brg</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Brg</th>
 
-                  <th style="padding: 4px 12px;" scope="col">Qnt Sisa</th>
+                  <th style="padding: 4px 12px;" scope="col">Qty Sisa</th>
 
                   <th style="padding: 4px 12px;" scope="col">Satuan</th>
 
@@ -4139,7 +4139,7 @@ function submitPrintBA (nobukti) {
                   <tr>
                     <td class="text-center" style="width: 2%" >No.</td>
                     <td class="text-center" style="width: 30%">Nama Barang</td>
-                    <td class="text-center" style="width: 5%">Qnt</td>
+                    <td class="text-center" style="width: 5%">Qty</td>
                     <td class="text-center" style="width: 5%">No. SPB</td>
                     <td class="text-center" style="width: 5%">Faktur Pajak</td>
                     <td class="text-center" style="width: 5%">Supplier</td>
