@@ -215,6 +215,11 @@
                     <option value="2">Two</option>
                     <option value="3">Three</option>
                   </select>
+
+          <label for="input_add_kodesls">Sales</label>
+          <select id="input_add_kodesls" class="form-control"></select>
+          <label for="input_add_boffice">Back Office</label>
+          <select id="input_add_boffice" class="form-control"></select>
         </div>
             <br/>
 
@@ -413,6 +418,11 @@
                     <option value="2">Two</option>
                     <option value="3">Three</option>
                   </select>
+
+          <label for="input_edit_kodesls">Sales</label>
+          <select id="input_edit_kodesls" class="form-control"></select>
+          <label for="input_edit_boffice">Back Office</label>
+          <select id="input_edit_boffice" class="form-control"></select>
         </div>
             <br/>
 
@@ -791,6 +801,7 @@ function buttonAdd () {
       document.getElementById("input_add_groupcustomer").innerHTML = rowTableGroup
       document.getElementById("input_add_jeniscustomer").innerHTML = rowTableJenis
       document.getElementById("input_add_kota").innerHTML = rowTable
+      isiOpsiSalesBOffice('add', res)
     }})
 
 
@@ -798,6 +809,32 @@ function buttonAdd () {
 
 }
 
+
+// Dropdown Sales (DBKARYAWAN IsSales=1) & Back Office ([user]) - disimpan ke DBCUSTSUPP.KodeSls / BOffice,
+// yang dibaca menu SO saat memilih pelanggan.
+function isiOpsiSalesBOffice (mode, res) {
+  let opsiSales = `<option value="">Pilih Sales</option>`
+  ;(res.listDataSales || []).forEach((item) => {
+    opsiSales += `<option value="${item.keynik}">${item.keynik} - ${item.nama ?? ''}</option>`
+  })
+  let opsiBOffice = `<option value="">Pilih Back Office</option>`
+  ;(res.listDataBOffice || []).forEach((item) => {
+    opsiBOffice += `<option value="${item.keynik}">${item.keynik} - ${item.fullname ?? ''}</option>`
+  })
+  document.getElementById(`input_${mode}_kodesls`).innerHTML = opsiSales
+  document.getElementById(`input_${mode}_boffice`).innerHTML = opsiBOffice
+}
+
+// Pilih nilai di <select>; kalau kode lama tidak ada di daftar (mis. sales sudah tidak aktif),
+// tambahkan sebagai opsi supaya nilainya tidak hilang saat disimpan ulang.
+function pilihOpsi (id, nilai) {
+  let el = document.getElementById(id)
+  nilai = String(nilai ?? '').trim()
+  if (nilai && !Array.from(el.options).some(o => o.value === nilai)) {
+    el.insertAdjacentHTML('beforeend', `<option value="${nilai}">${nilai}</option>`)
+  }
+  el.value = nilai
+}
 
 function submitEdit () {
 
@@ -873,6 +910,8 @@ function submitEdit () {
   console.log('jeniscustomer' , jeniscustomer)
   let groupcustomer = $("#input_edit_groupcustomer").val();
   console.log('groupcustomer' , groupcustomer)
+  let kodesls = $("#input_edit_kodesls").val();
+  let boffice = $("#input_edit_boffice").val();
   let intcomp = $("#input_edit_intcomp").val();
   console.log('intcomp' , intcomp)
   let compcode = $("#input_edit_compcode").val();
@@ -915,7 +954,7 @@ function submitEdit () {
     async: false,
     data: {
       _token : _token,
-      isppn, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist,
+      isppn, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist, kodesls, boffice,
       jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, npwp,namapkp,alamatpkp,kotapkp
     },
     success: function(res) {
@@ -1009,6 +1048,8 @@ function submitAdd () {
   console.log('jeniscustomer' , jeniscustomer)
   let groupcustomer = $("#input_add_groupcustomer").val();
   console.log('groupcustomer' , groupcustomer)
+  let kodesls = $("#input_add_kodesls").val();
+  let boffice = $("#input_add_boffice").val();
   let intcomp = $("#input_add_intcomp").val();
   console.log('intcomp' , intcomp)
   let compcode = $("#input_add_compcode").val();
@@ -1044,6 +1085,12 @@ function submitAdd () {
     alertify.warning("Kota harus diisi");
     return
   }
+
+  // Tanpa sales, customer baru tidak bisa dipakai di SO (Sales di SO diambil dari master customer).
+  if (!kodesls) {
+    alertify.warning("Sales harus diisi");
+    return
+  }
   //
   // if (!namaarea) {
   //   alertify.warning("Nama area harus diisi");
@@ -1056,7 +1103,7 @@ function submitAdd () {
     async: false,
     data: {
       _token : _token,
-      isppn, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist,
+      isppn, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist, kodesls, boffice,
       jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, npwp,namapkp,alamatpkp,kotapkp
     },
     success: function(res) {
@@ -1155,6 +1202,7 @@ function buttonEdit (kode) {
       document.getElementById("input_edit_groupcustomer").innerHTML = rowTableGroup
       document.getElementById("input_edit_jeniscustomer").innerHTML = rowTableJenis
       document.getElementById("input_edit_kota").innerHTML = rowTable
+      isiOpsiSalesBOffice('edit', res)
     }})
 
   $.ajax({
@@ -1214,6 +1262,8 @@ function buttonEdit (kode) {
       document.getElementById("input_edit_compcode").value = res[0].CompCode
       document.getElementById("input_edit_custcode").value = res[0].CustCode
       document.getElementById("input_edit_intcomp").value = res[0].IntCode
+      pilihOpsi("input_edit_kodesls", res[0].KodeSls)
+      pilihOpsi("input_edit_boffice", res[0].BOffice)
 
 
     }})
