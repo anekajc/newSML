@@ -4767,6 +4767,9 @@ function formatRibuanLive (el) {
   while (pos < el.value.length && hitung < target) {
     if (el.value[pos] !== ',') hitung++
     pos++
+  }
+  el.setSelectionRange(pos, pos)
+}
 
 function formatAngkaX (angka) {
   if (Number(angka) == 0) {
