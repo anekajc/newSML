@@ -605,7 +605,7 @@
         <input id="AddAddNamaBrg" type="text" class="form-control bs-full" disabled>
 
         <label>Qty</label>
-        <input id="AddAddInputQty" type="number" value='0.00' class="form-control text-right" onchange="onChangeQty()">
+        <input id="AddAddInputQty" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" onchange="onChangeQty()">
 
         <label>Satuan</label>
         <div>
@@ -672,7 +672,7 @@
         <input id="AddEditNamaBrg" type="text" class="form-control bs-full" disabled>
 
         <label>Qty</label>
-        <input id="AddEditInputQty" type="number" value='0.00' class="form-control text-right" onchange="onChangeQtyEdit()">
+        <input id="AddEditInputQty" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" onchange="onChangeQtyEdit()">
 
         <label>Satuan</label>
         <div>
@@ -1102,6 +1102,57 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 </script>
 <script type="text/javascript">
+
+// Separator ribuan (koma) untuk input Qty - pola sama dengan retursuratjalan.blade.php.
+// Angka dari server -> teks ber-separator 2 desimal (null/kosong = 0.00).
+function angkaTampil (nilai) {
+  let n = Number(String(nilai == null || nilai === '' ? 0 : nilai).replace(/,/g, ''))
+  if (isNaN(n)) return String(nilai)
+  let parts = n.toFixed(2).split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return parts.join('.')
+}
+
+// Nilai input ber-separator dibersihkan dulu sebelum dihitung / dikirim ke server -
+// parseFloat('1,500.00') hanya terbaca 1.
+function bersihkanAngka (nilai) {
+  return parseFloat(String(nilai == null ? '' : nilai).replace(/,/g, '')) || 0
+}
+
+function formatRibuan (el) {
+  let raw = String(el.value).replace(/,/g, '')
+  if (raw === '' || isNaN(Number(raw))) return
+  el.value = angkaTampil(raw)
+}
+
+// Posisi kursor dihitung dari jumlah karakter bermakna (angka, titik desimal, minus) di depannya.
+function formatRibuanLive (el) {
+  let cursorPos = el.selectionStart
+  let sebelum = el.value.slice(0, cursorPos).replace(/[^0-9.\-]/g, '')
+
+  let raw = el.value.replace(/[^0-9.\-]/g, '')
+  let negatif = raw.charAt(0) === '-'
+  raw = raw.replace(/-/g, '')
+  if (raw === '' && !negatif) { el.value = ''; return }
+
+  let titik = raw.indexOf('.')
+  let bulat = titik >= 0 ? raw.slice(0, titik) : raw
+  let desimal = titik >= 0 ? raw.slice(titik + 1).replace(/\./g, '').slice(0, 2) : null
+  bulat = bulat.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = (negatif ? '-' : '') + bulat + (desimal !== null ? '.' + desimal : '')
+
+  let jumlahTitik = (sebelum.match(/\./g) || []).length
+  let jumlahMinus = (sebelum.match(/-/g) || []).length
+  let target = sebelum.length - Math.max(0, jumlahTitik - 1) - Math.max(0, jumlahMinus - (negatif ? 1 : 0))
+
+  let pos = 0, hitung = 0
+  while (pos < el.value.length && hitung < target) {
+    if (el.value[pos] !== ',') hitung++
+    pos++
+  }
+  el.setSelectionRange(pos, pos)
+}
+
 
 // let tempNoBukti = ''
 
@@ -1730,7 +1781,7 @@ function submitAddEdit () {
   let urutbeli = $("#AddEditUrutBeli").val()
   let namabrg = $("#AddEditNamaBrg").val();
   let kodebrg = $("#AddEditKodeBrg").val();
-  let qnt = $("#AddEditInputQty").val();
+  let qnt = bersihkanAngka($("#AddEditInputQty").val());
 
   let nosat = $("#AddEditInputNosat").val();
   let isi = 0
@@ -1951,7 +2002,7 @@ function submitAddAdd () {
   let urutbeli = $("#AddAddUrutBeli").val()
   let namabrg = $("#AddAddNamaBrg").val();
   let kodebrg = $("#AddAddKodeBrg").val();
-  let qnt = $("#AddAddInputQty").val();
+  let qnt = bersihkanAngka($("#AddAddInputQty").val());
 
   let nosat = $("#AddAddInputNosat").val();
   let isi = 0
@@ -2354,7 +2405,7 @@ function onChangeQtyEdit () {
   console.log('onChangeQtyEdit')
   console.log('tempBarangAddEdit' , tempBarangAddEdit)
 
-  let qty = $("#AddEditInputQty").val();
+  let qty = bersihkanAngka($("#AddEditInputQty").val());
   let nosat = $("#AddEditInputNosat").val();
   if (jQuery.isEmptyObject(tempBarangAddEdit)) {
     console.log('g ada barang')
@@ -2376,7 +2427,7 @@ function onChangeQty () {
 
   console.log('onChangeQty')
   console.log('tempBarangAddAdd' , tempBarangAddAdd)
-  let qty = $("#AddAddInputQty").val();
+  let qty = bersihkanAngka($("#AddAddInputQty").val());
   let nosat = $("#AddAddInputNosat").val();
   console.log('qty' , qty)
   console.log('nosat' , nosat)
@@ -2405,7 +2456,7 @@ function buttonAddPickBarang (index) {
   console.log('tempBarangAddAdd', tempBarangAddAdd)
   document.getElementById("AddAddKodeBrg").value = tempBarangAddAdd.KodeBrg
   document.getElementById("AddAddNamaBrg").value = tempBarangAddAdd.NamaBrg ? tempBarangAddAdd.NamaBrg : tempBarangAddAdd.NamaBrgx
-  document.getElementById("AddAddInputQty").value = tempBarangAddAdd.QntSisa
+  document.getElementById("AddAddInputQty").value = angkaTampil(tempBarangAddAdd.QntSisa)
   document.getElementById("AddAddInputQty1").value = tempBarangAddAdd.Qnt1Sisa
   document.getElementById("AddAddInputQty2").value = tempBarangAddAdd.Qnt2Sisa
 
@@ -2740,7 +2791,7 @@ function buttonAddEditItem (i) {
   document.getElementById("AddEditNoBeli").value = tempBarangAddEdit.nobeli || ''
   document.getElementById("AddEditUrutBeli").value = tempBarangAddEdit.urutbeli || 0
   document.getElementById("AddEditNamaBrg").value = tempBarangAddEdit.NAMABRG || ''
-  document.getElementById("AddEditInputQty").value = parseFloat(tempBarangAddEdit.QNT).toFixed(2)
+  document.getElementById("AddEditInputQty").value = angkaTampil(tempBarangAddEdit.QNT)
   document.getElementById("AddEditInputQty1").value = parseFloat(tempBarangAddEdit.QNT1).toFixed(2)
   document.getElementById("AddEditInputQty2").value = parseFloat(tempBarangAddEdit.QNT2).toFixed(2)
   document.getElementById("AddEditInputSat1").value = tempBarangAddEdit.SAT_1

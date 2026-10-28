@@ -776,7 +776,13 @@ if ((int) substr($tglServer, 0, 4) !== (int) $periode->tahun || (int) substr($tg
       ];
     }
     $this->isiNilaiPPN($noBukti[0]->Nobukti);
-    app('App\Http\Controllers\GlobalController')->LoggingData('I','IVRJ',$noBukti[0]->Nobukti,'',0,'DBINVOICERPJ');
+    // Nota sudah tersimpan; gagal catat log jangan sampai membuat browser menampilkan
+    // "silahkan refresh browser" padahal datanya sudah masuk.
+    try {
+      app('App\Http\Controllers\GlobalController')->LoggingData('I','IVRJ',$noBukti[0]->Nobukti,'',0,'DBINVOICERPJ');
+    } catch (\Throwable $e) {
+      report($e);
+    }
 
     return [
       "status" => 1 ,
@@ -798,7 +804,13 @@ public function spDeleteAll (Request $req) {
     return ["status" => 0, "pesan" => "Nota " . $req->nobukti . " sudah diotorisasi, batalkan otorisasi dulu sebelum menghapus"];
   }
 
-  app('App\Http\Controllers\GlobalController')->LoggingData('D','IVRJ',$req->nobukti,'',0,'DBINVOICERPJ');
+  // Log dicatat sebelum hapus (isi nota masih ada). Gagal catat log jangan sampai
+  // membatalkan hapus - dulu hapus tidak jalan sama sekali kalau LoggingData error.
+  try {
+    app('App\Http\Controllers\GlobalController')->LoggingData('D','IVRJ',$req->nobukti,'',0,'DBINVOICERPJ');
+  } catch (\Throwable $e) {
+    report($e);
+  }
 
   DB::connection('SML')->update("delete from DBINVOICERPJDet where NoBukti = cast(:nobukti as varchar(100))
   delete from DBINVOICERPJ where NoBukti = cast(:nobukti1 as varchar(100)) and isnull(IsOtorisasi1,0) <> 1
