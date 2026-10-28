@@ -240,7 +240,10 @@ Deallocate Mydata1" , ["pemakai"=>$username]);
          // DB::connection("SML")->update("delete tempketlog  where iduser=:pemakai",["pemakai"=>$username] );
          // DB::connection("SML")->update("delete xMytable  where iduser=:pemakai",["pemakai"=>$username] );
 
-          $pketerangan = $pketx[0]->keterangan;
+          // Kolom timestamp (MyID) ikut tercatat sebagai byte mentah berisi NUL (\0). Di server
+          // (pdo_dblib, prepare emulasi) query insert dbLogFile terpotong di byte NUL -> SQL error,
+          // sehingga simpan/hapus yang memanggil LoggingData gagal. Byte NUL dibuang dulu.
+          $pketerangan = str_replace("\0", "", $pketx[0]->keterangan);
 
     } else {
             $pketerangan = $pketerangan;
@@ -432,7 +435,10 @@ Deallocate Mydata1" , ["pemakai"=>$username]);
          // DB::connection("SML")->update("delete tempketlog  where iduser=:pemakai",["pemakai"=>$username] );
          // DB::connection("SML")->update("delete xMytable  where iduser=:pemakai",["pemakai"=>$username] );
 
-          $pketerangan = $pketx[0]->keterangan;
+          // Kolom timestamp (MyID) ikut tercatat sebagai byte mentah berisi NUL (\0). Di server
+          // (pdo_dblib, prepare emulasi) query insert dbLogFile terpotong di byte NUL -> SQL error,
+          // sehingga simpan/hapus yang memanggil LoggingData gagal. Byte NUL dibuang dulu.
+          $pketerangan = str_replace("\0", "", $pketx[0]->keterangan);
 
     } else {
             $pketerangan = $pketerangan;

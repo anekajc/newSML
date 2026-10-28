@@ -466,7 +466,7 @@
 <div id="page3" style="display: none" class="mainpage container-fluid" >
 <div id="formBsGrid">
 
-  <div class="row">
+  <div class="row mb-4">
     <div class="col-8 text-left">
       {{-- <h2>Koreksi SPR</h2> --}}
     </div>
@@ -812,7 +812,7 @@
         </div>
 
         <div class="input-group col-md-4">
-          <input id="KoreksiEditInputQty" type="number" value='0.00' class="form-control text-right" style="width: 75%">
+          <input id="KoreksiEditInputQty" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" style="width: 75%">
 
           <input id="KoreksiEditInputSat" type="text" value='PCS' class="form-control text-center" disabled style="width: 25%">
 
@@ -834,7 +834,7 @@
         </div>
 
         <div class="input-group col-md-4">
-          <input id="KoreksiEditInputQtyReject" type="number" value='0.00' class="form-control text-right" style="width: 75%">
+          <input id="KoreksiEditInputQtyReject" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" style="width: 75%">
 
           <input id="KoreksiEditInputSatReject" type="text" value='PCS' class="form-control text-center" disabled style="width: 25%">
 
@@ -1221,6 +1221,57 @@
 <script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script type="text/javascript">
+
+// Separator ribuan (koma) untuk input Qty - pola sama dengan retursuratjalan.blade.php.
+// Angka dari server -> teks ber-separator 2 desimal (null/kosong = 0.00).
+function angkaTampil (nilai) {
+  let n = Number(String(nilai == null || nilai === '' ? 0 : nilai).replace(/,/g, ''))
+  if (isNaN(n)) return String(nilai)
+  let parts = n.toFixed(2).split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return parts.join('.')
+}
+
+// Nilai input ber-separator dibersihkan dulu sebelum dihitung / dikirim ke server -
+// parseFloat('1,500.00') hanya terbaca 1.
+function bersihkanAngka (nilai) {
+  return parseFloat(String(nilai == null ? '' : nilai).replace(/,/g, '')) || 0
+}
+
+function formatRibuan (el) {
+  let raw = String(el.value).replace(/,/g, '')
+  if (raw === '' || isNaN(Number(raw))) return
+  el.value = angkaTampil(raw)
+}
+
+// Posisi kursor dihitung dari jumlah karakter bermakna (angka, titik desimal, minus) di depannya.
+function formatRibuanLive (el) {
+  let cursorPos = el.selectionStart
+  let sebelum = el.value.slice(0, cursorPos).replace(/[^0-9.\-]/g, '')
+
+  let raw = el.value.replace(/[^0-9.\-]/g, '')
+  let negatif = raw.charAt(0) === '-'
+  raw = raw.replace(/-/g, '')
+  if (raw === '' && !negatif) { el.value = ''; return }
+
+  let titik = raw.indexOf('.')
+  let bulat = titik >= 0 ? raw.slice(0, titik) : raw
+  let desimal = titik >= 0 ? raw.slice(titik + 1).replace(/\./g, '').slice(0, 2) : null
+  bulat = bulat.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = (negatif ? '-' : '') + bulat + (desimal !== null ? '.' + desimal : '')
+
+  let jumlahTitik = (sebelum.match(/\./g) || []).length
+  let jumlahMinus = (sebelum.match(/-/g) || []).length
+  let target = sebelum.length - Math.max(0, jumlahTitik - 1) - Math.max(0, jumlahMinus - (negatif ? 1 : 0))
+
+  let pos = 0, hitung = 0
+  while (pos < el.value.length && hitung < target) {
+    if (el.value[pos] !== ',') hitung++
+    pos++
+  }
+  el.setSelectionRange(pos, pos)
+}
+
 
 
 
@@ -1650,8 +1701,8 @@ function buttonKoreksiEditItem (i) {
   console.log(barang)
   document.getElementById("KoreksiEditKodeBrg").value = barang.KodeBrg
   document.getElementById("KoreksiEditNamaBrg").value = barang.NAMABRG
-  document.getElementById("KoreksiEditInputQty").value = barang.QNT ? parseFloat(barang.QNT).toFixed(2) : '0.00'
-  document.getElementById("KoreksiEditInputQtyReject").value = barang.QNTREJECT ? parseFloat(barang.QNTREJECT).toFixed(2) : '0.00'
+  document.getElementById("KoreksiEditInputQty").value = angkaTampil(barang.QNT)
+  document.getElementById("KoreksiEditInputQtyReject").value = angkaTampil(barang.QNTREJECT)
   document.getElementById("KoreksiEditInputSat").value = barang.NOSAT == 1 ? barang.SAT_1 : barang.SAT_2
   document.getElementById("KoreksiEditInputSatReject").value = barang.NOSAT == 1 ? barang.SAT_1 : barang.SAT_2
   document.getElementById("KoreksiEditReturSupp").value = barang.FlagKembali
@@ -1962,8 +2013,8 @@ function submitKoreksiEdit () {
   let _token  = $("#_token").val()
   let barang = barangKoreksiEdit
   let choice = "U"
-  let qntTerima = $("#KoreksiEditInputQty").val()
-  let qntReject = $("#KoreksiEditInputQtyReject").val()
+  let qntTerima = bersihkanAngka($("#KoreksiEditInputQty").val())
+  let qntReject = bersihkanAngka($("#KoreksiEditInputQtyReject").val())
   let retursupp = $("#KoreksiEditReturSupp").val()
 
   let nobukti = barang.NoBukti
