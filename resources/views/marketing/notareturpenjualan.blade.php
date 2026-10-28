@@ -507,7 +507,7 @@
                 </div> -->
                   <div class="col-8">
                     <div class="form-group">
-                      <input type="number"  class="form-control text-right" id="input_add_kurs" placeholder="" disabled>
+                      <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)"  class="form-control text-right" id="input_add_kurs" placeholder="" disabled>
                     </div>
                   </div>
                 </div>
@@ -844,7 +844,7 @@
         </div>
 
         <div class="input-group col-md-4">
-          <input id="AddAddInputQty" type="number" value='0.00' class="form-control text-right" style="width: 75%">
+          <input id="AddAddInputQty" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" style="width: 75%">
 
           <input id="AddAddInputSat" type="text" value='PCS' class="form-control text-center" disabled style="width: 25%">
 
@@ -868,7 +868,7 @@
       </div>
 
       <div class="col-md-4">
-        <input id="AddAddInputHarga" type="number" value='0.00' class="form-control text-right" onchange="onChangeInputAddHarga()">
+        <input id="AddAddInputHarga" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeInputAddHarga()">
       </div>
 
 
@@ -886,7 +886,7 @@
       </div>
 
       <div class="col-md-2">
-        <input id="AddAddInputDiscPersen" type="number" value='0.00' class="form-control text-right" onchange="onChangeInputAddDisc()">
+        <input id="AddAddInputDiscPersen" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeInputAddDisc()">
       </div>
 
 
@@ -904,7 +904,7 @@
       </div>
 
       <div class="col-md-4">
-        <input id="AddAddInputDiscRp" type="number" value='0.00' class="form-control text-right" onchange="onChangeInputAddDiscRp()">
+        <input id="AddAddInputDiscRp" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeInputAddDiscRp()">
       </div>
 
 
@@ -1063,7 +1063,7 @@
       </div>
 
       <div class="input-group col-md-4">
-        <input id="AddEditInputQty" disabled type="number" value='0.00' class="form-control text-right" style="width: 75%">
+        <input id="AddEditInputQty" disabled type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" style="width: 75%">
 
         <input id="AddEditInputSat" type="text" value='PCS' class="form-control text-center" disabled style="width: 25%">
 
@@ -1087,7 +1087,7 @@
     </div>
 
     <div class="col-md-4">
-      <input id="AddEditInputHarga" type="number" value='0.00' class="form-control text-right" onchange="onChangeInputEditHarga()">
+      <input id="AddEditInputHarga" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeInputEditHarga()">
     </div>
 
 
@@ -1105,7 +1105,7 @@
     </div>
 
     <div class="col-md-2">
-      <input id="AddEditInputDiscPersen" type="number" value='0.00' class="form-control text-right" onchange="onChangeInputEditDisc()">
+      <input id="AddEditInputDiscPersen" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeInputEditDisc()">
     </div>
 
 
@@ -1123,7 +1123,7 @@
     </div>
 
     <div class="col-md-4">
-      <input id="AddEditInputDiscRp" type="number" value='0.00' class="form-control text-right" onchange="onChangeInputEditDiscRp()">
+      <input id="AddEditInputDiscRp" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00' class="form-control text-right" onchange="onChangeInputEditDiscRp()">
     </div>
 
 
@@ -1434,7 +1434,7 @@
               </div>
               <div class="col-8">
                 <div class="form-group">
-                  <input type="number" class="form-control text-right" id="input_koreksi_uangmuka" placeholder="" onblur="onChangeUangMuka('nuangmuka' , 'input_koreksi_uangmuka' , 'uang muka')">
+                  <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" class="form-control text-right" id="input_koreksi_uangmuka" placeholder="" onblur="formatRibuan(this); onChangeUangMuka('nuangmuka' , 'input_koreksi_uangmuka' , 'uang muka')">
                 </div>
               </div>
             </div>
@@ -1467,7 +1467,7 @@
                   </div>
                   <div class="col-8">
                     <div class="form-group">
-                      <input type="number" class="form-control text-right" id="input_koreksi_kurs" placeholder="" onblur="onChangeKurs('kurs' , 'input_koreksi_kurs')">
+                      <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" class="form-control text-right" id="input_koreksi_kurs" placeholder="" onblur="formatRibuan(this); onChangeKurs('kurs' , 'input_koreksi_kurs')">
                     </div>
                   </div>
                 </div>
@@ -1859,7 +1859,7 @@
               </div>
               <div class="col-8">
                 <div class="form-group">
-                  <input type="number" class="form-control text-right" id="input_otorisasi_uangmuka" placeholder="" disabled>
+                  <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" class="form-control text-right" id="input_otorisasi_uangmuka" placeholder="" disabled>
                 </div>
               </div>
             </div>
@@ -1891,7 +1891,7 @@
                   </div>
                   <div class="col-8">
                     <div class="form-group">
-                      <input type="number" class="form-control text-right" id="input_otorisasi_kurs" placeholder="" disabled>
+                      <input type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" class="form-control text-right" id="input_otorisasi_kurs" placeholder="" disabled>
                     </div>
                   </div>
                 </div>
@@ -3271,7 +3271,7 @@ function buttonAddListValas () {
 
         <td>${item.kodevls}</td>
         <td>${item.namavls}</td>
-        <td class="text-right">${item.kurs ? parseFloat(item.kurs).toFixed(2) : '0.00'}</td>
+        <td class="text-right">${angkaTampil(item.kurs)}</td>
 
         </tr>`
       });
@@ -3330,8 +3330,8 @@ function buttonAddListBarang () {
 
           <td>${item.KODEBRG}</td>
           <td>${item.NAMABRG}</td>
-          <td class="text-right">${item.QntSisa}</td>
-          <td class="text-right">${item.Qnt}</td>
+          <td class="text-right">${angkaTampil(item.QntSisa)}</td>
+          <td class="text-right">${angkaTampil(item.Qnt)}</td>
           <td>${item.Satuan}</td>
 
           </tr>`
@@ -3372,7 +3372,7 @@ function buttonAddPickValas (kode, kurs) {
   console.log('buttonAddPickValas')
   console.log(kode,kurs)
   document.getElementById("input_add_valas").value = kode
-  document.getElementById("input_add_kurs").value = kurs
+  document.getElementById("input_add_kurs").value = angkaTampil(kurs)
   // if (tipeform == 'edit') {
     onChangeHeader('KODEVLS' , kode)
     onChangeHeader('KURS' , kurs)
@@ -3421,7 +3421,7 @@ function onChangeValasDropdown () {
   let kurs = itemX && itemX.kurs ? parseFloat(itemX.kurs).toFixed(2) : '0.00'
   onChangeHeader('KODEVLS' , kode)
   onChangeHeader('KURS' , kurs)
-  document.getElementById("input_add_kurs").value = kurs
+  document.getElementById("input_add_kurs").value = angkaTampil(kurs)
 }
 
 // Kode lama mengunci valas dengan men-disable / menyembunyikan tombol #buttonAddListValas.
@@ -3462,13 +3462,13 @@ function buttonAddPickBarang (index) {
   tempBarangAddAdd = listBarang[index]
   document.getElementById("AddAddKodeBrg").value = tempBarangAddAdd.KODEBRG
   document.getElementById("AddAddNamaBrg").value = tempBarangAddAdd.NAMABRG
-  document.getElementById("AddAddInputQty").value = tempBarangAddAdd.QntSisa
-  document.getElementById("AddAddInputQty").value = tempBarangAddAdd.QntSisa
+  document.getElementById("AddAddInputQty").value = angkaTampil(tempBarangAddAdd.QntSisa)
+  document.getElementById("AddAddInputQty").value = angkaTampil(tempBarangAddAdd.QntSisa)
 
   document.getElementById("AddAddInputSat").value = tempBarangAddAdd.Satuan
 
 
-  document.getElementById("AddAddInputHarga").value = Number(tempBarangAddAdd.HARGA) ? parseFloat(tempBarangAddAdd.HARGA).toFixed(2) : '0.00'
+  document.getElementById("AddAddInputHarga").value = angkaTampil(tempBarangAddAdd.HARGA)
 
 
   document.getElementById("AddAddInputDiscPersen").value = '0.00'
@@ -3501,7 +3501,7 @@ function submitAddEdit () {
     let noinvoice = $("#input_add_noinvoice").val()
     let disc = 0
     let kodevalas = $("#input_add_valas").val()
-    let kurs = $("#input_add_kurs").val()
+    let kurs = bersihkanAngka($("#input_add_kurs").val())
     let ppn = $("#input_add_tipeppn").val()
     let tipebayar = $("#input_add_tipebayar").val()
     let hari = $("#input_add_hari").val()
@@ -3511,7 +3511,7 @@ function submitAddEdit () {
     let norpj = $("#input_add_noretur").val()
     let urutrpj = tempBarangAddEdit.UrutSPR
     let sat_1 = tempBarangAddEdit.SAT1
-    let qnt = $("#AddEditInputQty").val()
+    let qnt = bersihkanAngka($("#AddEditInputQty").val())
     let nosat = tempBarangAddEdit.Nosat
     // Qty tidak bisa diubah di Edit Item (input disabled), jadi Qnt/Qnt2 dikirim apa adanya.
     // Dulu untuk satuan 2/3 Qnt dihitung ulang qnt * isi, padahal Qnt yang tampil sudah
@@ -3519,10 +3519,10 @@ function submitAddEdit () {
     let qnt1 = tempBarangAddEdit.Qnt
     let qnt2 = tempBarangAddEdit.Qnt2
     let isi = tempBarangAddEdit.Isi
-    let harga = $("#AddEditInputHarga").val()
-    let discp = $("#AddEditInputDiscPersen").val()
-    let discrp = $("#AddEditInputDiscRp").val()
-    let disctot = $("#AddEditInputDiscRp").val()
+    let harga = bersihkanAngka($("#AddEditInputHarga").val())
+    let discp = bersihkanAngka($("#AddEditInputDiscPersen").val())
+    let discrp = bersihkanAngka($("#AddEditInputDiscRp").val())
+    let disctot = bersihkanAngka($("#AddEditInputDiscRp").val())
     let keterangan = ''
     let flagmenu = 0
     let flagtipe = 0
@@ -3701,7 +3701,7 @@ function submitAddAdd () {
     let noinvoice = $("#input_add_noinvoice").val()
     let disc = 0
     let kodevalas = $("#input_add_valas").val()
-    let kurs = $("#input_add_kurs").val()
+    let kurs = bersihkanAngka($("#input_add_kurs").val())
     let ppn = $("#input_add_tipeppn").val()
     let tipebayar = $("#input_add_tipebayar").val()
     let hari = $("#input_add_hari").val()
@@ -3711,7 +3711,7 @@ function submitAddAdd () {
     let norpj = $("#input_add_noretur").val()
     let urutrpj = tempBarangAddAdd.URUT
     let sat_1 = tempBarangAddAdd.SAT1
-    let qnt = $("#AddAddInputQty").val()
+    let qnt = bersihkanAngka($("#AddAddInputQty").val())
     let nosat = tempBarangAddAdd.NoSat
     // Qty sisa SPR (QntSisa) sudah dalam satuan Qnt SPR, dan sisa SPR dihitung dari Qnt nota
     // (vwOutSPBRJual). Jadi Qnt = Qnt2 = qty, sama seperti tombol Buat Nota (spAddAllNew).
@@ -3719,10 +3719,10 @@ function submitAddAdd () {
     let qnt1 = qnt
     let qnt2 = qnt
     let isi = tempBarangAddAdd.Isi
-    let harga = $("#AddAddInputHarga").val()
-    let discp = $("#AddAddInputDiscPersen").val()
-    let discrp = $("#AddAddInputDiscRp").val()
-    let disctot = $("#AddAddInputDiscRp").val()
+    let harga = bersihkanAngka($("#AddAddInputHarga").val())
+    let discp = bersihkanAngka($("#AddAddInputDiscPersen").val())
+    let discrp = bersihkanAngka($("#AddAddInputDiscRp").val())
+    let disctot = bersihkanAngka($("#AddAddInputDiscRp").val())
     let keterangan = ''
     let flagmenu = 0
     let flagtipe = 0
@@ -3921,7 +3921,7 @@ function refreshDataTableKoreksi (nobukti , noretur) {
       <option value=0 selected>None</option>
       `
     }
-      document.getElementById("input_add_kurs").value = dataTableKoreksi[0].KURS ? parseFloat(dataTableKoreksi[0].KURS).toFixed(2) : '1.00'
+      document.getElementById("input_add_kurs").value = dataTableKoreksi[0].KURS ? angkaTampil(dataTableKoreksi[0].KURS) : '1.00'
       document.getElementById("input_add_tipeppn").value = dataTableKoreksi[0].PPN
       document.getElementById("input_add_tipebayar").value = dataTableKoreksi[0].TIPEBAYAR
 
@@ -3956,7 +3956,7 @@ function refreshDataTableKoreksi (nobukti , noretur) {
             <td>${item.NAMABRG}</td>
             <td>${item.NamaBrgKom ? item.NamaBrgKom : ''}</td>
             <td>${item.satx ? item.satx : '' }</td>
-            <td class="text-right">${item.Qnt}</td>
+            <td class="text-right">${angkaTampil(item.Qnt)}</td>
             <td>${item.Satuan}</td>
             <td class="text-right">${formatAngka(parseFloat(item.Harga).toFixed(2))}</td>
 
@@ -4397,7 +4397,7 @@ if (pcekglobal) {
       document.getElementById("input_add_noretur").value = dataTableAdd[0].NOBUKTI
       document.getElementById("input_add_valas").value = dataTableAdd[0].Valas ? dataTableAdd[0].Valas : 'IDR'
 
-      document.getElementById("input_add_kurs").value = dataTableAdd[0].Kurs ? dataTableAdd[0].Kurs : '1.00'
+      document.getElementById("input_add_kurs").value = dataTableAdd[0].Kurs ? angkaTampil(dataTableAdd[0].Kurs) : '1.00'
       document.getElementById("input_add_tipebayar").value = dataTableAdd[0].TipeBayar ? dataTableAdd[0].TipeBayar : 0
 
       document.getElementById("input_add_hari").value = Number(dataTableAdd[0].HARI) ? dataTableAdd[0].HARI : 0
@@ -4721,6 +4721,53 @@ function buttonAddNew (nobukti) {
 
 }
 
+// Separator ribuan (koma) untuk input Qty - pola sama dengan retursuratjalan.blade.php.
+// Angka dari server -> teks ber-separator 2 desimal (null/kosong = 0.00).
+function angkaTampil (nilai) {
+  let n = Number(String(nilai == null || nilai === '' ? 0 : nilai).replace(/,/g, ''))
+  if (isNaN(n)) return String(nilai)
+  let parts = n.toFixed(2).split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return parts.join('.')
+}
+
+// Nilai input ber-separator dibersihkan dulu sebelum dihitung / dikirim ke server -
+// parseFloat('1,500.00') hanya terbaca 1.
+function bersihkanAngka (nilai) {
+  return parseFloat(String(nilai == null ? '' : nilai).replace(/,/g, '')) || 0
+}
+
+function formatRibuan (el) {
+  let raw = String(el.value).replace(/,/g, '')
+  if (raw === '' || isNaN(Number(raw))) return
+  el.value = angkaTampil(raw)
+}
+
+// Posisi kursor dihitung dari jumlah karakter bermakna (angka, titik desimal, minus) di depannya.
+function formatRibuanLive (el) {
+  let cursorPos = el.selectionStart
+  let sebelum = el.value.slice(0, cursorPos).replace(/[^0-9.\-]/g, '')
+
+  let raw = el.value.replace(/[^0-9.\-]/g, '')
+  let negatif = raw.charAt(0) === '-'
+  raw = raw.replace(/-/g, '')
+  if (raw === '' && !negatif) { el.value = ''; return }
+
+  let titik = raw.indexOf('.')
+  let bulat = titik >= 0 ? raw.slice(0, titik) : raw
+  let desimal = titik >= 0 ? raw.slice(titik + 1).replace(/\./g, '').slice(0, 2) : null
+  bulat = bulat.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  el.value = (negatif ? '-' : '') + bulat + (desimal !== null ? '.' + desimal : '')
+
+  let jumlahTitik = (sebelum.match(/\./g) || []).length
+  let jumlahMinus = (sebelum.match(/-/g) || []).length
+  let target = sebelum.length - Math.max(0, jumlahTitik - 1) - Math.max(0, jumlahMinus - (negatif ? 1 : 0))
+
+  let pos = 0, hitung = 0
+  while (pos < el.value.length && hitung < target) {
+    if (el.value[pos] !== ',') hitung++
+    pos++
+
 function formatAngkaX (angka) {
   if (Number(angka) == 0) {
     return '0.00'
@@ -4785,7 +4832,7 @@ function buttonKoreksiDelete (index) {
         let noinvoice = $("#input_add_noinvoice").val()
         let disc = 0
         let kodevalas = $("#input_add_valas").val()
-        let kurs = $("#input_add_kurs").val()
+        let kurs = bersihkanAngka($("#input_add_kurs").val())
         let ppn = $("#input_add_tipeppn").val()
         let tipebayar = $("#input_add_tipebayar").val()
         let hari = $("#input_add_hari").val()
@@ -4795,16 +4842,16 @@ function buttonKoreksiDelete (index) {
         let norpj = $("#input_add_noretur").val()
         let urutrpj = dataDelete.UrutSPR
         let sat_1 = dataDelete.SAT1
-        let qnt = $("#AddEditInputQty").val()
+        let qnt = bersihkanAngka($("#AddEditInputQty").val())
         let nosat = dataDelete.Nosat
         let qnt1 = 0
         let qnt2 = 0
         let isi = dataDelete.Isi
 
-        let harga = $("#AddEditInputHarga").val()
-        let discp = $("#AddEditInputDiscPersen").val()
-        let discrp = $("#AddEditInputDiscRp").val()
-        let disctot = $("#AddEditInputDiscRp").val()
+        let harga = bersihkanAngka($("#AddEditInputHarga").val())
+        let discp = bersihkanAngka($("#AddEditInputDiscPersen").val())
+        let discrp = bersihkanAngka($("#AddEditInputDiscRp").val())
+        let disctot = bersihkanAngka($("#AddEditInputDiscRp").val())
         let keterangan = ''
         let flagmenu = 0
         let flagtipe = 0
@@ -4947,10 +4994,10 @@ function buttonKoreksiEdit (index ) {
 
   document.getElementById("AddEditKodeBrg").value = tempBarangAddEdit.Kodebrg
   document.getElementById("AddEditNamaBrg").value = tempBarangAddEdit.NAMABRG
-  document.getElementById("AddEditInputQty").value = parseFloat(tempBarangAddEdit.Qnt).toFixed(2)
-  document.getElementById("AddEditInputHarga").value = parseFloat(tempBarangAddEdit.Harga).toFixed(2)
-  document.getElementById("AddEditInputDiscPersen").value = parseFloat(tempBarangAddEdit.DiscP).toFixed(2)
-  document.getElementById("AddEditInputDiscRp").value = parseFloat(tempBarangAddEdit.DiscRp).toFixed(2)
+  document.getElementById("AddEditInputQty").value = angkaTampil(tempBarangAddEdit.Qnt)
+  document.getElementById("AddEditInputHarga").value = angkaTampil(tempBarangAddEdit.Harga)
+  document.getElementById("AddEditInputDiscPersen").value = angkaTampil(tempBarangAddEdit.DiscP)
+  document.getElementById("AddEditInputDiscRp").value = angkaTampil(tempBarangAddEdit.DiscRp)
 
   $('.showhideitem').hide();
   // document.getElementById("buttonAddListBarang").disabled = false
@@ -5274,7 +5321,7 @@ function buttonKoreksiEdit (index ) {
 
 function onChangeInputAddDisc () {
   console.log("onChangeInputAddAddDisc")
-  let harga = $("#AddAddInputHarga").val();
+  let harga = bersihkanAngka($("#AddAddInputHarga").val());
 
   if (!Number(harga)) {
 
@@ -5282,7 +5329,7 @@ function onChangeInputAddDisc () {
     return
   }
 
-  let disc = $("#AddAddInputDiscPersen").val();
+  let disc = bersihkanAngka($("#AddAddInputDiscPersen").val());
   if (disc <= 0) {
     document.getElementById("AddAddInputDiscRp").value = '0.00'
     document.getElementById("AddAddInputDiscPersen").value = '0.00'
@@ -5291,7 +5338,7 @@ function onChangeInputAddDisc () {
   }
 
   let discRp = Number(harga) * Number(disc) / 100
-  document.getElementById("AddAddInputDiscRp").value = parseFloat(discRp).toFixed(2)
+  document.getElementById("AddAddInputDiscRp").value = angkaTampil(discRp)
 
 }
 
@@ -5299,7 +5346,7 @@ function onChangeInputAddDisc () {
 
 function onChangeInputEditDisc () {
   console.log("onChangeInputAddEditDisc")
-  let harga = $("#AddEditInputHarga").val();
+  let harga = bersihkanAngka($("#AddEditInputHarga").val());
 
   if (!Number(harga)) {
 
@@ -5307,7 +5354,7 @@ function onChangeInputEditDisc () {
     return
   }
 
-  let disc = $("#AddEditInputDiscPersen").val();
+  let disc = bersihkanAngka($("#AddEditInputDiscPersen").val());
   if (disc <= 0) {
     document.getElementById("AddEditInputDiscRp").value = '0.00'
     document.getElementById("AddEditInputDiscPersen").value = '0.00'
@@ -5316,7 +5363,7 @@ function onChangeInputEditDisc () {
   }
 
   let discRp = Number(harga) * Number(disc) / 100
-  document.getElementById("AddEditInputDiscRp").value = parseFloat(discRp).toFixed(2)
+  document.getElementById("AddEditInputDiscRp").value = angkaTampil(discRp)
 
 }
 
@@ -5334,7 +5381,7 @@ function onChangeInputAddHarga () {
 
 function onChangeInputAddDiscRp () {
   console.log("onChangeInputAddAddDiscRp")
-  let harga = $("#AddAddInputHarga").val();
+  let harga = bersihkanAngka($("#AddAddInputHarga").val());
 
   if (!Number(harga)) {
 
@@ -5342,7 +5389,7 @@ function onChangeInputAddDiscRp () {
     return
   }
 
-  let discRp = $("#AddAddInputDiscRp").val();
+  let discRp = bersihkanAngka($("#AddAddInputDiscRp").val());
 
   if (discRp <= 0) {
     document.getElementById("AddAddInputDiscRp").value = '0.00'
@@ -5352,13 +5399,13 @@ function onChangeInputAddDiscRp () {
   }
 
   let disc = Number(discRp) / Number(harga) * 100
-  document.getElementById("AddAddInputDiscPersen").value = parseFloat(disc).toFixed(2)
+  document.getElementById("AddAddInputDiscPersen").value = angkaTampil(disc)
 }
 
 
 function onChangeInputEditDiscRp () {
   console.log("onChangeInputAddEditDiscRp")
-  let harga = $("#AddEditInputHarga").val();
+  let harga = bersihkanAngka($("#AddEditInputHarga").val());
 
   if (!Number(harga)) {
 
@@ -5366,7 +5413,7 @@ function onChangeInputEditDiscRp () {
     return
   }
 
-  let discRp = $("#AddEditInputDiscRp").val();
+  let discRp = bersihkanAngka($("#AddEditInputDiscRp").val());
 
   if (discRp <= 0) {
     document.getElementById("AddEditInputDiscRp").value = '0.00'
@@ -5376,7 +5423,7 @@ function onChangeInputEditDiscRp () {
   }
 
   let disc = Number(discRp) / Number(harga) * 100
-  document.getElementById("AddEditInputDiscPersen").value = parseFloat(disc).toFixed(2)
+  document.getElementById("AddEditInputDiscPersen").value = angkaTampil(disc)
 }
 
 

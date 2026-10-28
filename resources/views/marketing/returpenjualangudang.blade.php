@@ -2492,15 +2492,15 @@ if (pcekglobal) {
             // outstanding), sedangkan "Qty Terima" adalah bagian yang sudah diterima
             // (QNT - QntSisa) -- sebelumnya QntSisa malah ditaruh langsung di kolom
             // "Qty Terima" dan "Qty PR Jual" menampilkan QNT mentah, jadi tidak sinkron.
-            let qntPrJualCol = mode === 'detail' ? qntsisa : qnt
-            let qntSudahTerima = mode === 'detail' ? (parseFloat(qnt) - parseFloat(qntsisa)).toFixed(2) : qntsisa
+            let qntPrJualCol = angkaTampil(mode === 'detail' ? qntsisa : qnt)
+            let qntSudahTerima = angkaTampil(mode === 'detail' ? (parseFloat(qnt) - parseFloat(qntsisa)).toFixed(2) : qntsisa)
             let terimaCol = mode === 'detail' ? '' : `<td class="text-center"><input class="" type="checkbox" value="" id="add_checkbox${i}"></td>`
             let qntTerimaCol = mode === 'detail'
               ? `<td class="text-right">${qntSudahTerima}</td>`
-              : `<td class="text-center"><input onchange="checkRejectVsTerima(${i})" id="input_add_qntTerima${i}" style="width: 100px;" class="text-right" type="number" min=0 value=${qntsisa}></td>`
+              : `<td class="text-center"><input onchange="checkRejectVsTerima(${i})" id="input_add_qntTerima${i}" style="width: 100px;" class="text-right" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value="${angkaTampil(qntsisa)}"></td>`
             let qntRejectCol = mode === 'detail'
               ? `<td class="text-right">0.00</td>`
-              : `<td class="text-center"><input onchange="checkRejectVsTerima(${i})" id="input_add_qntReject${i}" style="width: 100px;" class="text-right" type="number" min=0 value='0.00'></td>`
+              : `<td class="text-center"><input onchange="checkRejectVsTerima(${i})" id="input_add_qntReject${i}" style="width: 100px;" class="text-right" type="text" inputmode="decimal" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" value='0.00'></td>`
             rowTable += `<tr>
             ${terimaCol}
             <td>${item.KODEBRG}</td>
@@ -2572,8 +2572,8 @@ function buttonDetail (nobukti, namacustsupp, ppn) {
 // Terima. Dipasang di onchange kedua input (Terima & Reject) supaya
 // pengecekan jalan begitu salah satu nilainya diubah, bukan menunggu submit.
 function checkRejectVsTerima (i) {
-  let terima = Number($(`#input_add_qntTerima${i}`).val()) || 0
-  let reject = Number($(`#input_add_qntReject${i}`).val()) || 0
+  let terima = bersihkanAngka($(`#input_add_qntTerima${i}`).val())
+  let reject = bersihkanAngka($(`#input_add_qntReject${i}`).val())
   if (reject > terima) {
     alertify.warning("QTY Reject tidak boleh melebihi qty terima")
   }
@@ -2611,11 +2611,11 @@ function submitAdd () {
 
   dataTableAdd.forEach((item, i) => {
     if (document.getElementById(`add_checkbox${i}`).checked) {
-      let checkQntTerima = $(`#input_add_qntTerima${i}`).val();
-      dataTableAdd[i].inputQntTerima = $(`#input_add_qntTerima${i}`).val();
+      let checkQntTerima = bersihkanAngka($(`#input_add_qntTerima${i}`).val());
+      dataTableAdd[i].inputQntTerima = checkQntTerima;
 
-        let checkQntReject = $(`#input_add_qntReject${i}`).val();
-        dataTableAdd[i].inputQntReject = $(`#input_add_qntReject${i}`).val();
+        let checkQntReject = bersihkanAngka($(`#input_add_qntReject${i}`).val());
+        dataTableAdd[i].inputQntReject = checkQntReject;
         if (Number(checkQntTerima)  > Number(dataTableAdd[i].QntSisa)) {
           checkQnt = 1
         }
