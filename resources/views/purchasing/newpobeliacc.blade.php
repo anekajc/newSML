@@ -6631,7 +6631,7 @@ let _token = $('#_token').val()
           <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 5%;">${itemSub.Perkiraan ?? ''}</td>
           <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 20%;">${itemSub.KetPerk ?? ''}</td>
           <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 10%;">${itemSub.SUBCOST ?? ''}</td>
-          <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; text-align: center; width: 5%;">${itemSub.SATX}</td>
+          <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; text-align: center; width: 5%;">${itemSub.SATX || itemSub.Satuan || ''}</td>
           <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; text-align: center; width: 10%;">${itemSub.Qnt ? parseFloat(itemSub.Qnt).toFixed(2) : ''}</td>
           <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; text-align: right; width: 10%;">${formatAngkaRoundCeil(itemSub.harga)}</td>
           <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; text-align: center; width: 5%;">${itemSub.DISC ?? ''}</td>
