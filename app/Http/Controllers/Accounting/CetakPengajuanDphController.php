@@ -231,6 +231,18 @@ class CetakPengajuanDphController extends Controller
   {
       $noBukti = $req->input('NOBUKTI');
 
+      // CetakTTDPH hanya membaca baris dbTempTTDPH yang Pilih=1, jadi tandai
+      // invoice yang dicentang user dan kosongkan sisanya.
+      $noInvoice = array_values(array_filter((array) $req->input('noinvoice', [])));
+      DB::connection("SML")->update("update dbTempTTDPH set Pilih = 0");
+      if (count($noInvoice)) {
+          $placeholders = implode(',', array_fill(0, count($noInvoice), '?'));
+          DB::connection("SML")->update(
+              "update dbTempTTDPH set Pilih = 1 where NoInvoice in ($placeholders)",
+              $noInvoice
+          );
+      }
+
       $cetak = DB::connection("SML")->select(
           "EXEC dbo.CetakTTDPH ?",
           [$noBukti]
