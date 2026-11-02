@@ -3540,13 +3540,16 @@ function tabel6ActionsCell(row) {
   var html = '<td class="text-center"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" title="Detail" type="button" onclick="buttonDetail(\'' + nobukti + '\')"><i class="bi bi-info"></i></button> ';
   if (isOto) {
-    html += '<button class="btn btn-danger btn-sm" title="Batal Otorisasi" type="button" onclick="buttonBatalOtorisasiSPB(\'' + nobukti + '\')"><i class="bi bi-key"></i></button> ';
+    // Tombol Batal Otorisasi disembunyikan dari tab Surat Jalan.
+    // html += '<button class="btn btn-danger btn-sm" title="Batal Otorisasi" type="button" onclick="buttonBatalOtorisasiSPB(\'' + nobukti + '\')"><i class="bi bi-key"></i></button> ';
     html += '<button class="btn btn-primary btn-sm" title="Kirim Terima" type="button" onclick="buttonKirimTerima(\'' + nobukti + '\',\'' + namaCustSupp + '\',\'' + tglKirim + '\',\'' + tglTerimaBrg + '\',\'' + tglTerima + '\')"><i class="bi bi-calendar4-week"></i></button> ';
     html += '<button class="btn btn-success btn-sm" title="Terima Acc" type="button" onclick="buttonTerimaAcc(\'' + nobukti + '\',\'' + namaCustSupp + '\',\'' + tglSpbInvc + '\')"><i class="bi bi-calendar4-range"></i></button>';
-  } else {
-    html += '<button class="btn btn-success btn-sm" title="Edit" type="button" onclick="buttonKoreksiSPB(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button> ';
-    html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOtorisasiSPB(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   }
+  // Tombol Edit & Otorisasi disembunyikan dari tab Surat Jalan -- sisakan Detail saja.
+  // } else {
+  //   html += '<button class="btn btn-success btn-sm" title="Edit" type="button" onclick="buttonKoreksiSPB(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button> ';
+  //   html += '<button title="Otorisasi" class="btn btn-info btn-sm" type="button" onclick="buttonOtorisasiSPB(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
+  // }
   html += '</div></td>';
   return html;
 }

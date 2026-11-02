@@ -879,9 +879,18 @@
                 <div id="dropdown_pelanggan" class="dropdown-menu w-100"></div>
               </div>
             </div>
-            <div class="col-md-12" style="margin-top:-10px;">
-              <div class="form-group">
-                <textarea style="width: 100%; resize: none;" rows=3 placeholder="Alamat Pelanggan" class="form-control text-left" id="input_add_alamatpelanggan" disabled></textarea>
+
+            {{-- No PO di bawah Pelanggan (urutan sama dengan programajcSML): cukup diketik,
+                 rekomendasi muncul lewat searchNoPO() -- tanpa tombol browse. --}}
+            <div class="col-md-4" style="margin-top:-10px;">
+              <div class="form-group"><label>No PO</label></div>
+            </div>
+            <div class="col-md-8" style="margin-top:-10px;">
+              <div class="form-group position-relative">
+                <textarea class="form-control text-left" id="input_add_nopo" rows=3 style="width: 100%; resize: none;"
+                  placeholder="Ketik No PO" autocomplete="off" onkeyup="searchNoPO(this.value)"></textarea>
+                <input type="hidden" id="input_add_idpo">
+                <div id="dropdown_nopo" class="dropdown-menu w-100"></div>
               </div>
             </div>
 
@@ -897,15 +906,12 @@
               </div>
             </div>
 
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group"><label>DP</label></div>
-            </div>
-            <div class="col-md-8" style="margin-top:-10px;">
+            <div class="col-md-12" style="margin-top:-10px;">
               <div class="form-group">
-                <input type="text" data-a-sign="" data-a-dec="." data-a-sep="," class="form-control text-left input-partial-number" id="input_add_dp" value='0.00' onBlur="onChangeDP()">
+                <textarea style="width: 100%; resize: none;" rows=3 placeholder="Alamat Pelanggan" class="form-control text-left" id="input_add_alamatpelanggan" disabled></textarea>
               </div>
             </div>
-            
+
             <div class="col-md-4" style="margin-top:-10px;">
               <div class="form-group"><label>Sales</label></div>
             </div>
@@ -1053,41 +1059,20 @@
           <div class="col-md-3">
             <div class="row">
 
-              <div class="col-md-4"><div class="form-group"><label>Tgl PO</label></div></div>
+              <div class="col-md-4"><div class="form-group"><label>DP</label></div></div>
               <div class="col-md-8">
+                <div class="form-group">
+                  <input type="text" data-a-sign="" data-a-dec="." data-a-sep="," class="form-control text-left input-partial-number" id="input_add_dp" value='0.00' onBlur="onChangeDP()">
+                </div>
+              </div>
+
+              <div class="col-md-4" style="margin-top:-10px;"><div class="form-group"><label>Tgl PO</label></div></div>
+              <div class="col-md-8" style="margin-top:-10px;">
                 <div class="form-group">
                   <input type="date" class="form-control text-left" id="input_add_tanggalpo" value="{!! date('Y-m-d') !!}" onblur="onChangeTgglPO()">
                 </div>
               </div>
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group"><label>No PO</label></div>
-            </div>
 
-            <div class="col-md-8" style="margin-top: -10px;">
-              <div class="input-group flex-nowrap mb-3">
-                <input
-                  type="text"
-                  class="form-control text-left"
-                  id="input_add_nopo"
-                  placeholder="Ketik No PO"
-                  autocomplete="off"
-                  onkeyup="searchNoPO(this.value)"
-                  style="min-width: 0;"
-                >
-                <input type="hidden" id="input_add_idpo">
-                <button
-                  type="button"
-                  id="buttonAddListNoPo"
-                  class="btn btn-chip-biru flex-shrink-0"
-                  onclick="buttonAddListNoPo()"
-                >
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-
-              <div id="dropdown_nopo" class="dropdown-menu w-100"></div>
-            </div>
-            
               <div class="col-md-4" style="margin-top:-10px;"><div class="form-group"><label>Draft PO</label></div></div>
               <div class="col-md-8" style="margin-top:-10px;">
                 <select onchange="onChangeDraftPO()" id="input_add_draftpo" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example">
@@ -1674,9 +1659,12 @@
                 <input type="text" class="form-control text-left" id="input_detail_kodepelanggan" disabled>
               </div>
             </div>
-            <div class="col-md-12" style="margin-top:-10px;">
+            <div class="col-md-4" style="margin-top:-10px;">
+              <div class="form-group"><label>No PO</label></div>
+            </div>
+            <div class="col-md-8" style="margin-top:-10px;">
               <div class="form-group">
-                <textarea style="width: 100%; resize: none;" rows=3 class="form-control text-left" id="input_detail_alamatpelanggan" disabled></textarea>
+                <textarea class="form-control text-left" id="input_detail_nopo" rows=3 style="width: 100%; resize: none;" disabled></textarea>
               </div>
             </div>
           </div>
@@ -1691,12 +1679,9 @@
               </div>
             </div>
 
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group"><label>DP</label></div>
-            </div>
-            <div class="col-md-8" style="margin-top:-10px;">
+            <div class="col-md-12" style="margin-top:-10px;">
               <div class="form-group">
-                <input type="text" class="form-control text-left" id="input_detail_dp" value='0.00' disabled>
+                <textarea style="width: 100%; resize: none;" rows=3 class="form-control text-left" id="input_detail_alamatpelanggan" disabled></textarea>
               </div>
             </div>
 
@@ -1844,18 +1829,16 @@
 
           <div class="col-md-3">
             <div class="row">
-              <div class="col-md-4"><div class="form-group"><label>Tgl PO</label></div></div>
+              <div class="col-md-4"><div class="form-group"><label>DP</label></div></div>
               <div class="col-md-8">
                 <div class="form-group">
-                  <input type="date" class="form-control text-left" id="input_detail_tanggalpo" value="{!! date('Y-m-d') !!}" disabled>
+                  <input type="text" class="form-control text-left" id="input_detail_dp" value='0.00' disabled>
                 </div>
               </div>
-              <div class="col-md-4" style="margin-top:-10px;">
-                <div class="form-group"><label>No PO</label></div>
-              </div>
+              <div class="col-md-4" style="margin-top:-10px;"><div class="form-group"><label>Tgl PO</label></div></div>
               <div class="col-md-8" style="margin-top:-10px;">
                 <div class="form-group">
-                  <input type="text" class="form-control text-left" id="input_detail_nopo" disabled>
+                  <input type="date" class="form-control text-left" id="input_detail_tanggalpo" value="{!! date('Y-m-d') !!}" disabled>
                 </div>
               </div>
               <div class="col-md-4" style="margin-top:-10px;"><div class="form-group"><label>Draft PO</label></div></div>
@@ -5246,7 +5229,6 @@ console.log('xhargacek:', xhargacek)
                     document.getElementById("input_add_nopo").disabled = true
                     document.getElementById("input_add_kodepelanggan").disabled = true
                     document.getElementById("buttonAddListPelanggan").disabled = true
-                    document.getElementById("buttonAddListNoPo").disabled = true
                     document.getElementById("input_add_namasales").disabled = true
                     $('#divhargaterakhir').hide();
                     cleanFormAddAdd()
@@ -5355,7 +5337,6 @@ console.log('xhargacek:', xhargacek)
                     document.getElementById("input_add_nopo").disabled = true
                     document.getElementById("input_add_kodepelanggan").disabled = true
                     document.getElementById("buttonAddListPelanggan").disabled = true
-                    document.getElementById("buttonAddListNoPo").disabled = true
                     document.getElementById("input_add_namasales").disabled = true
                     $('#divhargaterakhir').hide();
                     cleanFormAddAdd()
@@ -8846,7 +8827,6 @@ if (pcekglobal) {
   document.getElementById("input_add_nopo").disabled = true
   document.getElementById("input_add_kodepelanggan").disabled = true
   document.getElementById("buttonAddListPelanggan").disabled = true
-  document.getElementById("buttonAddListNoPo").disabled = true
   document.getElementById("input_add_namasales").disabled = true
   let akses = $("#akses_iskoreksi").val();
 
@@ -8977,7 +8957,6 @@ if (pcekglobal) {
    document.getElementById("input_add_nopo").disabled = false
    document.getElementById("input_add_kodepelanggan").disabled = false
    document.getElementById("buttonAddListPelanggan").disabled = false
-   document.getElementById("buttonAddListNoPo").disabled = false
    document.getElementById("input_add_namasales").disabled = false
   // $('.showhidemodalbodyadd').hide();
   // $('#modalBodyAddListPelanggan').show();
