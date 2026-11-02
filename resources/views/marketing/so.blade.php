@@ -912,16 +912,6 @@
               </div>
             </div>
 
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group"><label>Sales</label></div>
-            </div>
-            <div class="col-md-8" style="margin-top:-10px;">
-              <div class="form-group">
-                  <input type="hidden" class="form-control" id="input_add_kodesales">
-                <input type="text" class="form-control text-left" id="input_add_namasales">
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -1050,7 +1040,18 @@
               <div class="col-md-12"><label>Keterangan</label></div>
               <div class="col-md-12">
                 <div class="form-group" style="margin-top: 14px">
-                  <textarea type="text" style="width: 100%; resize: none" rows=7  class="form-control" id="input_add_catatan" onblur="onChangeCatatan()"></textarea>
+                  <textarea type="text" style="width: 100%; resize: none" rows=4  class="form-control" id="input_add_catatan" onblur="onChangeCatatan()"></textarea>
+                </div>
+              </div>
+
+              {{-- Sales di bawah Keterangan, sama seperti programajcSML. --}}
+              <div class="col-md-4" style="margin-top:-10px;">
+                <div class="form-group"><label>Sales</label></div>
+              </div>
+              <div class="col-md-8" style="margin-top:-10px;">
+                <div class="form-group">
+                  <input type="hidden" class="form-control" id="input_add_kodesales">
+                  <input type="text" class="form-control text-left" id="input_add_namasales" disabled>
                 </div>
               </div>
             </div>
@@ -1685,16 +1686,6 @@
               </div>
             </div>
 
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group"><label>Sales</label></div>
-            </div>
-            <div class="col-md-8" style="margin-top:-10px;">
-              <div class="form-group">
-                <input type="hidden" class="form-control" id="input_detail_kodesales">
-                <input type="text" class="form-control text-left" id="input_detail_namasales" disabled>
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -1822,6 +1813,16 @@
               <div class="col-md-12">
                 <div class="form-group" style="margin-top: 14px">
                   <textarea type="text" style="width: 100%; resize: none" rows=4 class="form-control" id="input_detail_catatan" disabled></textarea>
+                </div>
+              </div>
+
+              <div class="col-md-4" style="margin-top:-10px;">
+                <div class="form-group"><label>Sales</label></div>
+              </div>
+              <div class="col-md-8" style="margin-top:-10px;">
+                <div class="form-group">
+                  <input type="hidden" class="form-control" id="input_detail_kodesales">
+                  <input type="text" class="form-control text-left" id="input_detail_namasales" disabled>
                 </div>
               </div>
             </div>
@@ -8957,7 +8958,7 @@ if (pcekglobal) {
    document.getElementById("input_add_nopo").disabled = false
    document.getElementById("input_add_kodepelanggan").disabled = false
    document.getElementById("buttonAddListPelanggan").disabled = false
-   document.getElementById("input_add_namasales").disabled = false
+   document.getElementById("input_add_namasales").disabled = true // Sales terisi otomatis, selalu dikunci
   // $('.showhidemodalbodyadd').hide();
   // $('#modalBodyAddListPelanggan').show();
   // $('#modalBodyAddMain').show();
