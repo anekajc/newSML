@@ -443,9 +443,7 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
           <table id="tabel2" class="data-table po-aksi-hover">
             <thead id="tabel_header_penerimaan" class="text-center">
               <tr>
-                {{-- NONAKTIF kolom Actions tab Outstanding Bon - hidupkan lagi dengan membuka komentar di 4 titik bertanda ini
                 <th style="padding: 4px 12px;" scope="col">Actions</th>
-                --}}
                 <th style="padding: 4px 12px;" scope="col">No. Bon</th>
                 <th style="padding: 4px 12px;" scope="col">Tanggal</th>
                 <th style="padding: 4px 12px;" scope="col">Penerima</th>
@@ -1067,6 +1065,7 @@ function renderTabelOutstanding () {
       */
       rowTable += `<button class="btn btn-success btn-sm" type="button" title="Koreksi" onclick="buttonKoreksi('${item.NoBukti}','${item.Urut}','${item.Perkiraan}')"><i class="bi bi-pen"></i></button>`
       rowTable += `<button class="btn btn-danger btn-sm" type="button" title="Hapus" onclick="buttonDelete('${item.NoBukti}','${item.Urut}','${item.Perkiraan}')"><i class="bi bi-trash"></i></button>`
+      rowTable += `<button class="btn btn-primary btn-sm" type="button" title="Cetak" onclick="submitprint('${item.NoBukti}','${item.Perkiraan}')"><i class="bi bi-printer"></i></button>`
       rowTable += `</div></td>`
     } else {
       rowTable += `<tr><td class="text-center"></td>`
@@ -1124,20 +1123,17 @@ function renderTabelPenerimaan () {
   let thead = document.getElementById('tabel_header_penerimaan')
   thead.innerHTML = bsHeadHtml(cols)
   let baris = thead.querySelector('tr')
-  /* NONAKTIF kolom Actions tab Outstanding Bon - hidupkan lagi dengan membuka komentar di 4 titik bertanda ini
   if (baris) {
     baris.insertAdjacentHTML('afterbegin', '<th style="padding: 4px 12px;" scope="col">Actions</th>')
   }
-  */
 
   let rowTable = ''
-  ;(dataPenerimaan || []).forEach((item) => {
-    /* NONAKTIF kolom Actions tab Outstanding Bon - hidupkan lagi dengan membuka komentar di 4 titik bertanda ini
+  ;(dataPenerimaan || []).forEach((item, idx) => {
+    // Baris dikirim lewat indeks dataPenerimaan, bukan teks Penerima/Keterangan, supaya
+    // tanda kutip di data tidak merusak atribut onclick.
     rowTable += `<tr><td class="text-center"><div class="po-aksi-wrap">
-        <button class="btn btn-primary btn-sm" type="button" title="+ Kredit" onclick="buttonAddKredit('${item.NoBukti}','${item.Penerima}')"><i class="bi bi-file-earmark-minus"></i></button>
+        <button class="btn btn-primary btn-sm" type="button" title="Kredit" onclick="buttonAddKredit(${idx})"><i class="bi bi-file-earmark-minus"></i></button>
       </div></td>`
-    */
-    rowTable += `<tr>`
     kolomRender.forEach((c) => {
       if (c.tipe === 1) {
         rowTable += `<td style="text-align: right;">${bsRenderNilai(c, item)}</td>`
@@ -1154,8 +1150,7 @@ function renderTabelPenerimaan () {
     lengthChange: false,
     pageLength: bsPanjangHalaman,
     order: [],
-    // NONAKTIF kolom Actions tab Outstanding Bon - hidupkan lagi dengan membuka komentar di 4 titik bertanda ini
-    // columnDefs: [{ targets: [0], orderable: false }],
+    columnDefs: [{ targets: [0], orderable: false }],
     dom: "<'po-table-wrap't><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
     language: {
       emptyTable: 'Tidak ada data',
@@ -1336,10 +1331,12 @@ function submitAdd () {
     }
 
     if (kredit > sisa) {
-      alertify.warning("Kredit melebihi debet")
+      alertify.warning("Kredit melebihi saldo")
       return
     }
 
+    // Jumlah di mode kredit hanya menampilkan debet bon (terkunci), bukan ikut disimpan.
+    jumlah = 0
 
   } else {
     if (jumlah <= 0 ) {
@@ -1378,12 +1375,15 @@ function submitAdd () {
 
         if (res == 1) {
           // $("#form").modal('toggle')
-          alertify.success('Bon telah ditambah');
+          alertify.success(tipeadd == 'kredit' ? 'Kredit telah disimpan' : 'Bon telah ditambah');
 
           loadAll()
 
           $("#form").modal('toggle')
 
+        }
+        if (res == 3) {
+          alertify.warning('Kredit melebihi saldo bon, silahkan refresh data');
         }
         if (res == 2) {
           setNewNoBukti()
@@ -1414,11 +1414,35 @@ function cleanFormAdd () {
 }
 
 function lockFormAdd (value= false) {
+  // Tanggal & Keterangan selalu dibuka lagi di sini karena mode Kredit (lockFormKredit)
+  // ikut menguncinya.
+  document.getElementById('input_add_tanggal').disabled = false
+  document.getElementById('input_add_keterangan').disabled = false
   document.getElementById('input_add_penerima').disabled = value
   document.getElementById('input_add_jumlah').disabled = value
   document.getElementById('input_add_kredit').disabled = !value
   // document.getElementById('input_add_tanggal').disabled = value
 
+}
+
+// Mode Kredit (tab Outstanding Bon): semua kolom dikunci kecuali Kredit.
+function lockFormKredit () {
+  document.getElementById('input_add_tanggal').disabled = true
+  document.getElementById('input_add_keterangan').disabled = true
+  document.getElementById('input_add_penerima').disabled = true
+  document.getElementById('input_add_jumlah').disabled = true
+  document.getElementById('input_add_kredit').disabled = false
+}
+
+// Tanggal kredit = hari ini; kalau hari ini di luar periode kerja, pakai tanggal
+// terakhir periode supaya tetap lolos cek periode di submitAdd().
+function bsTanggalKredit () {
+  let hariIni = formatDate(new Date())
+  let bulan = Number($("#periode_bulan").val())
+  let tahun = Number($("#periode_tahun").val())
+  let awal  = formatDate(new Date(tahun, bulan - 1, 1))
+  let akhir = formatDate(new Date(tahun, bulan, 0))
+  return (hariIni >= awal && hariIni <= akhir) ? hariIni : akhir
 }
 
 
@@ -1669,46 +1693,177 @@ function buttonAdd () {
 
 }
 
-function buttonAddKredit (nobukti, penerima) {
-  lockFormAdd(true)
-  cleanFormAdd()
+/* Tombol Kredit di tab Outstanding Bon. Modal Bon dibuka dengan data bon terisi dan
+   terkunci; hanya Kredit yang bisa diisi, maksimal sebesar saldo bon. Setelah disimpan,
+   baris kredit tampil di tab Penambahan Bon dan bon yang sudah lunas hilang dari tab
+   Outstanding Bon (lihat queryPenerimaan(): Having Kredit < Debet). */
+function buttonAddKredit (idx) {
+  let item = dataPenerimaan[idx]
+  if (!item) { return }
+
+  tipeform = 'kredit'
   tipeadd = 'kredit'
+  cleanFormAdd()
+  lockFormKredit()
 
-    document.getElementById("input_add_nobon").value = nobukti
-    document.getElementById("input_add_penerima").value = penerima
-    let _token = $("#_token").val()
-    let perkiraan = bsPerkiraan
-    $.ajax({
-      url: "{!! url('bonsementaraspdetail') !!}",
-      type: "post",
-      async: false,
-      data: {
-        _token,
-        nobukti,
-        urut: 0,
-        perkiraan
+  let nobukti = item.NoBukti
+  document.getElementById("input_add_nobon").value = nobukti
+  document.getElementById("input_add_tanggal").value = bsTanggalKredit()
+  document.getElementById("input_add_penerima").value = item.Penerima || ''
+  document.getElementById("input_add_keterangan").value = item.Keterangan || ''
+  document.getElementById("input_add_jumlah").value = bsFormatAngkaDes(item.Debet, 2)
 
-      },
-      success: function(res) {
+  // Saldo diambil ulang dari server, bukan dari baris tabel, supaya tetap benar kalau
+  // ada kredit lain yang masuk setelah tabel dimuat.
+  let sisa = 0
+  let _token = $("#_token").val()
+  let perkiraan = bsPerkiraan
+  $.ajax({
+    url: "{!! url('bonsementaraspdetail') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token,
+      nobukti,
+      urut: 0,
+      perkiraan
+    },
+    success: function(res) {
+      sisa = Number(res.sisa && res.sisa[0] ? res.sisa[0].sisa : 0) || 0
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+      sisa = -1
+    }
+  })
 
+  if (sisa < 0) { return }
+  if (sisa <= 0) {
+    alertify.warning('Bon sudah lunas')
+    loadAll()
+    return
+  }
 
-        document.getElementById("input_add_kredit").value = bsFormatAngkaDes(res.sisa[0].sisa, 2)
-        document.getElementById("input_add_sisa").value = res.sisa[0].sisa
+  document.getElementById("input_add_kredit").value = bsFormatAngkaDes(sisa, 2)
+  document.getElementById("input_add_sisa").value = sisa
 
+  $("#buttonSubmitAdd").show()
+  $("#buttonSubmitEdit").hide()
+  $("#form").modal('show')
 
+}
 
+/* Cetak Bon Sementara (tombol Cetak di tab Penambahan Bon) - data dari SP_CetakBON
+   lewat bonsementaradetailCetak. Satu blok Kepada/Jumlah/Terbilang per baris bon
+   (debet & kredit), lalu kolom tanda tangan - semuanya dalam satu halaman. */
+function submitprint (nobukti, perkiraan) {
+  if (!Number($("#akses_iscetak").val())) {
+    alertify.warning('No access')
+    return
+  }
 
-      },
-      error: function (err) {
-        console.log(err)
-        alertify.warning('Terjadi kesalahan silahkan refresh browser')
-      }
+  let dataPrint = []
+  $.ajax({
+    url: "{!! url('bonsementaradetailCetak') !!}",
+    type: "post",
+    async: false,
+    data: {
+      _token: $("#_token").val(),
+      nobukti,
+      perkiraan
+    },
+    success: function(res) {
+      dataPrint = res || []
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    }
+  })
 
-    })
-    $("#buttonSubmitAdd").show()
-    $("#buttonSubmitEdit").hide()
-  $("#form").modal('toggle')
+  if (!dataPrint.length) {
+    alertify.warning('Data cetak tidak ditemukan')
+    return
+  }
 
+  let esc = (v) => String(v === null || v === undefined ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  let rupiah = (v) => (Number(v) || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  // Header memakai baris bon (debet); kalau tidak ada, baris pertama.
+  let bon = dataPrint.find(r => Number(r.Debet) > 0) || dataPrint[0]
+  // "2026-11-02 00:00:00.000" -> "02/11/2026"
+  let tanggal = bon.Tanggal ? String(bon.Tanggal).split(' ')[0].split('-').reverse().join('/') : ''
+
+  let css = `<style type="text/css">
+    @page { size: A4 portrait; margin: 10mm; }
+    body { font-family: sans-serif; font-size: 11px; margin: 0; }
+    .bon { width: 19cm; border: 1px solid #000; }
+    .bon table { width: 100%; border-collapse: collapse; }
+    .bon td { padding: 2px 6px; vertical-align: top; }
+    .sec { border-top: 1px solid #000; padding: 6px 0; }
+    .lbl { width: 3.2cm; font-weight: bold; white-space: nowrap; }
+    .sep { width: 0.3cm; font-weight: bold; }
+    .isi { font-weight: bold; }
+    .abu { background: #c8c8c8; display: inline-block; min-width: 6cm; padding: 1px 4px; font-weight: bold;
+           -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .abu-blok { background: #c8c8c8; display: block; min-height: 30px; padding: 2px 4px; font-weight: bold;
+           -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ttd td { border: 1px solid #000; text-align: center; width: 25%; }
+    .ttd tr.ruang td { height: 60px; vertical-align: bottom; }
+  </style>`
+
+  // Print dipicu onload supaya logo sudah termuat sebelum dialog print muncul.
+  let html = `<html><head><title>Bon Sementara ${esc(bon.NoBukti)}</title>${css}</head><body onload="window.print(); window.close()">`
+  html += `<div class="bon">`
+
+  // Kop: logo + perusahaan | judul + no bon + tanggal
+  html += `<table><tr>
+    <td style="width: 55%; border-right: 1px solid #000;">
+      <table><tr>
+        <td style="width: 70px; padding: 0;"><img src="{!! URL::asset('img/sml.png') !!}" style="height: 40px; width: 64px" alt=""></td>
+        <td style="padding: 0 0 0 6px;">
+          <div style="font-size: 14px; font-weight: bold;">CV. SINAR MAHAKAM LESTARI</div>
+          <div style="font-size: 9px;">JL. PRAMUKA NO. 63 RT. 11 BANJARMASIN 70249</div>
+          <div style="font-size: 9px;">TELP : 0511 - 3269593 | FAX : 0511 - 3272142</div>
+          <div style="font-size: 9px;">E-Mail : spl@indo.net</div>
+        </td>
+      </tr></table>
+    </td>
+    <td style="width: 45%;">
+      <div style="text-align: center; font-size: 13px; font-weight: bold;">Bon Sementara</div>
+      <div style="text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 4px;">${esc(bon.NAMAPERKIRAAN)}</div>
+      <table>
+        <tr><td class="lbl" style="width: 1.6cm; padding: 0;">No. Bon</td><td class="sep" style="padding: 0;">:</td><td class="isi" style="padding: 0;">${esc(bon.NoBukti)}</td></tr>
+        <tr><td class="lbl" style="width: 1.6cm; padding: 0;">Tanggal</td><td class="sep" style="padding: 0;">:</td><td class="isi" style="padding: 0;">${esc(tanggal)}</td></tr>
+      </table>
+    </td>
+  </tr></table>`
+
+  // Satu blok per baris bon (debet & kredit)
+  dataPrint.forEach((r) => {
+    html += `<div class="sec"><table>
+      <tr><td class="lbl">Kepada</td><td class="sep">:</td><td class="isi">${esc(r.Penerima)}</td></tr>
+      <tr><td class="lbl">Untuk Keperluan</td><td class="sep">:</td><td class="isi">${esc(r.Keterangan)}</td></tr>
+    </table></div>`
+    html += `<div class="sec"><table>
+      <tr><td class="lbl">Jumlah</td><td class="sep">:</td><td><span class="abu">Rp. ${rupiah(r.Jumlah)}</span></td></tr>
+      <tr><td class="lbl">Terbilang</td><td class="sep">:</td><td><span class="abu-blok">${esc(r.Terbilang)}</span></td></tr>
+    </table></div>`
+  })
+
+  // Tanda tangan - dulu di halaman 2, sekarang ikut di halaman yang sama.
+  html += `<div class="sec" style="padding: 6px 8px 8px;"><table class="ttd">
+    <tr><td>Mengetahui</td><td>Menyetujui</td><td>Kasir</td><td>Peminjam</td></tr>
+    <tr class="ruang"><td></td><td></td><td></td><td>${esc(bon.Penerima)}</td></tr>
+  </table></div>`
+
+  html += `</div></body></html>`
+
+  let w = window.open(' ')
+  w.document.write(html)
+  w.document.close()
 }
 
 function formatDate(date , pemisah = '-') {
