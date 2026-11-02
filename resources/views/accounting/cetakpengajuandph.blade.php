@@ -3891,6 +3891,7 @@
         function setAddTableHeadTambah() {
             document.getElementById("addTableHead").innerHTML = `
               <tr>
+                <th scope="col">v</th>
                 <th scope="col">No. Invoice</th>
                 <th scope="col">Supplier</th>
                 <th scope="col">Valas</th>

@@ -484,6 +484,22 @@ order by A.KasBank, A.NoFaktur, A.Perkiraan, A.Urut
     }
 
 
+    // Kredit dari tab Outstanding Bon: kolom Jumlah di modal hanya menampilkan debet bon
+    // (terkunci), jadi baris kredit selalu disimpan dengan Debet 0. Kredit tidak boleh
+    // melebihi sisa bon - dicek ulang di sini karena saldo bisa berubah sejak modal dibuka.
+    $jumlah = $req->jumlah;
+    if ($req->choice == 'I' && $req->tipeadd == 'kredit') {
+      $jumlah = 0;
+      $sisa = DB::connection('SML')->select("select isnull(MAX(Debet) , 0) - isnull(sum(Kredit), 0) sisa
+        from dbBon
+       where NoBukti = :nobukti
+        and Perkiraan= :perkiraan and Devisi='01'", ["nobukti" => $req->nobon , "perkiraan" => $req->perkiraan]);
+      $sisa = $sisa ? (float) $sisa[0]->sisa : 0;
+      if ((float) $req->kredit <= 0 || round((float) $req->kredit, 2) > round($sisa, 2)) {
+        return 3;
+      }
+    }
+
     $urutx = $req->urut;
 
     if ($req->choice == 'I') {
@@ -510,7 +526,7 @@ order by A.KasBank, A.NoFaktur, A.Perkiraan, A.Urut
     $req->tanggal,// @Tanggal datetime,
     $req->penerima,// @Penerima varchar(40),
     $req->keterangan ? $req->keterangan : '',// @Keterangan varchar(40),
-    $req->jumlah,// @Debet numeric(18,2),
+    $jumlah,// @Debet numeric(18,2),
     $req->kredit,// @Kredit numeric(18,2),
     $req->perkiraan,// @Perkiraan varchar(15),
     date('Y-m-d H:i:s'),// @TglInput datetime,
@@ -529,6 +545,36 @@ order by A.KasBank, A.NoFaktur, A.Perkiraan, A.Urut
 
       return 1;
 
+  }
+
+  /* Data cetak Bon Sementara (tombol Cetak di tab Penambahan Bon). SP_CetakBON menerima
+     NoBukti+Perkiraan dan mengembalikan satu baris per baris dbBon (debet & kredit).
+     Kolom terbilang dari SP selalu dihitung dari Debet dan tidak bernama, jadi Jumlah &
+     Terbilang dihitung ulang di sini: baris debet memakai Debet, baris kredit memakai Kredit. */
+  public function getDetailCetak (Request $req) {
+    $cetak = DB::connection('SML')->select("exec SP_CetakBON ?", [ $req->nobukti . $req->perkiraan ]);
+
+    $hasil = [];
+    foreach ($cetak as $row) {
+      $jumlah = ((float) $row->Debet != 0) ? (float) $row->Debet : (float) $row->Kredit;
+      $terbilang = DB::connection('SML')->select("select dbo.terbilang(cast(? as numeric(18,2))) as terbilang", [ $jumlah ]);
+
+      $hasil[] = [
+        "NoBukti"       => $row->NoBukti,
+        "Tanggal"       => $row->Tanggal,
+        "Penerima"      => $row->Penerima,
+        "Keterangan"    => $row->Keterangan,
+        "NAMAPERKIRAAN" => $row->NAMAPERKIRAAN,
+        "Debet"         => $row->Debet,
+        "Kredit"        => $row->Kredit,
+        "Urut"          => $row->Urut,
+        "UserID"        => $row->UserID,
+        "Jumlah"        => $jumlah,
+        "Terbilang"     => $terbilang ? trim((string) $terbilang[0]->terbilang) : '',
+      ];
+    }
+
+    return $hasil;
   }
 
   public function spKoreksi (Request $req) {
