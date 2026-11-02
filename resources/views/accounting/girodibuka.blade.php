@@ -9054,33 +9054,44 @@ function submitPrint (nobukti) {
         }
 
       </style>`;
-        hdr = `<table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:10px;">
+        // Satu grid 6 kolom untuk semua baris (judul, header, data, baris kosong) supaya
+        // garis tabel lurus: Keterangan memakai 2 kolom (di atasnya label No. Bukti/Tanggal).
+        hdr = `<table style="width:100%; border-collapse:collapse; border:1px solid #3c3c3c; margin:0; table-layout:fixed; font-family:sans-serif; font-size:10px;">
+            <colgroup>
+              <col style="width:5%">
+              <col style="width:15%">
+              <col style="width:20%">
+              <col style="width:25%">
+              <col style="width:13%">
+              <col style="width:22%">
+            </colgroup>
             <thead>
             <!-- JUDUL -->
               <tr>
-                <td colspan="4" rowspan="2" style="border:1px solid; text-align:center; font-weight:bold; font-size:18px;">
-                  GIRO DITERIMA
+                <td colspan="4" rowspan="2" style="text-align:center; font-weight:bold; font-size:18px;">
+                  GIRO DIBUKA
                 </td>
-                <td style="border:1px solid; width:15%;">No. Bukti</td>
-                <td style="border:1px solid; width:25%;">${dataPrint[0].NoBukti}</td>
+                <td>No. Bukti</td>
+                <td>${dataPrint[0].NoBukti}</td>
               </tr>
 
               <!-- TANGGAL -->
               <tr>
-                <td style="border:1px solid;">Tanggal</td>
-                <td style="border:1px solid;">${tanggalOnly}</td>
+                <td>Tanggal</td>
+                <td>${tanggalOnly}</td>
               </tr>
-                  <tr>
-                    <td rowspan="2" class="text-center" style="width: 1%">No.</td>
-                    <td rowspan="2" class="text-center" style="width: 10%">KODE</td>
-                    <td rowspan="2" class="text-center" style="width: 20%">BANK</td>
-                    <td rowspan="2" class="text-center" style="width: 50%">KETERANGAN</td>
-                    <td rowspan="2" class="text-center" style="width: 20%">JUMLAH</td>
-                  </tr>
-                </thead> `;
+              <tr>
+                <td class="text-center fw-bold">No.</td>
+                <td class="text-center fw-bold">KODE</td>
+                <td class="text-center fw-bold">BANK</td>
+                <td class="text-center fw-bold" colspan="2">KETERANGAN</td>
+                <td class="text-center fw-bold">JUMLAH</td>
+              </tr>
+            </thead>
+            <tbody>`;
 
     let z = 0
-    let maxRow = 8;
+    let maxRow = 10; // sama dengan jumlah baris per halaman (arrayDataPrint dipotong per 10)
     let tempPrintStr = ``
     // buat hitung grandtotal
     let grandTotalDebet = 0;
@@ -9120,15 +9131,11 @@ function submitPrint (nobukti) {
 
          tempPrintStr += `
          <tr>
-         <td class="text-align: center"
-               style="width: 1%; ">${z+1}</td>
-         <td class="text-align: left"
-               style="width: 10%;  ">${itemSub.NoGiro}</td>
-         <td class="text-align: left"
-               style="width: 20%;">${itemSub.Bank}</td>
-         <td class="text-align: left"
-               style="width: 50%;">${itemSub.Keterangan}</td>
-         <td style="width: 20%; text-align: right;">
+         <td style="text-align: center;">${z+1}</td>
+         <td style="text-align: left;">${itemSub.NoGiro || ''}</td>
+         <td style="text-align: left;">${itemSub.Bank || ''}</td>
+         <td style="text-align: left;" colspan="2">${itemSub.Keterangan || ''}</td>
+         <td style="text-align: right;">
             ${itemSub.DebetRp 
               ? Number(itemSub.DebetRp).toLocaleString('id-ID', {
                   minimumFractionDigits: 2,
@@ -9151,8 +9158,7 @@ function submitPrint (nobukti) {
             <td style="border-top:none; border-bottom:none;">&nbsp;</td>
             <td style="border-top:none; border-bottom:none;"></td>
             <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
+            <td style="border-top:none; border-bottom:none;" colspan="2"></td>
             <td style="border-top:none; border-bottom:none;"></td>
           </tr>`;
         }
