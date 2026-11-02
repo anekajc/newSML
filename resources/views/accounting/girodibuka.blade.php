@@ -453,6 +453,9 @@
 
 
 </div>
+<div id="imagecontainer" class="d-none" style="">
+  <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
+</div>
 <div id="contentContainer" class="container-fluid">
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
