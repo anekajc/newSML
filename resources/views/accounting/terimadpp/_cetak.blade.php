@@ -81,14 +81,16 @@ function submitPrint (nobukti) {
     dataPrint.forEach(r => { grandTotal += ctdJumlah(r) })
 
     let css = `<style type="text/css">
-      @page { size: A4; margin: 8mm; }
-      body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; margin: 0; color: #000; }
-      .ctd-page { width: 19.4cm; page-break-after: always; }
+      /* Ukuran disamakan dengan cetakan menu lain (mis. pengajuandpp/giroditerima):
+         kontainer 21cm tanpa @page sehingga browser mengecilkannya agar muat kertas,
+         teks tabel 10px. */
+      body { font-family: sans-serif; font-size: 11px; margin: 0; color: #000; }
+      .ctd-page { width: 21cm; margin-left: 7px; margin-top: 5px; page-break-after: always; }
       .ctd-page:last-child { page-break-after: auto; }
-      table { width: 100%; border-collapse: collapse; }
-      td, th { padding: 2px 4px; vertical-align: middle; }
+      table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 10px; }
+      td, th { padding: 1px 5px 0px; vertical-align: middle; }
       .bx { border: 1px solid #000; }
-      .judul { font-size: 18px; font-weight: bold; text-align: center; letter-spacing: .5px; }
+      .judul { font-size: 16px; font-weight: bold; text-align: center; }
       .tb-det th { border: 1px solid #000; font-weight: normal; text-align: center; height: 18px; }
       .tb-det td { border-left: 1px solid #000; border-right: 1px solid #000; height: 16px; }
       .tb-det tr.ctd-total td { border: 1px solid #000; font-weight: bold; }

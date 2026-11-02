@@ -1900,6 +1900,27 @@
 
         let ctkRtSudahInit = {};
 
+        // ReportTable hanya mengenal window.gcart_header / g_href / doMoveHeader / dst.,
+        // sedangkan halaman ini menyimpan semuanya per tab (akhiran Out / Penerimaan).
+        // Tanpa penukaran ini headHtml() tidak menemukan kolomnya (indeks -1 = sama dengan
+        // "menu tertutup"), sehingga semua roda gigi tampil aktif dan geser/sembunyi kolom
+        // tidak tersimpan. Dipanggil lewat onActivate dan di awal tiap fungsi render.
+        function ctkPakaiTabel(tableId) {
+            const s = (tableId === 'tabelOut') ? 'Out' : 'Penerimaan';
+            window.gcart_header = (s === 'Out') ? gcart_headerOut : gcart_headerPenerimaan;
+            window.g_href = (s === 'Out') ? g_hrefOut : g_hrefPenerimaan;
+            window.g_modeReport = (s === 'Out') ? g_modeReportOut : g_modeReportPenerimaan;
+            window.gsum_issubtotal = (s === 'Out') ? gsum_issubtotalOut : gsum_issubtotalPenerimaan;
+            window.gsum_isgrandtotal = (s === 'Out') ? gsum_isgrandtotalOut : gsum_isgrandtotalPenerimaan;
+            window.doSimpanHeader = (s === 'Out') ? doSimpanHeaderOut : doSimpanHeaderPenerimaan;
+            window.doMoveHeader = (s === 'Out') ? doMoveHeaderOut : doMoveHeaderPenerimaan;
+            window.doButtonVisibility = (s === 'Out') ? doButtonVisibilityOut : doButtonVisibilityPenerimaan;
+            window.doSetDesimal = (s === 'Out') ? doSetDesimalOut : doSetDesimalPenerimaan;
+            window.doButtonTotal = (s === 'Out') ? doButtonTotalOut : doButtonTotalPenerimaan;
+            window.doSetHeader = (s === 'Out') ? doSetHeaderOut : doSetHeaderPenerimaan;
+            if (typeof ReportTable !== 'undefined' && ReportTable.use) { ReportTable.use('#' + tableId); }
+        }
+
         function ctkInitReportTableSekali(tableId, barId, theadId, onChange) {
             if (ctkRtSudahInit[tableId] || typeof ReportTable === 'undefined') { return; }
             ctkRtSudahInit[tableId] = true;
@@ -1907,7 +1928,8 @@
             ReportTable.init({
                 table: '#' + tableId,
                 bar: '#' + barId,
-                onChange: onChange
+                onChange: onChange,
+                onActivate: function() { ctkPakaiTabel(tableId); }
             });
 
             // Sebagian layout memasang penangan klik sendiri di <thead>; teruskan klik pada
@@ -1963,6 +1985,7 @@
         }
 
         function renderTabelOut() {
+            ctkPakaiTabel('tabelOut');
             const cols = gcart_headerOut.filter(c => c[2] === 1);
             if ($.fn.DataTable.isDataTable('#tabelOut')) { $('#tabelOut').DataTable().destroy(); }
             let thead = document.getElementById('tabelOut_header');
@@ -2037,6 +2060,7 @@
         }
 
         function renderTabelPenerimaan() {
+            ctkPakaiTabel('tabelPenerimaan');
             const cols = gcart_headerPenerimaan.filter(c => c[2] === 1);
             if ($.fn.DataTable.isDataTable('#tabelPenerimaan')) { $('#tabelPenerimaan').DataTable().destroy(); }
             let thead = document.getElementById('tabelPenerimaan_header');
@@ -4894,11 +4918,10 @@
             hdr = `<table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:10px;">
             <thead>
             <tr>
-              <td colspan="9" style="text-align:center; font-weight:bold; font-size:16px; border:none;">
+              <td colspan="8" style="text-align:center; font-weight:bold; font-size:16px; border:none;">
                 REKAP DPH
               </td>
             </tr>
-              </tr>
                   <tr>
                     <td rowspan="2" class="text-center" style="width: 1%">No.</td>
                     <td colspan="2" class="text-center" style="width: 10%">DPH</td>
@@ -4998,7 +5021,6 @@
             <td style="border-top:none; border-bottom:none;"></td>
             <td style="border-top:none; border-bottom:none;"></td>
             <td style="border-top:none; border-bottom:none;"></td>
-            <td style="border-top:none; border-bottom:none;"></td>
           </tr>`;
                 }
 
@@ -5015,7 +5037,7 @@
               maximumFractionDigits: 2
             })}
           </td>
-          <td colspan="5" style="border:1px solid;"></td>
+          <td colspan="3" style="border:1px solid;"></td>
         </tr>`;
 
                 tempPrintStr += `</tbody>`;
