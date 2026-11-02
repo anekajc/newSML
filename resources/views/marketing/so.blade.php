@@ -1040,18 +1040,8 @@
               <div class="col-md-12"><label>Keterangan</label></div>
               <div class="col-md-12">
                 <div class="form-group" style="margin-top: 14px">
-                  <textarea type="text" style="width: 100%; resize: none" rows=4  class="form-control" id="input_add_catatan" onblur="onChangeCatatan()"></textarea>
-                </div>
-              </div>
-
-              {{-- Sales di bawah Keterangan, sama seperti programajcSML. --}}
-              <div class="col-md-4" style="margin-top:-10px;">
-                <div class="form-group"><label>Sales</label></div>
-              </div>
-              <div class="col-md-8" style="margin-top:-10px;">
-                <div class="form-group">
-                  <input type="hidden" class="form-control" id="input_add_kodesales">
-                  <input type="text" class="form-control text-left" id="input_add_namasales" disabled>
+                  {{-- Tinggi disamakan supaya sisi bawahnya sejajar dengan textarea Alamat Kirim / Lokasi Penerima. --}}
+                  <textarea type="text" style="width: 100%; resize: none; height: 175px;" class="form-control" id="input_add_catatan" onblur="onChangeCatatan()"></textarea>
                 </div>
               </div>
             </div>
@@ -1109,6 +1099,19 @@
                   <input type="hidden" class="form-control" id="input_add_kodepic">
                   <input type="text" class="form-control" id="input_add_namapic" disabled>
                   <button onclick="buttonAddListPIC()" id="buttonAddListPIC" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{-- Sales sejajar dengan Inside Sales & PIC, di bawah kolom Keterangan. Terisi otomatis, selalu dikunci. --}}
+          <div class="col-md-3">
+            <div class="row">
+              <div class="col-md-4"><div class="form-group"><label>Sales</label></div></div>
+              <div class="col-md-8">
+                <div class="input-group form-group">
+                  <input type="hidden" class="form-control" id="input_add_kodesales">
+                  <input type="text" class="form-control" id="input_add_namasales" disabled>
                 </div>
               </div>
             </div>
@@ -1812,17 +1815,7 @@
               <div class="col-md-12"><label>Keterangan</label></div>
               <div class="col-md-12">
                 <div class="form-group" style="margin-top: 14px">
-                  <textarea type="text" style="width: 100%; resize: none" rows=4 class="form-control" id="input_detail_catatan" disabled></textarea>
-                </div>
-              </div>
-
-              <div class="col-md-4" style="margin-top:-10px;">
-                <div class="form-group"><label>Sales</label></div>
-              </div>
-              <div class="col-md-8" style="margin-top:-10px;">
-                <div class="form-group">
-                  <input type="hidden" class="form-control" id="input_detail_kodesales">
-                  <input type="text" class="form-control text-left" id="input_detail_namasales" disabled>
+                  <textarea type="text" style="width: 100%; resize: none; height: 175px;" class="form-control" id="input_detail_catatan" disabled></textarea>
                 </div>
               </div>
             </div>
@@ -1881,6 +1874,13 @@
 
           <div class="col-md-3">
             <div class="row">
+              <div class="col-md-4"><div class="form-group"><label>Sales</label></div></div>
+              <div class="col-md-8">
+                <div class="input-group form-group">
+                  <input type="hidden" class="form-control" id="input_detail_kodesales">
+                  <input type="text" class="form-control" id="input_detail_namasales" disabled>
+                </div>
+              </div>
             </div>
           </div>
         </div>
