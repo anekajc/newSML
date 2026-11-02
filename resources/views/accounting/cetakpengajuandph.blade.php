@@ -770,6 +770,7 @@
                                     <table id="addTable" class="dph-tb">
                                         <thead id="addTableHead">
                                             <tr>
+                                                <th scope="col">v</th>
                                                 <th scope="col">No. Invoice</th>
                                                 <th scope="col">Supplier</th>
                                                 <th scope="col">Valas</th>
@@ -779,7 +780,7 @@
                                         </thead>
                                         <tbody id="addTableData" class="text-left">
                                             <tr>
-                                                <td colspan="5" class="text-center">Belum ada data</td>
+                                                <td colspan="6" class="text-center">Belum ada data</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -4257,14 +4258,17 @@
                     listOutstanding.forEach((item, i) => {
                         rowTable += `
       <tr>
+        <td><div class="form-check text-center">
+            <input id="addChecklist${i}" class="form-check-input" type="checkbox" value="">
+            </div></td>
         <td>${item.noinvoice }</td>
 
-        <td>${item.namacustsupp }</td>
+        <td>${item.namacustsupp ?? '' }</td>
 
 
-        <td>${item.valas }</td>
-        <td >${formatAngka(parseFloat(item.dibayar).toFixed(2))}</td>
-        <td >${formatAngka(parseFloat(item.kl).toFixed(2))}</td>
+        <td>${item.valas ?? '' }</td>
+        <td class="text-right">${formatAngka(parseFloat(item.dibayar || 0).toFixed(2))}</td>
+        <td class="text-right">${formatAngka(parseFloat(item.kl || 0).toFixed(2))}</td>
 
 
 
@@ -4275,6 +4279,10 @@
 
 
                     });
+
+                    if (!listOutstanding.length) {
+                        rowTable = '<tr><td colspan="6" class="text-center">Belum ada data</td></tr>'
+                    }
 
 
 
@@ -4429,26 +4437,43 @@
             // for (var i = 0; i < 30; i++) {
             //   dataPrint.push(dataPrint[0])
             // }
+            // Hanya invoice yang dicentang (kolom v) yang ikut dicetak.
+            let noinvoice = []
+            listOutstanding.forEach((item, i) => {
+                let cb = document.getElementById(`addChecklist${i}`)
+                if (cb && cb.checked) {
+                    noinvoice.push(item.noinvoice)
+                }
+            })
+            if (!noinvoice.length) {
+                alertify.warning('Pilih minimal satu data yang akan dicetak')
+                return
+            }
+
             let _token = $('#_token').val()
+            let dataPrint = []
             $.ajax({
                 url: "{!! url('cetakpengajuandphdetailCetak') !!}",
                 type: "post",
                 async: false,
                 data: {
                     _token: _token,
-                    NOBUKTI: nobukti
+                    NOBUKTI: nobukti,
+                    noinvoice: noinvoice
                 },
                 success: function(res) {
-                    console.log(res)
-
-                    dataPrint = res
-                    console.log(res[0])
-                    console.log(res[0][0])
-
-                    // console.log(res[0][0].IsOtorisasi1)
-
+                    dataPrint = res || []
+                },
+                error: function(err) {
+                    console.log(err)
+                    alertify.warning('Terjadi kesalahan silahkan refresh browser')
                 }
             })
+
+            if (!dataPrint.length) {
+                alertify.warning('Data cetak tidak ditemukan')
+                return
+            }
 
             let arrayDataPrint = []
             for (let i = 0; i < dataPrint.length; i += 8) {

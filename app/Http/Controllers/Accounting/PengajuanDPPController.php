@@ -361,10 +361,30 @@ order by a.Tanggal desc, A.NoBukti desc
   {
       $noBukti = $req->input('NOBUKTI');
 
-      $cetak = DB::connection("SML")->select(
-          "EXEC dbo.SP_CETAKPENGAJUANDPP ?",
-          [$noBukti]
-      );
+      // Dulu memakai SP_CETAKPENGAJUANDPP, tapi SP itu men-join DBHUTPIUT tanpa
+      // membedakan baris invoice (Debet) dan baris pelunasan TDP (Kredit), sehingga
+      // satu invoice tercetak dua kali dan baris invoicenya kosong. C.NoBukti di SP
+      // juga menimpa A.NoBukti sehingga No DPP di cetakan kosong.
+      $cetak = DB::connection("SML")->select("
+          select A.NoBukti, B.Tanggal, C.JatuhTempo,
+                 isnull(C.Nilai,0) Nilai, isnull(E.Retur,0) RETUR,
+                 isnull(C.Nilai,0) - isnull(E.Retur,0) Dibayar,
+                 A.KODECUSTSUPP, D.NAMACUSTSUPP, F.NoSPP NOORDER, A.NoFaktur
+          from DBDPHDET A
+          left outer join DBDPH B on A.NoBukti = B.NoBukti
+          outer apply (select max(H.JatuhTempo) JatuhTempo, sum(H.Debet) Nilai
+                       from DBHUTPIUT H
+                       where H.NoFaktur = A.NoFaktur and H.TipeTrans = 'T'
+                         and H.Debet <> 0 and isnull(H.NoRetur,'') = '') C
+          outer apply (select sum(H.Kredit) Retur
+                       from DBHUTPIUT H
+                       where H.NoFaktur = A.NoFaktur and H.TipeTrans = 'T'
+                         and isnull(H.NoRetur,'') <> '') E
+          left outer join DBCUSTSUPP D on A.KODECUSTSUPP = D.KODECUSTSUPP
+          left outer join DBINVOICEPL F on A.NoFaktur = F.NoBukti
+          where A.NoBukti = ?
+          order by A.NoFaktur
+      ", [$noBukti]);
 
       $tempCetak1 = [];
       foreach ($cetak as $p) {

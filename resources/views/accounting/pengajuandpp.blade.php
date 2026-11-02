@@ -5137,8 +5137,8 @@ function submitPrint (nobukti) {
 
     dataPrint.forEach(item => {
 
-      if (item.Kredit) {
-        grandTotalJumlah += Number(item.Kredit) || 0;
+      if (item.Dibayar) {
+        grandTotalJumlah += Number(item.Dibayar) || 0;
       }
 
     });
@@ -5180,23 +5180,23 @@ function submitPrint (nobukti) {
          <td class="text-align: left"
                style="width: 20%;">${itemSub.NOORDER ?? ''}</td>
          <td style="width: 20%; text-align: right;">
-            ${itemSub.Kredit 
-              ? Number(itemSub.Kredit).toLocaleString('id-ID', {
+            ${itemSub.Nilai 
+              ? Number(itemSub.Nilai).toLocaleString('id-ID', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2
                 }) 
               : ''}
           </td>
           <td class="text-align: left"
-               style="width: 15%;">${itemSub.RETUR
+               style="width: 15%; text-align: right;">${itemSub.RETUR
                 ? Number(itemSub.RETUR).toLocaleString('id-ID', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })
                 : ''}</td>
           <td style="width: 20%; text-align: right;">
-            ${itemSub.Kredit 
-              ? Number(itemSub.Kredit).toLocaleString('id-ID', {
+            ${itemSub.Dibayar 
+              ? Number(itemSub.Dibayar).toLocaleString('id-ID', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2
                 }) 
@@ -5215,7 +5215,6 @@ function submitPrint (nobukti) {
           tempPrintStr += `
           <tr>
             <td style="border-top:none; border-bottom:none;">&nbsp;</td>
-            <td style="border-top:none; border-bottom:none;"></td>
             <td style="border-top:none; border-bottom:none;"></td>
             <td style="border-top:none; border-bottom:none;"></td>
             <td style="border-top:none; border-bottom:none;"></td>
