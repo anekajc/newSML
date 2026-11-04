@@ -704,11 +704,21 @@ order by A.KasBank, A.NoFaktur, A.Perkiraan, A.Urut
     }
 
     $baris = DB::connection('SML')->select(
-      "select NoBukti from dbTransaksi where NoBukti = :nobukti and urut = :urut and Lawan = '113400'",
+      "select A.NoBukti, A.CustSuppL, C.NAMACUSTSUPP
+      from dbTransaksi A
+      left outer join DBCUSTSUPP C on A.CustSuppL = C.KODECUSTSUPP
+      where A.NoBukti = :nobukti and A.urut = :urut and A.Lawan = '113400'",
       ["nobukti" => $nobukti, "urut" => $urut]
     );
     if (count($baris) === 0) {
       return 'Baris outstanding tidak ditemukan';
+    }
+
+    // Hanya customer NO NAME yang boleh dikoreksi - sama dengan outCustNoName() di view.
+    $kodeLama = strtoupper(trim((string) $baris[0]->CustSuppL));
+    $namaLama = strtoupper(trim((string) $baris[0]->NAMACUSTSUPP));
+    if (!($kodeLama === 'CZ999' || $namaLama === '' || $namaLama === 'NO NAME')) {
+      return 'Koreksi customer hanya untuk customer NO NAME';
     }
 
     $sudahDibayar = DB::connection('SML')->select(
