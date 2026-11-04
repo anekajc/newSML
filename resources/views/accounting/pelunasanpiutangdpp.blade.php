@@ -3101,9 +3101,13 @@ function renderTabelOutstanding () {
     let btnAdd = noName
       ? `<button class="btn btn-primary btn-sm" type="button" title="Customer masih NO NAME" onclick="alertify.warning('Customer masih NO NAME - koreksi customer dulu sebelum diproses')"><i class="bi bi-plus"></i></button>`
       : `<button class="btn btn-primary btn-sm" type="button" title="Tambah" onclick="buttonAdd('${item.NOBUKTI}')"><i class="bi bi-plus"></i></button>`
+    // Koreksi customer hanya untuk data yang customer-nya masih NO NAME.
+    let btnKoreksi = noName
+      ? `<button class="btn btn-success btn-sm" type="button" title="Koreksi Customer" onclick="buttonKoreksiCustomer('${item.NOBUKTI}','${item.urutTrans}')"><i class="bi bi-pen"></i></button>`
+      : ''
     rowTable += `<tr><td class="text-center"><div class="po-aksi-wrap">
         ${btnAdd}
-        <button class="btn btn-success btn-sm" type="button" title="Koreksi Customer" onclick="buttonKoreksiCustomer('${item.NOBUKTI}','${item.urutTrans}')"><i class="bi bi-pen"></i></button>
+        ${btnKoreksi}
       </div></td>`
     kolomRender.forEach((c) => {
       if (c.tipe === 1) {
@@ -3203,7 +3207,11 @@ function buttonKoreksiCustomer (nobukti, urut) {
   }
 
   let item = (dataOutstanding || []).find(i => i.NOBUKTI === nobukti && String(i.urutTrans) === String(urut))
-  koreksiCustCtx = { nobukti, urut, customerLama: item ? item.Customer : '', kode: '', nama: '' }
+  if (!item || !outCustNoName(item)) {
+    alertify.warning('Koreksi customer hanya untuk customer NO NAME')
+    return
+  }
+  koreksiCustCtx ={ nobukti, urut, customerLama: item ? item.Customer : '', kode: '', nama: '' }
 
   document.getElementById('input_koreksicust_nobukti').value = nobukti
   document.getElementById('input_koreksicust_customerlama').value = koreksiCustCtx.customerLama || '(kosong)'
