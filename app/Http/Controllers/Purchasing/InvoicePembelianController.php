@@ -199,6 +199,11 @@ order by A.NOBUKTI
 
 
   public function spOtorisasi1 (Request $req) {
+      // Hak akses Otorisasi dicek juga di server (bukan hanya di JS) sesuai Set Pemakai.
+      $akses = $this->getAkses();
+      if (!$akses || !$akses->IsOtorisasi1) {
+        return $this->tolak('Anda tidak memiliki akses otorisasi.');
+      }
       $username = \Auth::user()->username;
       $nobukti =  $req->nobukti;
       $otorisasi = $req->otorisasi;
@@ -224,6 +229,14 @@ order by A.NOBUKTI
 
 
     public function spUnOtorisasi1 (Request $req) {
+        // Hak akses Batal Otorisasi dicek juga di server (bukan hanya di JS) sesuai Set Pemakai.
+        $akses = $this->getAkses();
+        if (!$akses || !$akses->IsBatal) {
+          return $this->tolak('Anda tidak memiliki akses batal otorisasi.');
+        }
+        if (trim((string) $req->pket) === '') {
+          return $this->tolak('Keterangan batal otorisasi harus diisi.');
+        }
         $nobukti =  $req->nobukti;
         $inv = $this->headerDokumen('DBINVOICE', $nobukti);
         if (!$inv) {

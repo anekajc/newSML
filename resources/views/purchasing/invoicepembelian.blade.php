@@ -380,6 +380,7 @@ td input[type="checkbox"] {
   <input type="hidden" id="akses_iskoreksi" value="{!! $akses->ISKOREKSI !!}" />
   <input type="hidden" id="akses_iscetak" value="{!! $akses->ISCETAK !!}" />
   <input type="hidden" id="akses_isbatal" value="{!! $akses->IsBatal !!}" />
+  <input type="hidden" id="akses_isotorisasi1" value="{!! $akses->IsOtorisasi1 !!}" />
 
 
   <input type="hidden" name="_token" id="_token" value="{!! csrf_token() !!}" />
@@ -2181,7 +2182,11 @@ console.log('vvvvvvvvvvvvvvvvvv')
     }
 
       function submitOtorisasi1 (nobukti) {
-  console.log('=============================')
+        let akses = $("#akses_isotorisasi1").val();
+        if (!Number(akses)) {
+          alertify.warning('No access');
+          return;
+        }
         // let nobukti = DataNobukti;
         let otorisasi = 1
         console.log(nobukti, otorisasi,'----t')
@@ -2221,13 +2226,11 @@ console.log('vvvvvvvvvvvvvvvvvv')
 
 
       function submitUnOtorisasi1 (nobukti, isOtorisasi) {
-        // Sementara dinonaktifkan sampai izin ISBATAL untuk menu Invoice Pembelian
-        // diaktifkan lewat Berkas > Set Pemakai. Aktifkan kembali blok ini setelah itu.
-        // let akses = $("#akses_isbatal").val();
-        // if (!Number(akses)) {
-        //   alertify.warning('No access');
-        //   return;
-        // }
+        let akses = $("#akses_isbatal").val();
+        if (!Number(akses)) {
+          alertify.warning('No access');
+          return;
+        }
 
         if (Number(isOtorisasi) === 0) {
           alertify.warning('Belum diotorisasi');
@@ -3044,6 +3047,8 @@ console.log('vvvvvvvvvvvvvvvvvv')
           document.getElementById("akses_iskoreksi").value = res.ISKOREKSI
           document.getElementById("akses_iscetak").value = res.ISCETAK
           document.getElementById("akses_ishapus").value = res.ISHAPUS
+          document.getElementById("akses_isbatal").value = res.IsBatal
+          document.getElementById("akses_isotorisasi1").value = res.IsOtorisasi1
         }
       })
 
