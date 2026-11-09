@@ -51,7 +51,7 @@ class HomeController extends Controller
 
       // $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0();
 
-      return view('newmaster' , [
+      return view('newmasterTest' , [
         "menul0" => [],
         "periode" => $periode,
       ]);
@@ -63,7 +63,7 @@ class HomeController extends Controller
 
       $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(5);
 
-      return view('accounting.newmaster' , [
+      return view('accounting.newmasterTest' , [
         "menul0" => $menul0,
         "periode" => $periode,
       ]);
@@ -75,7 +75,7 @@ class HomeController extends Controller
 
       $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(4);
 
-      return view('marketing.newmaster' , [
+      return view('marketing.newmasterTest' , [
         "menul0" => $menul0,
         "periode" => $periode,
       ]);
@@ -87,7 +87,7 @@ class HomeController extends Controller
 
       $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(6);
 
-      return view('gudang.newmaster' , [
+      return view('gudang.newmasterTest' , [
         "menul0" => $menul0,
         "periode" => $periode,
       ]);
@@ -99,7 +99,7 @@ class HomeController extends Controller
 
       $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(3);
 
-      return view('purchasing.newmaster' , [
+      return view('purchasing.newmasterTest' , [
         "menul0" => $menul0,
         "periode" => $periode,
       ]);
@@ -112,7 +112,7 @@ class HomeController extends Controller
 
       $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(2);
 
-      return view('master.newmaster' , [
+      return view('master.newmasterTest' , [
         "menul0" => $menul0,
         "periode" => $periode,
       ]);
@@ -143,7 +143,7 @@ class HomeController extends Controller
 
       $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(1);
 
-      return view('berkas.newmaster' , [
+      return view('berkas.newmasterTest' , [
         "menul0" => $menul0,
         "periode" => $periode,
         "akses" => $akses
