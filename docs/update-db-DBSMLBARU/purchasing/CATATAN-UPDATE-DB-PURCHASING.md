@@ -37,6 +37,8 @@ Buka di SSMS, lalu jalankan berurutan:
 | 7 | `07_debetnote_akun_bd.sql` | Akun posting `DBPOSTHUTPIUT` Kode `BD` (Debet Note) | Ya, kalau menu Debet Note dipakai |
 | 20 | `20_fnc_masterbeli_kolom_hutang.sql` | Tambah kolom `hutang` (Lunas/Belum) di fungsi `fnc_MasterBeli` | Ya. Tanpa ini kolom badge Hutang di menu Penerimaan ACC kosong |
 | 21 | `21_vwposthutpiut_jurnaloto_tanpa_qc.sql` | Posting hutang (`vwPostHutPiut`) & jurnal (`vwPostJurnalOto`) pembelian barang tidak menunggu QC, disamakan dengan DBSMLNEW | Ya. Tanpa ini pembelian yang di-ACC sebelum QC tidak masuk `DBHUTPIUT`/jurnal dan kolom Hutang tampil Lunas |
+| 25 | `25_gabung_menu_pr.sql` | Kosongkan href menu lama PR Non Agen & PR Non Stock di `DBMENUWEB`/`DBMENU` (menu PR digabung) | Ya, bersamaan dengan update kode menu PR gabungan. Tanpa ini menu lama di sidebar mengarah ke halaman 404 |
+| 26 | `26_sembunyikan_menu_pr_lama.sql` | Sembunyikan menu PR Non Agen & PR Non Stock dari sidebar (`DBMENUWEB.HeaderMenu` = NULL) | Ya, sesudah file 25 |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -225,3 +227,32 @@ Jalan keluarnya, pilih salah satu:
 - **Uji (di-ROLLBACK) di DBSMLNEW** dengan `SML/DN/00001/1026` (M028, invoice `SML/LPB/00133/0326`, 2 USD × 18.000). Hasilnya 1 baris `DBHUTPIUT` HT 21201 dengan Debet 36.000 dan DebetD 2, sehingga saldo invoice turun dari 1.046.932 menjadi 1.010.932. Jurnal yang terbentuk: 21201 / lawan 51300 sebesar 36.000.
 - **Data lama:** saat dicek, DN di DBSMLNEW (`SML/DN/00001/0926`, `SML/DN/00001/1026`) belum diotorisasi, dan DBSMLBARU belum punya DN. Jadi tidak ada data yang perlu diposting ulang.
 - **Separator:** tabel Add/Edit/Detail, modal Invoice, dan form Edit Item diberi separator ribuan. Input Nilai/Kurs diketik dengan separator, lalu dikirim sebagai angka bersih. Controller juga membuang koma (`angka()`). Kolom **Nilai Inv** untuk invoice valas sekarang menampilkan `SaldoD` (dulu `Saldo` Rp, mis. 1,046,932.00 untuk invoice USD 60). Hapus item memakai data item itu sendiri, bukan isi form Edit. `formatAngka` lama yang salah untuk angka minus (`-,360,000.00`) juga diperbaiki.
+
+---
+
+## 25 — Menu PR Agen, PR Non Agen, PR Non Stock digabung jadi satu (11 November 2026)
+
+- **Perubahan kode:** ketiga menu PR digabung di halaman `/pembelianpermintaanagen` (`PembelianPermintaanAgenController` + `purchasing/pembelianpermintaanagen.blade.php`).
+  - Tabel memuat ketiga jenis sekaligus, dengan kolom baru **Jenis** (Agen / Non Agen / Non Stock) di sebelah No Bukti dan filter **Jenis** di modal Filter. `?jenis=agen|nonagen|nonstock` di URL dipakai sebagai filter awal.
+  - Form Add punya dropdown **Jenis PR** di sebelah No Bukti, defaultnya Agen. Ganti jenis membuat no bukti di-generate ulang dengan prefix jenis itu (`DBNOMOR.PRA` / `PR` / `PNS`, sama seperti dulu). Dropdown dikunci setelah item pertama tersimpan dan saat edit.
+  - Browse barang per jenis sama seperti dulu: Agen `KODEGRP 'BJ'` + `pAgen = 1`, Non Agen `KODEGRP 'BJ'` + `pAgen = 0`, Non Stock `KODEGRP 'JS'` + `IsJasa = 1`. Untuk Non Stock satuan tidak dipilih (selalu SAT1).
+  - Nilai `isjasa`/`pagen`/`pjasa` ke `sp_PPL` ditentukan server dari jenis PR (PR yang sudah ada mengikuti header `DBPPL.pAgen`/`pJasa`), bukan dari kiriman browser.
+  - **Hak akses per jenis:** tetap memakai `DBFLMENUWEB` kode menu lama, yaitu Agen `030102`, Non Agen `030101`, Non Stock `030103`. Halaman bisa dibuka kalau user punya `HASACCESS` di salah satunya. Data, pilihan Jenis PR, serta Tambah/Koreksi/Hapus/Otorisasi/Batal mengikuti hak jenis masing-masing.
+  - Route `pembelianpermintaannonagen*` dan `pembelianpermintaannonstock*` di `routes/purchasing.php` di-comment. Controller dan blade lamanya dibiarkan sebagai cadangan. Route `purchaseRequestCetak` (cetak PR) dipindah ke `PembelianPermintaanAgenController::spCetak`.
+- **Perubahan database (`25_gabung_menu_pr.sql`):** href menu lama dikosongkan (NULL):
+  - `DBMENUWEB` `030101` (pembelianpermintaannonagen) dan `030103` (pembelianpermintaannonstock).
+  - `DBMENU` `03001` (pembelianpermintaannonagen) dan `030013` (pembelianpermintaannonstock).
+  - Baris menu dan hak akses `DBFLMENUWEB` `030101`/`030103` **tidak** dihapus, karena dipakai sebagai hak akses jenis Non Agen dan Non Stock.
+  - Rollback ada di bagian bawah file skrip.
+- **Sudah dijalankan** langsung di DBSMLBARU (server 36.88.190.218) pada 11 November 2026, dengan hasil sesuai. Untuk server client, jalankan `25_gabung_menu_pr.sql` bersamaan dengan update kodenya.
+- **Catatan:** menu `030101`/`030103` disembunyikan dari sidebar lewat file 26 (lihat bagian 26). Pintu masuk PR gabungan di sidebar hanya menu `030102`, yang tampil bagi user dengan `HASACCESS` di `030102`. User yang **hanya** punya akses Non Agen/Non Stock (di DBSMLBARU: `sax`) tidak melihat menu PR, kecuali diberi akses `030102` (yang berarti akses PR Agen juga).
+
+---
+
+## 26 — Sembunyikan menu PR Non Agen & PR Non Stock dari sidebar (11 November 2026)
+
+- **Gejala:** sesudah file 25, menu `030101` (PR Stock (Non Keagenan)) dan `030103` (PR Non Stock) masih tampil di sidebar, tapi tidak bisa diklik.
+- **Perubahan (`26_sembunyikan_menu_pr_lama.sql`):** `DBMENUWEB.HeaderMenu` kedua menu diubah ke NULL. Sidebar web (`HomeController`, `NewMenuController@getMenuL0`) hanya menampilkan baris yang `HeaderMenu`-nya tidak NULL. Pola ini sama dengan menu tersembunyi lain, misalnya `030303` List Reject.
+- **Hasil sidebar:** Pembelian > PR > PR (Keagenan), Closing PR. Struktur PR tetap punya turunan karena Closing PR ada di bawahnya.
+- Hak akses `DBFLMENUWEB` `030101`/`030103` tidak diubah. Hak akses ini tetap dipakai sebagai hak akses jenis Non Agen dan Non Stock di halaman PR gabungan.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 11 November 2026. Rollback ada di bagian bawah file skrip.

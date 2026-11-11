@@ -51,8 +51,8 @@
 </div>
 
 <style>
-  /* Tiga pasang label + input per baris (TOP | TOP INT | Plafon, Pph21 | Pph23). */
-  #formBsGrid .bs-form.bs-form-3 { grid-template-columns: 120px minmax(0, 1fr) 80px minmax(0, 1fr) 70px minmax(0, 1fr); margin-top: 14px; }
+  /* Tiga pasang label + input per baris (Pembayaran | TOP | TOP INT, Pph21 | Pph23 | Plafon). */
+  #formBsGrid .bs-form.bs-form-3 { grid-template-columns: 120px minmax(0, 1fr) 80px minmax(0, 1fr) 80px minmax(0, 1fr); margin-top: 14px; }
   @media (max-width: 575.98px) {
     #formBsGrid .bs-form.bs-form-3 { grid-template-columns: 1fr; }
   }
@@ -79,6 +79,9 @@
           <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
 
             <div class="bs-form">
+          <label for="input_add_npwp">NPWP/NIK <span class="text-danger">*</span></label>
+          <div class="bs-full"><small class="npwp-warn"></small><input type="text" class="form-control" id="input_add_npwp" placeholder="NPWP/NIK"></div>
+
           <label for="input_add_kode">Kode</label>
           <input type="text" class="form-control"  id="input_add_kode" placeholder="Kode">
           <label for="input_add_bentukusaha">Bentuk Usaha</label>
@@ -131,18 +134,22 @@
             <input type="hidden" class="form-control" id="input_add_fax" placeholder="No Fax">
 
             <div class="bs-form bs-form-3">
+          <label for="input_add_tipebayar">Pembayaran</label>
+          <select id="input_add_tipebayar" class="form-control">
+                    <option selected value=0>Tunai/CBD</option>
+                    <option value=1>Kredit</option>
+                  </select>
           <label for="input_add_top">TOP</label>
           <input type="number" class="form-control text-right" id="input_add_top" value=0>
           <label for="input_add_haripiutang">TOP INT</label>
           <input type="number" class="form-control text-right" id="input_add_haripiutang" value=0 >
-          <label for="input_add_plafon">Plafon</label>
-          <input type="text" inputmode="decimal" class="form-control text-right format-number" id="input_add_plafon" value=0 >
 
           <label for="input_add_pph21">Pph21</label>
           <input type="number" class="form-control text-right" id="input_add_pph21" value=0.00>
           <label for="input_add_pph23">Pph23</label>
           <input type="number" class="form-control text-right" id="input_add_pph23" value=0.00>
-          <div style="grid-column: 5 / -1"></div>
+          <label for="input_add_plafon">Plafon</label>
+          <input type="text" inputmode="decimal" class="form-control text-right format-number" id="input_add_plafon" value=0 >
         </div>
 
             <div class="bs-form">
@@ -226,9 +233,6 @@
             <div class="form-card-title mb-0">Data Pajak</div>
             <br/>
             <div class="bs-form bs-form-1">
-          <label for="input_add_npwp">NPWP</label>
-          <input type="text" class="form-control" id="input_add_npwp" placeholder="NPWP">
-
           <label for="input_add_namapkp">Nama</label>
           <input type="text" class="form-control" id="input_add_namapkp" placeholder="Nama PKP">
 
@@ -282,6 +286,9 @@
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
 
             <div class="bs-form">
+          <label for="input_edit_npwp">NPWP/NIK <span class="text-danger">*</span></label>
+          <div class="bs-full"><small class="npwp-warn"></small><input type="text" class="form-control" id="input_edit_npwp" placeholder="NPWP/NIK"></div>
+
           <label for="input_edit_kode">Kode</label>
           <input type="text" class="form-control" disabled id="input_edit_kode" placeholder="Kode">
           <label for="input_edit_bentukusaha">Bentuk Usaha</label>
@@ -334,18 +341,22 @@
             <input type="hidden" class="form-control" id="input_edit_fax" placeholder="No Fax">
 
             <div class="bs-form bs-form-3">
+          <label for="input_edit_tipebayar">Pembayaran</label>
+          <select id="input_edit_tipebayar" class="form-control">
+                    <option selected value=0>Tunai/CBD</option>
+                    <option value=1>Kredit</option>
+                  </select>
           <label for="input_edit_top">TOP</label>
           <input type="number" class="form-control text-right" id="input_edit_top" value=0>
           <label for="input_edit_haripiutang">TOP INT</label>
           <input type="number" class="form-control text-right" id="input_edit_haripiutang" value=0 >
-          <label for="input_edit_plafon">Plafon</label>
-          <input type="text" inputmode="decimal" class="form-control text-right format-number" id="input_edit_plafon">
 
           <label for="input_edit_pph21">Pph21</label>
           <input type="number" class="form-control text-right" id="input_edit_pph21" value=0.00>
           <label for="input_edit_pph23">Pph23</label>
           <input type="number" class="form-control text-right" id="input_edit_pph23" value=0.00>
-          <div style="grid-column: 5 / -1"></div>
+          <label for="input_edit_plafon">Plafon</label>
+          <input type="text" inputmode="decimal" class="form-control text-right format-number" id="input_edit_plafon">
         </div>
 
             <div class="bs-form">
@@ -429,9 +440,6 @@
             <div class="form-card-title mb-0">Data Pajak</div>
             <br/>
             <div class="bs-form bs-form-1">
-          <label for="input_edit_npwp">NPWP</label>
-          <input type="text" class="form-control" id="input_edit_npwp" placeholder="NPWP">
-
           <label for="input_edit_namapkp">Nama</label>
           <input type="text" class="form-control" id="input_edit_namapkp" placeholder="Nama PKP">
 
@@ -633,7 +641,14 @@
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/master-list.js') !!}?v={{ @filemtime(base_path('public/js/master-list.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+@include('master.partials.npwpCek')
 <script type="text/javascript">
+
+// NPWP/NIK dicek ke server saat diketik (hanya dibandingkan dengan customer lain).
+$(function () {
+  npwpPasang('#input_add_npwp', "{!! url('mastercustomerceknpwp') !!}")
+  npwpPasang('#input_edit_npwp', "{!! url('mastercustomerceknpwp') !!}", function () { return $('#input_edit_kode').val() })
+})
 
 let dataRefresh = []
 
@@ -754,10 +769,12 @@ function buttonAdd () {
   document.getElementById("input_add_noUrut").value = ''
   document.getElementById("input_add_fax").value = ''
   $('#form .modal-body input[type="text"]').val('')
+  npwpReset('#input_add_npwp')
 
   document.getElementById("input_add_pph21").value = 0.00
   document.getElementById("input_add_pph23").value = 0.00
   document.getElementById("input_add_top").value = 0
+  document.getElementById("input_add_tipebayar").value = 0
   setNum("input_add_plafon", 0)
   document.getElementById("input_add_haripiutang").value = 0
 
@@ -904,6 +921,13 @@ function submitEdit () {
 
   let top = $("#input_edit_top").val();
   console.log('top' , top)
+  let tipebayar = $("#input_edit_tipebayar").val();
+  // Kredit wajib punya TOP; Tunai/CBD boleh TOP 0.
+  if (tipebayar == 1 && !(Number(top) > 0)) {
+    alertify.warning("TOP wajib diisi (lebih dari 0) untuk pembayaran Kredit");
+    $("#input_edit_top").focus()
+    return
+  }
   let plafon = $("#input_edit_plafon").val().replace(/,/g, '');
   console.log('plafon' , plafon)
   let jeniscustomer = $("#input_edit_jeniscustomer").val();
@@ -934,6 +958,8 @@ function submitEdit () {
 
   // jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, bank,accno,npwp,namapkp,alamatpkp,kotapkp,atn
 
+  if (!npwpValid('#input_edit_npwp')) return
+
   if (!kode) {
     alertify.warning("Kode harus diisi");
     return
@@ -954,7 +980,7 @@ function submitEdit () {
     async: false,
     data: {
       _token : _token,
-      isppn, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist, kodesls, boffice,
+      isppn, tipebayar, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist, kodesls, boffice,
       jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, npwp,namapkp,alamatpkp,kotapkp
     },
     success: function(res) {
@@ -1042,6 +1068,13 @@ function submitAdd () {
 
   let top = $("#input_add_top").val();
   console.log('top' , top)
+  let tipebayar = $("#input_add_tipebayar").val();
+  // Kredit wajib punya TOP; Tunai/CBD boleh TOP 0.
+  if (tipebayar == 1 && !(Number(top) > 0)) {
+    alertify.warning("TOP wajib diisi (lebih dari 0) untuk pembayaran Kredit");
+    $("#input_add_top").focus()
+    return
+  }
   let plafon = $("#input_add_plafon").val().replace(/,/g, '');
   console.log('plafon' , plafon)
   let jeniscustomer = $("#input_add_jeniscustomer").val();
@@ -1071,6 +1104,8 @@ function submitAdd () {
   let jenis = 1
 
   // jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, bank,accno,npwp,namapkp,alamatpkp,kotapkp,atn
+
+  if (!npwpValid('#input_add_npwp')) return
 
   if (!kode) {
     alertify.warning("Kode harus diisi");
@@ -1103,7 +1138,7 @@ function submitAdd () {
     async: false,
     data: {
       _token : _token,
-      isppn, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist, kodesls, boffice,
+      isppn, tipebayar, top, plafon, jeniscustomer, groupcustomer, intcomp , compcode , custcode, berikat, blacklist, kodesls, boffice,
       jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, npwp,namapkp,alamatpkp,kotapkp
     },
     success: function(res) {
@@ -1254,10 +1289,13 @@ function buttonEdit (kode) {
       // document.getElementById("input_edit_bank").value = res[0].bank
       // document.getElementById("input_edit_atn").value = res[0].ATN
       document.getElementById("input_edit_npwp").value = res[0].NPWP
+      npwpReset('#input_edit_npwp')
+      npwpCekSekarang('#input_edit_npwp')
       document.getElementById("input_edit_namapkp").value = res[0].NAMAPKP
       document.getElementById("input_edit_alamatpkp").value = res[0].ALAMATPKP1
       document.getElementById("input_edit_kotapkp").value = res[0].KOTAPKP
       setNum("input_edit_plafon", res[0].PLAFON)
+      document.getElementById("input_edit_tipebayar").value = Number(res[0].TipeBayar) ? 1 : 0
 
       document.getElementById("input_edit_compcode").value = res[0].CompCode
       document.getElementById("input_edit_custcode").value = res[0].CustCode

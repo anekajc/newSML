@@ -2565,6 +2565,7 @@
 @endsection
 
 @section('js')
+@include('partials.tabel-memuat')
 @include('marketing.partials.tampilan-purchasing-js')
 <script>window.RT_LABEL_PAJAK = true</script>
 <script src="{{ asset('js/report-table.js') }}"></script>
@@ -8331,8 +8332,22 @@ document.getElementById("input_add_hari").value = Number(hari)
 document.getElementById("input_add_tipeppn").value = ppn
 }
 
-  if (Number(hari) > 0) {
-    document.getElementById("input_add_pembayaran").value = 1
+  if (!inputtarget) {
+    // Pembayaran ikut master customer (0 = Tunai/CBD, 1 = Kredit); user masih boleh mengubah.
+    // Fallback ke logika lama (TOP > 0 = Kredit) bila data customer gagal diambil.
+    let tipeBayar = Number(hari) > 0 ? 1 : 0
+    $.ajax({
+      url: "{!! url('socekkredithari') !!}",
+      type: "post",
+      async: false,
+      data: { _token: $("#_token").val(), kodepelanggan: kode },
+      success: function(res) {
+        if (res.length) tipeBayar = Number(res[0].tipebayar) ? 1 : 0
+      }
+    })
+    document.getElementById("input_add_pembayaran").value = tipeBayar
+    // Sama seperti onChangeInputAddPembayaran: Tunai/CBD -> hari 0, Kredit -> TOP customer.
+    document.getElementById("input_add_hari").value = tipeBayar ? Number(hari) : 0
   }
 
   if (Number(ppn)) {

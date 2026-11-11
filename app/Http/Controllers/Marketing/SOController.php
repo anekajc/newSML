@@ -1821,7 +1821,8 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
 //     select b.NAMAMERK ,  a.* from dbbarang a
 // join DBMERK b on a.KodeMerk = b.KODEMERK
 //  where a.KODEGRP = 'BJ' and a.pAgen = 1
-    $listData = DB::connection('SML')->select("select hari from dbcustsupp where KODECUSTSUPP = :kodepelanggan", ["kodepelanggan" => $req->kodepelanggan]);
+    // tipebayar = pembayaran dari master customer (0 = Tunai/CBD, 1 = Kredit), dipakai SO saat pilih customer.
+    $listData = DB::connection('SML')->select("select hari, isnull(TipeBayar, 0) as tipebayar from dbcustsupp where KODECUSTSUPP = :kodepelanggan", ["kodepelanggan" => $req->kodepelanggan]);
     return $listData;
   }
 

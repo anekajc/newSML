@@ -9,10 +9,15 @@ use App\Models\NewAksesMenu;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use App\Traits\NpwpTrait;
 
 
 class MasterSupplierController extends Controller
 {
+  use NpwpTrait;
+
+  protected function jenisCustSupp(): int { return 0; }
+
 
   public function index(Request $req) {
 
@@ -80,18 +85,14 @@ public function loadAll()
 public function spAdd(Request $req) {
     $check = DB::connection('SML')->select('SELECT * FROM DBCUSTSUPP where KODECUSTSUPP = :kode', ['kode' => $req->kode]);
     
-    // NPWP kosong tidak dicek: form kosong sampai ke sini sebagai null, dan koneksi SQL Server
-    // produksi (ANSI_NULLS OFF) mencocokkan "NPWP = NULL" dengan baris yang NPWP-nya null -
-    // akibatnya supplier tanpa NPWP selalu ditolak "NPWP sudah ada".
-    $checkNIK = trim((string) $req->npwp) === '' ? [] :
-      DB::connection('SML')->select('SELECT * FROM DBCUSTSUPP where NPWP = :npwp', ['npwp' => $req->npwp]);
-
     if ($check) {
         return 'Kode supplier sudah ada di database';
     }
 
-     if ($checkNIK) {
-        return 'NPWP sudah ada di database';
+    // NPWP/NIK wajib & tidak boleh sama dengan supplier lain (NpwpTrait).
+    $errNpwp = $this->validasiNpwp($req->npwp);
+    if ($errNpwp) {
+        return $errNpwp;
     }
 
     $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (HARI, USAHA, KODECUSTSUPP, NAMACUSTSUPP, ALAMAT1, Kota, KODEPOS, NEGARA, TELPON, FAX, EMAIL, NPPH23, NPPH22, HARIHUTPIUT, IsAktif, Att, AttPhone, AttDepart, bank, NoAcc, ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis) VALUES (:haribiasa, :usaha, :kode, :nama, :alamat, :kota, :kodepos, :negara, :telp, :fax, :email, :npph23, :npph21, :haripiutang, :isaktif, :att, :attphone, :attdepart, :bank, :accno, :atn, :npwp, :namapkp, :alamatpkp, :kotapkp, :isppn, :jenis)', [
@@ -153,7 +154,12 @@ public function spAdd(Request $req) {
   }
 
   public function spEdit (Request $req) {
-    $edit = DB::connection('SML')->update('update DBCUSTSUPP set USAHA =:usaha , NAMACUSTSUPP = :nama , HARI = :haribiasa, ALAMAT1 = :alamat, Kota = :kota, KODEPOS = :kodepos , NEGARA= :negara, TELPON = :telp , FAX  = :fax, EMAIL = :email, NPPH23 = :npph23, NPPH22 = :npph21, HARIHUTPIUT = :haripiutang , IsAktif = :isaktif, Att = :att , AttPhone = :attphone, AttDepart = :attdepart , bank = :bank , NoAcc = :accno, ATN = :atn, NPWP = :npwp , NAMAPKP = :namapkp , ALAMATPKP1 = :alamatpkp , KOTAPKP = :kotapkp , IsPpn = :isppn  where KODECUSTSUPP = :kode' , ['usaha'=> $req->bentukusaha , 'nama' => $req->nama , 'alamat' => $req->alamat , 'haribiasa' => $req->haribiasa , 'kota'=> $req->kota , 'kodepos' => $req->kodepos ,  'negara' => $req->negara, 'telp' => $req->telp ,'fax' => $req->fax , 'email' => $req->email , 'npph23' => $req->pph23 , 'npph21' => $req->pph21 , 'haripiutang' => $req->haripiutang , 'isaktif'=> $req->isaktif , 'att'=>$req->att, 'attphone'=> $req->attphone , 'attdepart'=>$req->attdepart, 'bank'=>$req->bank,'accno'=> $req->accno , 'atn' => $req->atn , 'npwp' => $req->npwp , 'namapkp' => $req->namapkp ,'alamatpkp' => $req->alamatpkp , 'kotapkp' => $req->kotapkp , 'isppn'=> $req->isppn , 'kode' => $req->kode]);
+    $errNpwp = $this->validasiNpwp($req->npwp, $req->kode);
+    if ($errNpwp) {
+        return $errNpwp;
+    }
+
+    $edit =DB::connection('SML')->update('update DBCUSTSUPP set USAHA =:usaha , NAMACUSTSUPP = :nama , HARI = :haribiasa, ALAMAT1 = :alamat, Kota = :kota, KODEPOS = :kodepos , NEGARA= :negara, TELPON = :telp , FAX  = :fax, EMAIL = :email, NPPH23 = :npph23, NPPH22 = :npph21, HARIHUTPIUT = :haripiutang , IsAktif = :isaktif, Att = :att , AttPhone = :attphone, AttDepart = :attdepart , bank = :bank , NoAcc = :accno, ATN = :atn, NPWP = :npwp , NAMAPKP = :namapkp , ALAMATPKP1 = :alamatpkp , KOTAPKP = :kotapkp , IsPpn = :isppn  where KODECUSTSUPP = :kode' , ['usaha'=> $req->bentukusaha , 'nama' => $req->nama , 'alamat' => $req->alamat , 'haribiasa' => $req->haribiasa , 'kota'=> $req->kota , 'kodepos' => $req->kodepos ,  'negara' => $req->negara, 'telp' => $req->telp ,'fax' => $req->fax , 'email' => $req->email , 'npph23' => $req->pph23 , 'npph21' => $req->pph21 , 'haripiutang' => $req->haripiutang , 'isaktif'=> $req->isaktif , 'att'=>$req->att, 'attphone'=> $req->attphone , 'attdepart'=>$req->attdepart, 'bank'=>$req->bank,'accno'=> $req->accno , 'atn' => $req->atn , 'npwp' => $req->npwp , 'namapkp' => $req->namapkp ,'alamatpkp' => $req->alamatpkp , 'kotapkp' => $req->kotapkp , 'isppn'=> $req->isppn , 'kode' => $req->kode]);
 
     return $edit;
   }

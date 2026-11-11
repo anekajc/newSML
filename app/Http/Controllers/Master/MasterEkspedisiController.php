@@ -10,6 +10,7 @@ use App\Models\NewAksesMenu;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use App\Traits\NpwpTrait;
 // use App\Models\VWPerkiraan;
 
 
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\DB;
 
 class MasterEkspedisiController extends Controller
 {
+  use NpwpTrait;
+
+  protected function jenisCustSupp(): int { return 3; }
+
 
   public function index(Request $req) {
 
@@ -275,6 +280,12 @@ and a.Jenis=3 and a.KODECUSTSUPP = :kode" , ['kode' => $req->kode]);
       return 'Kode supplier/customer sudah ada di database';
     }
 
+    // NPWP/NIK wajib & tidak boleh sama dengan ekspedisi lain (NpwpTrait).
+    $errNpwp = $this->validasiNpwp($req->npwp);
+    if ($errNpwp) {
+      return $errNpwp;
+    }
+
     $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (
     USAHA, KODECUSTSUPP, NAMACUSTSUPP, ALAMAT1, ALAMAT2, 
     Kota,  KODEPOS, NEGARA, TELPON, FAX, 
@@ -335,7 +346,12 @@ and a.Jenis=3 and a.KODECUSTSUPP = :kode" , ['kode' => $req->kode]);
   }
 
   public function submitEdit (Request $req) {
-        $listData = DB::connection('SML')->update('UPDATE DBCUSTSUPP SET 
+        $errNpwp = $this->validasiNpwp($req->npwp, $req->kodeCustSupp);
+        if ($errNpwp) {
+            return $errNpwp;
+        }
+
+        $listData =DB::connection('SML')->update('UPDATE DBCUSTSUPP SET 
         USAHA = :bentukUsaha, 
         NAMACUSTSUPP = :namaCustSupp, 
         ALAMAT1 = :alamat1, 

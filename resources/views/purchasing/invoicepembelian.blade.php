@@ -1802,6 +1802,7 @@ td input[type="checkbox"] {
 @endsection
 
 @section('js')
+@include('partials.tabel-memuat')
 {{-- Header tabel interaktif (drag kolom + roda gigi + bar kolom tersembunyi + tombol
      "Reset kolom"), disamakan dengan newpo.blade.php. --}}
 <script>window.RT_LABEL_PAJAK = true</script>

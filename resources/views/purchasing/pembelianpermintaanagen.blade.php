@@ -1,6 +1,6 @@
 @extends('newmasterTest')
 @section('buttons')
-@section('page-title', 'PR Agen')
+@section('page-title', 'Permintaan Pembelian (PR)')
 
 @endsection
 
@@ -410,12 +410,8 @@ td input[type="checkbox"] {
 
   <input type="hidden" id="periode_tahun" value="{!! $periode->tahun !!}" />
   <input type="hidden" id="periode_bulan" value="{!! $periode->bulan !!}" />
-  <input type="hidden" id="akses_istambah" value="{!! $akses->ISTAMBAH !!}" />
-  <input type="hidden" id="akses_ishapus" value="{!! $akses->ISHAPUS!!}" />
-  <input type="hidden" id="akses_iskoreksi" value="{!! $akses->ISKOREKSI !!}" />
-  <input type="hidden" id="akses_iscetak" value="{!! $akses->ISCETAK !!}" />
-  <input type="hidden" id="akses_isotorisasi1" value="{!! $akses->IsOtorisasi1 !!}" />
-  <input type="hidden" id="akses_isbatal" value="{!! $akses->IsBatal !!}" />
+  {{-- Hak akses sekarang per jenis PR (Agen 030102, Non Agen 030101, Non Stock 030103),
+       dibaca JS lewat PR_AKSES / prAkses() - bukan lagi hidden input akses_* satu menu. --}}
   <input type="hidden" name="_token" id="_token" value="{!! csrf_token() !!}" />
 
 
@@ -506,9 +502,9 @@ td input[type="checkbox"] {
           <div class="row">
             <!-- <input type="hidden" id="input_kodegroup" value="" /> -->
             <input type="hidden" class="form-control" id="input_add_nourut" placeholder="No Urut" disabled>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <div class="row">
-            <div class="col-md-3" style="margin-top:5px;">
+            <div class="col-md-4" style="margin-top:5px;">
               <div class="form-group">
                 <label>No Bukti</label>
               </div>
@@ -520,9 +516,29 @@ td input[type="checkbox"] {
             </div>
           </div>
           </div>
-          <div class="col-md-4">
+          {{-- Jenis PR menentukan prefix no bukti, sumber browse barang, cara pilih satuan,
+               dan nilai pagen/isjasa/pjasa. Dikunci begitu PR sudah punya item / saat edit. --}}
+          <div class="col-md-3">
             <div class="row">
-            <div class="col-md-3" style="margin-top:5px;">
+            <div class="col-md-4" style="margin-top:5px;">
+              <div class="form-group">
+                <label for="input_add_jenispr">Jenis PR</label>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="form-group">
+                <select id="input_add_jenispr" class="form-control text-left" onchange="prGantiJenisForm()">
+                  @foreach ($jenisList as $j)
+                    <option value="{{ $j['kode'] }}">{{ $j['label'] }}</option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class="col-md-3">
+            <div class="row">
+            <div class="col-md-4" style="margin-top:5px;">
               <div class="form-group">
                 <label>Departemen</label>
               </div>
@@ -536,9 +552,9 @@ td input[type="checkbox"] {
             </div>
           </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
           <div class="row">
-            <div class="col-md-3" style="margin-top:5px;">
+            <div class="col-md-4" style="margin-top:5px;">
               <div class="form-group">
                 <label>Tanggal</label>
               </div>
@@ -868,9 +884,9 @@ td input[type="checkbox"] {
         <!-- <h1>Tes Modal</h1> -->
         <div class="container-fluid">
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="row">
-                <div class="col-md-3" style="margin-top:5px;">
+                <div class="col-md-4" style="margin-top:5px;">
                   <div class="form-group">
                     <label>No Bukti</label>
                   </div>
@@ -882,9 +898,23 @@ td input[type="checkbox"] {
                 </div>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="row">
-                <div class="col-md-3" style="margin-top:5px;">
+                <div class="col-md-4" style="margin-top:5px;">
+                  <div class="form-group">
+                    <label>Jenis PR</label>
+                  </div>
+                </div>
+                <div class="col-md-8">
+                  <div class="form-group">
+                    <input type="text" class="form-control" id="input_detail_jenispr" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="row">
+                <div class="col-md-4" style="margin-top:5px;">
                   <div class="form-group">
                     <label>Departemen</label>
                   </div>
@@ -896,9 +926,9 @@ td input[type="checkbox"] {
                 </div>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="row">
-                <div class="col-md-3" style="margin-top:5px;">
+                <div class="col-md-4" style="margin-top:5px;">
                   <div class="form-group">
                     <label>Tanggal</label>
                   </div>
@@ -1073,7 +1103,7 @@ td input[type="checkbox"] {
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="bi bi-funnel"></i>
-          Filter PR Agen
+          Filter PR
           <span class="rt-active-badge" id="prFilterBadge">0 aktif</span>
         </h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterPR').modal('hide')">
@@ -1084,6 +1114,15 @@ td input[type="checkbox"] {
       <div class="modal-body">
         <div class="rt-section">
           <div class="rt-group-label">Penyaringan Data</div>
+          <div class="mb-2">
+            <label class="rt-field-label" for="prModalJenis">Jenis</label>
+            <select class="rt-native" id="prModalJenis">
+              <option value="SEMUA">Semua</option>
+              @foreach ($jenisList as $j)
+                <option value="{{ $j['kode'] }}">{{ $j['label'] }}</option>
+              @endforeach
+            </select>
+          </div>
           <div class="rt-grid-2">
             <div>
               <label class="rt-field-label" for="prModalStatus">Status</label>
@@ -1123,6 +1162,7 @@ td input[type="checkbox"] {
 @endsection
 
 @section('js')
+@include('partials.tabel-memuat')
 <script>window.RT_LABEL_PAJAK = true</script>
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
@@ -1143,6 +1183,43 @@ let tempEditEdit = {}
 let tipeform = ''
 let tipeformitem = ''
 // let currentTipe = 0;
+
+// ---- Jenis PR (menu PR Agen, Non Agen, Non Stock digabung jadi satu halaman) ----
+// Kunci sama dengan PembelianPermintaanAgenController::JENIS. Nilai isjasa/pagen/pjasa
+// hanya untuk tampilan di browser - server memakai nilai miliknya sendiri saat menyimpan.
+const PR_JENIS = {
+  agen     : { label : 'Agen',      isjasa : 0, pagen : 1, pjasa : 0 },
+  nonagen  : { label : 'Non Agen',  isjasa : 0, pagen : 0, pjasa : 0 },
+  nonstock : { label : 'Non Stock', isjasa : 1, pagen : 0, pjasa : 1 }
+}
+// Hak akses per jenis (hanya jenis yang HASACCESS = 1), dari DBFLMENUWEB per kode menu lama.
+// Isinya hanya kunci jenis tetap & angka 0/1 dari controller, aman ditulis mentah.
+const PR_AKSES = {!! json_encode((object) $aksesJenis) !!};
+// Filter awal tabel dari ?jenis=... (null = semua), sudah divalidasi di controller.
+const PR_JENIS_AWAL = {!! json_encode($jenisAwal) !!};
+
+// Jenis PR yang sedang dibuka di form Add/Edit.
+let prJenisForm = 'agen'
+
+function prAkses (jenis, hak) {
+  let a = PR_AKSES[jenis]
+  return a ? Number(a[hak]) || 0 : 0
+}
+
+// Jenis sebuah PR: dari baris tabel kalau ada, kalau tidak dari data detail VwPPL
+// (IsJasa/pAgen) - sama dengan CASE di loadAll().
+function prJenisDariBaris (row) {
+  if (!row) { return null }
+  if (row.JenisKode) { return row.JenisKode }
+  if (Number(row.IsJasa) === 1) { return 'nonstock' }
+  if (Number(row.pAgen) === 1) { return 'agen' }
+  return 'nonagen'
+}
+
+function prJenisNoBukti (nobukti) {
+  let grup = (dataPR || []).find(g => g[0] && g[0].NoBukti === nobukti)
+  return grup ? prJenisDariBaris(grup[0]) : null
+}
 
 // tampilan baru
 let xisshown = []
@@ -1177,7 +1254,7 @@ $(document).ready(function(){
       async: false,
       data: {
         search: search,
-        isagen: 1
+        jenis: prJenisForm
       },
       success: function(res) {
         dataAddListItem = res;
@@ -1215,6 +1292,10 @@ $(document).ready(function(){
     });
   }
 });
+
+  // Filter Jenis awal (mis. ?jenis=nonagen) ikut tampil di modal filter & badge.
+  $('#prModalJenis').val(prFilterJenis)
+  prUpdateFilterBadge()
 
   // Idempotent - hanya benar-benar mengikat sekali seumur halaman, lihat definisinya.
   prInitReportTableSekali()
@@ -1670,9 +1751,11 @@ function prOtorisasiPR (grup) {
 // tabel digambar ulang (ganti periode, sehabis simpan, dst).
 let prFilterStatus = 'SEMUA'
 let prFilterOtorisasi = 'SEMUA'
+let prFilterJenis = (PR_JENIS_AWAL && PR_AKSES[PR_JENIS_AWAL]) ? PR_JENIS_AWAL : 'SEMUA'
 
 function prUpdateFilterBadge () {
   let jml = 0
+  if (prFilterJenis !== 'SEMUA') { jml++ }
   if (prFilterStatus !== 'SEMUA') { jml++ }
   if (prFilterOtorisasi !== 'SEMUA') { jml++ }
   let badge = document.getElementById('prFilterBadge')
@@ -1680,6 +1763,7 @@ function prUpdateFilterBadge () {
 }
 
 function prTerapkanFilter () {
+  prFilterJenis = $('#prModalJenis').val() || 'SEMUA'
   prFilterStatus = $('#prModalStatus').val() || 'SEMUA'
   prFilterOtorisasi = $('#prModalOtorisasi').val() || 'SEMUA'
   prUpdateFilterBadge()
@@ -1688,8 +1772,10 @@ function prTerapkanFilter () {
 }
 
 function prResetFilter () {
+  prFilterJenis = 'SEMUA'
   prFilterStatus = 'SEMUA'
   prFilterOtorisasi = 'SEMUA'
+  $('#prModalJenis').val('SEMUA')
   $('#prModalStatus').val('SEMUA')
   $('#prModalOtorisasi').val('SEMUA')
   prUpdateFilterBadge()
@@ -1753,9 +1839,11 @@ window.doSetHeader = function (mode, reset) {
       href   : PR_HREF,
       reset  : 1
     },
-    success : function (res) {
-      prCart = prBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal, res.aliasordered)
-      window.gcart_header = prCart
+    success : function () {
+      // getheadertable sudah menghapus pengaturan tersimpan. Kolom default diturunkan ulang
+      // lewat loadAll milik halaman ini (bukan dari jawaban getheadertable, yang masih memakai
+      // query PR Agen saja dan belum punya kolom Jenis).
+      prMuatData(false)
     },
     error : function (err) {
       console.log(err)
@@ -1765,6 +1853,11 @@ window.doSetHeader = function (mode, reset) {
 }
 
 function loadAll () {
+  prMuatData(true)
+}
+
+// render = false dipakai doSetHeader(): report-table.js menggambar ulang sendiri sesudahnya.
+function prMuatData (render) {
   let _token = $("#_token").val()
   let tglawal = $('#prTglAwal').val()
   let tglakhir = $('#prTglAkhir').val()
@@ -1786,11 +1879,11 @@ function loadAll () {
       prCart = prBuatCart(res.headertableheader, res.headertablevalue, res.isnumeric, res.isshown, res.desimal, res.aliasordered)
       window.gcart_header = prCart
       dataPR = res.listData1 || []
-      renderTabelPR()
+      if (render) { renderTabelPR() }
     },
     error: function (err) {
       console.log(err)
-      alertify.warning('Gagal memuat data Permintaan Pembelian Agen')
+      alertify.warning('Gagal memuat data Permintaan Pembelian')
     }
   })
 }
@@ -1823,6 +1916,9 @@ function renderTabelPR () {
   }
 
   let dataTampil = dataPR || []
+  if (prFilterJenis !== 'SEMUA') {
+    dataTampil = dataTampil.filter(function (grup) { return prJenisDariBaris(grup[0]) === prFilterJenis })
+  }
   if (prFilterOtorisasi !== 'SEMUA') {
     dataTampil = dataTampil.filter(function (grup) { return prOtorisasiPR(grup) === prFilterOtorisasi })
   }
@@ -1894,7 +1990,7 @@ function renderTabelPR () {
 }
 
 function buttonOtorisasi (nobukti, isOtorisasi) {
-  let akses = $("#akses_isotorisasi1").val();
+  let akses = prAkses(prJenisNoBukti(nobukti), 'IsOtorisasi1');
   if (!Number(akses)) {
     alertify.warning('No access');
     return;
@@ -1981,7 +2077,7 @@ function buttonOtorisasi (nobukti, isOtorisasi) {
 // }
 
 function buttonBatalOtorisasi (nobukti, isOtorisasi) {
-  let akses = $("#akses_isbatal").val();
+  let akses = prAkses(prJenisNoBukti(nobukti), 'IsBatal');
   if (!Number(akses)) {
     alertify.warning('No access');
     return;
@@ -2066,12 +2162,14 @@ function submitAddEdit () {
     let kodebarang = $("#input_add_add_kodebarang").val();
     let keterangannama = $("#input_add_add_keterangannama").val();
     let satuanInput = String($("#input_add_add_satuan").val() || ''); // pastikan string (val() null kalau tidak ada opsi terpilih)
-    let isjasa = 0;
-    let qnt = formatAngkaVal($("#input_add_add_qnt").val())
+    let jenisCfg = PR_JENIS[prJenisForm];
+    // Non Stock tidak memilih satuan (selalu SAT1), sama seperti menu PR Non Stock lama.
+    let isNonStock = prJenisForm === 'nonstock';
+    let qnt = formatAngkaVal($("#input_add_add_qnt").val()) || 0
     let keterangan = $("#input_add_add_keterangan").val();
     let kodedepartemen = $("#input_add_kodedepartemen").val();
 
-    if (!kodebarang || !satuanInput || qnt <= 0 || !kodedepartemen) {
+    if (!kodebarang || (!isNonStock && !satuanInput) || qnt <= 0 || !kodedepartemen) {
         alertify.warning("Lengkapi semua data wajib");
         return;
     }
@@ -2087,11 +2185,11 @@ function submitAddEdit () {
     console.log('SAT2:', barang.SAT2, 'ISI2:', barang.ISI2);
     console.log('SAT3:', barang.SAT3, 'ISI3:', barang.ISI3);
 
-    if (isjasa === "1") {
+    if (isNonStock) {
+        satuan = barang.SAT1 || 1;
+        isi = barang.ISI1 || 1;
         nosat = 1;
-        satuan = 1;       
-        isi = 1;          
-        qnt1 = qnt;
+        qnt1 = qnt * isi;
     } else {
         if (satuanInput === "1") {
             nosat = 1;
@@ -2141,9 +2239,10 @@ function submitAddEdit () {
             nourut,
             tanggal,
             kodedepartemen,
-            isjasa,
-            pagen: 1,
-            pjasa: 0,
+            jenis: prJenisForm,
+            isjasa: jenisCfg.isjasa,
+            pagen: jenisCfg.pagen,
+            pjasa: jenisCfg.pjasa,
             kodebarang,
             keterangannama,
             satuan,
@@ -2193,9 +2292,13 @@ function submitAddEdit () {
 
   document.getElementById("input_add_add_tipejasa").value = tempEdit.IsJasa;
 
-  // Isi dropdown satuan
+  // Isi dropdown satuan. Non Stock: satuan tidak dipilih (selalu SAT1), dropdown dikunci.
   let selectOption = '';
-  if (Number(tempEdit.IsJasa) === 1) {
+  let isNonStock = prJenisForm === 'nonstock';
+  document.getElementById("input_add_add_satuan").disabled = isNonStock;
+  if (isNonStock) {
+    selectOption = `<option value="1" selected>${tempEdit.SAT1 || '-'}</option>`;
+  } else if (Number(tempEdit.IsJasa) === 1) {
     selectOption = '<option value="1" selected>-</option>';
   } else {
     selectOption = '<option value=0 selected>Pilih Satuan</option>';
@@ -2218,7 +2321,7 @@ function submitAddEdit () {
   $('#input_add_add_qnt').autoNumeric('set', parseFloat(tempEdit.Qnt || 0).toFixed(2));
   document.getElementById("input_add_add_keterangan").value = tempEdit.Keterangan || '';
 
-  let defaultNoSat = Number(tempEdit.IsJasa) === 1 ? "1" : String(tempEdit.NoSat || "0");
+  let defaultNoSat = (isNonStock || Number(tempEdit.IsJasa) === 1) ? "1" : String(tempEdit.NoSat || "0");
   document.getElementById("input_add_add_satuan").value = defaultNoSat;
 
   // Tampilkan mode edit
@@ -2266,7 +2369,8 @@ if (pcekglobal) {
 }
 
   tipeform = 'edit'
-  let akses = $("#akses_iskoreksi").val();
+  let jenisEdit = prJenisNoBukti(nobukti)
+  let akses = prAkses(jenisEdit, 'ISKOREKSI');
 
   if (!Number(akses)) {
     alertify.warning('No access')
@@ -2332,6 +2436,9 @@ if (pcekglobal) {
   date1 = date.getFullYear()+"-"+(month)+"-"+(day);
   $('#input_add_tanggal').val(date1)
 
+  // Jenis PR yang sudah tersimpan tidak bisa diganti.
+  prSetJenisForm(prJenisDariBaris(dataTableAdd[0]) || jenisEdit, true)
+
   document.getElementById("tabel_data_add").innerHTML  = rowTable
   document.getElementById("input_add_nobukti").value  = dataTableAdd[0].NoBukti
   document.getElementById("input_add_nourut").value  = dataTableAdd[0].Nourut
@@ -2344,7 +2451,7 @@ if (pcekglobal) {
 
 function buttonAddDeleteItem (index) {
 
-  let akses = $("#akses_ishapus").val();
+  let akses = prAkses(prJenisForm, 'ISHAPUS');
 
   if (!Number(akses)) {
     alertify.warning('No access')
@@ -2360,9 +2467,10 @@ function buttonAddDeleteItem (index) {
         let nourut = $("#input_add_nourut").val();
         let nobukti = $("#input_add_nobukti").val();
         let tanggal = $("#input_add_tanggal").val();
-        let isjasa = 0
-        let pagen = 1
-        let pjasa = 0
+        let jenisCfg = PR_JENIS[prJenisForm]
+        let isjasa = jenisCfg.isjasa
+        let pagen = jenisCfg.pagen
+        let pjasa = jenisCfg.pjasa
         let urut = data.Urut
         let kodebarang = data.KodeBrg
         let qnt = data.Qnt
@@ -2474,6 +2582,8 @@ function buttonDetail (nobukti) {
 
       document.getElementById("tabel_data_detail").innerHTML  = rowTable
       document.getElementById("input_detail_nobukti").value  = res[0].NoBukti
+      let jenisDetail = PR_JENIS[prJenisDariBaris(res[0])]
+      document.getElementById("input_detail_jenispr").value = jenisDetail ? jenisDetail.label : ''
       document.getElementById("input_detail_kodedepartemen").value = res[0].KDDep
       // document.getElementById("input_detail_tanggal").value  = res[0].Tanggal
 
@@ -2483,17 +2593,69 @@ function buttonDetail (nobukti) {
   $("#page1").hide();
 }
 
+// No bukti baru mengikuti prefix jenis PR yang dipilih (Agen PRA, Non Agen PR, Non Stock PNS).
 function setNewNoBukti () {
   $.ajax({
     url: "{!! url('pembelianpermintaanagenspnobukti') !!}",
     type: "get",
     async: false,
     data: {
+      jenis: prJenisForm
     },
     success: function(res) {
+      if (res && res.pesan) {
+        alertify.warning(res.pesan)
+        document.getElementById("input_add_nobukti").value = ''
+        document.getElementById("input_add_nourut").value = ''
+        return
+      }
       document.getElementById("input_add_nobukti").value = res[0].Nobukti
       document.getElementById("input_add_nourut").value = res[0].Nourut
     }})
+}
+
+// Pasang jenis PR di form. kunci = true: dropdown tidak bisa diganti (PR sudah punya item / edit).
+function prSetJenisForm (jenis, kunci) {
+  if (!PR_JENIS[jenis]) { jenis = 'agen' }
+  prJenisForm = jenis
+  let sel = document.getElementById("input_add_jenispr")
+  // Jenis PR lama yang aksesnya tidak dimiliki user tetap ditampilkan namanya.
+  if (!sel.querySelector(`option[value="${jenis}"]`)) {
+    sel.insertAdjacentHTML('beforeend', `<option value="${jenis}">${PR_JENIS[jenis].label}</option>`)
+  }
+  sel.value = jenis
+  sel.disabled = !!kunci
+}
+
+// Jenis default form Add: Agen kalau boleh tambah Agen, kalau tidak jenis pertama yang boleh.
+function prJenisDefaultAdd () {
+  if (prAkses('agen', 'ISTAMBAH')) { return 'agen' }
+  return Object.keys(PR_AKSES).find(j => prAkses(j, 'ISTAMBAH')) || null
+}
+
+// Dropdown Jenis PR diganti di form Add (sebelum ada item tersimpan): no bukti di-generate
+// ulang dengan prefix jenis baru, dan isian item yang belum disimpan dikosongkan karena
+// daftar barangnya beda per jenis.
+function prGantiJenisForm () {
+  let sel = document.getElementById("input_add_jenispr")
+  let baru = sel.value
+
+  if (tipeform !== 'add' || (dataTableAdd && dataTableAdd.length)) {
+    sel.value = prJenisForm
+    alertify.warning('Jenis PR tidak bisa diganti setelah PR punya item')
+    return
+  }
+  if (!prAkses(baru, 'ISTAMBAH')) {
+    sel.value = prJenisForm
+    alertify.warning('Anda tidak punya akses tambah PR ' + PR_JENIS[baru].label)
+    return
+  }
+
+  prJenisForm = baru
+  dataAddListItem = []
+  cleanFormAddAdd()
+  $('.showhide').hide()
+  setNewNoBukti()
 }
 
 
@@ -2533,26 +2695,24 @@ if (pcekglobal) {
   cleanFormAdd()
   unlockFormAdd();
 
-  let akses = $("#akses_istambah").val();
+  // Boleh tambah kalau punya hak Tambah di salah satu jenis; default Agen.
+  let jenisAdd = prJenisDefaultAdd()
 
-  if (!Number(akses)) {
+  if (!jenisAdd) {
     alertify.warning('No access')
     return
   }
 
-  // pembelianpermintaanagenspnobukti
-  $.ajax({
-    url: "{!! url('pembelianpermintaanagenspnobukti') !!}",
-    type: "get",
-    async: false,
-    data: {
-    },
-    success: function(res) {
-      document.getElementById("input_add_nobukti").value = res[0].Nobukti
-      document.getElementById("input_add_nourut").value = res[0].Nourut
+  dataTableAdd = []
+  dataAddListItem = []
+  prSetJenisForm(jenisAdd, false)
+  // Jenis yang tidak boleh ditambah user tidak bisa dipilih.
+  $('#input_add_jenispr option').each(function () {
+    this.disabled = !prAkses(this.value, 'ISTAMBAH')
+  })
 
-    }})
-    dataTableAdd = []
+  // pembelianpermintaanagenspnobukti - prefix ikut jenis PR
+  setNewNoBukti()
     cleanFormAdd()
 
     $.ajax({
@@ -2652,7 +2812,7 @@ function searchBarangAll (e) {
       async: false,
       data: {
         search,
-        isagen : 1
+        jenis : prJenisForm
       },
       success: function (res) {
         dataAddListItem = res;
@@ -2698,6 +2858,16 @@ function buttonAddAddInsertItem (i) {
   $('#input_add_add_keterangannama').val(item.NAMABRG);
 
   let satuanOptions = '';
+  if (prJenisForm === 'nonstock') {
+    // Non Stock: satuan tidak dipilih, selalu SAT1 (dropdown tetap dikunci).
+    $('#input_add_add_satuan').html(`<option value="${item.SAT1 || ''}">${item.SAT1 || '-'}</option>`);
+    $('#formAddListItem').modal('hide');
+    setTimeout(() => {
+      document.getElementById("input_add_add_qnt").focus();
+      document.getElementById("input_add_add_qnt").select();
+    }, 300);
+    return;
+  }
   if (item.SAT1) satuanOptions += `<option value="${item.SAT1}">${item.SAT1} - ${Number(String(item.ISI1||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
   if (item.SAT2) satuanOptions += `<option value="${item.SAT2}">${item.SAT2} - ${Number(String(item.ISI2||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
   if (item.SAT3) satuanOptions += `<option value="${item.SAT3}">${item.SAT3} - ${Number(String(item.ISI3||0).replace(/,/g,'')).toLocaleString('id-ID')}</option>`;
@@ -2736,7 +2906,7 @@ function buttonAddAddInsertItem (i) {
   let qnt = formatAngkaVal($("#input_add_add_qnt").val())
   let keterangan = $("#input_add_add_keterangan").val();
   let kodedepartemen = $("#input_add_kodedepartemen").val();
-  let isjasa = 0;
+  let jenisCfg = PR_JENIS[prJenisForm];
 
   let barang = dataAddListItem.find(item => item.KODEBRG === kodebarang);
 
@@ -2748,11 +2918,11 @@ function buttonAddAddInsertItem (i) {
   let isi = 0;
   let nosat = 0;
 
-  // Validasi jika jasa TANPA satuan
-  if (isjasa == "1" && !barang.SAT1 && !barang.SAT2 && !barang.SAT3) {
+  // Non Stock: satuan tidak dipilih, selalu SAT1 - sama seperti menu PR Non Stock lama.
+  if (prJenisForm === 'nonstock') {
     nosat = 1;
     isi = barang.ISI1 || 1;
-    satuan = 1;
+    satuan = barang.SAT1 || 1;
   } else if (satuan === barang.SAT1) {
     isi = Number(String(barang.ISI1 ?? 0).replace(/,/g, '')) || 0;
     nosat = 1;
@@ -2783,9 +2953,7 @@ function buttonAddAddInsertItem (i) {
     nourut,
     tanggal,
     kodedepartemen,
-    isjasa,
-    pagen: 1,
-    pjasa: 0,
+    jenis: prJenisForm,
     kodebarang,
     keterangannama,
     satuan,
@@ -2813,9 +2981,10 @@ function buttonAddAddInsertItem (i) {
       nourut,
       tanggal,
       kodedepartemen,
-      isjasa,
-      pagen: 1,
-      pjasa: 0,
+      jenis: prJenisForm,
+      isjasa: jenisCfg.isjasa,
+      pagen: jenisCfg.pagen,
+      pjasa: jenisCfg.pjasa,
       kodebarang,
       keterangannama,
       satuan,
@@ -2836,6 +3005,8 @@ function buttonAddAddInsertItem (i) {
       if (res == 1) {
         loadAll();
         tipeform = 'edit';
+        // PR sudah tersimpan dengan jenis ini - jenisnya tidak boleh diganti lagi.
+        document.getElementById("input_add_jenispr").disabled = true;
         cleanFormAddAdd();
         refreshDataTableAdd(nobukti);
         alertify.success('Berhasil menambah item');
@@ -2855,7 +3026,7 @@ function buttonAddAddInsertItem (i) {
 
   function buttonEditAddItem () {
 
-  let akses = $("#akses_istambah").val();
+  let akses = prAkses(prJenisForm, 'ISTAMBAH');
 
   if (!Number(akses)) {
     alertify.warning('No access')
@@ -2921,8 +3092,12 @@ function buttonAddAddItem () {
 
   document.getElementById("input_add_add_satuan").innerHTML = satuanOptions;
 
+  // Non Stock: satuan tidak dipilih (selalu SAT1), dropdown dikunci - sama seperti menu lama.
+  if (prJenisForm === 'nonstock') {
+    document.getElementById("input_add_add_satuan").innerHTML = `<option value="">-</option>`;
+    document.getElementById("input_add_add_satuan").disabled = true;
   // Disable satuan jika jasa tanpa satuan
-  if (tempAdd.ISJASA == "1" && !tempAdd.SAT1 && !tempAdd.SAT2 && !tempAdd.SAT3) {
+  } else if (tempAdd.ISJASA == "1" && !tempAdd.SAT1 && !tempAdd.SAT2 && !tempAdd.SAT3) {
     document.getElementById("input_add_add_satuan").disabled = true;
   } else {
     document.getElementById("input_add_add_satuan").disabled = false;

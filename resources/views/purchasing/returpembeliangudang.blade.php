@@ -1446,6 +1446,7 @@ td input[type="checkbox"] {
 @endsection
 
 @section('js')
+@include('partials.tabel-memuat')
 <script src="{!! URL::asset('js/ajc-func-core.js') !!}"></script>
 {{-- Header tabel interaktif (drag kolom + roda gigi + bar kolom tersembunyi + tombol
      "Reset kolom"), sama dengan newpo.blade.php / uangmukabeli.blade.php. --}}

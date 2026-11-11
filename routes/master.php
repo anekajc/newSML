@@ -523,6 +523,7 @@ Route::get('/masterkotaloadall' , [MasterKotaController::class, 'loadAll'])->mid
 //MASTER SUPPLIER ========================================================
 Route::get('/mastersupplier' , [MasterSupplierController::class, 'index'])->middleware('auth');
 Route::get('/mastersupplierlistkota' , [MasterSupplierController::class, 'spListKota'])->middleware('auth');
+Route::get('/mastersupplierceknpwp' , [MasterSupplierController::class, 'cekNpwp'])->middleware('auth');
 Route::post('/mastersupplierspadd' , [MasterSupplierController::class, 'spAdd'])->middleware('auth');
 Route::post('/mastersupplierspdetail' , [MasterSupplierController::class, 'spDetail'])->middleware('auth');
 Route::post('/mastersupplierspdelete' , [MasterSupplierController::class, 'spDelete'])->middleware('auth');
@@ -552,6 +553,7 @@ Route::get('/mastergroupcustomerloadall' , [MasterGroupCustomerController::class
 //MASTER CUSTOMER ========================================================
 Route::get('/mastercustomer' , [MasterCustomerController::class, 'index'])->middleware('auth');
 Route::get('/mastercustomerlistselect' , [MasterCustomerController::class, 'spListSelect'])->middleware('auth');
+Route::get('/mastercustomerceknpwp' , [MasterCustomerController::class, 'cekNpwp'])->middleware('auth');
 Route::post('/mastercustomerspadd' , [MasterCustomerController::class, 'spAdd'])->middleware('auth');
 Route::post('/mastercustomerspdelete' , [MasterCustomerController::class, 'spDelete'])->middleware('auth');
 Route::post('/mastercustomerspdetail' , [MasterCustomerController::class, 'spDetail'])->middleware('auth');
@@ -567,6 +569,7 @@ Route::post('/mastercustomerspdeletedetailakun' , [MasterCustomerController::cla
 // MASTER EKSPEDISI ==========================================================
 Route::get('/masterekspedisi', [MasterEkspedisiController::class, 'index'])->middleware('auth');
 Route::get('/masterekspedisiloadall', [MasterEkspedisiController::class, 'loadAll'])->middleware('auth');
+Route::get('/masterEkspedisiCekNpwp', [MasterEkspedisiController::class, 'cekNpwp'])->middleware('auth');
 Route::get('/masterEkspedisiLoadDetailAkun', [MasterEkspedisiController::class, 'loadDetailAkun'])->middleware('auth');
 Route::get('/masterEkspedisiLoadDetailAkunEdit', [MasterEkspedisiController::class, 'loadDetailAkunEdit'])->middleware('auth');
 Route::get('/masterEkspedisiLoadHutangPiutang', [MasterEkspedisiController::class, 'loadHutangPiutang'])->middleware('auth');

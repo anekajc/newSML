@@ -80,6 +80,9 @@
           <input type="hidden" name="noUrut" id="input_add_noUrut" value="" />
 
             <div class="bs-form">
+          <label for="input_add_npwp">NPWP/NIK <span class="text-danger">*</span></label>
+          <div class="bs-full"><small class="npwp-warn"></small><input type="text" class="form-control" id="input_add_npwp" placeholder="NPWP/NIK"></div>
+
           <label for="input_add_kode">Kode</label>
           <input type="text" class="form-control" id="input_add_kode" placeholder="Kode">
           <label for="input_add_bentukusaha">Bentuk Usaha</label>
@@ -161,10 +164,6 @@
             <h5>Data Pajak</h5>
             <br/>
             <div class="bs-form bs-form-1">
-          <label for="input_add_npwp">NPWP</label>
-          <div class="bs-full"><input type="text" class="form-control" id="input_add_npwp" placeholder="NPWP"></div>
-        </div>
-            <div class="bs-form bs-form-1">
           <label for="input_add_namapkp">Nama</label>
           <input type="text" class="form-control" id="input_add_namapkp" placeholder="Nama PKP">
 
@@ -204,6 +203,9 @@
           <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
 
             <div class="bs-form">
+          <label for="input_edit_npwp">NPWP/NIK <span class="text-danger">*</span></label>
+          <div class="bs-full"><small class="npwp-warn"></small><input type="text" class="form-control" id="input_edit_npwp" placeholder="NPWP/NIK"></div>
+
           <label for="input_edit_kode">Kode</label>
           <input type="text" class="form-control" disabled id="input_edit_kode" placeholder="Kode">
           <label for="input_edit_bentukusaha">Bentuk Usaha</label>
@@ -289,9 +291,6 @@
             <h5>Data Pajak</h5>
             <br/>
             <div class="bs-form bs-form-1">
-          <label for="input_edit_npwp">NPWP</label>
-          <input type="text" class="form-control" id="input_edit_npwp" placeholder="NPWP">
-
           <label for="input_edit_namapkp">Nama</label>
           <input type="text" class="form-control" id="input_edit_namapkp" placeholder="Nama PKP">
 
@@ -470,9 +469,16 @@
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/master-list.js') !!}?v={{ @filemtime(base_path('public/js/master-list.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+@include('master.partials.npwpCek')
 <script type="text/javascript">
 
 let dataRefresh = []
+
+// NPWP/NIK dicek ke server saat diketik (hanya dibandingkan dengan supplier lain).
+$(function () {
+  npwpPasang('#input_add_npwp', "{!! url('mastersupplierceknpwp') !!}")
+  npwpPasang('#input_edit_npwp', "{!! url('mastersupplierceknpwp') !!}", function () { return $('#input_edit_kode').val() })
+})
 
 // ---------- Tumpukan modal (disalin dari accounting/penerimaandpp) ----------
 // Hanya satu modal yang terlihat pada satu waktu. Saat modal anak dibuka (Add/Edit Detail Akun,
@@ -574,6 +580,7 @@ function buttonAdd () {
   // sebelumnya ikut terbawa.
   $('#form .modal-body input[type="text"], #form .modal-body input[type="number"]').each(function () { this.value = this.defaultValue })
   $('#form .modal-body input[type="checkbox"]').prop('checked', false)
+  npwpReset('#input_add_npwp')
 
   $.ajax({
     url: "{!! url('mastersupplierlistkota') !!}",
@@ -661,6 +668,8 @@ function buttonEdit (kode) {
       document.getElementById("input_edit_bank").value = res[0].bank
       document.getElementById("input_edit_atn").value = res[0].ATN
       document.getElementById("input_edit_npwp").value = res[0].NPWP
+      npwpReset('#input_edit_npwp')
+      npwpCekSekarang('#input_edit_npwp')
       document.getElementById("input_edit_namapkp").value = res[0].NAMAPKP
       document.getElementById("input_edit_alamatpkp").value = res[0].ALAMATPKP1
       document.getElementById("input_edit_kotapkp").value = res[0].KOTAPKP
@@ -766,6 +775,8 @@ function submitEdit () {
 
   // jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, bank,accno,npwp,namapkp,alamatpkp,kotapkp,atn
 
+  if (!npwpValid('#input_edit_npwp')) return
+
   if (!kode) {
     alertify.warning("Kode harus diisi");
     return
@@ -867,6 +878,8 @@ function submitAdd () {
   let jenis = 0
 
   // jenis,kode,bentukusaha, nama, alamat, kota, kodepos, negara, telp, fax, email, pph23,pph21,haripiutang, isaktif,att,attphone,attdepart, bank,accno,npwp,namapkp,alamatpkp,kotapkp,atn
+
+  if (!npwpValid('#input_add_npwp')) return
 
   if (!kode) {
     alertify.warning("Kode harus diisi");
