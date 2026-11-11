@@ -449,7 +449,18 @@
   }
 
   function toggleExport() { document.getElementById('exportDrop').classList.toggle('open'); }
-  function doExport(fmt) { if (fmt === 'Print') { window.print(); } }
+  // Excel = tabel #mainTable apa adanya (yang tampil di layar, termasuk filter pencarian) lewat
+  // doExportTableToExcel() milik masterreport2 -> ReportExport.toXlsx (public/js/report-export.js).
+  function doExport(fmt) {
+    document.getElementById('exportDrop').classList.remove('open');
+    if (fmt === 'Print') { window.print(); return; }
+    if (!document.querySelector('#tableBody tr.data-row')) {
+      const msg = 'Tidak ada data untuk di-export. Klik Tampilkan terlebih dahulu.';
+      if (window.alertify && typeof alertify.alert === 'function') { alertify.alert(msg); } else { alert(msg); }
+      return;
+    }
+    doExportTableToExcel('mainTable');
+  }
   document.addEventListener('click', function (e) {
     const wrap = document.getElementById('exportWrap');
     if (wrap && !wrap.contains(e.target)) { document.getElementById('exportDrop').classList.remove('open'); }

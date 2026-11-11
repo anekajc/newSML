@@ -761,7 +761,20 @@
   }
 
   function toggleExport() { document.getElementById('exportDrop').classList.toggle('open'); }
-  function doExport(fmt) { if (fmt === 'Print') { window.print(); } }
+  // Excel = tabel #mainTable apa adanya (yang tampil di layar; mode QTY maupun QTY+Rp dengan header
+  // rowspan/colspan jadi sel merge) lewat ReportExport.toXlsx (public/js/report-export.js).
+  // Tidak memakai doExportTableToExcel() milik masterreportGudang: guard #showTableReport-nya
+  // tidak berlaku untuk halaman ini.
+  function doExport(fmt) {
+    document.getElementById('exportDrop').classList.remove('open');
+    if (fmt === 'Print') { window.print(); return; }
+    if (!document.querySelector('#tableBody tr.data-row')) {
+      const msg = 'Tidak ada data untuk di-export. Klik Tampilkan terlebih dahulu.';
+      if (window.alertify && typeof alertify.alert === 'function') { alertify.alert(msg); } else { alert(msg); }
+      return;
+    }
+    ReportExport.toXlsx('mainTable', { baseName: @json($akses['xlsfilename'] ?? 'KartuStock'), sheetName: 'Kartu Stock' });
+  }
   document.addEventListener('click', function (e) {
     const wrap = document.getElementById('exportWrap');
     if (wrap && !wrap.contains(e.target)) { document.getElementById('exportDrop').classList.remove('open'); }
