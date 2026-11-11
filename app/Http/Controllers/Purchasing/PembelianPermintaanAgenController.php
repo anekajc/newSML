@@ -242,7 +242,9 @@ class PembelianPermintaanAgenController extends Controller
         } else {
             $headertablealias = [];
         }
-        if (count($headertable) > 0) {
+        // Pengaturan yang tersimpan kosong (mis. disimpan waktu tabel tidak punya kolom)
+        // dianggap belum ada, supaya kolom default diturunkan ulang.
+        if (count($headertable) > 0 && !empty(json_decode($headertable[0]->value))) {
             $isnumberheadertable = json_decode($headertable[0]->isnumber) ?: [];
             $headertablevalue = json_decode($headertable[0]->value) ?: [];
             $headertableheader = json_decode($headertable[0]->header) ?: [];
@@ -265,6 +267,13 @@ class PembelianPermintaanAgenController extends Controller
             // komentar di query vwppl di atas.
             $kolomInternal = ['Qnt', 'QntBatal', 'QntPO', 'JenisKode'];
             if (!$tempOutstanding) {
+                // Periode tanpa data: kolom tidak bisa diturunkan dari baris pertama, jadi
+                // pakai susunan default yang sama (NoBukti, Jenis, Tanggal) supaya kolom
+                // No Bukti / Jenis / Tanggal tetap tampil walau tabel kosong.
+                $headertablevalue     = ['NoBukti', 'Jenis', 'Tanggal'];
+                $headertableheader    = ['NoBukti', 'Jenis', 'Tanggal'];
+                $headerisshown        = [1, 1, 1];
+                $isnumberheadertable  = [0, 0, 2];
             } else {
                 foreach ($tempOutstanding[0][0] as $key => $value) {
                     if (str_contains($key, "Oto") || in_array($key, $kolomInternal, true)) {
