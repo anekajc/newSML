@@ -2884,6 +2884,7 @@
 @endsection
 
 @section('js')
+@include('partials.tabel-memuat')
 @include('marketing.partials.tampilan-purchasing-js')
 {{-- window.ReportTable (drag/gear header engine) -- loaded here same as
      marketing/so.blade.php, since purchasing.newmasterx doesn't include it by

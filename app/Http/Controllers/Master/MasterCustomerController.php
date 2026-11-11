@@ -10,10 +10,30 @@ use App\Models\NewAksesMenu;
 use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
+use App\Traits\NpwpTrait;
 
 
 class MasterCustomerController extends Controller
 {
+  use NpwpTrait;
+
+  protected function jenisCustSupp(): int { return 1; }
+
+  /**
+   * Pembayaran customer: 0 = Tunai/CBD, 1 = Kredit (sama dengan TipeBayar di SO).
+   * Kredit wajib punya TOP > 0; Tunai/CBD boleh TOP 0.
+   * Mengembalikan pesan error, atau null bila valid.
+   */
+  protected function validasiPembayaran($tipebayar, $top): ?string {
+    if (!in_array((string) $tipebayar, ['0', '1'], true)) {
+      return 'Pembayaran harus dipilih (Tunai/CBD atau Kredit)';
+    }
+    if ((int) $tipebayar === 1 && (int) $top <= 0) {
+      return 'TOP wajib diisi (lebih dari 0) untuk pembayaran Kredit';
+    }
+    return null;
+  }
+
 
   public function index(Request $req) {
 
@@ -47,21 +67,23 @@ class MasterCustomerController extends Controller
 
   public function spAdd (Request $req) {
     $check = DB::connection('SML')->select('SELECT * FROM DBCUSTSUPP where KODECUSTSUPP = :kode' , ['kode' => $req->kode]);
-    // NPWP kosong tidak dicek: form kosong sampai ke sini sebagai null, dan koneksi SQL Server
-    // produksi (ANSI_NULLS OFF) mencocokkan "NPWP = NULL" dengan baris yang NPWP-nya null -
-    // akibatnya customer tanpa NPWP selalu ditolak "NPWP sudah ada".
-    $checkNPWP = trim((string) $req->npwp) === '' ? [] :
-      DB::connection('SML')->select('SELECT * FROM DBCUSTSUPP where NPWP = :npwp' , ['npwp' => $req->npwp]);
-
     if ($check) {
       return 'Kode supplier/customer sudah ada di database';
     }
 
-     if ($checkNPWP) {
-      return 'NPWP sudah ada di database';
+    // NPWP/NIK wajib & tidak boleh sama dengan customer lain (NpwpTrait).
+    $errNpwp = $this->validasiNpwp($req->npwp);
+    if ($errNpwp) {
+      return $errNpwp;
     }
 
-    $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis, HARI, PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList, KodeSls, BOffice ) VALUES (:usaha, :kode , :nama , :alamat , :kota , :kodepos ,  :negara, :telp,:fax , :email , :npph23 , :npph21 , :haripiutang, :isaktif , :att, :attphone ,:attdepart,  :npwp ,:namapkp ,:alamatpkp ,:kotapkp, :isppn , :jenis , :top , :plafon , :jeniscustomer, :groupcustomer, :intcode, :compcode, :custcode , :berikat, :blacklist, :kodesls, :boffice)' , 
+    $errBayar = $this->validasiPembayaran($req->tipebayar, $req->top);
+    if ($errBayar) {
+      return $errBayar;
+    }
+    $tipebayar = (int) $req->tipebayar;
+
+    $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis, HARI, PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList, KodeSls, BOffice, TipeBayar ) VALUES (:usaha, :kode , :nama , :alamat , :kota , :kodepos ,  :negara, :telp,:fax , :email , :npph23 , :npph21 , :haripiutang, :isaktif , :att, :attphone ,:attdepart,  :npwp ,:namapkp ,:alamatpkp ,:kotapkp, :isppn , :jenis , :top , :plafon , :jeniscustomer, :groupcustomer, :intcode, :compcode, :custcode , :berikat, :blacklist, :kodesls, :boffice, :tipebayar)' , 
    
     ['usaha'=> $req->bentukusaha , 
     'kode' => $req->kode , 
@@ -96,7 +118,8 @@ class MasterCustomerController extends Controller
     'berikat' => $req->berikat, 
     'blacklist' => $req->blacklist ,
     'kodesls' => $req->kodesls ?: null ,
-    'boffice' => $req->boffice ?: null ]);
+    'boffice' => $req->boffice ?: null ,
+    'tipebayar' => $tipebayar ]);
 
     return 1;
 
@@ -134,13 +157,24 @@ class MasterCustomerController extends Controller
   }
 
   public function spDetail (Request $req) {
-    $detail = DB::connection('SML')->select('SELECT USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, bank, NoAcc , ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis,HARI,PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList, KodeSls, BOffice from DBCUSTSUPP where KODECUSTSUPP = :kode', ['kode' => $req->kode]);
+    $detail = DB::connection('SML')->select('SELECT USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, bank, NoAcc , ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis,HARI,PLAFON , JenisCustSupp, Agent, IntCode, CompCode, CustCode , BERIKAT, pBlackList, KodeSls, BOffice, TipeBayar from DBCUSTSUPP where KODECUSTSUPP = :kode', ['kode' => $req->kode]);
     // $listData = DB::connection('SML')->select('SELECT USAHA , KODECUSTSUPP , NAMACUSTSUPP ,  ALAMAT1 , Kota, KODEPOS , NEGARA, TELPON , FAX , EMAIL, NPPH23 , NPPH22 , HARIHUTPIUT , IsAktif, Att , AttPhone , AttDepart, bank, NoAcc , ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis from DBCUSTSUPP where Jenis = 0');
     return $detail;
   }
 
   public function spEdit (Request $req) {
-    $edit = DB::connection('SML')->update('update DBCUSTSUPP set HARI = :top ,PLAFON = :plafon , JenisCustSupp = :jeniscustomer , Agent = :groupcustomer , IntCode = :intcode , CompCode = :compcode , CustCode = :custcode , BERIKAT = :berikat , pBlackList = :blacklist , KodeSls = :kodesls , BOffice = :boffice ,  USAHA =:usaha , NAMACUSTSUPP = :nama ,  ALAMAT1 = :alamat, Kota = :kota, KODEPOS = :kodepos , NEGARA= :negara, TELPON = :telp , FAX  = :fax, EMAIL = :email, NPPH23 = :npph23, NPPH22 = :npph21, HARIHUTPIUT = :haripiutang , IsAktif = :isaktif, Att = :att , AttPhone = :attphone, AttDepart = :attdepart ,  NPWP = :npwp , NAMAPKP = :namapkp , ALAMATPKP1 = :alamatpkp , KOTAPKP = :kotapkp , IsPpn = :isppn  where KODECUSTSUPP = :kode' , ['top' => $req->top , 'plafon' => $req->plafon , 'jeniscustomer' => $req->jeniscustomer, 'groupcustomer' => $req->groupcustomer, 'intcode' => $req->intcomp , 'compcode' => $req->compcode, 'custcode' => $req->custcode , 'berikat' => $req->berikat, 'blacklist' => $req->blacklist , 'kodesls' => $req->kodesls ?: null , 'boffice' => $req->boffice ?: null ,'usaha'=> $req->bentukusaha , 'nama' => $req->nama , 'alamat' => $req->alamat , 'kota'=> $req->kota , 'kodepos' => $req->kodepos ,  'negara' => $req->negara, 'telp' => $req->telp ,'fax' => $req->fax , 'email' => $req->email , 'npph23' => $req->pph23 , 'npph21' => $req->pph21 , 'haripiutang' => $req->haripiutang , 'isaktif'=> $req->isaktif , 'att'=>$req->att, 'attphone'=> $req->attphone , 'attdepart'=>$req->attdepart,  'npwp' => $req->npwp , 'namapkp' => $req->namapkp ,'alamatpkp' => $req->alamatpkp , 'kotapkp' => $req->kotapkp , 'isppn'=> $req->isppn , 'kode' => $req->kode]);
+    $errNpwp = $this->validasiNpwp($req->npwp, $req->kode);
+    if ($errNpwp) {
+      return $errNpwp;
+    }
+
+    $errBayar = $this->validasiPembayaran($req->tipebayar, $req->top);
+    if ($errBayar) {
+      return $errBayar;
+    }
+    $tipebayar = (int) $req->tipebayar;
+
+    $edit =DB::connection('SML')->update('update DBCUSTSUPP set TipeBayar = :tipebayar , HARI = :top ,PLAFON = :plafon , JenisCustSupp = :jeniscustomer , Agent = :groupcustomer , IntCode = :intcode , CompCode = :compcode , CustCode = :custcode , BERIKAT = :berikat , pBlackList = :blacklist , KodeSls = :kodesls , BOffice = :boffice ,  USAHA =:usaha , NAMACUSTSUPP = :nama ,  ALAMAT1 = :alamat, Kota = :kota, KODEPOS = :kodepos , NEGARA= :negara, TELPON = :telp , FAX  = :fax, EMAIL = :email, NPPH23 = :npph23, NPPH22 = :npph21, HARIHUTPIUT = :haripiutang , IsAktif = :isaktif, Att = :att , AttPhone = :attphone, AttDepart = :attdepart ,  NPWP = :npwp , NAMAPKP = :namapkp , ALAMATPKP1 = :alamatpkp , KOTAPKP = :kotapkp , IsPpn = :isppn  where KODECUSTSUPP = :kode' , ['tipebayar' => $tipebayar , 'top' => $req->top , 'plafon' => $req->plafon , 'jeniscustomer' => $req->jeniscustomer, 'groupcustomer' => $req->groupcustomer, 'intcode' => $req->intcomp , 'compcode' => $req->compcode, 'custcode' => $req->custcode , 'berikat' => $req->berikat, 'blacklist' => $req->blacklist , 'kodesls' => $req->kodesls ?: null , 'boffice' => $req->boffice ?: null ,'usaha'=> $req->bentukusaha , 'nama' => $req->nama , 'alamat' => $req->alamat , 'kota'=> $req->kota , 'kodepos' => $req->kodepos ,  'negara' => $req->negara, 'telp' => $req->telp ,'fax' => $req->fax , 'email' => $req->email , 'npph23' => $req->pph23 , 'npph21' => $req->pph21 , 'haripiutang' => $req->haripiutang , 'isaktif'=> $req->isaktif , 'att'=>$req->att, 'attphone'=> $req->attphone , 'attdepart'=>$req->attdepart,  'npwp' => $req->npwp , 'namapkp' => $req->namapkp ,'alamatpkp' => $req->alamatpkp , 'kotapkp' => $req->kotapkp , 'isppn'=> $req->isppn , 'kode' => $req->kode]);
 
     return $edit;
   }

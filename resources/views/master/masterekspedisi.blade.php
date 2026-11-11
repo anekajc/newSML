@@ -82,6 +82,9 @@
           <input type="hidden" id="input_add_alamatPajak2">
 
             <div class="bs-form">
+          <label for="input_add_NPWP">NPWP/NIK <span class="text-danger">*</span></label>
+          <div class="bs-full"><small class="npwp-warn"></small><input type="text" class="form-control" id="input_add_NPWP" placeholder="NPWP/NIK"></div>
+
           <label for="input_add_kode">Kode</label>
           <input type="text" class="form-control" id="input_add_kode" placeholder="Kode">
           <label for="input_add_bentukUsaha">Bentuk Usaha</label>
@@ -157,9 +160,6 @@
             <h5>Data Pajak</h5>
             <br/>
             <div class="bs-form bs-form-1">
-          <label for="input_add_NPWP">NPWP</label>
-          <input type="text" class="form-control" id="input_add_NPWP" placeholder="NPWP">
-
           <label for="input_add_namaPajak">Nama</label>
           <input type="text" class="form-control" id="input_add_namaPajak" placeholder="Nama PKP">
 
@@ -205,6 +205,9 @@
           <input type="hidden" id="input_edit_alamatPajak2">
 
             <div class="bs-form">
+          <label for="input_edit_NPWP">NPWP/NIK <span class="text-danger">*</span></label>
+          <div class="bs-full"><small class="npwp-warn"></small><input type="text" class="form-control" id="input_edit_NPWP" placeholder="NPWP/NIK"></div>
+
           <label for="input_edit_kode">Kode</label>
           <input type="text" class="form-control" disabled id="input_edit_kode" placeholder="Kode">
           <label for="input_edit_bentukUsaha">Bentuk Usaha</label>
@@ -280,9 +283,6 @@
             <h5>Data Pajak</h5>
             <br/>
             <div class="bs-form bs-form-1">
-          <label for="input_edit_NPWP">NPWP</label>
-          <input type="text" class="form-control" id="input_edit_NPWP" placeholder="NPWP">
-
           <label for="input_edit_namaPajak">Nama</label>
           <input type="text" class="form-control" id="input_edit_namaPajak" placeholder="Nama PKP">
 
@@ -546,9 +546,16 @@
 <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/master-list.js') !!}?v={{ @filemtime(base_path('public/js/master-list.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
+@include('master.partials.npwpCek')
 <script type="text/javascript">
 
 let dataRefresh = []
+
+// NPWP/NIK dicek ke server saat diketik (hanya dibandingkan dengan ekspedisi lain).
+$(function () {
+  npwpPasang('#input_add_NPWP', "{!! url('masterEkspedisiCekNpwp') !!}")
+  npwpPasang('#input_edit_NPWP', "{!! url('masterEkspedisiCekNpwp') !!}", function () { return $('#input_edit_kode').val() })
+})
 
 // Kolom tabel daftar (lebih dari 5 kolom -> bisa digeser & disembunyikan, lihat MasterList.kolom()).
 // [field, label, tampil, tipe, total, desimal]
@@ -653,6 +660,7 @@ function buttonAdd () {
   $('#form .modal-body input[type="hidden"]').val('')
   $('#form .modal-body input[type="checkbox"]').prop('checked', false)
   $('#form .modal-body select').prop('selectedIndex', 0)
+  npwpReset('#input_add_NPWP')
 
   isiKota('input_add_kota')
 
@@ -697,6 +705,8 @@ function buttonEdit (kode) {
       document.getElementById("input_edit_accNo").value = res[0].NoAcc
       document.getElementById("input_edit_atasNama").value = res[0].ATN
       document.getElementById("input_edit_NPWP").value = res[0].NPWP
+      npwpReset('#input_edit_NPWP')
+      npwpCekSekarang('#input_edit_NPWP')
       document.getElementById("input_edit_pajakKota").value = res[0].KOTAPKP
       document.getElementById("input_edit_namaPajak").value = res[0].NAMAPKP
       document.getElementById("input_edit_alamatPajak").value = res[0].ALAMATPKP1
@@ -775,6 +785,8 @@ function submitEdit () {
   let namaPkp = $("#input_edit_namaPajak").val(); //NamaPKP
   let alamatPkp = $("#input_edit_alamatPajak").val(); //AlamatPkp1
   let alamatPkp2 = $("#input_edit_alamatPajak2").val() //AlamatPkp2
+
+  if (!npwpValid('#input_edit_NPWP')) return
 
   // Validasi sama dengan mastersupplier.
   if (!kodeCustSupp) {
@@ -876,6 +888,8 @@ function submitAdd () {
   let namaPkp = $("#input_add_namaPajak").val(); //NamaPKP
   let alamatPkp = $("#input_add_alamatPajak").val(); //AlamatPkp1
   let alamatPkp2 = $("#input_add_alamatPajak2").val() //AlamatPkp2
+
+  if (!npwpValid('#input_add_NPWP')) return
 
   if(!attPhone){
     alertify.warning('PIC Phone Wajib Diisi')
