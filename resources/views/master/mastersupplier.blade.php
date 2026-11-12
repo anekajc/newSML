@@ -86,16 +86,8 @@
           <label for="input_add_kode">Kode</label>
           <input type="text" class="form-control" id="input_add_kode" placeholder="Kode">
           <label for="input_add_bentukusaha">Bentuk Usaha</label>
-          <div class="d-flex align-items-center" style="gap:8px"><select id="input_add_bentukusaha" class="form-control" aria-label="Default select example" onchange=changePph23()>
-                    <option selected value="PT">PT</option>
-                    <option value="CV">CV</option>
-                    <option value="PD">PD</option>
-                    <option value="UD">UD</option>
-                    <option value="TOKO">TOKO</option>
-                    <option value="BAPAK">BAPAK</option>
-                    <option value="IBU">IBU</option>
-                    <option value="EXP">EXP</option>
-                    <option value="-">-</option>
+          <div class="d-flex align-items-center" style="gap:8px"><select id="input_add_bentukusaha" class="form-control" aria-label="Bentuk Usaha">
+                    @include('master.partials.badanUsaha', ['opsiSaja' => true])
                   </select>
             <input type="checkbox" id="input_add_isppn" name="" value="">
                 <label class="text-left">PKP</label></div>
@@ -210,20 +202,12 @@
           <input type="text" class="form-control" disabled id="input_edit_kode" placeholder="Kode">
           <label for="input_edit_bentukusaha">Bentuk Usaha</label>
           <div class="d-flex align-items-center" style="gap:8px"><!-- <div class="form-group">
-                  <input type="text" class="form-control" id="input_edit_bentukusaha" placeholder="Bentuk Usaha">
+                  <input type="text" class="form-control" id="input_edit_bentukusaha_lama" placeholder="Bentuk Usaha">
                 </div> -->
 
                 <div class="form-group">
-                  <select id="input_edit_bentukusaha" class="form-control" aria-label="Default select example">
-                    <option selected value="PT">PT</option>
-                    <option value="CV">CV</option>
-                    <option value="PD">PD</option>
-                    <option value="UD">UD</option>
-                    <option value="TOKO">TOKO</option>
-                    <option value="BAPAK">BAPAK</option>
-                    <option value="IBU">IBU</option>
-                    <option value="EXP">EXP</option>
-                    <option value="-">-</option>
+                  <select id="input_edit_bentukusaha" class="form-control" aria-label="Bentuk Usaha">
+                    @include('master.partials.badanUsaha', ['opsiSaja' => true])
                   </select>
                 </div>
             <input type="checkbox" id="input_edit_isppn" name="">
@@ -470,6 +454,7 @@
 <script src="{!! URL::asset('js/master-list.js') !!}?v={{ @filemtime(base_path('public/js/master-list.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
 @include('master.partials.npwpCek')
+@include('master.partials.badanUsaha')
 <script type="text/javascript">
 
 let dataRefresh = []
@@ -581,6 +566,8 @@ function buttonAdd () {
   $('#form .modal-body input[type="text"], #form .modal-body input[type="number"]').each(function () { this.value = this.defaultValue })
   $('#form .modal-body input[type="checkbox"]').prop('checked', false)
   npwpReset('#input_add_npwp')
+  // Bentuk Usaha wajib dipilih dari Master Badan Usaha; PPh21/PPh23 ikut terisi (dikunci).
+  BadanUsaha.pilih('#input_add_bentukusaha', '', '#input_add_pph21', '#input_add_pph23')
 
   $.ajax({
     url: "{!! url('mastersupplierlistkota') !!}",
@@ -657,8 +644,9 @@ function buttonEdit (kode) {
       document.getElementById("input_edit_negara").value = res[0].NEGARA
       document.getElementById("input_edit_fax").value = res[0].FAX
       document.getElementById("input_edit_email").value = res[0].EMAIL
-      document.getElementById("input_edit_pph23").value = (parseFloat(res[0].NPPH23) || 0).toFixed(2)
-      document.getElementById("input_edit_pph21").value = (parseFloat(res[0].NPPH22) || 0).toFixed(2)
+      // PPh21/PPh23 mengikuti Master Badan Usaha. Data lama yang tidak ada di master
+      // (kosong, 'KOP', ...) -> dropdown kosong, wajib dipilih sebelum simpan.
+      BadanUsaha.pilih('#input_edit_bentukusaha', res[0].USAHA, '#input_edit_pph21', '#input_edit_pph23')
       document.getElementById("input_edit_haripiutang").value = String(res[0].HARIHUTPIUT ?? '').replace(/^(-?)\./, (m, minus) => minus + '0.')
       document.getElementById("input_edit_isaktif").value = res[0].IsAktif
       document.getElementById("input_edit_att").value = res[0].Att
@@ -725,7 +713,7 @@ function submitEdit () {
   let kode = $("#input_edit_kode").val();
   console.log('kode' , kode)
   let bentukusaha = $("#input_edit_bentukusaha").val();
-  console.log('bentukusaha' , bentukusaha)
+  if (!BadanUsaha.cek('#input_edit_bentukusaha')) return
   let nama = $("#input_edit_nama").val();
   console.log('nama' , nama)
   let alamat = $("#input_edit_alamat").val();
@@ -829,7 +817,7 @@ function submitAdd () {
   let kode = $("#input_add_kode").val();
   console.log('kode' , kode)
   let bentukusaha = $("#input_add_bentukusaha").val();
-  console.log('bentukusaha' , bentukusaha)
+  if (!BadanUsaha.cek('#input_add_bentukusaha')) return
   let nama = $("#input_add_nama").val();
   console.log('nama' , nama)
   let alamat = $("#input_add_alamat").val();
@@ -1141,20 +1129,12 @@ function loadPerkiraanEdit (perkiraan, kodecust){
 
 }
 
-function changePph23() {
-  let valueUsaha = document.getElementById('input_add_bentukusaha').value 
-
-  console.log(valueUsaha);
-
-  if (valueUsaha == 'PT' || valueUsaha == 'CV') {
-    document.getElementById('input_add_pph23').value = 2
-  } else {
-    document.getElementById('input_add_pph23').value = 2.5
-  }
-}
+// changePph23() (PT/CV = 2, lainnya = 2.5) diganti Master Badan Usaha - lihat partials/badanUsaha.
 
 window.onload = function(){
   MasterList.kolom({ href: 'mastersupplier', kolom: MSP_KOLOM, onChange: loadAll })
+  BadanUsaha.pasang('#input_add_bentukusaha', '#input_add_pph21', '#input_add_pph23')
+  BadanUsaha.pasang('#input_edit_bentukusaha', '#input_edit_pph21', '#input_edit_pph23')
   loadAll();
 };
 

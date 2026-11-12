@@ -19,6 +19,7 @@ use App\Http\Controllers\Master\MasterHeadGroupController;
 use App\Http\Controllers\Master\MasterHutangController;
 use App\Http\Controllers\Master\MasterJabatanController;
 use App\Http\Controllers\Master\MasterJenisCustomerController;
+use App\Http\Controllers\Master\MasterBadanUsahaController;
 use App\Http\Controllers\Master\MasterKotaController;
 use App\Http\Controllers\Master\MasterLabaRugiController;
 use App\Http\Controllers\Master\MasterLokasiBarangController;
@@ -541,6 +542,14 @@ Route::post('/masterjeniscustomerspdelete' , [MasterJenisCustomerController::cla
 Route::get('/masterjeniscustomerspdetail' , [MasterJenisCustomerController::class, 'spDetail'])->middleware('auth');
 Route::post('/masterjeniscustomerspedit' , [MasterJenisCustomerController::class, 'spEdit'])->middleware('auth');
 Route::get('/masterjeniscustomerloadall' , [MasterJenisCustomerController::class, 'loadAll'])->middleware('auth');
+
+//MASTER BADAN USAHA (PT, CV, UD, ... + PPh21/PPh23) ===================
+Route::get('/masterbadanusaha' , [MasterBadanUsahaController::class, 'index'])->middleware('auth');
+Route::get('/masterbadanusahaloadall' , [MasterBadanUsahaController::class, 'loadAll'])->middleware('auth');
+Route::get('/masterbadanusahaspdetail' , [MasterBadanUsahaController::class, 'spDetail'])->middleware('auth');
+Route::post('/masterbadanusahaspadd' , [MasterBadanUsahaController::class, 'spAdd'])->middleware('auth');
+Route::post('/masterbadanusahaspedit' , [MasterBadanUsahaController::class, 'spEdit'])->middleware('auth');
+Route::post('/masterbadanusahaspdelete' , [MasterBadanUsahaController::class, 'spDelete'])->middleware('auth');
 
 //MASTER GROUP CUSTOMER ==================================================
 Route::get('/mastergroupcustomer' , [MasterGroupCustomerController::class, 'index'])->middleware('auth');
