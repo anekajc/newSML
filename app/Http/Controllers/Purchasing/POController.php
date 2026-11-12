@@ -21,12 +21,78 @@ class POController extends Controller
 {
   use PenjagaTransaksi;
 
+  // Menu PO Stock & PO Non Stock digabung di /purchaseorder. Hak akses per jenis tetap
+  // memakai DBFLMENUWEB kode menu lama (sama pola dengan PR gabungan):
+  // PO Stock 030201 (pJasa 0), PO Non Stock 030202 (pJasa 1).
+  const JENIS_PO = [
+    'stock'    => ['kodemenu' => '030201', 'pjasa' => 0],
+    'nonstock' => ['kodemenu' => '030202', 'pjasa' => 1],
+  ];
+
+  private $cacheAksesPO = null;
+
+  /** Baris DBMENUWEB+DBFLMENUWEB user untuk tiap jenis PO (null = tidak ada barisnya). */
+  private function aksesPOJenis () {
+    if ($this->cacheAksesPO !== null) { return $this->cacheAksesPO; }
+    $akses = [];
+    foreach (self::JENIS_PO as $jenis => $j) {
+      $akses[$jenis] = NewMenu::join('DBFLMENUWEB', 'DBFLMENUWEB.L1', '=', 'DBMENUWEB.KODEMENU')
+        ->where('DBFLMENUWEB.USERID', Auth::user()->username)
+        ->where('DBMENUWEB.KODEMENU', $j['kodemenu'])
+        ->first();
+    }
+    return $this->cacheAksesPO = $akses;
+  }
+
+  private function punyaAksesPO ($jenis) {
+    $a = $this->aksesPOJenis()[$jenis] ?? null;
+    return $a && (int) $a->HASACCESS === 1;
+  }
+
+  /** Objek akses untuk blade; jenis tanpa akses diisi 0 semua. */
+  private static function aksesKosong ($a) {
+    if ($a && (int) $a->HASACCESS === 1) { return $a; }
+    return (object) [
+      'HASACCESS' => 0, 'ISTAMBAH' => 0, 'ISHAPUS' => 0, 'ISKOREKSI' => 0, 'ISCETAK' => 0,
+      'IsOtorisasi1' => 0, 'IsBatal' => 0, 'OL' => 0,
+    ];
+  }
+
+  /**
+   * pJasa yang boleh ditampilkan di daftar PO gabungan sesuai filter Jenis & hak akses:
+   * 0 / 1 = satu jenis, null = keduanya, false = tidak ada yang boleh.
+   */
+  private function pJasaDaftar (Request $req) {
+    $stock = $this->punyaAksesPO('stock');
+    $ns    = $this->punyaAksesPO('nonstock');
+    $jenis = (string) $req->input('jenis', 'SEMUA');
+    if ($jenis === 'stock')    { return $stock ? 0 : false; }
+    if ($jenis === 'nonstock') { return $ns ? 1 : false; }
+    if ($stock && $ns) { return null; }
+    if ($stock) { return 0; }
+    if ($ns)    { return 1; }
+    return false;
+  }
 
   public function index(Request $req) {
-    $kodemenu = '04101';
-    $akses = app('App\Http\Controllers\GlobalController')->getAkses($kodemenu, $req->path());
-    if(!$akses || !$akses->HASACCESS) {
+    $aksesJenis = $this->aksesPOJenis();
+    if (!$this->punyaAksesPO('stock') && !$this->punyaAksesPO('nonstock')) {
        return redirect('/home');
+    }
+    $akses   = self::aksesKosong($aksesJenis['stock']);
+    $aksesNS = self::aksesKosong($aksesJenis['nonstock']);
+
+    // Filter Jenis awal dari ?jenis= (route lama /pononstock diarahkan ke ?jenis=nonstock).
+    $jenisAwal = (string) $req->input('jenis');
+    if (!isset(self::JENIS_PO[$jenisAwal]) || !$this->punyaAksesPO($jenisAwal)) {
+      $jenisAwal = null;
+    }
+    $aksesJenisJs = [];
+    foreach (['stock' => $akses, 'nonstock' => $aksesNS] as $jenis => $a) {
+      $aksesJenisJs[$jenis] = [
+        'HASACCESS' => (int) $a->HASACCESS,
+        'ISTAMBAH'  => (int) $a->ISTAMBAH,
+      ];
     }
 
 
@@ -222,9 +288,15 @@ class POController extends Controller
       // "tempOutstanding3" => $tempOutstanding3,
       "tempOutstanding5" => [],
 
-      "level" => $akses->OL,
+      // level = jumlah kolom level otorisasi di daftar PO gabungan.
+      "level" => max((int) $akses->OL, (int) $aksesNS->OL),
+      "levelNS" => (int) $aksesNS->OL,
       "listBarangAll" => [] ,
-      "akses" => $akses
+      "akses" => $akses,
+      "aksesStock" => $akses,
+      "aksesNS" => $aksesNS,
+      "aksesJenis" => $aksesJenisJs,
+      "jenisAwal" => $jenisAwal,
     ]);
 
 }
@@ -470,8 +542,19 @@ class POController extends Controller
    * Supplier & Total DPP) dihitung di server dengan aturan yang sama seperti dulu
    * dihitung di browser.
    */
+  // Daftar PO gabungan (PO Stock + PO Non Stock), disaring filter Jenis & hak akses per jenis.
   public function loadPurchaseOrder (Request $req) {
-    return self::daftarPO($req, 0);
+    $pJasa = $this->pJasaDaftar($req);
+    if ($pJasa === false) {
+      return [
+        "draw" => (int) $req->input('draw', 1),
+        "recordsTotal" => 0,
+        "recordsFiltered" => 0,
+        "data" => [],
+        "kpi" => ["jmlSupp" => 0, "totDPP" => 0],
+      ];
+    }
+    return self::daftarPO($req, $pJasa);
   }
 
   /**
@@ -500,7 +583,8 @@ class POController extends Controller
                   else 1
              end As Bit) NeedOtorisasi
         ,Isnull(A.IsBatal,0) Isbatal,A.UserBatal,A.TglBatal,
-        A.FlagTipe,A.NOSO,A.NOPOCUST ,A.tglKirim,A.MaxOL,b.qnt as qnt,b.qntbeli as qntbeli
+        A.FlagTipe,A.NOSO,A.NOPOCUST ,A.tglKirim,A.MaxOL,b.qnt as qnt,b.qntbeli as qntbeli,
+        ISNULL(a.pJasa,0) pJasa
       From dbPO a WITH(NOLOCK)
       inner join (
         Select A.NoBukti, C.NAMACUSTSUPP,
@@ -517,7 +601,7 @@ class POController extends Controller
         Left Outer Join dbCustSupp C WITH(NOLOCK) on c.KodeCustSupp=a.KodeSupp
         left outer join (select nopo,sum(qnt)qntbeli from DBBELIDET WITH(NOLOCK) group by nopo) D on D.NoPO=A.NOBUKTI
         where A.Tanggal between @tglawal and @tglakhir
-          and ISNULL(A.pJasa,0) = @pJasa
+          and (@pJasa is null or ISNULL(A.pJasa,0) = @pJasa)
         Group By A.NoBukti, A.Tanggal, A.KodeSupp, C.NAMACUSTSUPP, C.Kota,
           A.Handling, A.FakturSupp, isnull(A.IsBatal,0),ISNULL(A.pJasa,0),D.qntbeli
       ) b on a.NoBukti=b.NoBukti
@@ -588,7 +672,7 @@ class POController extends Controller
       'IsOtorisasi1', 'OtoUser1', 'TglOto1', 'IsOtorisasi2', 'OtoUser2', 'TglOto2',
       'IsOtorisasi3', 'OtoUser3', 'TglOto3', 'IsOtorisasi4', 'OtoUser4', 'TglOto4',
       'IsOtorisasi5', 'OtoUser5', 'TglOto5', 'NeedOtorisasi', 'Isbatal', 'UserBatal',
-      'TglBatal', 'FlagTipe', 'NOSO', 'NOPOCUST', 'tglKirim', 'MaxOL', 'qnt', 'qntbeli'
+      'TglBatal', 'FlagTipe', 'NOSO', 'NOPOCUST', 'tglKirim', 'MaxOL', 'qnt', 'qntbeli', 'pJasa'
     ];
     $orderCol = (string) $req->input('orderCol', '');
     $orderDir = strtolower((string) $req->input('orderDir', 'asc')) === 'desc' ? 'DESC' : 'ASC';
@@ -609,7 +693,8 @@ class POController extends Controller
     $deklarasi = "SET NOCOUNT ON
       declare @tglawal date, @tglakhir date, @pJasa bit, @cari varchar(210)
       select @tglawal = ?, @tglakhir = ?, @pJasa = ?, @cari = ?";
-    $bind = [$tglawal, $tglakhir, (int) $pJasa, '%' . $search . '%'];
+    // $pJasa null = PO Stock + PO Non Stock sekaligus (daftar PO gabungan).
+    $bind = [$tglawal, $tglakhir, $pJasa === null ? null : (int) $pJasa, '%' . $search . '%'];
 
     // Satu kali jalan: jumlah baris (setelah filter), jumlah baris yang cocok dengan
     // kotak cari, dan angka KPI. Supplier dihitung unik setelah trim + upper, kode
@@ -705,7 +790,17 @@ class POController extends Controller
     // menampilkan sisa qty penuh walau PO aktifnya sudah menutup semuanya.
     // SisaBaru di sqlOutstandingPR() menghitung ulang sisa itu dari agregat
     // dbPOdet per NoPPL+UrutPPL saja, jadi baris hantu itu tidak muncul lagi.
-    $where = '((A.Qnt - isnull(A.QntBatal,0)) - isnull(P.QntPO,0)) > 0 and A.pjasa = 0';
+    // Halaman PO gabungan: Outstanding PR menampilkan semua jenis PR (Agen / Non Agen /
+    // Non Stock). Jenis dihitung dari pjasa (vwOutPPL) + DBPPL.pAgen (header PR), sama
+    // dengan PembelianPermintaanAgenController::jenisDokumen(). Filter ?jenis= opsional.
+    $exprJenis = "case when isnull(A.pjasa,0) = 1 then 'nonstock'
+                       when isnull(H.pAgen,0) = 1 then 'agen'
+                       else 'nonagen' end";
+    $where = '((A.Qnt - isnull(A.QntBatal,0)) - isnull(P.QntPO,0)) > 0';
+    $jenisPR = (string) $req->input('jenis', 'SEMUA');
+    if (in_array($jenisPR, ['agen', 'nonagen', 'nonstock'], true)) {
+      $where .= " and ($exprJenis) = '$jenisPR'";
+    }
     $bind  = [];
     $search = trim((string) $req->input('search', ''));
     if ($search !== '') {
@@ -722,6 +817,7 @@ class POController extends Controller
       select count(1) as jml
       from DBO.vwOutPPL A WITH(NOLOCK)
       left outer join ( $sqlPO ) P on P.NoPPL = A.NoBukti and P.UrutPPL = A.Urut
+      left outer join DBPPL H WITH(NOLOCK) on H.NoBukti = A.NoBukti
       where $where
       -- Hint ini memangkas waktu query vwOutPPL dari ~4 detik ke <1 detik (hasil identik), sama seperti Closing PR.
       OPTION (HASH JOIN, MERGE JOIN)
@@ -747,9 +843,11 @@ class POController extends Controller
                A.*,
                (A.Qnt - isnull(A.QntBatal,0)) - isnull(P.QntPO,0) SisaPPLBaru,
                isnull(P.QntPOBruto,0) QNTPOBaru,
-               CONVERT(varchar(10), A.Tanggal, 23) TanggalBaru
+               CONVERT(varchar(10), A.Tanggal, 23) TanggalBaru,
+               $exprJenis JenisPR
         from DBO.vwOutPPL A WITH(NOLOCK)
         left outer join ( $sqlPO ) P on P.NoPPL = A.NoBukti and P.UrutPPL = A.Urut
+        left outer join DBPPL H WITH(NOLOCK) on H.NoBukti = A.NoBukti
         where $where
       ) X
       $batasBaris

@@ -659,6 +659,16 @@ having COUNT(*)>1
         if ($check) {
           return 2;
       }
+
+      // PRB baru: tanggal harus masuk periode kerja aktif (sama seperti Perintah Retur Jual).
+      // Tambah/ubah/hapus item PRB yang sudah ada tidak dibatasi periode.
+      $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+      $tgl = (string) $req->Tanggal;
+      if (!$this->tanggalSah($tgl)
+          || (int) substr($tgl, 0, 4) !== (int) $periode->tahun
+          || (int) substr($tgl, 5, 2) !== (int) $periode->bulan) {
+        return $this->tolak('Tanggal tidak sesuai periode kerja aktif.');
+      }
     }
 
     if($choice == "D" || $choice == "U"){

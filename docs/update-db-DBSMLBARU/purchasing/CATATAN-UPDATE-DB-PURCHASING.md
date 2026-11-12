@@ -266,3 +266,25 @@ Jalan keluarnya, pilih salah satu:
 - **Perubahan (`28_label_menu_pr.sql`):** `DBMENUWEB.Keterangan` untuk `030102` diubah dari `PR (Keagenan)` menjadi `PR`. Hak akses `DBFLMENUWEB` `030102` tidak diubah.
 - **Hasil sidebar:** Pembelian > PR > PR, Closing PR.
 - **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 12 November 2026. Rollback ada di bagian bawah file skrip.
+
+---
+
+## 29 — Menu PO Stock & PO Non Stock digabung jadi satu (12 November 2026)
+
+- **Perubahan kode:** kedua menu PO digabung di halaman `/purchaseorder` (`POController` + `purchasing/purchaseOrder.blade.php`).
+  - Tab **Purchase Order** memuat PO Stock dan PO Non Stock sekaligus. Ada kolom baru **Jenis** (PO Stock / PO Non Stock) tepat sesudah No Bukti, dan filter **Jenis** di modal Filter. `?jenis=stock|nonstock` di URL dipakai sebagai filter awal.
+  - Kolom Jenis dipasang langsung di JS, **tidak** lewat konfigurasi kolom `dbheadertable`, supaya selalu tampil apa pun pengaturan kolom user (di PR dulu kolom Jenis bisa hilang karena itu).
+  - Tombol **Tambah** membuka modal pilihan PO Stock / PO Non Stock. Kalau user hanya boleh menambah satu jenis, form jenis itu langsung terbuka. Tombol **Tambah PR** tetap berdiri sendiri (PO Stock).
+  - Edit / Detail / Otorisasi / Batal / Print di tiap baris memakai fungsi sesuai jenis PO-nya.
+  - Form PO Non Stock dipindah ke `purchasing/partials/poNonStockForm|Modal|Script|Css.blade.php`. Semua id, fungsi, variabel global, `name`, dan class show/hide yang bentrok dengan form PO Stock diberi awalan `ns_`. **Perubahan form PO Non Stock dilakukan di partial ini**, bukan di `purchaseOrderNonStock.blade.php` (blade lama dibiarkan sebagai cadangan).
+  - Tab **Outstanding PR** menampilkan semua PR (Agen / Non Agen / Non Stock) dengan kolom **Jenis PR** sesudah No Bukti dan tombol Filter Jenis PR. Jenis = `vwOutPPL.pjasa` + `DBPPL.pAgen`, sama dengan menu PR.
+  - Supplier di form PO Stock dan PO Non Stock bisa diketik. Saran 10 teratas (kode/nama) tampil seperti Pelanggan di menu SO. Enter / tombol cari tetap membuka modal Supplier.
+  - **Hak akses per jenis:** memakai `DBFLMENUWEB` kode menu lama, PO Stock `030201` dan PO Non Stock `030202` (dibaca per KODEMENU). Halaman bisa dibuka kalau punya `HASACCESS` di salah satunya. Daftar PO hanya memuat jenis yang boleh diakses.
+  - Route `/pononstock` diarahkan ke `/purchaseorder?jenis=nonstock`. Route AJAX `pons*`/`polist*` tetap dipakai form Non Stock.
+- **Perubahan database (`29_gabung_menu_po.sql`):**
+  - `DBMENUWEB` `030202` (PO Non Stock): `href` dan `HeaderMenu` dikosongkan (NULL), sehingga hilang dari sidebar.
+  - `DBMENU` `030022` (PO Jasa, `pononstock`): `href` dikosongkan.
+  - `DBMENUWEB` `030201`: label `PO Stock` diganti `PO`.
+  - Hak akses `DBFLMENUWEB` `030201`/`030202` **tidak** diubah.
+  - Rollback ada di bagian bawah file skrip.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 12 November 2026, dengan hasil sesuai. Untuk server client, jalankan `29_gabung_menu_po.sql` bersamaan dengan update kodenya.

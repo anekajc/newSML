@@ -8,7 +8,7 @@
    Isi        : 1. Tabel baru DBBADANUSAHA (KodeUsaha, PPH21, PPH23).
                    Minimal salah satu PPh harus > 0 (CHECK constraint).
                    KodeUsaha yang disimpan ke DBCUSTSUPP.USAHA (varchar 20).
-                2. Data awal = 9 opsi dropdown lama. PPh21 = 0, PPh23 sesuai
+                2. Data awal = 8 opsi dropdown lama (tanpa '-', lihat script 29). PPh21 = 0, PPh23 sesuai
                    logika lama changePph23(): PT/CV = 2, lainnya = 2.5.
                 3. Menu DBMENUWEB 01003014 "Badan Usaha" di group 01003.
                 4. Hak akses DBFLMENUWEB: baris untuk semua user, akses
@@ -35,12 +35,13 @@ CREATE TABLE dbo.DBBADANUSAHA (
 GO
 BEGIN TRAN;
 
--- 2. Data awal (9 opsi dropdown lama)
+-- 2. Data awal (8 opsi dropdown lama)
 INSERT INTO dbo.DBBADANUSAHA (KodeUsaha, PPH21, PPH23)
 SELECT v.KodeUsaha, v.PPH21, v.PPH23
 FROM (VALUES
   ('PT', 0, 2), ('CV', 0, 2), ('PD', 0, 2.5), ('UD', 0, 2.5), ('TOKO', 0, 2.5),
-  ('BAPAK', 0, 2.5), ('IBU', 0, 2.5), ('EXP', 0, 2.5), ('-', 0, 2.5)
+  ('BAPAK', 0, 2.5), ('IBU', 0, 2.5), ('EXP', 0, 2.5)
+  -- ('-' sempat ikut di sini, dihapus lewat 29_dbbadanusaha_tanpa_strip.sql)
 ) v (KodeUsaha, PPH21, PPH23)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.DBBADANUSAHA b WHERE b.KodeUsaha = v.KodeUsaha);
 
