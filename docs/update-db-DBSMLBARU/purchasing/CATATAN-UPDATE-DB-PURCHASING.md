@@ -39,6 +39,7 @@ Buka di SSMS, lalu jalankan berurutan:
 | 21 | `21_vwposthutpiut_jurnaloto_tanpa_qc.sql` | Posting hutang (`vwPostHutPiut`) & jurnal (`vwPostJurnalOto`) pembelian barang tidak menunggu QC, disamakan dengan DBSMLNEW | Ya. Tanpa ini pembelian yang di-ACC sebelum QC tidak masuk `DBHUTPIUT`/jurnal dan kolom Hutang tampil Lunas |
 | 25 | `25_gabung_menu_pr.sql` | Kosongkan href menu lama PR Non Agen & PR Non Stock di `DBMENUWEB`/`DBMENU` (menu PR digabung) | Ya, bersamaan dengan update kode menu PR gabungan. Tanpa ini menu lama di sidebar mengarah ke halaman 404 |
 | 26 | `26_sembunyikan_menu_pr_lama.sql` | Sembunyikan menu PR Non Agen & PR Non Stock dari sidebar (`DBMENUWEB.HeaderMenu` = NULL) | Ya, sesudah file 25 |
+| 28 | `28_label_menu_pr.sql` | Label sidebar `DBMENUWEB` `030102` "PR (Keagenan)" diganti "PR" | Ya, sesudah file 26 (hanya label) |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -256,3 +257,12 @@ Jalan keluarnya, pilih salah satu:
 - **Hasil sidebar:** Pembelian > PR > PR (Keagenan), Closing PR. Struktur PR tetap punya turunan karena Closing PR ada di bawahnya.
 - Hak akses `DBFLMENUWEB` `030101`/`030103` tidak diubah. Hak akses ini tetap dipakai sebagai hak akses jenis Non Agen dan Non Stock di halaman PR gabungan.
 - **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 11 November 2026. Rollback ada di bagian bawah file skrip.
+
+---
+
+## 28 — Label menu "PR (Keagenan)" diganti "PR" (12 November 2026)
+
+- **Alasan:** sejak file 25, halaman `/pembelianpermintaanagen` sudah menjadi PR gabungan (Agen / Non Agen / Non Stock), jadi label "(Keagenan)" di sidebar menyesatkan.
+- **Perubahan (`28_label_menu_pr.sql`):** `DBMENUWEB.Keterangan` untuk `030102` diubah dari `PR (Keagenan)` menjadi `PR`. Hak akses `DBFLMENUWEB` `030102` tidak diubah.
+- **Hasil sidebar:** Pembelian > PR > PR, Closing PR.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 12 November 2026. Rollback ada di bagian bawah file skrip.

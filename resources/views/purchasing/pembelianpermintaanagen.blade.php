@@ -502,20 +502,6 @@ td input[type="checkbox"] {
           <div class="row">
             <!-- <input type="hidden" id="input_kodegroup" value="" /> -->
             <input type="hidden" class="form-control" id="input_add_nourut" placeholder="No Urut" disabled>
-          <div class="col-md-3">
-            <div class="row">
-            <div class="col-md-4" style="margin-top:5px;">
-              <div class="form-group">
-                <label>No Bukti</label>
-              </div>
-            </div>
-            <div class="col-md-8">
-              <div class="form-group">
-                <input type="text" class="form-control text-left" id="input_add_nobukti" placeholder="No Bukti" disabled>
-              </div>
-            </div>
-          </div>
-          </div>
           {{-- Jenis PR menentukan prefix no bukti, sumber browse barang, cara pilih satuan,
                dan nilai pagen/isjasa/pjasa. Dikunci begitu PR sudah punya item / saat edit. --}}
           <div class="col-md-3">
@@ -532,6 +518,20 @@ td input[type="checkbox"] {
                     <option value="{{ $j['kode'] }}">{{ $j['label'] }}</option>
                   @endforeach
                 </select>
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class="col-md-3">
+            <div class="row">
+            <div class="col-md-4" style="margin-top:5px;">
+              <div class="form-group">
+                <label>No Bukti</label>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="form-group">
+                <input type="text" class="form-control text-left" id="input_add_nobukti" placeholder="No Bukti" disabled>
               </div>
             </div>
           </div>
@@ -888,12 +888,12 @@ td input[type="checkbox"] {
               <div class="row">
                 <div class="col-md-4" style="margin-top:5px;">
                   <div class="form-group">
-                    <label>No Bukti</label>
+                    <label>Jenis PR</label>
                   </div>
                 </div>
                 <div class="col-md-8">
                   <div class="form-group">
-                    <input type="text" class="form-control" id="input_detail_nobukti" placeholder="No Bukti" disabled>
+                    <input type="text" class="form-control" id="input_detail_jenispr" disabled>
                   </div>
                 </div>
               </div>
@@ -902,12 +902,12 @@ td input[type="checkbox"] {
               <div class="row">
                 <div class="col-md-4" style="margin-top:5px;">
                   <div class="form-group">
-                    <label>Jenis PR</label>
+                    <label>No Bukti</label>
                   </div>
                 </div>
                 <div class="col-md-8">
                   <div class="form-group">
-                    <input type="text" class="form-control" id="input_detail_jenispr" disabled>
+                    <input type="text" class="form-control" id="input_detail_nobukti" placeholder="No Bukti" disabled>
                   </div>
                 </div>
               </div>

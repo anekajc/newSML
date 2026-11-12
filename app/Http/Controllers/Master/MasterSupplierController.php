@@ -10,11 +10,12 @@ use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Traits\NpwpTrait;
+use App\Traits\BadanUsahaTrait;
 
 
 class MasterSupplierController extends Controller
 {
-  use NpwpTrait;
+  use NpwpTrait, BadanUsahaTrait;
 
   protected function jenisCustSupp(): int { return 0; }
 
@@ -28,6 +29,7 @@ class MasterSupplierController extends Controller
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(2);
 
     return view('master.mastersupplier' , [
+      "listBadanUsaha" => $this->listBadanUsaha(),
       "menul0" => $menul0,
       "periode" => $periode,
       // "users"=> $users,
@@ -95,6 +97,12 @@ public function spAdd(Request $req) {
         return $errNpwp;
     }
 
+    // Bentuk Usaha wajib dari Master Badan Usaha; PPh21/PPh23 mengikuti master.
+    $errUsaha = $this->terapkanBadanUsaha($req, 'bentukusaha', 'pph21', 'pph23');
+    if ($errUsaha) {
+        return $errUsaha;
+    }
+
     $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (HARI, USAHA, KODECUSTSUPP, NAMACUSTSUPP, ALAMAT1, Kota, KODEPOS, NEGARA, TELPON, FAX, EMAIL, NPPH23, NPPH22, HARIHUTPIUT, IsAktif, Att, AttPhone, AttDepart, bank, NoAcc, ATN, NPWP, NAMAPKP, ALAMATPKP1, KOTAPKP, IsPpn, Jenis) VALUES (:haribiasa, :usaha, :kode, :nama, :alamat, :kota, :kodepos, :negara, :telp, :fax, :email, :npph23, :npph21, :haripiutang, :isaktif, :att, :attphone, :attdepart, :bank, :accno, :atn, :npwp, :namapkp, :alamatpkp, :kotapkp, :isppn, :jenis)', [
         'haribiasa' => $req->haribiasa,  
         'usaha' => $req->bentukusaha,
@@ -157,6 +165,12 @@ public function spAdd(Request $req) {
     $errNpwp = $this->validasiNpwp($req->npwp, $req->kode);
     if ($errNpwp) {
         return $errNpwp;
+    }
+
+    // Bentuk Usaha wajib dari Master Badan Usaha (data lama yang kosong/tidak cocok harus dipilih).
+    $errUsaha = $this->terapkanBadanUsaha($req, 'bentukusaha', 'pph21', 'pph23');
+    if ($errUsaha) {
+        return $errUsaha;
     }
 
     $edit =DB::connection('SML')->update('update DBCUSTSUPP set USAHA =:usaha , NAMACUSTSUPP = :nama , HARI = :haribiasa, ALAMAT1 = :alamat, Kota = :kota, KODEPOS = :kodepos , NEGARA= :negara, TELPON = :telp , FAX  = :fax, EMAIL = :email, NPPH23 = :npph23, NPPH22 = :npph21, HARIHUTPIUT = :haripiutang , IsAktif = :isaktif, Att = :att , AttPhone = :attphone, AttDepart = :attdepart , bank = :bank , NoAcc = :accno, ATN = :atn, NPWP = :npwp , NAMAPKP = :namapkp , ALAMATPKP1 = :alamatpkp , KOTAPKP = :kotapkp , IsPpn = :isppn  where KODECUSTSUPP = :kode' , ['usaha'=> $req->bentukusaha , 'nama' => $req->nama , 'alamat' => $req->alamat , 'haribiasa' => $req->haribiasa , 'kota'=> $req->kota , 'kodepos' => $req->kodepos ,  'negara' => $req->negara, 'telp' => $req->telp ,'fax' => $req->fax , 'email' => $req->email , 'npph23' => $req->pph23 , 'npph21' => $req->pph21 , 'haripiutang' => $req->haripiutang , 'isaktif'=> $req->isaktif , 'att'=>$req->att, 'attphone'=> $req->attphone , 'attdepart'=>$req->attdepart, 'bank'=>$req->bank,'accno'=> $req->accno , 'atn' => $req->atn , 'npwp' => $req->npwp , 'namapkp' => $req->namapkp ,'alamatpkp' => $req->alamatpkp , 'kotapkp' => $req->kotapkp , 'isppn'=> $req->isppn , 'kode' => $req->kode]);

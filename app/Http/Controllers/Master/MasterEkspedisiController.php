@@ -11,6 +11,7 @@ use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Traits\NpwpTrait;
+use App\Traits\BadanUsahaTrait;
 // use App\Models\VWPerkiraan;
 
 
@@ -19,7 +20,7 @@ use App\Traits\NpwpTrait;
 
 class MasterEkspedisiController extends Controller
 {
-  use NpwpTrait;
+  use NpwpTrait, BadanUsahaTrait;
 
   protected function jenisCustSupp(): int { return 3; }
 
@@ -33,6 +34,7 @@ class MasterEkspedisiController extends Controller
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(2);
 
     return view('master.masterekspedisi' , [
+      "listBadanUsaha" => $this->listBadanUsaha(),
       "menul0" => $menul0,
       "periode" => $periode,
       // "users"=> $users,
@@ -286,6 +288,12 @@ and a.Jenis=3 and a.KODECUSTSUPP = :kode" , ['kode' => $req->kode]);
       return $errNpwp;
     }
 
+    // Bentuk Usaha wajib dari Master Badan Usaha; PPh21/PPh23 mengikuti master.
+    $errUsaha = $this->terapkanBadanUsaha($req, 'bentukUsaha', 'npph21', 'npph23');
+    if ($errUsaha) {
+      return $errUsaha;
+    }
+
     $listData = DB::connection('SML')->update('insert into DBCUSTSUPP (
     USAHA, KODECUSTSUPP, NAMACUSTSUPP, ALAMAT1, ALAMAT2, 
     Kota,  KODEPOS, NEGARA, TELPON, FAX, 
@@ -351,7 +359,13 @@ and a.Jenis=3 and a.KODECUSTSUPP = :kode" , ['kode' => $req->kode]);
             return $errNpwp;
         }
 
-        $listData =DB::connection('SML')->update('UPDATE DBCUSTSUPP SET 
+        // Bentuk Usaha wajib dari Master Badan Usaha (data lama yang kosong/tidak cocok harus dipilih).
+        $errUsaha = $this->terapkanBadanUsaha($req, 'bentukUsaha', 'npph21', 'npph23');
+        if ($errUsaha) {
+            return $errUsaha;
+        }
+
+        $listData = DB::connection('SML')->update('UPDATE DBCUSTSUPP SET 
         USAHA = :bentukUsaha, 
         NAMACUSTSUPP = :namaCustSupp, 
         ALAMAT1 = :alamat1, 

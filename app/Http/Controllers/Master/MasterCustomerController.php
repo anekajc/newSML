@@ -11,11 +11,12 @@ use App\Models\NewPeriode;
 use App\Models\NewUsers;
 use Illuminate\Support\Facades\DB;
 use App\Traits\NpwpTrait;
+use App\Traits\BadanUsahaTrait;
 
 
 class MasterCustomerController extends Controller
 {
-  use NpwpTrait;
+  use NpwpTrait, BadanUsahaTrait;
 
   protected function jenisCustSupp(): int { return 1; }
 
@@ -44,6 +45,7 @@ class MasterCustomerController extends Controller
     $menul0 = app('App\Http\Controllers\NewMenuController')->getMenuL0(2);
 
     return view('master.mastercustomer' , [
+      "listBadanUsaha" => $this->listBadanUsaha(),
       "menul0" => $menul0,
       "periode" => $periode,
       // "users"=> $users,
@@ -75,6 +77,12 @@ class MasterCustomerController extends Controller
     $errNpwp = $this->validasiNpwp($req->npwp);
     if ($errNpwp) {
       return $errNpwp;
+    }
+
+    // Bentuk Usaha wajib dari Master Badan Usaha; PPh21/PPh23 mengikuti master.
+    $errUsaha = $this->terapkanBadanUsaha($req, 'bentukusaha', 'pph21', 'pph23');
+    if ($errUsaha) {
+      return $errUsaha;
     }
 
     $errBayar = $this->validasiPembayaran($req->tipebayar, $req->top);
@@ -166,6 +174,12 @@ class MasterCustomerController extends Controller
     $errNpwp = $this->validasiNpwp($req->npwp, $req->kode);
     if ($errNpwp) {
       return $errNpwp;
+    }
+
+    // Bentuk Usaha wajib dari Master Badan Usaha (data lama yang kosong/tidak cocok harus dipilih).
+    $errUsaha = $this->terapkanBadanUsaha($req, 'bentukusaha', 'pph21', 'pph23');
+    if ($errUsaha) {
+      return $errUsaha;
     }
 
     $errBayar = $this->validasiPembayaran($req->tipebayar, $req->top);

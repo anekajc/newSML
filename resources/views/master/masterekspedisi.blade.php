@@ -88,16 +88,8 @@
           <label for="input_add_kode">Kode</label>
           <input type="text" class="form-control" id="input_add_kode" placeholder="Kode">
           <label for="input_add_bentukUsaha">Bentuk Usaha</label>
-          <div class="d-flex align-items-center" style="gap:8px"><select id="input_add_bentukUsaha" class="form-control" aria-label="Default select example" onchange=changePph23()>
-                    <option selected value="PT">PT</option>
-                    <option value="CV">CV</option>
-                    <option value="PD">PD</option>
-                    <option value="UD">UD</option>
-                    <option value="TOKO">TOKO</option>
-                    <option value="BAPAK">BAPAK</option>
-                    <option value="IBU">IBU</option>
-                    <option value="EXP">EXP</option>
-                    <option value="-">-</option>
+          <div class="d-flex align-items-center" style="gap:8px"><select id="input_add_bentukUsaha" class="form-control" aria-label="Bentuk Usaha">
+                    @include('master.partials.badanUsaha', ['opsiSaja' => true])
                   </select>
             <input type="checkbox" id="input_add_isPpn" name="" value="">
                 <label class="text-left">PKP</label></div>
@@ -211,16 +203,8 @@
           <label for="input_edit_kode">Kode</label>
           <input type="text" class="form-control" disabled id="input_edit_kode" placeholder="Kode">
           <label for="input_edit_bentukUsaha">Bentuk Usaha</label>
-          <div class="d-flex align-items-center" style="gap:8px"><select id="input_edit_bentukUsaha" class="form-control" aria-label="Default select example">
-                    <option selected value="PT">PT</option>
-                    <option value="CV">CV</option>
-                    <option value="PD">PD</option>
-                    <option value="UD">UD</option>
-                    <option value="TOKO">TOKO</option>
-                    <option value="BAPAK">BAPAK</option>
-                    <option value="IBU">IBU</option>
-                    <option value="EXP">EXP</option>
-                    <option value="-">-</option>
+          <div class="d-flex align-items-center" style="gap:8px"><select id="input_edit_bentukUsaha" class="form-control" aria-label="Bentuk Usaha">
+                    @include('master.partials.badanUsaha', ['opsiSaja' => true])
                   </select>
             <input type="checkbox" id="input_edit_isPpn" name="" value="">
                 <label class="text-left">PKP</label></div>
@@ -547,6 +531,7 @@
 <script src="{!! URL::asset('js/master-list.js') !!}?v={{ @filemtime(base_path('public/js/master-list.js')) ?: '1' }}"></script>
 <script src="{!! URL::asset('js/picker-kas.js') !!}?v={{ @filemtime(base_path('public/js/picker-kas.js')) ?: '1' }}"></script>
 @include('master.partials.npwpCek')
+@include('master.partials.badanUsaha')
 <script type="text/javascript">
 
 let dataRefresh = []
@@ -661,6 +646,8 @@ function buttonAdd () {
   $('#form .modal-body input[type="checkbox"]').prop('checked', false)
   $('#form .modal-body select').prop('selectedIndex', 0)
   npwpReset('#input_add_NPWP')
+  // Bentuk Usaha wajib dipilih dari Master Badan Usaha; PPh21/PPh23 ikut terisi (dikunci).
+  BadanUsaha.pilih('#input_add_bentukUsaha', '', '#input_add_pph21', '#input_add_pph23')
 
   isiKota('input_add_kota')
 
@@ -693,9 +680,11 @@ function buttonEdit (kode) {
       document.getElementById("input_edit_kodePos").value = res[0].KODEPOS
       document.getElementById("input_edit_negara").value = res[0].NEGARA
       document.getElementById("input_edit_telepon").value = res[0].TELPON
-      document.getElementById("input_edit_pph23").value = (parseFloat(res[0].NPPH23) || 0).toFixed(2)
       document.getElementById("input_edit_noFax").value = res[0].FAX
-      document.getElementById("input_edit_pph21").value = (parseFloat(res[0].NPPH22) || 0).toFixed(2)
+      // Bentuk Usaha + PPh21/PPh23 dari Master Badan Usaha. Nilai lama 'PT. ' / 'CV.' dicocokkan
+      // ke 'PT' / 'CV' (dulu tidak cocok dengan opsi, makanya dropdown edit tampil kosong).
+      // Yang tetap tidak ada di master (kosong / NULL) wajib dipilih sebelum simpan.
+      BadanUsaha.pilih('#input_edit_bentukUsaha', res[0].USAHA, '#input_edit_pph21', '#input_edit_pph23')
       document.getElementById("input_edit_email").value = res[0].EMAIL
       document.getElementById("input_edit_aktif").value = res[0].IsAktif
       document.getElementById("input_edit_att").value = res[0].Att
@@ -757,6 +746,7 @@ function submitEdit () {
   
   let kodeCustSupp = $("#input_edit_kode").val(); //KodeCustSupp
   let bentukUsaha = $("#input_edit_bentukUsaha").val(); //Usaha
+  if (!BadanUsaha.cek('#input_edit_bentukUsaha')) return
   let namaCustSupp = $("#input_edit_nama").val(); //NamaCustSupp
   let alamat1 = $("#input_edit_alamat").val(); //Alamat1
   let alamat2 = $("#input_edit_alamat2").val(); //Alamat2
@@ -860,6 +850,7 @@ function submitAdd () {
   
   let kodeCustSupp = $("#input_add_kode").val(); //KodeCustSupp
   let bentukUsaha = $("#input_add_bentukUsaha").val(); //Usaha
+  if (!BadanUsaha.cek('#input_add_bentukUsaha')) return
   let namaCustSupp = $("#input_add_nama").val(); //NamaCustSupp
   let alamat1 = $("#input_add_alamat").val(); //Alamat1
   let alamat2 = $("#input_add_alamat2").val(); //Alamat2
@@ -1402,6 +1393,8 @@ $.ajax({
 
 window.onload = function(){
   MasterList.kolom({ href: 'masterekspedisi', kolom: MEK_KOLOM, onChange: renderTabel })
+  BadanUsaha.pasang('#input_add_bentukUsaha', '#input_add_pph21', '#input_add_pph23')
+  BadanUsaha.pasang('#input_edit_bentukUsaha', '#input_edit_pph21', '#input_edit_pph23')
   loadAll();
 };
 
@@ -1623,16 +1616,7 @@ function setupEnterKeySearch(inputId, buttonFunction, options = {}) {
 //     setupEnterKeySearch('input_edit_kota', 'buttonKota', { allowEmpty: true });
 // });
 
-// Pph23 bawaan mengikuti Bentuk Usaha, sama dengan mastersupplier.
-function changePph23() {
-  let valueUsaha = document.getElementById('input_add_bentukUsaha').value
-
-  if (valueUsaha == 'PT' || valueUsaha == 'CV') {
-    document.getElementById('input_add_pph23').value = 2
-  } else {
-    document.getElementById('input_add_pph23').value = 2.5
-  }
-}
+// changePph23() (PT/CV = 2, lainnya = 2.5) diganti Master Badan Usaha - lihat partials/badanUsaha.
 
 
 </script>
