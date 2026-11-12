@@ -2419,17 +2419,9 @@ function buttonAddDeleteItem (i) {
 
 function submitAddAdd () {
 
-  let checkDate = new Date($("#input_add_tanggal").val())
-  let periode_bulan = document.getElementById("periode_bulan").value
-  let periode_tahun = document.getElementById("periode_tahun").value
-
+  // Tidak dibatasi periode: halaman ini hanya mengubah harga/diskon retur yang sudah ada,
+  // dan retur boleh diproses di bulan berbeda dari tanggal dokumennya (sama seperti Retur Jual).
   let barang = tempBarangAddAdd
-
-  if ( checkDate.getFullYear()  !== Number(periode_tahun)  || (checkDate.getMonth() +1) !== Number(periode_bulan) ) {
-
-      alertify.warning("Tanggal tidak sesuai periode");
-      return
-  }
 
   let _token  = $("#_token").val()
 

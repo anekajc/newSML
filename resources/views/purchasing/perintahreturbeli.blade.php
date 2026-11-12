@@ -2866,19 +2866,23 @@ function submitAddAdd () {
 
   console.log('submitAddAdd')
 
-  let checkDate = new Date($("#input_add_tanggal").val())
-  
-  let periode_bulan = document.getElementById("periode_bulan").value
-  let periode_tahun = document.getElementById("periode_tahun").value
-
-  if (checkDate.getFullYear() !== Number(periode_tahun) || (checkDate.getMonth() +1) !== Number(periode_bulan)) {
-      alertify.warning("Tanggal tidak sesuai periode");
-      return
-  }
-
-  let Jmlrecord = 0 
+  let Jmlrecord = 0
   if (dataTableAdd.length) {
     Jmlrecord = 1
+  }
+
+  // Cek periode hanya untuk PRB baru (sama seperti Perintah Retur Jual). Menambah item ke PRB
+  // yang sudah ada tidak dibatasi periode - retur boleh menarik LPB bulan mana pun selama OS.
+  if (Jmlrecord == 0) {
+    let checkDate = new Date($("#input_add_tanggal").val())
+
+    let periode_bulan = document.getElementById("periode_bulan").value
+    let periode_tahun = document.getElementById("periode_tahun").value
+
+    if (checkDate.getFullYear() !== Number(periode_tahun) || (checkDate.getMonth() +1) !== Number(periode_bulan)) {
+        alertify.warning("Tanggal tidak sesuai periode");
+        return
+    }
   }
 
   let _token  = $("#_token").val()
