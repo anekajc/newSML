@@ -1256,9 +1256,9 @@ td input[type="checkbox"] {
                         <th style="padding: 4px 12px; " scope="col">No Bukti</th>
                         <th style="padding: 4px 12px; " scope="col">Tanggal</th>
                         <th style="padding: 4px 12px; " scope="col">Supplier</th>
-                        <th style="padding: 4px 12px; " scope="col">Tanggal Kirim</th>
-                        <th style="padding: 4px 12px; " scope="col">No. SO</th>
-                        <th style="padding: 4px 12px; " scope="col">PO. Cust</th>
+                        <th style="padding: 4px 12px; " scope="col">Tgl Kirim</th>
+                        <th style="padding: 4px 12px; " scope="col">No So</th>
+                        <th style="padding: 4px 12px; " scope="col">No Po Cust</th>
                         <th style="padding: 4px 12px; " scope="col">DPP</th>
                         <th style="padding: 4px 12px; " scope="col">PPN</th>
                         <th style="padding: 4px 12px; " scope="col">Grand Total</th>
@@ -7865,6 +7865,24 @@ function poKolomOutSO (cart) {
     })
 }
 
+// Tab Purchase Order (urut 2): judul kolom yang tampil ke user dirapikan di sini. Nama field
+// di DBHEADERTABLE (NoBukti, NamaCustSupp, NOSO, NOPOCUST, TglKirim) tetap - dicocokkan tanpa
+// peduli huruf besar/kecil, dan yang disimpan balik tetap header aslinya (c[6]).
+const PO_LABEL_PO = {
+  nobukti      : 'No Bukti',
+  namacustsupp : 'Supplier',
+  noso         : 'No So',
+  nopocust     : 'No Po Cust',
+  tglkirim     : 'Tgl Kirim'
+}
+function poLabelPO (cart) {
+  return (cart || []).map(c => {
+    let label = PO_LABEL_PO[String(c[6]).toLowerCase()]
+    if (label) { c[1] = label }
+    return c
+  })
+}
+
 // labelQty: judul kolom "Qnt..." ditampilkan sebagai "Qty..." (hanya tab outstanding;
 // nama field datanya tetap, yang berubah hanya judul yang terlihat user).
 function poBuatCart (headers, values, isnumerics, isshowns, desimals, aliasordered, labelQty) {
@@ -8381,7 +8399,7 @@ window.doSetHeader = function (mode, reset) {
     },
     success : function (res) {
       if (urut === 2) {
-        poCart[2] = poBuatCart(res.headertableheader2, res.headertablevalue2, res.isnumeric2, res.isshown2, res.desimal2, res.aliasordered2)
+        poCart[2] = poLabelPO(poBuatCart(res.headertableheader2, res.headertablevalue2, res.isnumeric2, res.isshown2, res.desimal2, res.aliasordered2))
       } else if (urut === 3) {
         poCart[3] = poKolomOutSO(poBuatCart(res.headertableheader3, res.headertablevalue3, res.isnumeric3, res.isshown3, res.desimal3, res.aliasordered3, true))
       } else {
@@ -9119,7 +9137,7 @@ function loadAll () {
       laaliasordered2 = meta.aliasordered2
 
       poCart[1] = poBuatCart(laheadertable, laheadertablevalue, laisnumeric, laisshown, ladesimal, laaliasordered, true)
-      poCart[2] = poBuatCart(laheadertable2, laheadertablevalue2, laisnumeric2, laisshown2, ladesimal2, laaliasordered2)
+      poCart[2] = poLabelPO(poBuatCart(laheadertable2, laheadertablevalue2, laisnumeric2, laisshown2, ladesimal2, laaliasordered2))
       poCart[3] = poKolomOutSO(poBuatCart(meta.headertableheader3, meta.headertablevalue3, meta.isnumeric3, meta.isshown3, meta.desimal3, meta.aliasordered3, true))
 
       poMetaSudah = true
