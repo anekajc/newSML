@@ -614,18 +614,16 @@ td input[type="checkbox"] {
             <tr>
               <th scope="col">No Inv</th>
               <th scope="col">Keterangan</th>
-              <th scope="col">Debet Note</th>
               <th scope="col">Valas</th>
               <th scope="col">Kurs</th>
-              <th scope="col">Debet Note Rp</th>
-              <th scope="col">Invoice</th>
-              <th scope="col">Invoice Rp</th>
+              <th scope="col">Debet Note</th>
+              <th scope="col">Kredit</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody id="addTableData">
             <tr>
-              <td colspan="9" class="text-center">Belum ada data</td>
+              <td colspan="7" class="text-center">Belum ada data</td>
             </tr>
           </tbody>
         </table>
@@ -647,27 +645,6 @@ td input[type="checkbox"] {
             <div class="col-auto" style="width:220px;">
               <div class="form-group">
                 <input id="AddEditNoInv" type="text" class="form-control" disabled>
-              </div>
-            </div>
-            {{-- Nilai Inv & Nilai Inv (Rp) sebaris dengan No Inv supaya form lebih pendek dan
-                 tombol Simpan/Batal terlihat tanpa scroll. Spacer menggeser Nilai Inv ke kolom
-                 ke-3 (setelah ujung kanan Ket.), Nilai Inv (Rp) di kolom ke-4. Spacer fleksibel
-                 (basis 0, maks 360px) supaya di layar sempit menyusut, bukan membuat baris turun. --}}
-            <div class="col-auto" style="flex:1 1 0; max-width:360px; padding:0;"></div>
-            <div class="col-auto" style="width:120px; margin-top:5px; white-space:nowrap;">
-              <div class="form-group"><label>Nilai Inv</label></div>
-            </div>
-            <div class="col-auto" style="width:200px;">
-              <div class="form-group">
-                <input id="AddEditNilaiInv" type="text" value="0.00" class="form-control text-right" disabled>
-              </div>
-            </div>
-            <div class="col-auto" style="width:120px; margin-top:5px; white-space:nowrap;">
-              <div class="form-group"><label>Nilai Inv (Rp)</label></div>
-            </div>
-            <div class="col-auto" style="width:200px;">
-              <div class="form-group">
-                <input id="AddEditNilaiInvRp" type="text" value="0.00" class="form-control text-right" disabled>
               </div>
             </div>
           </div>
@@ -695,25 +672,28 @@ td input[type="checkbox"] {
             </div>
             <div class="col-auto" style="width:220px;">
               <div class="form-group">
-                <input id="AddEditKurs" type="text" inputmode="decimal" value="1.00" class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKursItem()" onblur="formatRibuan(this); onChangeNilaiKursItem()">
+                {{-- Terkunci di 1.00 kalau valasnya IDR - lihat buttonAddEditItem(). --}}
+                <input id="AddEditKurs" type="text" inputmode="decimal" value="1.00" class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)">
               </div>
             </div>
           </div>
+          {{-- Debet Note dan Kredit saling mengunci (lihat dnKunciDK()). Kredit disimpan ke
+               field Nilai yang sama, bertanda minus. --}}
           <div class="row" style="margin-top:-5px;">
             <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Nilai</label></div>
+              <div class="form-group"><label>Debet Note</label></div>
             </div>
             <div class="col-auto" style="width:220px;">
               <div class="form-group">
-                <input id="AddEditNilai" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKursItem()" onblur="formatRibuan(this); onChangeNilaiKursItem()">
+                <input id="AddEditNilai" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('AddEditNilai', 'AddEditKredit')" onblur="formatRibuan(this); dnKunciDK('AddEditNilai', 'AddEditKredit')">
               </div>
             </div>
             <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Nilai (Rp)</label></div>
+              <div class="form-group"><label>Kredit</label></div>
             </div>
             <div class="col-auto" style="width:220px;">
               <div class="form-group">
-                <input id="AddEditNilaiRp" type="text" value="0.00" class="form-control text-right" disabled>
+                <input id="AddEditKredit" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('AddEditNilai', 'AddEditKredit')" onblur="formatRibuan(this); dnKunciDK('AddEditNilai', 'AddEditKredit')">
               </div>
             </div>
           </div>
@@ -809,17 +789,15 @@ td input[type="checkbox"] {
             <tr>
               <th scope="col">No Inv</th>
               <th scope="col">Keterangan</th>
-              <th scope="col">Debet Note</th>
               <th scope="col">Valas</th>
               <th scope="col">Kurs</th>
-              <th scope="col">Debet Note Rp</th>
-              <th scope="col">Invoice</th>
-              <th scope="col">Invoice Rp</th>
+              <th scope="col">Debet Note</th>
+              <th scope="col">Kredit</th>
             </tr>
           </thead>
           <tbody id="detailTableData">
             <tr>
-              <td colspan="8" class="text-center">Belum ada data</td>
+              <td colspan="6" class="text-center">Belum ada data</td>
             </tr>
           </tbody>
         </table>
@@ -941,17 +919,15 @@ td input[type="checkbox"] {
                     <th scope="col">Tanggal</th>
                     <th scope="col">Jatuh Tempo</th>
                     <th scope="col">Valas</th>
-                    <th scope="col">Debet Note</th>
                     <th scope="col">Kurs</th>
-                    <th scope="col">Debet Note (Rp)</th>
-                    <th scope="col">Hutang (Valas)</th>
-                    <th scope="col">Hutang (Rp)</th>
+                    <th scope="col">Debet Note</th>
+                    <th scope="col">Kredit</th>
                     <th scope="col">Keterangan</th>
                   </tr>
                 </thead>
                 <tbody id="tabel_data_add_list_invoice" class="text-left">
                   <tr>
-                    <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+                    <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
                   </tr>
                 </tbody>
               </table>
@@ -1421,16 +1397,19 @@ function submitAddEdit () {
   let nourut = $("#input_add_nourut").val();
   let tanggal  = $("#input_add_tanggal").val()
   let noinvoice  = $("#AddEditNoInv").val()
-  let nilai  = bersihkanAngka($("#AddEditNilai").val())
-  let nilairp  = bersihkanAngka($("#AddEditNilaiRp").val())
+  let debet  = bersihkanAngka($("#AddEditNilai").val())
+  let kredit  = bersihkanAngka($("#AddEditKredit").val())
   let kodevls  = $("#AddEditValas").val()
-  let kurs  = bersihkanAngka($("#AddEditKurs").val())
+  let kurs  = dnValasIDR(kodevls) ? 1 : bersihkanAngka($("#AddEditKurs").val())
   let keterangan  = $("#AddEditKeterangan").val()
 
-  if (Number(nilai) < 0 || Number(kurs) < 0 ) {
+  if (debet < 0 || kredit < 0 || kurs < 0 ) {
     alertify.warning("Nilai < 0")
     return
   }
+  // Kredit disimpan di field Nilai yang sama dengan Debet Note, bertanda minus.
+  let nilai  = dnNilaiDK(debet, kredit)
+  let nilairp  = dnNilaiRp(nilai, kurs)
 
   $.ajax({
     url: "{!! url('debetnotespkoreksi') !!}",
@@ -1556,14 +1535,16 @@ function buttonAddPickInvoice () {
       if (document.getElementById(`add_checkbox${i}`).checked) {
 
         // Input tampil dengan separator ribuan, yang dikirim angka bersih.
-        let checkNilai = bersihkanAngka($(`#add_inputQnt${i}`).val());
-        let checkKurs = bersihkanAngka($(`#add_inputKurs${i}`).val());
-        let checkNilaiRp = bersihkanAngka($(`#add_inputQntRp${i}`).val());
+        let checkDebet = bersihkanAngka($(`#add_inputQnt${i}`).val());
+        let checkKredit = bersihkanAngka($(`#add_inputKredit${i}`).val());
+        let checkKurs = dnValasIDR(item.KodeVls) ? 1 : bersihkanAngka($(`#add_inputKurs${i}`).val());
+        // Kredit disimpan di field Nilai yang sama dengan Debet Note, bertanda minus.
+        let checkNilai = dnNilaiDK(checkDebet, checkKredit)
         listInvoice[i].Keterangan = $(`#add_inputKeterangan${i}`).val();
         listInvoice[i].inputNilai = checkNilai
         listInvoice[i].inputKurs = checkKurs
-        listInvoice[i].inputNilaiRp = checkNilaiRp
-        if (Number(checkNilai) < 0 || Number(checkKurs) < 0 ) {
+        listInvoice[i].inputNilaiRp = dnNilaiRp(checkNilai, checkKurs)
+        if (checkDebet < 0 || checkKredit < 0 || checkKurs < 0 ) {
           checkMinus = 1
         }
 
@@ -1578,7 +1559,7 @@ function buttonAddPickInvoice () {
     }
 
     if (checkMinus) {
-      alertify.warning("Qty < 0");
+      alertify.warning("Nilai < 0");
       return
     }
 
@@ -1661,6 +1642,8 @@ function buttonAddListInvoice () {
       listInvoice = res
       let rowTable = ``
       res.forEach((item, i) => {
+        // Valas IDR: kurs terkunci di 1.00. Valas lain: kurs terbuka, diisi awal kurs invoice.
+        let idr = dnValasIDR(item.KodeVls)
         rowTable +=
         `<tr>
         <td class="text-center"><input class="" type="checkbox" value="" id="add_checkbox${i}"></td>
@@ -1668,13 +1651,9 @@ function buttonAddListInvoice () {
         <td>${formatDate(item.Tanggal,'-').split('-').reverse().join('/')}</td>
         <td>${formatDate(item.JatuhTempo,'-').split('-').reverse().join('/')}</td>
         <td>${item.KodeVls}</td>
-        <td><input id="add_inputQnt${i}" style="height:30px; width: 115px; min-width: 115px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
-
-        <td><input id="add_inputKurs${i}" style="height:30px; width: 85px; min-width: 85px" type="text" inputmode="decimal" value='1.00' class="form-control text-right" oninput="formatRibuanLive(this); onChangeNilaiKurs(${i})" onblur="formatRibuan(this); onChangeNilaiKurs(${i})"></td>
-        <td><input style="height:30px; width: 120px; min-width: 120px" id="add_inputQntRp${i}" type="text" value='0.00' class="form-control text-right"  disabled></td>
-
-        <td class="text-right">${formatAngka(parseFloat(item.SaldoD).toFixed(2))}</td>
-        <td class="text-right">${formatAngka(parseFloat(item.Saldo).toFixed(2))}</td>
+        <td><input id="add_inputKurs${i}" style="height:30px; width: 100px; min-width: 100px" type="text" inputmode="decimal" value='${idr ? '1.00' : angkaTampil(item.Kurs)}' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" ${idr ? 'disabled' : ''}></td>
+        <td><input id="add_inputQnt${i}" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')" onblur="formatRibuan(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')"></td>
+        <td><input id="add_inputKredit${i}" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')" onblur="formatRibuan(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')"></td>
 
         <td><input style="height:30px; min-width: 200px" id="add_inputKeterangan${i}" type="text" value='' class="form-control text-left" ></td>
 
@@ -1700,18 +1679,43 @@ function buttonAddListInvoice () {
   })
 }
 
-function onChangeNilaiKursItem () {
-  let onChangeQnt = bersihkanAngka($(`#AddEditNilai`).val());
-  let onChangeKurs = bersihkanAngka($(`#AddEditKurs`).val());
-
-  document.getElementById(`AddEditNilaiRp`).value = formatAngka((onChangeQnt * onChangeKurs).toFixed(2))
+function dnValasIDR (kodeVls) {
+  let vls = String(kodeVls || 'IDR').trim().toUpperCase()
+  return vls === 'IDR' || vls === ''
 }
 
-function onChangeNilaiKurs (index) {
-  let onChangeQnt = bersihkanAngka($(`#add_inputQnt${index}`).val());
-  let onChangeKurs = bersihkanAngka($(`#add_inputKurs${index}`).val());
+// Debet Note dan Kredit saling mengunci: begitu salah satu berisi angka (bukan 0), yang
+// satunya di-disable; dikosongkan / dinolkan lagi = keduanya terbuka kembali.
+function dnKunciDK (idDebet, idKredit) {
+  let elDebet = document.getElementById(idDebet)
+  let elKredit = document.getElementById(idKredit)
+  let debet = bersihkanAngka(elDebet.value)
+  let kredit = bersihkanAngka(elKredit.value)
 
-  document.getElementById(`add_inputQntRp${index}`).value = formatAngka((onChangeQnt * onChangeKurs).toFixed(2))
+  elKredit.disabled = debet !== 0
+  elDebet.disabled = debet === 0 && kredit !== 0
+}
+
+// Nilai yang disimpan ke field Nilai: Debet Note apa adanya, Kredit bertanda minus.
+function dnNilaiDK (debet, kredit) {
+  return debet !== 0 ? debet : (kredit !== 0 ? -kredit : 0)
+}
+
+// NilaiRp tidak lagi tampil di layar, tetap dihitung (Nilai x Kurs) untuk total DN dan
+// posting hutang/jurnal.
+function dnNilaiRp (nilai, kurs) {
+  return Number((nilai * kurs).toFixed(2))
+}
+
+// Sel Valas, Kurs, Debet Note, Kredit untuk tabel form Add/Edit dan Detail. Nilai minus di
+// database = kredit, ditampilkan positif di kolom Kredit.
+function dnSelDK (item) {
+  let nilai = Number(item.Nilai) || 0
+  return `
+                  <td>${item.kodeVls}</td>
+                  <td class="text-right">${angkaTampil(item.Kurs)}</td>
+                  <td class="text-right">${angkaTampil(nilai < 0 ? 0 : nilai)}</td>
+                  <td class="text-right">${angkaTampil(nilai < 0 ? -nilai : 0)}</td>`
 }
 
 function buttonAddListCustomer () {
@@ -1803,12 +1807,7 @@ function refreshDataTable (nobukti) {
                 <tr>
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
-                  <td class="text-right">${angkaTampil(item.Nilai)}</td>
-                  <td>${item.kodeVls}</td>
-                  <td class="text-right">${angkaTampil(item.Kurs)}</td>
-                  <td class="text-right">${angkaTampil(item.NilaiRp)}</td>
-                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
-                  <td class="text-right">${angkaTampil(item.Saldo)}</td>
+                  ${dnSelDK(item)}
                   <td class="text-center">
                     <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})"><i class="bi bi-pen"></i></button>
                     <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDelete(${i}  )"><i class="bi bi-trash"></i></button>
@@ -1885,12 +1884,7 @@ function buttonDetail (nobukti) {
                 <tr>
                   <td>${item.NoInv}</td>
                   <td>${item.Keterangan ? item.Keterangan : ''}</td>
-                  <td class="text-right">${angkaTampil(item.Nilai)}</td>
-                  <td>${item.kodeVls}</td>
-                  <td class="text-right">${angkaTampil(item.Kurs)}</td>
-                  <td class="text-right">${angkaTampil(item.NilaiRp)}</td>
-                  <td class="text-right">${angkaTampil(nilaiInvoice(item))}</td>
-                  <td class="text-right">${angkaTampil(item.Saldo)}</td>
+                  ${dnSelDK(item)}
                 </tr>`
       });
 
@@ -1991,7 +1985,7 @@ function buttonAdd (nobukti) {
   document.getElementById("input_add_tanggal").disabled = false
   document.getElementById("input_add_kodecustomer").disabled = false
   document.getElementById("buttonAddListCustomer").disabled = false
-  document.getElementById("addTableData").innerHTML = `<tr><td colspan=9 class="text-center">Belum ada data</td></tr>`
+  document.getElementById("addTableData").innerHTML = `<tr><td colspan=7 class="text-center">Belum ada data</td></tr>`
   tipeform = 'add'
   $('.showhideitem').hide();
   $('#modalAdd').show();
@@ -2007,14 +2001,18 @@ function buttonAddEditItem (i) {
   tempBarangAddEdit = listData[i]
   document.getElementById("AddEditNoInv").value = tempBarangAddEdit.NoInv
   document.getElementById("AddEditValas").value = tempBarangAddEdit.kodeVls
-  document.getElementById("AddEditKurs").value = angkaTampil(tempBarangAddEdit.Kurs)
-  document.getElementById("AddEditNilai").value = angkaTampil(tempBarangAddEdit.Nilai)
+  // Valas IDR: kurs terkunci di 1.00.
+  let idr = dnValasIDR(tempBarangAddEdit.kodeVls)
+  document.getElementById("AddEditKurs").value = idr ? '1.00' : angkaTampil(tempBarangAddEdit.Kurs)
+  document.getElementById("AddEditKurs").disabled = idr
 
-  document.getElementById("AddEditKeterangan").value = tempBarangAddEdit.Keterangan
+  // Nilai minus di database = kredit.
+  let nilai = Number(tempBarangAddEdit.Nilai) || 0
+  document.getElementById("AddEditNilai").value = angkaTampil(nilai < 0 ? 0 : nilai)
+  document.getElementById("AddEditKredit").value = angkaTampil(nilai < 0 ? -nilai : 0)
+  dnKunciDK('AddEditNilai', 'AddEditKredit')
 
-  document.getElementById("AddEditNilaiRp").value = angkaTampil(tempBarangAddEdit.NilaiRp)
-  document.getElementById("AddEditNilaiInv").value = angkaTampil(nilaiInvoice(tempBarangAddEdit))
-  document.getElementById("AddEditNilaiInvRp").value = angkaTampil(tempBarangAddEdit.Saldo)
+  document.getElementById("AddEditKeterangan").value = tempBarangAddEdit.Keterangan || ''
 
   $('.showhideitem').hide();
   $('#formAddEdit').show();
@@ -2105,13 +2103,6 @@ function formatAngka (angkaString) {
 // Angka dari server -> teks ber-separator 2 desimal (null/kosong = 0.00).
 function angkaTampil (nilai) {
   return dnFormatAngkaDes(nilai, 2)
-}
-
-// Nilai invoice dalam mata uang invoice: valas = SaldoD, IDR = Saldo (dulu selalu Saldo Rp,
-// sehingga kolom Nilai Inv invoice USD tampil nilai rupiahnya).
-function nilaiInvoice (item) {
-  let vls = String(item.kodeVls || item.KodeVls || 'IDR').trim().toUpperCase()
-  return (vls === 'IDR' || vls === '') ? item.Saldo : item.SaldoD
 }
 
 // Nilai input ber-separator dibersihkan dulu sebelum dihitung / dikirim ke server -
