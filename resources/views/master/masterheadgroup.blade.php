@@ -185,7 +185,7 @@
           <div class="bs-form bs-form-lebar">
             <label for="input_subgroup_add_kodesubgroup">Kode Subgroup</label>
             <input id="input_subgroup_add_kodesubgroup" type="text" class="form-control">
-            <label for="input_add_perkPers">Perk. Persiapan</label>
+            <label for="input_add_perkPers">COA Biaya <span class="coa-wajib text-danger" style="display:none">*</span></label>
             <div class="input-group">
               <input type="text" class="form-control" id="input_add_perkPers" disabled>
               <div class="input-group-append">
@@ -195,7 +195,7 @@
 
             <label for="input_subgroup_add_namasubgroup">Nama Subgroup</label>
             <input id="input_subgroup_add_namasubgroup" type="text" class="form-control">
-            <label for="input_add_perkJual">Perk. Jual</label>
+            <label for="input_add_perkJual">COA Penjualan <span class="coa-wajib text-danger" style="display:none">*</span></label>
             <div class="input-group">
               <input type="text" class="form-control" id="input_add_perkJual" disabled>
               <div class="input-group-append">
@@ -220,7 +220,7 @@
           <div class="bs-form bs-form-lebar">
             <label for="input_subgroup_edit_kodesubgroup">Kode Subgroup</label>
             <input id="input_subgroup_edit_kodesubgroup" type="text" class="form-control" disabled>
-            <label for="input_edit_perkPers">Perk. Persiapan</label>
+            <label for="input_edit_perkPers">COA Biaya <span class="coa-wajib text-danger" style="display:none">*</span></label>
             <div class="input-group">
               <input type="text" class="form-control" id="input_edit_perkPers" disabled>
               <div class="input-group-append">
@@ -230,7 +230,7 @@
 
             <label for="input_subgroup_edit_namasubgroup">Nama Subgroup</label>
             <input id="input_subgroup_edit_namasubgroup" type="text" class="form-control">
-            <label for="input_edit_perkJual">Perk. Jual</label>
+            <label for="input_edit_perkJual">COA Penjualan <span class="coa-wajib text-danger" style="display:none">*</span></label>
             <div class="input-group">
               <input type="text" class="form-control" id="input_edit_perkJual" disabled>
               <div class="input-group-append">
@@ -581,6 +581,25 @@ function submitEditSubKategori () {
     }})
 }
 
+function isGroupJasa (kodegroup) {
+  return String(kodegroup || '').trim().toUpperCase() === 'JS';
+}
+
+function cekCoaWajibSubGroup (kodegroup, perkpers, perkjual) {
+  if (!isGroupJasa(kodegroup)) {
+    return true;
+  }
+  if (!perkpers) {
+    alertify.warning("COA Biaya wajib diisi untuk headgroup Jasa");
+    return false;
+  }
+  if (!perkjual) {
+    alertify.warning("COA Penjualan wajib diisi untuk headgroup Jasa");
+    return false;
+  }
+  return true;
+}
+
 function submitAddSubGroup () {
   let _token = $("#_token").val();
   let kodehdgroup = $("#input_subgroup_kodehdgroup").val();
@@ -607,12 +626,9 @@ function submitAddSubGroup () {
     return
   }
 
-  if (!perkpers) {
-    alertify.warning("Perkiraan  harus diisi");
-    return
-  }
-  if (!perkjual) {
-    alertify.warning("Perkiraan  harus diisi");
+  // COA Biaya & COA Penjualan wajib hanya untuk headgroup Jasa (KODEGRP = 'JS'),
+  // dipakai nanti oleh Purchase Order. Untuk group lain boleh kosong.
+  if (!cekCoaWajibSubGroup(kodegroup, perkpers, perkjual)) {
     return
   }
 
@@ -676,12 +692,7 @@ function submitEditSubGroup () {
     return
   }
 
-  if (!perkpers) {
-    alertify.warning("Perkiraan  harus diisi");
-    return
-  }
-  if (!perkjual) {
-    alertify.warning("Perkiraan  harus diisi");
+  if (!cekCoaWajibSubGroup(kodegroup, perkpers, perkjual)) {
     return
   }
 
@@ -936,6 +947,8 @@ function buttonSubGroup (kode, kodegroup) {
       document.getElementById("input_subgroup_kodegroup").value = kodegroup
       document.getElementById("input_subgroup_kodehdgroup").value = kode
       document.getElementById("tabel_data_subgroup").innerHTML = rowTable
+      // Tanda * pada COA hanya tampil untuk headgroup Jasa (wajib diisi)
+      $('#formSubGroup .coa-wajib').toggle(isGroupJasa(kodegroup))
 
     }})
 

@@ -34,13 +34,30 @@
         <div class="col-md-3">
           <div class="row">
 
+            {{-- Jenis PO (PO Stock / PO Non Stock), pasangannya #input_add_jenispo di form PO Stock.
+                 Diisi & dikunci oleh poIsiDropdownJenisPO(), diganti lewat poGantiJenisPO()
+                 (purchaseOrder.blade.php). --}}
             <div class="col-md-4">
+              <div class="form-group">
+                <label for="ns_input_add_jenispo">Jenis PO</label>
+              </div>
+            </div>
+
+            <div class="col-md-8">
+              <div class="form-group">
+                <select id="ns_input_add_jenispo" class="form-control text-left" onchange="poGantiJenisPO(this, 'nonstock')">
+                  <option value="nonstock">PO Non Stock</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-4" style="margin-top:-12px;">
               <div class="form-group">
                 <label>Supplier</label>
               </div>
             </div>
 
-            <div class="col-md-8">
+            <div class="col-md-8" style="margin-top:-12px;">
               {{-- Supplier bisa diketik: saran muncul di bawah (sama seperti Pelanggan menu SO). --}}
               <div class="input-group mb-3 position-relative">
                 <input type="text" class="form-control text-left" placeholder="Cari Supplier..." id="ns_input_add_kodesupplier" autocomplete="off">
@@ -63,17 +80,7 @@
               </div>
             </div>
 
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group">
-                <label>Tanggal</label>
-              </div>
-            </div>
-
-            <div class="col-md-8" style="margin-top:-10px;">
-              <div class="form-group">
-                <input type="date" class="form-control text-left" id="ns_input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
-              </div>
-            </div>
+            {{-- Tanggal dipindah ke kolom Valas/Kurs, tepat di bawah Kurs. --}}
 
           </div>
         </div>
@@ -135,6 +142,24 @@
               </div>
             </div>
 
+            <div class="col-md-12" style="margin-top:-12px;">
+              <div class="row">
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>Tanggal</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <input type="date" class="form-control text-left" id="ns_input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{-- Perkiraan header sudah tidak diinput manual: perkiraan diambil otomatis dari
+                 COA Biaya barang (Master Barang -> Master Headgroup/SubGroup). Header DBPO.PERKIRAAN
+                 diisi server (PONonStockController@nilaiHeaderNonStock). Dikomentari, jangan dihapus.
             <div class="col-md-6" style="margin-top:-12px;">
               <div class="row">
                 <div class="col-9">
@@ -159,7 +184,10 @@
                 </div>
               </div>
             </div>
+            --}}
 
+            {{-- PPH23 & PPH21 hanya informatif (selalu disabled): nilainya dari setting PPH supplier
+                 (DBCUSTSUPP.NPPH23 / NPPH22), saat edit dari nilai yang tersimpan di PO. --}}
             <div class="col-md-12" style="margin-top:-12px;">
               <div class="row">
                 <div class="col-6">
@@ -169,7 +197,7 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <input type="number" class="form-control text-right" id="input_add_pph23" value='0.00'>
+                    <input type="text" class="form-control text-right" id="input_add_pph23" value='0.00' disabled>
                   </div>
                 </div>
               </div>
@@ -242,7 +270,7 @@
                 </div>
                 <div class="col-md-6">
                   <div class="form-group">
-                    <input type="number" class="form-control text-right" id="input_add_pph21" value='0.00'>
+                    <input type="text" class="form-control text-right" id="input_add_pph21" value='0.00' disabled>
                   </div>
                 </div>
               </div>

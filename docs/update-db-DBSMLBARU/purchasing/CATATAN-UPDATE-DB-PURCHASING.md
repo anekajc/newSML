@@ -288,3 +288,15 @@ Jalan keluarnya, pilih salah satu:
   - Hak akses `DBFLMENUWEB` `030201`/`030202` **tidak** diubah.
   - Rollback ada di bagian bawah file skrip.
 - **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 12 November 2026, dengan hasil sesuai. Untuk server client, jalankan `29_gabung_menu_po.sql` bersamaan dengan update kodenya.
+
+---
+
+## 30 — Form PO: dropdown Jenis PO, PPH dari supplier, Perkiraan otomatis dari COA barang (13 November 2026, tanpa perubahan database)
+
+- **Tombol Tambah** langsung membuka form Add (modal pilihan PO Stock / PO Non Stock dihapus). Default PO Stock, atau PO Non Stock kalau user tidak punya hak tambah PO Stock.
+- **Dropdown Jenis PO** ada di atas Supplier pada kedua form (`#input_add_jenispo`, `#ns_input_add_jenispo`). Isinya hanya jenis yang boleh ditambah user. Kalau diganti, form direset total dan no bukti dibuat sesuai jenisnya: PO Stock `PO`/`PON`, PO Non Stock `POB`. Dropdown terkunci saat Edit/Detail, setelah item pertama tersimpan, dan saat form dibuka dari Buat PO (Outstanding PR).
+- **Buat PO dari Outstanding PR:** PR Non Stock sekarang membuka form PO Non Stock. PR Agen/Non Agen tetap membuka form PO Stock. Dulu semua PR membuka form PO Stock.
+- **PO Non Stock, PPH23 & PPH21:** hanya informatif dan selalu disabled. Waktu supplier dipilih, nilainya diisi dari `DBCUSTSUPP.NPPH23` / `NPPH22`. Waktu Edit/Detail, nilainya dari yang tersimpan di DBPO. Nilai yang disimpan ditentukan server (`PONonStockController@nilaiHeaderNonStock`), nilai kiriman browser diabaikan.
+- **PO Non Stock, Perkiraan header:** input dikomentari. `DBPO.PERKIRAAN` pada PO baru diisi otomatis dari COA Biaya (`dbSubGroup.PerkPers`, Master Headgroup) barang item pertama. PO yang sudah ada mempertahankan nilai yang tersimpan, karena `sp_PO` Choice `U` menimpa `NPPH23`/`PERKIRAAN` header. Perkiraan per item tetap dibaca dari master barang masing-masing.
+- **PO Non Stock, Costing:** daftar Costing (`polistcosting`) disaring dari COA Biaya barang yang dipilih (`kodebrg`), bukan lagi dari Perkiraan header. Costing/Sub-Costing dikosongkan setiap kali barang dipilih ulang.
+- **Belum dikerjakan:** cetak PO Non Stock masih memakai `DBPO.PERKIRAAN` header (`Sp_CetakPO`). Rencananya nanti diganti ke perkiraan per barang.

@@ -448,13 +448,15 @@ function ns_submitAddAddKerja () {
   let NOPOCUST = '-'
   //iduser = $user->name
   //pJasa = 0
-  let NPPH23 = $("#input_add_pph23").val()
-  let PERKIRAAN = $("#input_add_perkiraan").val()
+  // NPPH23, PERKIRAAN & PPH21 header ditentukan server (PONonStockController@nilaiHeaderNonStock):
+  // PPH dari supplier, perkiraan dari COA Biaya barang. Nilai di bawah hanya pengisi parameter.
+  let NPPH23 = 0
+  let PERKIRAAN = ''
   let SatX = $("#input_add_add_satuanAlias").val()
   let COST = $("#input_add_add_costing").val()
   let SUBCOST = $("#input_add_add_subcosting").val()
   let TglKirim = $("#ns_input_add_tanggalkirim").val()
-  let PPH21 = $("#input_add_pph21").val()
+  let PPH21 = 0
   let NOPNw = $("#ns_input_add_add_nopnwpo").val()
   let UrutPNW = 0
 
@@ -685,6 +687,8 @@ function ns_submitAddAddKerja () {
         ns_tipeform = 'edit'
         document.getElementById("ns_buttonAddListPelanggan").disabled = true
         document.getElementById("ns_input_add_kodesupplier").disabled = true
+        // PO sudah tersimpan (punya item) - Jenis PO tidak bisa diganti lagi.
+        poIsiDropdownJenisPO('ns_input_add_jenispo', 'nonstock', false)
         $('#ns_divhargaterakhir').hide();
         ns_cleanFormAddAdd()
 
@@ -798,13 +802,15 @@ function ns_submitAddEditKerja () {
   let NOPOCUST = '-'
   //iduser = $user->name
   //pJasa = 0
-  let NPPH23 = $("#input_add_pph23").val()
-  let PERKIRAAN = $("#input_add_perkiraan").val()
+  // NPPH23, PERKIRAAN & PPH21 header ditentukan server (PONonStockController@nilaiHeaderNonStock):
+  // PPH dari supplier, perkiraan dari COA Biaya barang. Nilai di bawah hanya pengisi parameter.
+  let NPPH23 = 0
+  let PERKIRAAN = ''
   let SatX = $("#input_add_add_satuanAlias").val()
   let COST = $("#input_add_add_costing").val()
   let SUBCOST = $("#input_add_add_subcosting").val()
   let TglKirim = $("#ns_input_add_tanggalkirim").val()
-  let PPH21 = $("#input_add_pph21").val()
+  let PPH21 = 0
   let NOPNw = $("#ns_input_add_add_nopnwpo").val()
   let UrutPNW = 0
 
@@ -1263,6 +1269,7 @@ function ns_buttonAddAddPickBarangFOCPlus (index , pEdit = 0) {
   ns_cekSatuanBarang(ns_tempAddAdd.Kodebrg)
 
   document.getElementById("ns_input_add_add_kodebarang").value = ns_tempAddAdd.Kodebrg
+  ns_kosongkanCosting()
   document.getElementById("ns_input_add_add_namabarang").value = ''
   document.getElementById("ns_input_add_add_namabarangasli").value = ns_tempAddAdd.NamaBrg
   document.getElementById("ns_input_add_add_noPPL").value = ''
@@ -2163,9 +2170,13 @@ function buttonAddListCosting ()
 {
 
   let _token  = $("#_token").val()
-  perkiraan = document.getElementById("input_add_perkiraan").value
+  // Costing disaring dari COA Biaya barang yang dipilih (bukan lagi Perkiraan header).
+  let kodebrg = document.getElementById("ns_input_add_add_kodebarang").value
 
-  console.log(perkiraan)
+  if (!kodebrg) {
+    alertify.warning('Pilih barang terlebih dahulu')
+    return
+  }
 
   if ($.fn.DataTable.isDataTable('#tabel_add_list_costing')) { $('#tabel_add_list_costing').DataTable().destroy(); }
 
@@ -2175,7 +2186,7 @@ function buttonAddListCosting ()
     async: false,
     data: {
       _token,
-      perkiraan
+      kodebrg
     },
     success: function(res) {
       let rowTable = ``
@@ -3586,6 +3597,7 @@ function ns_buttonAddAddPickBarangAll (kodebrg) {
 
       ns_tempAddAdd = res.barang[0]
       document.getElementById("ns_input_add_add_kodebarang").value = ns_tempAddAdd.Kodebrg
+      ns_kosongkanCosting()
       document.getElementById("ns_input_add_add_namabarang").value = ''
       document.getElementById("ns_input_add_add_namabarangasli").value = ns_tempAddAdd.NamaBrg
       document.getElementById("input_add_add_disc").value = '0.00'
@@ -3692,6 +3704,7 @@ function ns_buttonAddAddPickBarangNonFOC (index , pEdit = 0) {
   ns_cekSatuanBarang(ns_tempAddAdd.KodeBrg)
 
   document.getElementById("ns_input_add_add_kodebarang").value = ns_tempAddAdd.KodeBrg
+  ns_kosongkanCosting()
   document.getElementById("ns_input_add_add_namabarang").value = ''
   document.getElementById("ns_input_add_add_namabarangasli").value = ns_tempAddAdd.NamaBrg
   document.getElementById("ns_input_add_add_qty").value = ns_formatAngka(parseFloat(ns_tempAddAdd.SisaPPL).toFixed(2))
@@ -3788,6 +3801,7 @@ function buttonAddAddPickBarangJasa (index , pEdit = 0) {
   ns_cekSatuanBarang(ns_tempAddAdd.KodeBrg)
 
   document.getElementById("ns_input_add_add_kodebarang").value = ns_tempAddAdd.KodeBrg
+  ns_kosongkanCosting()
   document.getElementById("ns_input_add_add_namabarang").value = ''
   document.getElementById("ns_input_add_add_namabarangasli").value = ns_tempAddAdd.NamaBrg
   // Barang dari master (Non PR) tidak punya kuantitas outstanding seperti barang dari
@@ -3883,6 +3897,7 @@ function buttonAddAddPickBarangJasaPPL (index , pEdit = 0) {
   ns_cekSatuanBarang(ns_tempAddAdd.KodeBrg)
 
   document.getElementById("ns_input_add_add_kodebarang").value = ns_tempAddAdd.KodeBrg
+  ns_kosongkanCosting()
   document.getElementById("ns_input_add_add_namabarang").value = ''
   document.getElementById("ns_input_add_add_namabarangasli").value = ns_tempAddAdd.NamaBrg
   document.getElementById("ns_input_add_add_qty").value = ns_formatAngka(parseFloat(ns_tempAddAdd.Qnt).toFixed(2))
@@ -4020,8 +4035,35 @@ function ns_buttonAddPickPelanggan (kode, nama , alamat, hari, ppn) {
   document.getElementById("ns_input_add_pembayaran").innerHTML = ns_selectTipeBayar
   document.getElementById("ns_input_add_tipeppn").innerHTML = ns_selectTipePPN
 
+  ns_isiPPHSupplier(kode)
+
   ns_buttonAddListBatal()
   // $("#ns_form").modal('toggle')
+}
+
+function ns_formatPPH (nilai) {
+  let n = parseFloat(nilai)
+  return isNaN(n) ? '0.00' : n.toFixed(2)
+}
+
+// PPH23 & PPH21 (informatif) dari setting supplier - daftar supplier polistpelanggan sudah
+// membawa NPPH23 & NPPH21 (= DBCUSTSUPP.NPPH22). Yang tersimpan ke PO tetap ditentukan server.
+function ns_isiPPHSupplier (kode) {
+  document.getElementById("input_add_pph23").value = '0.00'
+  document.getElementById("input_add_pph21").value = '0.00'
+  poAmbilSupplier(function (list) {
+    // Supplier sudah diganti lagi sebelum daftar selesai dimuat - abaikan.
+    if (document.getElementById("ns_input_add_kodesupplier").value !== kode) { return }
+    let s = (list || []).find((item) => String(item.KodeCustSupp) === String(kode))
+    document.getElementById("input_add_pph23").value = ns_formatPPH(s ? s.NPPH23 : 0)
+    document.getElementById("input_add_pph21").value = ns_formatPPH(s ? s.NPPH21 : 0)
+  })
+}
+
+// Costing bergantung pada COA barang, jadi dikosongkan setiap kali barang item dipilih ulang.
+function ns_kosongkanCosting () {
+  document.getElementById("input_add_add_costing").value = ''
+  document.getElementById("input_add_add_subcosting").value = ''
 }
 
 function buttonAddPickCosting (kodeCost) {
@@ -4196,8 +4238,7 @@ function ns_lockFormAdd () {
   document.getElementById("ns_input_add_disc").disabled = true
   document.getElementById("ns_input_add_discrp").disabled = true
 
-  document.getElementById("input_add_perkiraan").disabled = true
-  document.getElementById("buttonAddListPerkiraan").hidden = true
+  // Perkiraan header dikomentari di form (otomatis dari COA barang); PPH23/PPH21 selalu disabled.
   document.getElementById("input_add_pph23").disabled = true
   document.getElementById("input_add_pph21").disabled = true
 }
@@ -4258,10 +4299,9 @@ function ns_unlockFormAdd () {
   document.getElementById("ns_input_add_disc").disabled = false
   document.getElementById("ns_input_add_discrp").disabled = false
 
-  document.getElementById("input_add_perkiraan").disabled = false
-  document.getElementById("buttonAddListPerkiraan").hidden = false
-  document.getElementById("input_add_pph23").disabled = false
-  document.getElementById("input_add_pph21").disabled = false
+  // PPH23/PPH21 hanya informatif (dari supplier) - tetap disabled walau form dibuka.
+  document.getElementById("input_add_pph23").disabled = true
+  document.getElementById("input_add_pph21").disabled = true
 }
 
 function ns_cleanFormAdd () {
@@ -4287,6 +4327,9 @@ function ns_cleanFormAdd () {
   document.getElementById("ns_input_add_namasales").value = ''
   document.getElementById("ns_input_add_hari").value = 0
   document.getElementById("ns_input_add_draftpo").value = 0
+  // Dulu tidak dikosongkan - PO baru masih menampilkan PPH PO / supplier sebelumnya.
+  document.getElementById("input_add_pph23").value = '0.00'
+  document.getElementById("input_add_pph21").value = '0.00'
 
   document.getElementById("ns_input_add_tipeppn").disabled = false
   document.getElementById("ns_input_add_pembayaran").disabled = false
@@ -4396,7 +4439,9 @@ if (pcekglobal) {
   $('#ns_modalBodyAddMain').show();
   ns_refreshDataTableAdd(NOBUKTI)
   // $("#ns_form").modal('toggle')
+  poIsiDropdownJenisPO('ns_input_add_jenispo', 'nonstock', false)
   $('#page1').hide();
+  $('#page2').hide();
   $('#ns_page2').show();
 }
 
@@ -4474,7 +4519,13 @@ if (pcekglobal) {
     }
   })
 
+  // Jenis PO bisa diganti selama PO belum punya item, kecuali form dibuka dari Outstanding PR
+  // (Buat PO) - jenisnya mengikuti jenis PR.
+  poIsiDropdownJenisPO('ns_input_add_jenispo', 'nonstock', !ns_noBuktiUntukAdd)
   $('#page1').hide();
+  // Saat Jenis PO diganti dari form PO Stock, form PO Stock ditutup di sini (bukan sebelum
+  // membuka) supaya kalau pembukaan gagal (periode dikunci, dll.) form lama tetap tampil.
+  $('#page2').hide();
   $('#ns_page2').show();
 
 }
@@ -4572,7 +4623,9 @@ function ns_buttonDetailKerja (NOBUKTI) {
   $('#ns_modalBodyAddMain').show();
   ns_refreshDataTableAdd(NOBUKTI)
   // $("#ns_form").modal('toggle')
+  poIsiDropdownJenisPO('ns_input_add_jenispo', 'nonstock', false)
   $('#page1').hide();
+  $('#page2').hide();
   $('#ns_page2').show();
 }
 
@@ -4672,7 +4725,9 @@ function ns_refreshDataTableAdd (NOBUKTI) {
           document.getElementById("ns_input_add_tipeppn").value = ns_dataHeaderAdd.PPN
           document.getElementById("ns_input_add_tanggal").value = ns_formatDate(ns_dataHeaderAdd.Tanggal)
           document.getElementById("ns_input_add_tanggalkirim").value = ns_formatDate(ns_dataHeaderAdd.TglKirim)
-          document.getElementById("input_add_perkiraan").value = ns_dataHeaderAdd.perkiraan
+          // PPH yang tersimpan di PO (informatif). Perkiraan header tidak ditampilkan lagi.
+          document.getElementById("input_add_pph23").value = ns_formatPPH(ns_dataHeaderAdd.npph23)
+          document.getElementById("input_add_pph21").value = ns_formatPPH(ns_dataHeaderAdd.NPPH21)
 
           // Total = jumlah Subtotal (Total) seluruh item.
           document.getElementById("ns_input_add_total").value = ns_formatAngka(ns_dataTableAdd.reduce((jml, item) => jml + (parseFloat(item.Total) || 0), 0).toFixed(2))
