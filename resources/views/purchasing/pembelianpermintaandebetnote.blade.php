@@ -371,7 +371,8 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
   background-color: #eef2ff;
 }
 #tabel_add_list_customer thead th,
-#tabel_add_list_invoice thead th {
+#tabel_add_list_invoice thead th,
+#editItemTable thead th {
   background: #f8f9fb !important;
   color: #6b7280 !important;
   font-size: 12px;
@@ -382,7 +383,8 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
   border-top: none !important;
 }
 #tabel_add_list_customer tbody td,
-#tabel_add_list_invoice tbody td {
+#tabel_add_list_invoice tbody td,
+#editItemTable tbody td {
   border-top: none !important;
   border-bottom: 1px solid #f1f3f5 !important;
   font-size: 13px;
@@ -503,7 +505,8 @@ td input[type="checkbox"] {
             <th style="padding: 4px 12px;" scope="col">Tanggal</th>
             <th style="padding: 4px 12px;" scope="col">Kode Supp</th>
             <th style="padding: 4px 12px;" scope="col">Supplier</th>
-            <th style="padding: 4px 12px;" scope="col">Debet Note</th>
+            <th style="padding: 4px 12px;" scope="col">Debet</th>
+            <th style="padding: 4px 12px;" scope="col">Kredit</th>
           </tr>
         </thead>
         <tbody id="tabel_data" class="text-left">
@@ -573,7 +576,7 @@ td input[type="checkbox"] {
             </div>
             <div class="col-md-8" style="margin-top:-10px;">
               <div class="input-group mb-3">
-                <input type="text" class="form-control text-left" id="input_add_kodecustomer" placeholder="Kode Supplier">
+                <input type="text" class="form-control text-left" id="input_add_kodecustomer" placeholder="Ketik kode / nama, Enter">
                 <button type="button" id="buttonAddListCustomer" onclick="performSearchSupplier()" class="btn btn-chip-biru btn-sm" style="height:32px; border-radius:0;"><i class="bi bi-search"></i></button>
               </div>
             </div>
@@ -614,16 +617,17 @@ td input[type="checkbox"] {
             <tr>
               <th scope="col">No Inv</th>
               <th scope="col">Keterangan</th>
+              <th scope="col">Nilai</th>
               <th scope="col">Valas</th>
               <th scope="col">Kurs</th>
-              <th scope="col">Debet Note</th>
+              <th scope="col">Debet</th>
               <th scope="col">Kredit</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody id="addTableData">
             <tr>
-              <td colspan="7" class="text-center">Belum ada data</td>
+              <td colspan="8" class="text-center">Belum ada data</td>
             </tr>
           </tbody>
         </table>
@@ -636,67 +640,41 @@ td input[type="checkbox"] {
           <h4 style="margin-left:-35px;">Edit Item</h4>
         </div>
       </div>
+      {{-- Sebaris seperti baris di modal Tambah Invoice (tanpa centang): label di atas, input
+           di bawah. Debet dan Kredit saling mengunci (dnKunciDK()); Kredit disimpan ke field
+           Nilai yang sama, bertanda minus. Nilai = nilai invoice sebelum baris ini (item.Sisa),
+           dihitung ulang saat Debet/Kredit diketik (dnHitungSisaEdit()). --}}
       <div class="row">
-        <div class="col-md-12">
-          <div class="row">
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>No Inv</label></div>
-            </div>
-            <div class="col-auto" style="width:220px;">
-              <div class="form-group">
-                <input id="AddEditNoInv" type="text" class="form-control" disabled>
-              </div>
-            </div>
-          </div>
-          <div class="row" style="margin-top:-5px;">
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Ket.</label></div>
-            </div>
-            <div class="col-auto" style="width:580px;">
-              <div class="form-group">
-                <input id="AddEditKeterangan" type="text" class="form-control">
-              </div>
-            </div>
-          </div>
-          <div class="row" style="margin-top:-5px;">
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Valas</label></div>
-            </div>
-            <div class="col-auto" style="width:220px;">
-              <div class="form-group">
-                <input id="AddEditValas" type="text" class="form-control" disabled>
-              </div>
-            </div>
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Kurs</label></div>
-            </div>
-            <div class="col-auto" style="width:220px;">
-              <div class="form-group">
+        <div class="col-12 table-responsive">
+          <table id="editItemTable" class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">No Faktur</th>
+                <th scope="col">Tanggal</th>
+                <th scope="col">Jatuh Tempo</th>
+                <th scope="col">Nilai</th>
+                <th scope="col">Valas</th>
+                <th scope="col">Kurs</th>
+                <th scope="col">Debet</th>
+                <th scope="col">Kredit</th>
+                <th scope="col">Keterangan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input id="AddEditNoInv" style="height:30px; min-width: 170px" type="text" class="form-control" disabled></td>
+                <td><input id="AddEditTanggal" style="height:30px; width: 110px; min-width: 110px" type="text" class="form-control" disabled></td>
+                <td><input id="AddEditJatuhTempo" style="height:30px; width: 110px; min-width: 110px" type="text" class="form-control" disabled></td>
+                <td><input id="AddEditSisa" style="height:30px; width: 140px; min-width: 140px" type="text" value="0.00" class="form-control text-right" disabled></td>
+                <td><input id="AddEditValas" style="height:30px; width: 70px; min-width: 70px" type="text" class="form-control" disabled></td>
                 {{-- Terkunci di 1.00 kalau valasnya IDR - lihat buttonAddEditItem(). --}}
-                <input id="AddEditKurs" type="text" inputmode="decimal" value="1.00" class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)">
-              </div>
-            </div>
-          </div>
-          {{-- Debet Note dan Kredit saling mengunci (lihat dnKunciDK()). Kredit disimpan ke
-               field Nilai yang sama, bertanda minus. --}}
-          <div class="row" style="margin-top:-5px;">
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Debet Note</label></div>
-            </div>
-            <div class="col-auto" style="width:220px;">
-              <div class="form-group">
-                <input id="AddEditNilai" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('AddEditNilai', 'AddEditKredit')" onblur="formatRibuan(this); dnKunciDK('AddEditNilai', 'AddEditKredit')">
-              </div>
-            </div>
-            <div class="col-auto" style="width:140px; margin-top:5px;">
-              <div class="form-group"><label>Kredit</label></div>
-            </div>
-            <div class="col-auto" style="width:220px;">
-              <div class="form-group">
-                <input id="AddEditKredit" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('AddEditNilai', 'AddEditKredit')" onblur="formatRibuan(this); dnKunciDK('AddEditNilai', 'AddEditKredit')">
-              </div>
-            </div>
-          </div>
+                <td><input id="AddEditKurs" style="height:30px; width: 100px; min-width: 100px" type="text" inputmode="decimal" value="1.00" class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)"></td>
+                <td><input id="AddEditNilai" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('AddEditNilai', 'AddEditKredit'); dnHitungSisaEdit()" onblur="formatRibuan(this); dnKunciDK('AddEditNilai', 'AddEditKredit'); dnHitungSisaEdit()"></td>
+                <td><input id="AddEditKredit" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value="0.00" class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('AddEditNilai', 'AddEditKredit'); dnHitungSisaEdit()" onblur="formatRibuan(this); dnKunciDK('AddEditNilai', 'AddEditKredit'); dnHitungSisaEdit()"></td>
+                <td><input id="AddEditKeterangan" style="height:30px; min-width: 200px" type="text" class="form-control text-left"></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
       <div class="row">
@@ -789,15 +767,16 @@ td input[type="checkbox"] {
             <tr>
               <th scope="col">No Inv</th>
               <th scope="col">Keterangan</th>
+              <th scope="col">Nilai</th>
               <th scope="col">Valas</th>
               <th scope="col">Kurs</th>
-              <th scope="col">Debet Note</th>
+              <th scope="col">Debet</th>
               <th scope="col">Kredit</th>
             </tr>
           </thead>
           <tbody id="detailTableData">
             <tr>
-              <td colspan="6" class="text-center">Belum ada data</td>
+              <td colspan="7" class="text-center">Belum ada data</td>
             </tr>
           </tbody>
         </table>
@@ -918,16 +897,17 @@ td input[type="checkbox"] {
                     <th scope="col">No Faktur</th>
                     <th scope="col">Tanggal</th>
                     <th scope="col">Jatuh Tempo</th>
+                    <th scope="col">Nilai</th>
                     <th scope="col">Valas</th>
                     <th scope="col">Kurs</th>
-                    <th scope="col">Debet Note</th>
+                    <th scope="col">Debet</th>
                     <th scope="col">Kredit</th>
                     <th scope="col">Keterangan</th>
                   </tr>
                 </thead>
                 <tbody id="tabel_data_add_list_invoice" class="text-left">
                   <tr>
-                    <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+                    <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
                   </tr>
                 </tbody>
               </table>
@@ -976,8 +956,10 @@ function dnBuatCart (headers, values, isnumerics, isshowns, desimals, aliasorder
     if (aliasordered && aliasordered[i] && aliasordered[i].alias) {
       label = aliasordered[i].alias
     }
-    // Field data tetap 'Nilai DN' (alias query loadAll), yang diganti hanya judul kolomnya.
-    if (label === 'Nilai DN') { label = 'Debet Note' }
+    // Field data tetap 'Nilai DN' / 'Kredit DN' (alias query loadAll), yang diganti hanya
+    // judul kolomnya. Keduanya sudah positif dari server (kredit minus hanya di database).
+    if (label === 'Nilai DN') { label = 'Debet' }
+    if (label === 'Kredit DN') { label = 'Kredit' }
     let des = (desimals && desimals[i] !== undefined && desimals[i] !== null)
       ? Number(desimals[i])
       : (tipe === 1 ? 2 : 0)
@@ -1407,6 +1389,10 @@ function submitAddEdit () {
     alertify.warning("Nilai < 0")
     return
   }
+  if (dnHitungSisaEdit() < 0) {
+    alertify.warning("Debet invoice " + noinvoice + " melebihi Nilai")
+    return
+  }
   // Kredit disimpan di field Nilai yang sama dengan Debet Note, bertanda minus.
   let nilai  = dnNilaiDK(debet, kredit)
   let nilairp  = dnNilaiRp(nilai, kurs)
@@ -1531,8 +1517,13 @@ function buttonAddPickInvoice () {
   let _token = $("#_token").val();
   let tempData = []
   let checkMinus = 0
+  let lebihNilai = ''
   listInvoice.forEach((item, i) => {
       if (document.getElementById(`add_checkbox${i}`).checked) {
+        // Debet tidak boleh melebihi Nilai (sisa invoice) - sisa tidak boleh minus.
+        if (dnHitungSisa(i) < 0 && !lebihNilai) {
+          lebihNilai = item.NoFaktur
+        }
 
         // Input tampil dengan separator ribuan, yang dikirim angka bersih.
         let checkDebet = bersihkanAngka($(`#add_inputQnt${i}`).val());
@@ -1560,6 +1551,11 @@ function buttonAddPickInvoice () {
 
     if (checkMinus) {
       alertify.warning("Nilai < 0");
+      return
+    }
+
+    if (lebihNilai) {
+      alertify.warning("Debet invoice " + lebihNilai + " melebihi Nilai");
       return
     }
 
@@ -1650,10 +1646,11 @@ function buttonAddListInvoice () {
         <td>${item.NoFaktur}</td>
         <td>${formatDate(item.Tanggal,'-').split('-').reverse().join('/')}</td>
         <td>${formatDate(item.JatuhTempo,'-').split('-').reverse().join('/')}</td>
+        <td><input id="add_inputSisa${i}" style="height:30px; width: 140px; min-width: 140px" type="text" value='${angkaTampil(item.Sisa)}' class="form-control text-right" disabled></td>
         <td>${item.KodeVls}</td>
         <td><input id="add_inputKurs${i}" style="height:30px; width: 100px; min-width: 100px" type="text" inputmode="decimal" value='${idr ? '1.00' : angkaTampil(item.Kurs)}' class="form-control text-right" oninput="formatRibuanLive(this)" onblur="formatRibuan(this)" ${idr ? 'disabled' : ''}></td>
-        <td><input id="add_inputQnt${i}" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')" onblur="formatRibuan(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')"></td>
-        <td><input id="add_inputKredit${i}" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')" onblur="formatRibuan(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}')"></td>
+        <td><input id="add_inputQnt${i}" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}'); dnHitungSisa(${i})" onblur="formatRibuan(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}'); dnHitungSisa(${i})"></td>
+        <td><input id="add_inputKredit${i}" style="height:30px; width: 140px; min-width: 140px" type="text" inputmode="decimal" value='0.00' class="form-control text-right" oninput="formatRibuanLive(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}'); dnHitungSisa(${i})" onblur="formatRibuan(this); dnKunciDK('add_inputQnt${i}', 'add_inputKredit${i}'); dnHitungSisa(${i})"></td>
 
         <td><input style="height:30px; min-width: 200px" id="add_inputKeterangan${i}" type="text" value='' class="form-control text-left" ></td>
 
@@ -1677,6 +1674,37 @@ function buttonAddListInvoice () {
     }
 
   })
+}
+
+// Kolom Nilai di modal Invoice = sisa invoice (dari listInvoice: saldo dikurangi DN yang belum
+// diotorisasi). Debet mengurangi, Kredit menambah. Hasilnya dikembalikan supaya
+// buttonAddPickInvoice() bisa menolak Debet yang melebihi Nilai.
+function dnHitungSisa (i) {
+  let item = listInvoice[i] || {}
+  let debet = bersihkanAngka($(`#add_inputQnt${i}`).val())
+  let kredit = bersihkanAngka($(`#add_inputKredit${i}`).val())
+  let sisa = Number(((Number(item.Sisa) || 0) - debet + kredit).toFixed(2))
+  let el = document.getElementById(`add_inputSisa${i}`)
+  if (el) {
+    el.value = angkaTampil(sisa)
+    el.classList.toggle('text-danger', sisa < 0)
+  }
+  return sisa
+}
+
+// Kolom Nilai di form Edit Item = nilai invoice sebelum baris ini (item.Sisa dari getDetail),
+// dikurangi Debet / ditambah Kredit yang sedang diketik. Dikembalikan untuk validasi Simpan.
+function dnHitungSisaEdit () {
+  let item = tempBarangAddEdit || {}
+  let debet = bersihkanAngka($('#AddEditNilai').val())
+  let kredit = bersihkanAngka($('#AddEditKredit').val())
+  let sisa = Number(((Number(item.Sisa) || 0) - debet + kredit).toFixed(2))
+  let el = document.getElementById('AddEditSisa')
+  if (el) {
+    el.value = angkaTampil(sisa)
+    el.classList.toggle('text-danger', sisa < 0)
+  }
+  return sisa
 }
 
 function dnValasIDR (kodeVls) {
@@ -1707,11 +1735,12 @@ function dnNilaiRp (nilai, kurs) {
   return Number((nilai * kurs).toFixed(2))
 }
 
-// Sel Valas, Kurs, Debet Note, Kredit untuk tabel form Add/Edit dan Detail. Nilai minus di
-// database = kredit, ditampilkan positif di kolom Kredit.
+// Sel Nilai (nilai invoice sebelum baris ini, berjalan per baris - lihat getDetail), Valas, Kurs, Debet, Kredit untuk tabel form Add/Edit dan Detail.
+// Nilai minus di database = kredit, ditampilkan positif di kolom Kredit.
 function dnSelDK (item) {
   let nilai = Number(item.Nilai) || 0
   return `
+                  <td class="text-right">${angkaTampil(item.Sisa)}</td>
                   <td>${item.kodeVls}</td>
                   <td class="text-right">${angkaTampil(item.Kurs)}</td>
                   <td class="text-right">${angkaTampil(nilai < 0 ? 0 : nilai)}</td>
@@ -1914,9 +1943,8 @@ function buttonOtorisasi (nobukti) {
     return;
   }
 
-  alertify.confirm(
-    'Konfirmasi Otorisasi',
-    'Yakin Ingin Melakukan Otorisasi ' + nobukti + '?', function () {
+  // Otorisasi langsung jalan tanpa dialog konfirmasi (permintaan user 13 Nov 2026).
+  {
     let _token = $("#_token").val();
 
     $.ajax({
@@ -1941,9 +1969,7 @@ function buttonOtorisasi (nobukti) {
         alertify.warning('Terjadi kesalahan, silakan refresh browser.');
       }
     });
-  }, function () {
-    alertify.message('Dibatalkan');
-  });
+  }
 }
 
 function buttonKoreksi (nobukti ) {
@@ -1985,7 +2011,7 @@ function buttonAdd (nobukti) {
   document.getElementById("input_add_tanggal").disabled = false
   document.getElementById("input_add_kodecustomer").disabled = false
   document.getElementById("buttonAddListCustomer").disabled = false
-  document.getElementById("addTableData").innerHTML = `<tr><td colspan=7 class="text-center">Belum ada data</td></tr>`
+  document.getElementById("addTableData").innerHTML = `<tr><td colspan=8 class="text-center">Belum ada data</td></tr>`
   tipeform = 'add'
   $('.showhideitem').hide();
   $('#modalAdd').show();
@@ -2013,6 +2039,9 @@ function buttonAddEditItem (i) {
   dnKunciDK('AddEditNilai', 'AddEditKredit')
 
   document.getElementById("AddEditKeterangan").value = tempBarangAddEdit.Keterangan || ''
+  document.getElementById("AddEditTanggal").value = tempBarangAddEdit.TglInv ? formatDate(tempBarangAddEdit.TglInv, '-').split('-').reverse().join('/') : ''
+  document.getElementById("AddEditJatuhTempo").value = tempBarangAddEdit.JatuhTempoInv ? formatDate(tempBarangAddEdit.JatuhTempoInv, '-').split('-').reverse().join('/') : ''
+  dnHitungSisaEdit()
 
   $('.showhideitem').hide();
   $('#formAddEdit').show();
@@ -2155,10 +2184,46 @@ function formatRibuanLive (el) {
   el.setSelectionRange(pos, pos)
 }
 
-// Kode supplier bisa diketik seperti menu Purchase Order: Enter / tombol browse membuka
-// modal pemilih yang langsung terfilter dengan teks ketikan.
+// Kode / nama supplier bisa diketik, polanya sama dengan input barang di Permintaan Pembelian
+// Agen: Enter / tombol browse -> kalau hasilnya hanya 1 supplier (atau kodenya persis sama)
+// langsung terpilih tanpa modal; kalau lebih dari 1 / tidak ketemu, modal pemilih dibuka dan
+// langsung terfilter dengan teks ketikan.
 function performSearchSupplier () {
   const searchValue = document.getElementById('input_add_kodecustomer').value.trim();
+
+  if (searchValue) {
+    let cocok = []
+    $.ajax({
+      url: "{!! url('debetnotelistcustomer') !!}",
+      type: "get",
+      async: false,
+      success: function (res) {
+        listCustomer = res || []
+        let kata = searchValue.toLowerCase()
+        let persis = listCustomer.findIndex(c => String(c.KODECUSTSUPP || '').trim().toLowerCase() === kata)
+        if (persis >= 0) {
+          cocok = [persis]
+          return
+        }
+        listCustomer.forEach((c, i) => {
+          let teks = (String(c.KODECUSTSUPP || '') + ' ' + String(c.NAMACUSTSUPP || '')).toLowerCase()
+          if (teks.indexOf(kata) > -1) { cocok.push(i) }
+        })
+      },
+      error: function (err) {
+        console.log(err)
+      }
+    })
+
+    if (cocok.length === 1) {
+      let item = listCustomer[cocok[0]] || {}
+      document.getElementById("input_add_kodecustomer").value = item.KODECUSTSUPP || ''
+      document.getElementById("input_add_namacustomer").value = item.NAMACUSTSUPP || ''
+      document.getElementById("input_add_alamatcustomer").value = item.ALAMAT1 || ''
+      $('.showhideitem').hide();
+      return
+    }
+  }
 
   buttonAddListCustomer();
 

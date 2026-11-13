@@ -933,16 +933,6 @@ td input[type="checkbox"] {
   </style>
 {{-- end tampilan search modal barang all --}}
 <style>
-  /* Modal pilih jenis PO (tombol Tambah) */
-  .po-pilih-jenis { display: flex; gap: 12px; }
-  .po-pilih-jenis-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
-    padding: 18px 10px; border: 1px solid #cfdcff; border-radius: 10px;
-    background: #f5f8ff; color: #2563eb; font-weight: 600; font-size: 14px;
-    transition: all .12s ease;
-  }
-  .po-pilih-jenis-btn i { font-size: 26px; }
-  .po-pilih-jenis-btn:hover { background: #e8edff; border-color: #2563eb; transform: translateY(-1px); }
   /* Kolom Jenis (daftar PO & Outstanding PR) */
   .po-badge-jenis { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .po-badge-jenis-stock    { background: #e8edff; color: #2563eb; }
@@ -1243,8 +1233,9 @@ td input[type="checkbox"] {
                       <i class="bi bi-funnel"></i> Filter
                     </button>
                     <div class="po-toolbar-act">
-                      {{-- Tambah: pilih dulu PO Stock / PO Non Stock (modal #modalPilihJenisPO). --}}
-                      <button class="btn btn-chip-biru" onclick="poBukaPilihJenis()">Tambah</button>
+                      {{-- Tambah: langsung buka form Add, jenis PO dipilih lewat dropdown Jenis PO
+                           di atas Supplier (seperti Jenis PR di pembelianpermintaanagen). --}}
+                      <button class="btn btn-chip-biru" onclick="poBukaFormTambah()">Tambah</button>
                       <button class="btn btn-chip-biru" id="buttonTambahPr" onclick="buttonAddPr()">Tambah PR</button>
                     </div>
                   </div>
@@ -1580,13 +1571,29 @@ td input[type="checkbox"] {
         <div class="col-md-3">
           <div class="row">
 
+            {{-- Jenis PO (PO Stock / PO Non Stock), pasangannya #ns_input_add_jenispo di
+                 partials/poNonStockForm. Diisi & dikunci oleh poIsiDropdownJenisPO(). --}}
             <div class="col-md-4">
+              <div class="form-group">
+                <label for="input_add_jenispo">Jenis PO</label>
+              </div>
+            </div>
+
+            <div class="col-md-8">
+              <div class="form-group">
+                <select id="input_add_jenispo" class="form-control text-left" onchange="poGantiJenisPO(this, 'stock')">
+                  <option value="stock">PO Stock</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-4" style="margin-top:-12px;">
               <div class="form-group">
                 <label>Supplier</label>
               </div>
             </div>
 
-            <div class="col-md-8">
+            <div class="col-md-8" style="margin-top:-12px;">
               {{-- Supplier bisa diketik: saran muncul di bawah (sama seperti Pelanggan menu SO). --}}
               <div class="input-group mb-3 position-relative">
                 <input type="text" class="form-control text-left" placeholder="Cari Supplier..." id="input_add_kodesupplier" autocomplete="off">
@@ -1609,17 +1616,7 @@ td input[type="checkbox"] {
               </div>
             </div>
 
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group">
-                <label>Tanggal</label>
-              </div>
-            </div>
-
-            <div class="col-md-8" style="margin-top:-10px;">
-              <div class="form-group">
-                <input type="date" class="form-control text-left" id="input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
-              </div>
-            </div>
+            {{-- Tanggal dipindah ke kolom Valas/Kurs, tepat di bawah Kurs. --}}
 
           </div>
         </div>
@@ -1676,6 +1673,21 @@ td input[type="checkbox"] {
                 <div class="col-md-6">
                   <div class="form-group">
                     <input type="text" class="form-control text-right" id="input_add_kurs"  disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-12" style="margin-top:-12px;">
+              <div class="row">
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>Tanggal</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <input type="date" class="form-control text-left" id="input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
                   </div>
                 </div>
               </div>
@@ -4076,35 +4088,6 @@ td input[type="checkbox"] {
 @include('purchasing.partials.poNonStockForm')
 @include('purchasing.partials.poNonStockModal')
 
-{{-- Modal pilih jenis PO saat tombol Tambah diklik. --}}
-<div class="modal fade" id="modalPilihJenisPO" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 420px;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Tambah Purchase Order</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p class="mb-3" style="font-size: 13px; color: #6b7280;">Pilih jenis PO yang akan dibuat:</p>
-        <div class="po-pilih-jenis">
-          @if ($aksesStock->ISTAMBAH)
-          <button type="button" class="po-pilih-jenis-btn" onclick="poPilihJenisTambah('stock')">
-            <i class="bi bi-box-seam"></i>
-            <span>PO Stock</span>
-          </button>
-          @endif
-          @if ($aksesNS->ISTAMBAH)
-          <button type="button" class="po-pilih-jenis-btn" onclick="poPilihJenisTambah('nonstock')">
-            <i class="bi bi-tools"></i>
-            <span>PO Non Stock</span>
-          </button>
-          @endif
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 @endsection
 
 @section('js')
@@ -5153,6 +5136,7 @@ function submitAddTambahSOAllKerja () {
                   tipeform = 'edit'
                   document.getElementById("buttonAddListPelanggan").disabled = true
                   document.getElementById("input_add_kodesupplier").disabled = true
+                  poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
                   $('#divhargaterakhir').hide();
                   $('#divStockProyeksi').hide();
                   cleanFormAddAdd()
@@ -5537,6 +5521,7 @@ function submitAddAddKerja () {
                         tipeform = 'edit'
                         document.getElementById("buttonAddListPelanggan").disabled = true
                         document.getElementById("input_add_kodesupplier").disabled = true
+                        poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
                         $('#divhargaterakhir').hide();
                         $('#divStockProyeksi').hide();
                         cleanFormAddAdd()
@@ -5660,6 +5645,7 @@ function submitAddAddKerja () {
                         tipeform = 'edit'
                         document.getElementById("buttonAddListPelanggan").disabled = true
                         document.getElementById("input_add_kodesupplier").disabled = true
+                        poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
                         $('#divhargaterakhir').hide();
                         $('#divStockProyeksi').hide();
                         cleanFormAddAdd()
@@ -8220,28 +8206,85 @@ function poSisipJudulJenis (baris, posisi, label) {
   }
 }
 
-// Tombol Tambah: pilih dulu PO Stock / PO Non Stock. Kalau user hanya punya akses tambah
-// salah satu jenis, form jenis itu langsung dibuka.
-function poBukaPilihJenis () {
-  let bisa = ['stock', 'nonstock'].filter((j) => PO_AKSES_JENIS[j] && Number(PO_AKSES_JENIS[j].ISTAMBAH))
+// ---- Jenis PO di form Add/Edit (seperti Jenis PR di pembelianpermintaanagen) ----
+// Form PO Stock (#page2, fungsi tanpa awalan) & PO Non Stock (#ns_page2, awalan ns_) tetap
+// dua form terpisah karena isi Add Item, Harga Terakhir, Stock Proyeksi, PPH dan no bukti
+// (PO/PON vs POB) berbeda. Dropdown Jenis PO (#input_add_jenispo / #ns_input_add_jenispo)
+// ada di atas Supplier pada kedua form; mengganti pilihannya menutup form yang sedang
+// tampil dan membuka form Add jenis lainnya dari awal.
+
+// Jenis PO yang boleh dibuat user (hak tambah per jenis: 030201 / 030202).
+function poJenisBolehTambah () {
+  return ['stock', 'nonstock'].filter((j) => PO_AKSES_JENIS[j] && Number(PO_AKSES_JENIS[j].ISTAMBAH))
+}
+
+// Tombol Tambah: langsung buka form Add. Default PO Stock, kalau user tidak punya hak tambah
+// PO Stock langsung PO Non Stock.
+function poBukaFormTambah () {
+  let bisa = poJenisBolehTambah()
   if (!bisa.length) {
     alertify.warning('No access')
     return
   }
-  if (bisa.length === 1) {
-    poPilihJenisTambah(bisa[0])
-    return
-  }
-  $('#modalPilihJenisPO').modal('show')
+  poBukaFormAddJenis(bisa[0])
 }
 
-function poPilihJenisTambah (jenis) {
-  $('#modalPilihJenisPO').modal('hide')
+// noBuktiPR diisi kalau form dibuka dari tombol Buat PO di tab Outstanding PR.
+function poBukaFormAddJenis (jenis, noBuktiPR) {
   if (jenis === 'nonstock') {
-    ns_buttonAdd()
+    ns_buttonAdd(noBuktiPR)
   } else {
-    buttonAdd()
+    buttonAdd(noBuktiPR)
   }
+}
+
+// Buat PO dari Outstanding PR: PR Non Stock dibuatkan PO Non Stock, PR Agen/Non Agen PO Stock.
+function poBuatPODariPR (noBuktiPR, jenisPR) {
+  poBukaFormAddJenis(jenisPR === 'nonstock' ? 'nonstock' : 'stock', noBuktiPR)
+}
+
+// Isi dropdown Jenis PO sebuah form. bisaGanti = true hanya untuk PO baru yang belum punya
+// item (bukan dari Outstanding PR): pilihannya jenis yang boleh ditambah user. Selain itu
+// (edit, detail, item pertama sudah tersimpan) dropdown hanya berisi jenis form itu & dikunci.
+function poIsiDropdownJenisPO (idSelect, jenis, bisaGanti) {
+  let sel = document.getElementById(idSelect)
+  if (!sel) { return }
+  let daftar = bisaGanti ? poJenisBolehTambah() : []
+  if (!daftar.includes(jenis)) { daftar.push(jenis) }
+  sel.innerHTML = ['stock', 'nonstock']
+    .filter((j) => daftar.includes(j))
+    .map((j) => `<option value="${j}">${PO_LABEL_JENIS[j]}</option>`)
+    .join('')
+  sel.value = jenis
+  sel.disabled = !bisaGanti || daftar.length < 2
+}
+
+// onchange dropdown Jenis PO. jenisForm = jenis form tempat dropdown itu berada.
+function poGantiJenisPO (sel, jenisForm) {
+  let baru = sel.value
+  // Pilihan dikembalikan dulu: form lama baru disembunyikan oleh buttonAddKerja /
+  // ns_buttonAddKerja setelah form baru berhasil dibuka (gagal = form lama tetap utuh).
+  sel.value = jenisForm
+  if (baru === jenisForm || !PO_LABEL_JENIS[baru]) { return }
+
+  let isNS = jenisForm === 'nonstock'
+  let modeForm = isNS ? ns_tipeform : tipeform
+  let jmlItem = isNS ? ns_dataTableAdd.length : dataTableAdd.length
+  let dariPR = isNS ? ns_noBuktiUntukAdd : noBuktiUntukAdd
+  if (modeForm !== 'add' || jmlItem) {
+    alertify.warning('Jenis PO tidak bisa diganti setelah PO punya item')
+    return
+  }
+  if (dariPR) {
+    alertify.warning('Jenis PO mengikuti jenis PR yang dipilih')
+    return
+  }
+  if (!poJenisBolehTambah().includes(baru)) {
+    alertify.warning('Anda tidak punya akses tambah ' + PO_LABEL_JENIS[baru])
+    return
+  }
+  // Form jenis baru dibuka dari awal: semua isian kosong, no bukti dibuat saat supplier dipilih.
+  poBukaFormAddJenis(baru)
 }
 
 function poUpdateFilterOutPRBadge () {
@@ -8540,7 +8583,8 @@ function initTabelOutstanding (urut, pakaiCache) {
       orderable : false,
       className : 'text-center',
       render : function (data, type, row) {
-        return `<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Buat PO" onclick="buttonAdd('${row.Nobukti}')"><i class="bi bi-plus-lg"></i></button>`
+        // Jenis PO mengikuti jenis PR (PR Non Stock -> PO Non Stock). JenisPR hanya kunci tetap.
+        return `<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Buat PO" onclick="poBuatPODariPR('${row.Nobukti}', '${row.JenisPR || ''}')"><i class="bi bi-plus-lg"></i></button>`
       }
     })
   }
@@ -10444,7 +10488,9 @@ if (pcekglobal) {
   $('#modalBodyAddMain').show();
   refreshDataTableEdit(NOBUKTI)
   // $("#form").modal('toggle')
+  poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
   $('#page1').hide();
+  $('#ns_page2').hide();
   $('#page2').show();
 }
 
@@ -10521,7 +10567,13 @@ if (pcekglobal) {
     }
   })
 
+  // Jenis PO bisa diganti selama PO belum punya item, kecuali form dibuka dari Outstanding PR
+  // (Buat PO) - jenisnya mengikuti jenis PR.
+  poIsiDropdownJenisPO('input_add_jenispo', 'stock', !noBuktiUntukAdd)
   $('#page1').hide();
+  // Saat Jenis PO diganti dari form PO Non Stock, form Non Stock ditutup di sini (bukan
+  // sebelum membuka) supaya kalau pembukaan gagal (periode dikunci, dll.) form lama tetap tampil.
+  $('#ns_page2').hide();
   $('#page2').show();
   $('#modalBodyAddMainHeader').show();
 
@@ -10621,7 +10673,9 @@ function buttonDetailKerja (NOBUKTI) {
   $('#modalBodyAddMain').show();
   refreshDataTableDetail(NOBUKTI)
   // $("#form").modal('toggle')
+  poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
   $('#page1').hide();
+  $('#ns_page2').hide();
   $('#page2').show();
 }
 

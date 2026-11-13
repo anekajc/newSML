@@ -60,9 +60,15 @@ class KreditNoteController extends Controller
   private function queryKreditNote ($tglawal, $tglakhir, $filterkn) {
     return DB::connection("SML")->select("
       select * from (
-        select a.* , b.NAMACUSTSUPP, isnull(d.NilaiRp,0) NILAIKN
+        -- Di KN, Kredit disimpan plus dan Debet disimpan minus (kebalikan Debet Note). Di layar
+        -- dipisah jadi kolom Debet (NILAIDEBETKN) & Kredit (NILAIKN), keduanya tampil positif.
+        -- Nama field NILAIKN dipertahankan supaya susunan kolom tersimpan tetap cocok.
+        select a.* , b.NAMACUSTSUPP, isnull(d.Debet,0) NILAIDEBETKN, isnull(d.Kredit,0) NILAIKN
         from dbkreditnote a join DBCUSTSUPP b on a.KodeSupp = b.KODECUSTSUPP
-        left outer join (select NoBukti, Sum(NilaiRp) NilaiRp from dbKreditNoteDet group by NoBukti) d
+        left outer join (select NoBukti,
+                                Sum(case when NilaiRp < 0 then -NilaiRp else 0 end) Debet,
+                                Sum(case when NilaiRp > 0 then NilaiRp else 0 end) Kredit
+                         from dbKreditNoteDet group by NoBukti) d
                on d.NoBukti = a.NoBukti
         where a.Tanggal between ? and ?
       ) x
@@ -91,20 +97,35 @@ class KreditNoteController extends Controller
 
         // Saldo invoice dulu diagregasi dari SEMUA faktur di vwHutPiut (64 ribu faktur, 3 dtk
         // tiap buka Detail/Edit/Otorisasi), sekarang hanya faktur milik KN ini.
-        $tempOutstanding = DB::connection("SML")->select("Select  c.KodeSupp,d.NamaCustSupp,d.Alamat1,Right(a.noBukti,4)NoUrut,a.Urut,a.NoBukti,convert(varchar(10), c.tanggal, 23) tanggal,Keterangan,A.NoInv, b.Saldo, b.SaldoD,
+        // Sisa (kolom Nilai) berjalan per baris = nilai invoice SEBELUM baris KN ini, sama
+        // seperti Debet Note: saldo DBHUTPIUT tanpa posting KN (NoInvoice 'KN'), dikurangi semua
+        // baris KN (sudah/belum diotorisasi) untuk invoice itu yang urutannya lebih dulu
+        // (Tanggal, NoBukti, Urut). Di KN Kredit = Nilai plus (mengurangi), Debet = Nilai minus
+        // (menambah). Baris pertama = saldo invoice.
+        $tempOutstanding = DB::connection("SML")->select("Select  c.KodeSupp,d.NamaCustSupp,d.Alamat1,Right(a.noBukti,4)NoUrut,a.Urut,a.NoBukti,convert(varchar(10), c.tanggal, 23) tanggal,Keterangan,A.NoInv,
         a.Nilai,
         Case when a.kodevls='IDR' then 0.00 else a.Nilai end NilaiValas,
-        a.kodeVls, a.Kurs, a.NilaiRp , c.IsOtorisasi1
+        a.kodeVls, a.Kurs, a.NilaiRp , c.IsOtorisasi1,
+        Convert(Numeric(18,2), isnull(s.SaldoInv,0) - isnull(p.Sebelum,0)) Sisa,
+        s.TglInv, s.JatuhTempoInv
 From  dbKreditNoteDet a
 Left Outer Join dbKreditNote c On c.NoBukti=a.NoBukti
-Left Outer Join (select a.NoFaktur,Sum(Saldo) Saldo, Sum(SaldoD) SaldoD
-                 from dbo.vwHutPiut a
-                 where a.Tipe='PT'
-                   and a.NoFaktur in (select k.NoInv from dbKreditNoteDet k where k.NoBukti = cast(:nobukti2 as varchar(100)))
-                 Group by a.NoFaktur) b On a.NoInv=B.Nofaktur
 Left Outer Join dbCustSupp d On d.KodeCustSupp=c.KodeSupp
+Outer Apply (select case when max(case when isnull(h.Valas,'') not in ('','IDR') then 1 else 0 end)=1
+                         then Sum(h.SaldoD) else Sum(h.Saldo) end SaldoInv,
+                    Min(h.Tanggal) TglInv, Min(h.JatuhTempo) JatuhTempoInv
+             from DBHUTPIUT h
+             where h.NoFaktur=a.NoInv and h.KodeCustSupp=c.KodeSupp and h.Tipe='PT'
+               and isnull(h.NoInvoice,'')<>'KN') s
+Outer Apply (select sum(x.Nilai) Sebelum
+             from dbKreditNoteDet x
+             join dbKreditNote n on n.NoBukti=x.NoBukti
+             where x.NoInv=a.NoInv and n.KodeSupp=c.KodeSupp
+               and (n.Tanggal < c.Tanggal
+                    or (n.Tanggal = c.Tanggal and n.NoBukti < c.NoBukti)
+                    or (n.NoBukti = c.NoBukti and x.Urut < a.Urut))) p
 where a.NOBUKTI = cast(:nobukti as varchar(100))
-order by a.urut" , ["nobukti" => $req->nobukti, "nobukti2" => $req->nobukti]);
+order by a.urut" , ["nobukti" => $req->nobukti]);
     return $tempOutstanding;
   }
 
@@ -113,33 +134,44 @@ order by a.urut" , ["nobukti" => $req->nobukti, "nobukti2" => $req->nobukti]);
     return $header ? $header[0] : null;
   }
 
-  // Saldo invoice (Rp & valas) dan akun piutangnya dari DBHUTPIUT. Akun dipakai untuk perkHP
-  // (lawan jurnal KN); kalau tidak ketemu pakai akun piutang posting (DBPOSTHUTPIUT PT urut 2).
-  private function infoInvoice ($nofaktur) {
-    $saldo = DB::connection('SML')->select("select isnull(sum(Saldo),0) Saldo, isnull(sum(SaldoD),0) SaldoD from DBHUTPIUT where NoFaktur = cast(? as varchar(30)) and Tipe = 'PT'", [(string) $nofaktur]);
+  // Sisa invoice (mata uang invoice) dan akun piutangnya. Akun dipakai untuk perkHP (lawan
+  // jurnal KN); kalau tidak ketemu pakai akun piutang posting (DBPOSTHUTPIUT PT urut 2).
+  // Sisa = saldo DBHUTPIUT tanpa posting KN, dikurangi SEMUA baris KN (sudah/belum diotorisasi)
+  // untuk invoice itu - rumus yang sama dengan kolom Nilai di modal Invoice. Baris yang sedang
+  // dikoreksi ($nobukti + $urut) tidak ikut dihitung, supaya nilainya bisa diganti.
+  private function infoInvoice ($nofaktur, $kodecust, $nobukti = '', $urut = 0) {
+    $saldo = DB::connection('SML')->select("
+      select case when max(case when isnull(h.Valas,'') not in ('','IDR') then 1 else 0 end)=1
+                  then isnull(Sum(h.SaldoD),0) else isnull(Sum(h.Saldo),0) end SaldoInv
+      from DBHUTPIUT h
+      where h.NoFaktur = cast(? as varchar(30)) and h.KodeCustSupp = cast(? as varchar(15))
+        and h.Tipe = 'PT' and isnull(h.NoInvoice,'') <> 'KN'", [(string) $nofaktur, (string) $kodecust]);
+    $kn = DB::connection('SML')->select("
+      select isnull(sum(x.Nilai),0) Nilai
+      from dbKreditNoteDet x join dbKreditNote n on n.NoBukti = x.NoBukti
+      where x.NoInv = cast(? as varchar(30)) and n.KodeSupp = cast(? as varchar(15))
+        and not (x.NoBukti = cast(? as varchar(100)) and x.Urut = ?)", [(string) $nofaktur, (string) $kodecust, (string) $nobukti, (int) $urut]);
     $perk = DB::connection('SML')->select("select top 1 Perkiraan from DBHUTPIUT where NoFaktur = cast(? as varchar(30)) and Tipe = 'PT' and isnull(NOINVOICE,'') <> 'KN' and isnull(Perkiraan,'') <> '' order by Tanggal, Urut", [(string) $nofaktur]);
     if (!$perk) {
       $perk = DB::connection('SML')->select("select top 1 Perkiraan from DBPOSTHUTPIUT where Kode = 'PT' and Urut = 2");
     }
     return (object) [
-      "Saldo" => (float) $saldo[0]->Saldo,
-      "SaldoD" => (float) $saldo[0]->SaldoD,
+      "Sisa" => round((float) ($saldo ? $saldo[0]->SaldoInv : 0) - (float) $kn[0]->Nilai, 2),
       "Perkiraan" => $perk ? $perk[0]->Perkiraan : '',
     ];
   }
 
-  // Nilai KN harus > 0 dan tidak melebihi saldo invoice (IDR: Saldo, valas: SaldoD). Keputusan
-  // user 14 Okt 2026; programajcSML hanya menolak nilai minus.
-  private function cekNilai ($noinv, $kodevls, $nilai, $kurs, $info) {
-    if (!((float) $nilai > 0)) {
-      return "Nilai KN invoice " . $noinv . " harus lebih dari 0";
+  // Nilai KN bertanda: Kredit plus (mengurangi sisa invoice), Debet minus (menambah). Harus
+  // diisi (bukan 0), dan sisa sesudahnya tidak boleh minus (Kredit tidak melebihi Nilai).
+  private function cekNilai ($noinv, $nilai, $kurs, $info) {
+    if (abs((float) $nilai) < 0.005) {
+      return "Debet / Kredit invoice " . $noinv . " harus diisi";
     }
     if ((float) $kurs < 0) {
       return "Kurs invoice " . $noinv . " tidak boleh kurang dari 0";
     }
-    $saldo = strtoupper(trim((string) $kodevls)) === 'IDR' || trim((string) $kodevls) === '' ? $info->Saldo : $info->SaldoD;
-    if ((float) $nilai > $saldo + 0.005) {
-      return "Nilai KN invoice " . $noinv . " melebihi saldo invoice (" . number_format($saldo, 2, '.', ',') . ")";
+    if ($info->Sisa - (float) $nilai < -0.005) {
+      return "Kredit invoice " . $noinv . " melebihi Nilai (" . number_format($info->Sisa, 2, '.', ',') . ")";
     }
     return '';
   }
@@ -208,21 +240,31 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
     // kurs lain dan baris selisih kurs jadi kelompok sendiri dan invoice lunas tetap tampil.
     // Lunas dinilai per mata uang invoice (IDR: Saldo, valas: SaldoD). Sisa < 1 (hanya selisih
     // pembulatan di belakang koma, mis. 0,07) dianggap lunas, keputusan user 22 Okt 2026.
+    //
+    // Sisa (kolom Nilai di modal) = saldo invoice (mata uang invoice) dikurangi KN yang BELUM
+    // diotorisasi untuk invoice itu (Kredit = Nilai plus mengurangi, Debet = Nilai minus
+    // menambah). KN yang sudah diotorisasi sudah terposting ke DBHUTPIUT. Sama seperti Debet
+    // Note: invoice yang sudah pernah di-KN tetap tampil selama sisanya belum habis (dulu satu
+    // invoice hanya bisa dipakai di satu KN).
     $listData = DB::connection('SML')->select("declare @awal Varchar(15)
     Select @Awal= cast(:kodecustsupp as varchar(15))
     select Cast(1 as Bit) Pilih,Convert(Numeric(18,2),0) Nilai, isnull(v.Valas,'IDR') KodeVls, isnull(v.Kurs,1) Kurs, s.NoFaktur, s.Tanggal, s.JatuhTempo,
-           s.Saldo, s.SaldoD
+           s.Saldo, s.SaldoD,
+           Convert(Numeric(18,2), case when s.ValasAsing is null then s.Saldo else s.SaldoD end - isnull(p.Pending,0)) Sisa
     from (select a.NoFaktur, Min(a.Tanggal) Tanggal, Min(a.JatuhTempo) JatuhTempo, SUM(a.Saldo) Saldo, SUM(a.SaldoD) SaldoD,
                  nullif(max(case when isnull(a.Valas,'') not in ('','IDR') then a.Valas else '' end),'') ValasAsing
           from DBHUTPIUT a
           where a.KodeCustSupp=@Awal and a.Tipe='PT'
-            and not exists (select 1 from dbKreditNoteDet k where k.NoInv=a.NoFaktur)
           Group by a.NoFaktur) s
     outer apply (select top 1 h.Valas, h.Kurs from DBHUTPIUT h
                  where h.NoFaktur=s.NoFaktur and h.KodeCustSupp=@Awal and h.Tipe='PT'
                    and isnull(h.Valas,'IDR')=isnull(s.ValasAsing,'IDR')
                  order by h.Tanggal, h.Urut) v
-    where case when s.ValasAsing is null then s.Saldo else s.SaldoD end >= 1
+    outer apply (select sum(d.Nilai) Pending
+                 from dbKreditNoteDet d
+                 join dbKreditNote n on n.NoBukti=d.NoBukti
+                 where d.NoInv=s.NoFaktur and n.KodeSupp=@Awal and isnull(n.IsOtorisasi1,0)=0) p
+    where case when s.ValasAsing is null then s.Saldo else s.SaldoD end - isnull(p.Pending,0) >= 1
     Order by s.Nofaktur
 " , ["kodecustsupp" => (string) $req->kodecustsupp]);
     return $listData;
@@ -310,17 +352,13 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
       if (trim((string) $req->kodecustsupp) === '' || trim((string) $req->nobukti) === '') {
         return ["status" => 0, "pesan" => "Customer / No Bukti belum terisi, silahkan pilih customer"];
       }
+      // Invoice yang sama boleh dipakai di beberapa KN selama Nilai (sisa) belum habis - sama
+      // seperti Debet Note. Sisa dihitung ulang di server (bisa keduluan user lain).
       $infoInv = [];
       foreach ($tempData as $d) {
         $noinv = (string) ($d['NoFaktur'] ?? '');
-        // Satu invoice hanya boleh di satu KN (daftar invoice sudah menyaring, tapi bisa
-        // keduluan user lain saat form terbuka).
-        $dipakai = DB::connection('SML')->select("select top 1 NoBukti from dbKreditNoteDet where NoInv = cast(? as varchar(30))", [$noinv]);
-        if ($dipakai) {
-          return ["status" => 0, "pesan" => "Invoice " . $noinv . " sudah dipakai di KN " . $dipakai[0]->NoBukti];
-        }
-        $infoInv[$noinv] = $this->infoInvoice($noinv);
-        $salah = $this->cekNilai($noinv, $d['KodeVls'] ?? '', $this->angka($d['inputNilai'] ?? 0), $this->angka($d['inputKurs'] ?? 0), $infoInv[$noinv]);
+        $infoInv[$noinv] = $this->infoInvoice($noinv, $req->kodecustsupp);
+        $salah = $this->cekNilai($noinv, $this->angka($d['inputNilai'] ?? 0), $this->angka($d['inputKurs'] ?? 0), $infoInv[$noinv]);
         if ($salah !== '') {
           return ["status" => 0, "pesan" => $salah];
         }
@@ -350,33 +388,49 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
         $tanggal = $header->TANGGAL;
       }
 
+      // Semua invoice disimpan dalam SATU batch transaksi (sama seperti Debet Note): kalau satu
+      // gagal, semuanya dibatalkan. BEGIN/COMMIT harus di batch yang sama - koneksi pdo_sqlsrv
+      // memakai MARS, transaksi yang masih terbuka di akhir batch langsung di-rollback server.
+      // Sesudah tiap EXEC: kalau Sp_KreditNote me-ROLLBACK diam-diam (@@TRANCOUNT 0) batch
+      // dihentikan dengan error. Sp_KreditNote tidak mengisi perkHP, jadi baris yang baru masuk
+      // (Urut terbesar milik invoice itu) diisi akun piutang invoice (lawan jurnal KN).
+      $sql = "SET NOCOUNT ON; SET XACT_ABORT ON; BEGIN TRAN;\n";
+      $bindings = [];
       foreach ($tempData as $d)  {
-        // code...
-        DB::connection('SML')->statement('exec Sp_KreditNote ?,?,?,?,?,?,?,?,?,?,?,?', [
+        $noinv = (string) $d['NoFaktur'];
+        $sql .= "EXEC Sp_KreditNote ?,?,?,?,?,?,?,?,?,?,?,?;\n"
+              . "IF @@TRANCOUNT = 0 BEGIN RAISERROR('Sp_KreditNote membatalkan transaksi', 16, 1); RETURN; END;\n"
+              . "UPDATE dbKreditNoteDET SET perkHP = ? WHERE NOBUKTI = cast(? as varchar(100)) AND URUT = "
+              . "(select max(URUT) from dbKreditNoteDET where NOBUKTI = cast(? as varchar(100)) and NoInv = cast(? as varchar(30)));\n"
+              . "IF @@ROWCOUNT = 0 BEGIN RAISERROR('Item KN gagal tersimpan', 16, 1); RETURN; END;\n";
+        array_push($bindings,
           "I",
           $req->nobukti,
           $tanggal,
           $d['Keterangan'] ?? '',
           0,
-          $d['NoFaktur'],
+          $noinv,
           $req->kodecustsupp,
           $this->angka($d['inputNilai'] ?? 0),
           $d['KodeVls'],
           $this->angka($d['inputKurs'] ?? 0),
           $this->angka($d['inputNilaiRp'] ?? 0),
-          $req->nourut
+          $req->nourut,
+          $infoInv[$noinv]->Perkiraan,
+          (string) $req->nobukti,
+          (string) $req->nobukti,
+          $noinv
+        );
+      }
+      $sql .= "COMMIT TRAN;";
 
-
-        ]);
-
-        // Sp_KreditNote tidak mengisi perkHP dan kegagalan insert item tidak sampai ke PHP
-        // (dulu hanya header yang tersimpan). Item dipastikan ada, lalu perkHP diisi akun
-        // piutang invoice (lawan jurnal KN).
-        $urut = DB::connection('SML')->select("select max(URUT) urut from dbKreditNoteDET where NOBUKTI = cast(? as varchar(100)) and NoInv = cast(? as varchar(30))", [(string) $req->nobukti, (string) $d['NoFaktur']]);
-        if (!$urut || $urut[0]->urut === null) {
-          return ["status" => 0, "pesan" => "Invoice " . $d['NoFaktur'] . " gagal disimpan, silahkan coba lagi"];
-        }
-        DB::connection('SML')->update("update dbKreditNoteDET set perkHP = ? where NOBUKTI = cast(? as varchar(100)) and URUT = ?", [$infoInv[(string) $d['NoFaktur']]->Perkiraan, (string) $req->nobukti, (int) $urut[0]->urut]);
+      $conn = DB::connection('SML');
+      try {
+        $conn->statement($sql, $bindings);
+      } catch (\Throwable $e) {
+        try { $conn->unprepared('IF @@TRANCOUNT > 0 ROLLBACK TRAN'); } catch (\Throwable $e2) {}
+        \Log::error('Kredit Note spAdd gagal (' . $req->nobukti . '): ' . $e->getMessage());
+        return ["status" => 0, "pesan" => "Gagal menyimpan, tidak ada invoice yang tersimpan. Silahkan ulangi."];
       }
 
       return 1;
@@ -395,12 +449,13 @@ left outer join DBKOTA b on a.KOTA = b.KodeKota  where a.Jenis = 1");
     if ((int) $header->IsOtorisasi1 === 1) {
       return ["status" => 0, "pesan" => "KN " . $req->nobukti . " sudah diotorisasi, tidak bisa diubah"];
     }
-    $item = DB::connection('SML')->select("select NoInv, KodeVLS from dbKreditNoteDET where NOBUKTI = cast(? as varchar(100)) and URUT = ?", [(string) $req->nobukti, (int) $req->urut]);
+    $item = DB::connection('SML')->select("select a.NoInv, a.KodeVLS, b.KodeSupp from dbKreditNoteDET a join dbKreditNote b on b.NoBukti = a.NoBukti where a.NOBUKTI = cast(? as varchar(100)) and a.URUT = ?", [(string) $req->nobukti, (int) $req->urut]);
     if (!$item) {
       return ["status" => 0, "pesan" => "Item KN tidak ditemukan, mungkin sudah dihapus"];
     }
     if ($req->choice == 'U') {
-      $salah = $this->cekNilai($item[0]->NoInv, $item[0]->KodeVLS, $this->angka($req->nilai), $this->angka($req->kurs), $this->infoInvoice($item[0]->NoInv));
+      // Sisa dihitung tanpa baris yang sedang dikoreksi.
+      $salah = $this->cekNilai($item[0]->NoInv, $this->angka($req->nilai), $this->angka($req->kurs), $this->infoInvoice($item[0]->NoInv, $item[0]->KodeSupp, $req->nobukti, (int) $req->urut));
       if ($salah !== '') {
         return ["status" => 0, "pesan" => $salah];
       }

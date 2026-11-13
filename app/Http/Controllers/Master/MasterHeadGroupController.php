@@ -107,7 +107,37 @@ class MasterHeadGroupController extends Controller
     return $detail;
   }
 
+  /**
+   * COA Biaya (PerkPers) & COA Penjualan (PerkH) wajib untuk headgroup Jasa (KODEGRP = 'JS'),
+   * karena dipakai sebagai akun di Purchase Order barang jasa. Group lain boleh kosong.
+   * KODEGRP diambil dari DBHDGROUP, bukan dari request, supaya tidak bisa diakali dari client.
+   * Return string pesan error, atau null bila valid.
+   */
+  private function validasiCoaSubGroup ($kodehdgroup, $perkpers, $perkjual) {
+    $hd = DB::connection('SML')->select('SELECT KODEGRP FROM DBHDGROUP where KODEHDGRP = :kode', ['kode' => $kodehdgroup]);
+    if (!$hd) {
+      return 'Head Group tidak ditemukan';
+    }
+
+    if (strtoupper(trim($hd[0]->KODEGRP ?? '')) !== 'JS') {
+      return null;
+    }
+
+    if (trim((string) $perkpers) === '') {
+      return 'COA Biaya wajib diisi untuk headgroup Jasa';
+    }
+    if (trim((string) $perkjual) === '') {
+      return 'COA Penjualan wajib diisi untuk headgroup Jasa';
+    }
+    return null;
+  }
+
   public function spAddSubGroup (Request $req) {
+
+    $errorCoa = $this->validasiCoaSubGroup($req->kodehdgroup, $req->perkpers, $req->perkjual);
+    if ($errorCoa) {
+      return $errorCoa;
+    }
 
     $check = DB::connection('SML')->select('SELECT * FROM dbSubGroup where KodeSubGrp = :kodesubgroup and KodeHDGrp = :kodehdgroup' , ['kodesubgroup' => $req->kodesubgroup , 'kodehdgroup' => $req->kodehdgroup]);
 
@@ -125,6 +155,11 @@ class MasterHeadGroupController extends Controller
   }
 
   public function spEditSubGroup (Request $req) {
+    $errorCoa = $this->validasiCoaSubGroup($req->kodehdgroup, $req->perkpers, $req->perkjual);
+    if ($errorCoa) {
+      return $errorCoa;
+    }
+
     $edit = DB::connection('SML')->update('update dbSubGroup set NamaSubGrp = :namasubgroup , PerkPers = :perkpers , PerkH = :perkjual where KodeSubGrp = :kodesubgroup and KodeHDGrp = :kodehdgroup' , [ 'namasubgroup' => $req->namasubgroup  , 'perkpers' => $req->perkpers  , 'perkjual' => $req->perkjual  , 'kodesubgroup' => $req->kodesubgroup , 'kodehdgroup' => $req->kodehdgroup]);
     return $edit;
   }
