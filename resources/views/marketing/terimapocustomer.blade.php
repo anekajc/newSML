@@ -278,6 +278,16 @@
                   class="form-control text-right input-partial-number" autocomplete="off">
               </div>
             </div>
+            {{-- Draft PO (DBPOCUSTSUPP.pPO): disalin ke dbso.pPO saat No PO ini dipilih di menu SO. --}}
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Draft PO</label>
+                <select id="input_add_draftpo" class="form-control">
+                  <option value="0" selected>Tidak</option>
+                  <option value="1">Ya</option>
+                </select>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -761,6 +771,7 @@ function kosongkanFormPO () {
   $("#input_add_totalpo").val('')
   document.getElementById("input_add_kodecustomer").value = ''
   document.getElementById("input_add_namacustomer").value = ''
+  document.getElementById("input_add_draftpo").value = '0'
   document.getElementById("input_add_tanggal").value = formatDate(new Date()).split('/').join('-');
   $("#dropdown_pelanggan").hide()
 }
@@ -795,6 +806,7 @@ function buttonKoreksi (i) {
   document.getElementById("input_add_namacustomer").value = row.NAMACUSTSUPP || ''
   document.getElementById("input_add_nopo").value = row.POCustomer || ''
   if (row.rppo) { $("#input_add_totalpo").autoNumeric('set', Number(row.rppo)) } else { $("#input_add_totalpo").val('') }
+  document.getElementById("input_add_draftpo").value = (Number(tpcPickCI(row, 'pPO')) === 1) ? '1' : '0'
   $("#dropdown_pelanggan").hide()
   $("#form").modal("show");
 }
@@ -807,6 +819,7 @@ function submitAdd () {
   let pocust = $("#input_add_nopo").val().trim()
   let tanggal = $("#input_add_tanggal").val()
   let totalpo = Number($("#input_add_totalpo").autoNumeric('get')) || 0
+  let draftpo = $("#input_add_draftpo").val() === '1' ? 1 : 0
   let id = (xtipe == 'edit') ? koreksiid : 0
 
   if (!tanggal) { alertify.warning('Tgl terima harus diisi'); return }
@@ -824,7 +837,8 @@ function submitAdd () {
       tanggal,
       id,
       choice,
-      totalpo
+      totalpo,
+      draftpo
     },
     success: function(res) {
       if (res != 1) {
