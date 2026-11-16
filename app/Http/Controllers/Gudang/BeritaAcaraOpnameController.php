@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\NewMenu;
-use App\Models\NewAksesMenu;
-use App\Models\DBFLMENU;
-use App\Models\NewPeriode;
-use App\Models\NewUsers;
+use App\Model\NewMenu;
+use App\Model\NewAksesMenu;
+use App\Model\DBFLMENU;
+use App\Model\NewPeriode;
+use App\Model\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 
@@ -216,11 +216,6 @@ return $tempOutstanding;
   }
 
 
-
-
-
-
-
   public function spUpdateHeader (Request $req) {
     $res = DB::connection('SML')->update("update dbbaop set note = :keterangan where nobukti = :nobukti", ["keterangan" => $req->keterangan , "nobukti" => $req->nobukti]);
     return $res;
@@ -233,6 +228,7 @@ return $tempOutstanding;
     $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( 'oto','BAOP',$req->nobukti,'',0,'dbbaop');
     return $res;
   }
+  
   public function spBatalOtorisasi (Request $req) {
     $tanggal = date('Y-m-d H:i:s');
     $res = DB::connection('SML')->update("update dbbaop set isOtorisasi1 = 0, maxol = -1 , OtoUser1= '' , TglOto1 = NULL  where nobukti = :nobukti", [ "nobukti" => $req->nobukti]);

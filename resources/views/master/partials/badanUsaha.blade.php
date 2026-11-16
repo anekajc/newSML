@@ -47,8 +47,8 @@ window.BadanUsaha = {
 
   // Validasi sebelum simpan.
   cek: function (sel) {
-    if (!$(sel).val()) {
-      alertify.warning('Bentuk Usaha harus dipilih (data dari Master Badan Usaha)')
+    if (!/[A-Za-z0-9]/.test($(sel).val() || '')) {
+      alertify.warning('Bentuk Usaha harus dipilih, tidak boleh kosong atau - (data dari Master Badan Usaha)')
       return false
     }
     return true

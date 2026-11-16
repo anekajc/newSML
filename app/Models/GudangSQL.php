@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Model;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class GudangSQL extends Model
 {
-		protected $connection = 'sqlsrv';
+		protected $connection = 'SML';
     // protected $primaryKey = 'KODEGDG';
     protected $table = 'vwDBGudang';
     protected $fillable = array(

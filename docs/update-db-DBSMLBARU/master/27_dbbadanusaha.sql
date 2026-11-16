@@ -40,7 +40,8 @@ INSERT INTO dbo.DBBADANUSAHA (KodeUsaha, PPH21, PPH23)
 SELECT v.KodeUsaha, v.PPH21, v.PPH23
 FROM (VALUES
   ('PT', 0, 2), ('CV', 0, 2), ('PD', 0, 2.5), ('UD', 0, 2.5), ('TOKO', 0, 2.5),
-  ('BAPAK', 0, 2.5), ('IBU', 0, 2.5), ('EXP', 0, 2.5), ('-', 0, 2.5)
+  ('BAPAK', 0, 2.5), ('IBU', 0, 2.5), ('EXP', 0, 2.5)
+  -- ('-' sempat ikut di sini, dihapus lewat 29_dbbadanusaha_tanpa_strip.sql)
 ) v (KodeUsaha, PPH21, PPH23)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.DBBADANUSAHA b WHERE b.KodeUsaha = v.KodeUsaha);
 

@@ -4,15 +4,13 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\NewMenu;
-use App\Models\NewAksesMenu;
-use App\Models\NewPeriode;
-use App\Models\NewUsers;
+use App\Model\NewMenu;
+use App\Model\NewAksesMenu;
+use App\Model\NewPeriode;
+use App\Model\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Models\DBFLMENU;
+use App\Model\DBFLMENU;
 use Illuminate\Support\Facades\Auth;
-
-
 
 
 // use App\Http\Controllers\NewMenuController;
@@ -35,17 +33,18 @@ class GudangPermintaanSampleController extends Controller
 
     // Data belum otorisasi
     $tempOutstanding = DB::connection("SML")->select("
-        select
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+        select 
+          A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
-          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI,
+          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp,
-          A.KODESLS, G.Nama NAMASLS,
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
-          H.Nama NamaLokasi
+          A.KODECUSTSUPP, F.NamaCustSupp, 
+          A.KODESLS, G.Nama NAMASLS, 
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else 
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -54,30 +53,33 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
+        where 
           CAST(A.TANGGAL as date) between :date1 and :date2 and
-          A.NOBUKTI <> ''
-          and A.IsOtorisasi1 = 0
+          A.NOBUKTI <> '' 
+          and ISNULL(A.IsOtorisasi1, 0) = 0
           and ISNULL(A.pKonsi, 0) = 0
         order by B.URUT
-    ", [
+    
+        ", [
         "date1" => $date1,
         "date2" => $date2
     ]);
 
     // Data sudah otorisasi
     $tempOutstanding3 = DB::connection("SML")->select("
-        select
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
+        select 
+          A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
-          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI,
+          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp,
-          A.KODESLS, G.Nama NAMASLS,
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
-          H.Nama NamaLokasi
+          A.KODECUSTSUPP, F.NamaCustSupp, 
+          A.KODESLS, G.Nama NAMASLS, 
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else 
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -86,13 +88,15 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
+        where 
           CAST(A.TANGGAL as date) between :date1 and :date2 and
-          A.NOBUKTI <> ''
-          and A.IsOtorisasi1 = 1
+          A.NOBUKTI <> '' 
+          and ISNULL(A.IsOtorisasi1, 0) = 1
           and ISNULL(A.pKonsi, 0) = 0
         order by B.URUT
-    ", [
+    
+        ", [
         "date1" => $date1,
         "date2" => $date2
     ]);
@@ -170,7 +174,8 @@ class GudangPermintaanSampleController extends Controller
           A.KODECUSTSUPP, F.NamaCustSupp,
           A.KODESLS, G.Nama NAMASLS,
           B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
-          H.Nama NamaLokasi
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -179,6 +184,7 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
         where
           CAST(A.TANGGAL as date) between :date1 and :date2 and
           A.NOBUKTI <> ''
@@ -202,7 +208,8 @@ class GudangPermintaanSampleController extends Controller
           A.KODECUSTSUPP, F.NamaCustSupp,
           A.KODESLS, G.Nama NAMASLS,
           B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
-          H.Nama NamaLokasi
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -211,6 +218,7 @@ class GudangPermintaanSampleController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
         where
           CAST(A.TANGGAL as date) between :date1 and :date2 and
           A.NOBUKTI <> ''

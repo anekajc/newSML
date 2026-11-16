@@ -1,0 +1,900 @@
+/* ============================================================================
+ * wms-tampilan-baru.css - tampilan baru ajcwms (gaya newSML purchasing/purchaseOrder).
+ *
+ * Hanya visual. Dipakai halaman yang sudah dipindah ke layout newmasterTest dan
+ * dibungkus <div class="wms-baru">. Aturan ditulis umum (bukan per id tabel) supaya
+ * menu ajcwms lain cukup memuat file ini + memberi class wms-baru.
+ *
+ * Nilai warna disalin dari newSML purchaseOrder.blade.php / master-list.css:
+ *   header tabel #f8f9fb abu uppercase, baris ganjil #fbfbfc, hover #f5f3ff,
+ *   tombol aksi pastel 30x30 (hijau/kuning/biru/merah/cyan), tombol soft di modal.
+ * Tidak memuat fitur geser/sembunyikan kolom dan filter tanggal (tidak dipakai ajcwms).
+ * (Catatan 2026-10-19: file ini sekarang dimuat layout newmaster untuk SEMUA menu - lihat BAGIAN 2;
+ *  tab memakai custom-tabs pola newpo. Aturan .wms-baru di bagian awal tetap untuk modal newpo.)
+ * ========================================================================== */
+
+#content { padding-top: 16px; }
+
+/* ---------- Kartu pembungkus tab & tabel ---------- */
+.wms-baru .card {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.wms-baru .card > .card-body { padding: 12px 14px 16px; }
+
+/* ---------- Tabel ---------- */
+.wms-baru table.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  color: var(--text-main, #1f2937);
+  margin-bottom: 0;
+}
+
+.wms-baru table.table,
+.wms-baru table.table th,
+.wms-baru table.table td {
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+}
+
+.wms-baru table.table thead th {
+  background: #f8f9fb !important;
+  color: #6b7280 !important;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+  border-bottom: 1px solid #e7e9ee !important;
+  padding: 10px 12px !important;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.wms-baru table.table tbody td {
+  border-bottom: 1px solid #f1f2f5 !important;
+  vertical-align: middle;
+  height: 40px;
+}
+
+.wms-baru table.table.table-striped tbody tr:nth-of-type(odd),
+.wms-baru table.table tbody tr:nth-of-type(odd) { background-color: #fbfbfc; }
+
+.wms-baru table.table.table-striped tbody tr:nth-of-type(even),
+.wms-baru table.table tbody tr:nth-of-type(even) { background-color: #fff; }
+
+.wms-baru table.table tbody tr:hover { background-color: #f5f3ff; }
+
+.wms-baru table.table tbody td.dataTables_empty {
+  text-align: center !important;
+  color: #6b7280;
+  padding: 22px 12px !important;
+}
+
+/* Isi sel sebaris; tabel lebar cukup discroll mendatar di pembungkusnya. */
+.wms-baru .wms-scroll { overflow-x: auto; }
+.wms-baru .wms-scroll table.table td,
+.wms-baru .wms-scroll table.table th { white-space: nowrap; }
+
+/* ---------- Tombol aksi di sel tabel - kotak kecil pastel ---------- */
+.wms-baru table.table td .btn.btn-sm {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: all .12s ease;
+}
+
+.wms-baru table.table td .btn.btn-sm + .btn.btn-sm { margin-left: 4px; }
+
+.wms-baru table.table td .btn.btn-sm:hover {
+  opacity: 1;
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+.wms-baru table.table td .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+.wms-baru table.table td .btn-warning { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
+.wms-baru table.table td .btn-primary { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
+.wms-baru table.table td .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+.wms-baru table.table td .btn-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
+.wms-baru table.table td .btn-secondary { color: #495057; border-color: #dee2e6; background: #f1f3f5; }
+
+/* Kolom Actions di daftar utama: tombol baru tampil saat baris di-hover (pola po-aksi-hover). */
+.wms-baru table.table.wms-aksi-hover tbody td:first-child .btn {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+
+.wms-baru table.table.wms-aksi-hover tbody tr:hover td:first-child .btn {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Kotak centang di tabel: di tengah, sedikit diperbesar. */
+.wms-baru td .form-check { padding-left: 0; margin: 0; min-height: 0; }
+.wms-baru td input[type="checkbox"] {
+  float: none;
+  position: relative;
+  margin: 0;
+  vertical-align: middle;
+  top: -1px;
+  transform: scale(1.4);
+}
+
+/* Input di dalam sel tabel (mis. Qty Terima) ikut gaya input baru. */
+.wms-baru table.table td input[type="number"],
+.wms-baru table.table td input[type="text"] {
+  height: 30px;
+  border: 1px solid #e7e9ee;
+  border-radius: 7px;
+  padding: 2px 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.wms-baru table.table td input[type="number"]:focus,
+.wms-baru table.table td input[type="text"]:focus {
+  border-color: var(--rt-indigo, #4f46e5);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft, #eef0fe);
+}
+
+/* ---------- Kontrol DataTables (search / info) - seperti .po-search-inp ---------- */
+.wms-baru .dataTables_wrapper .dataTables_filter { margin-bottom: 10px; }
+
+.wms-baru .dataTables_wrapper .dataTables_filter label {
+  font-size: 0;
+  margin: 0;
+}
+
+.wms-baru .dataTables_wrapper .dataTables_filter input {
+  width: 220px;
+  margin: 0;
+  padding: 8px 12px 8px 34px;
+  border: 1.5px solid var(--rt-border, #e7e8f0);
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%235A6A85' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+  color: var(--rt-ink, #1d2130);
+  outline: none;
+}
+
+.wms-baru .dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--rt-indigo, #4f46e5);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft, #eef0fe);
+}
+
+.wms-baru .dataTables_wrapper .dataTables_info {
+  font-size: 12px;
+  color: #6b7280;
+  padding-top: 10px;
+}
+
+/* ---------- Modal ---------- */
+.wms-baru-modal .modal-content { border-radius: 14px; }
+
+.wms-baru-modal .modal-body h4.form-card-judul {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #6b7280;
+}
+
+/* Tombol modal - versi soft seperti newSML (Simpan biru, Batal abu, dst). */
+.wms-baru-modal .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 16px;
+  box-shadow: none;
+}
+
+.wms-baru-modal .btn-primary { background-color: #e8edff; border-color: #cfdcff; color: #2563eb; }
+.wms-baru-modal .btn-primary:hover,
+.wms-baru-modal .btn-primary:focus { background-color: #dce6ff; border-color: #b9c9ff; color: #1d4ed8; opacity: 1; }
+
+.wms-baru-modal .btn-secondary { background-color: #f1f3f5; border-color: #dee2e6; color: #495057; }
+.wms-baru-modal .btn-secondary:hover,
+.wms-baru-modal .btn-secondary:focus { background-color: #e9ecef; border-color: #ced4da; color: #343a40; opacity: 1; }
+
+.wms-baru-modal .btn-success { background-color: #e7f7ed; border-color: #cdebd7; color: #16a34a; }
+.wms-baru-modal .btn-success:hover,
+.wms-baru-modal .btn-success:focus { background-color: #d8f0e2; border-color: #b6e0c6; color: #15803d; opacity: 1; }
+
+.wms-baru-modal .btn-danger { background-color: #fdeaea; border-color: #f7cfcf; color: #dc2626; }
+.wms-baru-modal .btn-danger:hover,
+.wms-baru-modal .btn-danger:focus { background-color: #fbdcdc; border-color: #f2bcbc; color: #b91c1c; opacity: 1; }
+
+/* Tombol aksi kecil di tabel dalam modal tetap kotak 30x30 (aturan tabel di atas). */
+.wms-baru-modal table.table td .btn.btn-sm { padding: 0; }
+
+/* Jarak tabel di bawah form modal. */
+.wms-baru-modal .wms-modal-tabel { margin-top: 18px; }
+
+/* Input "Jumlah Print" di modal cetak. */
+.wms-baru-modal .wms-jumlah-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wms-baru-modal .wms-jumlah-print input {
+  width: 70px;
+  height: 34px;
+  border: 1px solid #e7e9ee;
+  border-radius: 7px;
+  padding: 2px 8px;
+  text-align: right;
+}
+
+/* ============================================================================
+ * BAGIAN 2 (2026-10-19) - pola halaman menu newpo untuk SEMUA menu ajcwms.
+ * File ini sekarang dimuat layout newmaster, jadi aturan di bawah di-scope ke
+ * #content-blade (area konten layout) dan hanya mengenai kelas yang dipasang di
+ * markup halaman (tab-card, custom-tabs, wms-kartu) atau yang dipasang
+ * public/js/wms-tampilan-baru.js (data-table, po-table-wrap, wms-toolbar).
+ * ========================================================================== */
+
+#content { padding-top: 12px; }
+
+/* ---------- Tab pil biru (sama persis dengan newSML purchasing/newpo) ---------- */
+#content-blade .custom-tabs {
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  background-color: #f1f3f5;
+  border-radius: 20px;
+  padding: 3px;
+}
+
+#content-blade .custom-tabs .nav-link {
+  display: inline-block !important;
+  padding: 5px 16px !important;
+  font-size: 0.75rem !important;
+  border: none;
+  border-radius: 17px;
+  color: #495057;
+  background: transparent;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#content-blade .custom-tabs .nav-link:hover {
+  background: transparent;
+  color: #007bff;
+}
+
+#content-blade .custom-tabs .nav-link.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
+}
+
+#content-blade .card.tab-card {
+  display: block !important;
+  padding: 0 !important;
+  border: none !important;
+  margin-bottom: 6px !important;
+  background: var(--white, #fff);
+  border-radius: var(--radius, 12px);
+  /* layout newmasterTest: .card global = text-align:center + align-items:center + cursor:pointer + hover naik.
+     Tab pil (inline-flex) ikut tergeser ke tengah, jadi kembalikan ke kiri. */
+  text-align: left !important;
+  align-items: flex-start !important;
+  cursor: default;
+}
+
+#content-blade .card.tab-card:hover,
+#content-blade .card.wms-kartu:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+#content-blade .card.tab-card .card-body { padding: 5px 10px !important; }
+
+/* ---------- Kartu pembungkus tabel ---------- */
+#content-blade .card.wms-kartu {
+  display: block;
+  padding: 0;
+  background: var(--white, #fff);
+  border-radius: var(--radius, 12px);
+  border: 1.5px solid var(--border, #e5e7eb);
+  overflow: hidden;
+  text-align: left;
+  align-items: stretch;
+  cursor: default;
+}
+
+#content-blade .card.wms-kartu > .card-body { padding: 0; }
+
+/* ---------- Toolbar: Cari data + Tampilkan ---------- */
+#content-blade .wms-toolbar { padding: 12px 14px 10px; margin: 0; }
+
+#content-blade .po-len-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rt-card, #fff);
+  border: 1.5px solid var(--rt-border, #E7E8F0);
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
+#content-blade .po-len-wrap label {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--rt-ink-soft, #6B7180);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+#content-blade .po-len-inp {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rt-ink, #1D2130);
+  outline: none;
+  cursor: pointer;
+  padding: 2px 20px 2px 0;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231D2130' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right center;
+}
+
+/* ---------- Tabel daftar (.data-table) ---------- */
+#content-blade table.data-table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 0 !important;
+  background: transparent;
+}
+
+#content-blade table.data-table thead th {
+  background: #f9fafb;
+  padding: 11px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: none;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+#content-blade table.data-table tbody td {
+  padding: 12px 16px;
+  border: none;
+  border-bottom: 1px solid #f3f4f6;
+  color: var(--text-main, #1f2937);
+  vertical-align: middle;
+}
+
+#content-blade table.data-table tbody tr,
+#content-blade table.data-table tbody tr:nth-of-type(odd) { background: transparent; }
+#content-blade table.data-table tbody tr:last-child td { border-bottom: none; }
+#content-blade table.data-table tbody tr:hover td { background: #f9fafb; }
+#content-blade table.data-table tbody td.dataTables_empty { text-align: center; color: #6b7280; }
+
+#content-blade .po-table-wrap table.dataTable thead th,
+#content-blade .po-table-wrap table.dataTable tbody td { white-space: nowrap; }
+
+#content-blade .po-table-wrap table.dataTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* ---------- Tombol aksi di sel tabel - kotak kecil warna pastel ---------- */
+#content-blade table.data-table td .btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  box-shadow: none;
+  vertical-align: middle;
+  transition: all .12s ease;
+}
+
+#content-blade table.data-table td .btn + .btn { margin-left: 4px; }
+
+#content-blade table.data-table td .btn:hover {
+  opacity: 1;
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+#content-blade table.data-table td .btn-success   { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+#content-blade table.data-table td .btn-warning   { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
+#content-blade table.data-table td .btn-primary   { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
+#content-blade table.data-table td .btn-danger    { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+#content-blade table.data-table td .btn-info      { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
+#content-blade table.data-table td .btn-secondary { color: #495057; border-color: #dee2e6; background: #f1f3f5; }
+#content-blade table.data-table td .btn-dark      { color: #374151; border-color: #d1d5db; background: #f3f4f6; }
+
+/* Tombol kolom Actions baru muncul saat barisnya di-hover (opt-in: po-aksi-hover).
+   Tidak dipasang di halaman scanner/handheld supaya tombol tetap terlihat di layar sentuh. */
+#content-blade table.data-table.po-aksi-hover tbody td:first-child .btn {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+
+#content-blade table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Kotak centang di tabel: di tengah, sedikit diperbesar. */
+#content-blade table.data-table td .form-check { padding-left: 0; margin: 0; min-height: 0; }
+#content-blade table.data-table td input[type="checkbox"] {
+  float: none;
+  position: relative;
+  margin: 0;
+  vertical-align: middle;
+  top: -1px;
+  transform: scale(1.4);
+}
+
+/* Info & nomor halaman DataTables di bawah tabel. */
+#content-blade .po-table-wrap + .row { margin: 0; padding: 4px 14px 10px; }
+
+/* ---------- Modal (semua modal di halaman) - gaya modal newpo ---------- */
+#content-blade .modal .modal-content {
+  border-radius: 14px;
+  border: 1px solid var(--border, #e5e7eb);
+  overflow: hidden;
+}
+
+#content-blade .modal .modal-header {
+  align-items: center;
+  background: #fff;
+  color: var(--text-main, #1f2937);
+  border-bottom: 1px solid #eef0f3;
+  padding: 14px 20px;
+}
+
+#content-blade .modal .modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2430;
+}
+
+#content-blade .modal .modal-header .close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 0 auto;
+  border: 1px solid #d5d9e0;
+  border-radius: 6px;
+  background: #f8f9fb;
+  color: #6b7280;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  line-height: 1;
+  opacity: 1;
+  text-shadow: none;
+  transition: background-color .12s, border-color .12s;
+}
+
+#content-blade .modal .modal-header .close:hover {
+  background: #eceef1;
+  border-color: #adb5bd;
+}
+
+#content-blade .modal .modal-body { background: #fff; padding: 16px 20px; }
+
+#content-blade .modal .modal-footer {
+  background: #fff;
+  border-top: 1px solid #eef0f3;
+  padding: 12px 20px;
+}
+
+/* Label form: kecil, huruf besar, abu - sejajar dengan input di sebelahnya. */
+#content-blade .modal .modal-body label {
+  margin-bottom: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--rt-ink-soft, #6B7180);
+  line-height: 38px;
+}
+
+#content-blade .modal .modal-body .form-check-label,
+#content-blade .modal .modal-body td label { line-height: normal; text-transform: none; }
+
+#content-blade .modal .form-group { margin-bottom: 12px; }
+
+#content-blade .modal .form-control {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--rt-border, #E7E8F0);
+  font-size: 13.5px;
+  color: var(--rt-ink, #1D2130);
+  box-shadow: none;
+}
+
+#content-blade .modal textarea.form-control,
+#content-blade .modal table .form-control { height: auto; }
+
+#content-blade .modal .form-control:focus {
+  border-color: var(--rt-indigo, #4f46e5);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft, #eef0fe);
+}
+
+#content-blade .modal .form-control:disabled,
+#content-blade .modal .form-control[disabled],
+#content-blade .modal .form-control[readonly] {
+  background-color: #f1f3f5;
+  border-color: #e3e6ea;
+  color: #8A8F9C;
+}
+
+/* Tabel di dalam modal: header abu huruf besar, baris bergaris tipis. */
+#content-blade .modal table.table { font-size: 13px; margin-bottom: 0; }
+
+#content-blade .modal table.table,
+#content-blade .modal table.table th,
+#content-blade .modal table.table td {
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+}
+
+#content-blade .modal table.table thead th {
+  background: #f8f9fb !important;
+  color: #6b7280 !important;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+  border-bottom: 1px solid #e7e9ee !important;
+  padding: 10px 12px !important;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+#content-blade .modal table.table tbody td {
+  border-bottom: 1px solid #f1f2f5 !important;
+  vertical-align: middle;
+}
+
+#content-blade .modal table.table.table-striped tbody tr:nth-of-type(odd) { background-color: #fbfbfc; }
+#content-blade .modal table.table tbody tr:hover { background-color: #f5f3ff; }
+
+/* Tombol modal - versi soft seperti newSML (Simpan biru, Batal abu, dst). */
+#content-blade .modal .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: none;
+}
+
+#content-blade .modal .modal-footer .btn { padding: 7px 16px; }
+
+#content-blade .modal .btn-primary { background-color: #e8edff; border-color: #cfdcff; color: #2563eb; }
+#content-blade .modal .btn-primary:hover,
+#content-blade .modal .btn-primary:focus { background-color: #dce6ff; border-color: #b9c9ff; color: #1d4ed8; opacity: 1; }
+
+#content-blade .modal .btn-secondary { background-color: #f1f3f5; border-color: #dee2e6; color: #495057; }
+#content-blade .modal .btn-secondary:hover,
+#content-blade .modal .btn-secondary:focus { background-color: #e9ecef; border-color: #ced4da; color: #343a40; opacity: 1; }
+
+#content-blade .modal .btn-success { background-color: #e7f7ed; border-color: #cdebd7; color: #16a34a; }
+#content-blade .modal .btn-success:hover,
+#content-blade .modal .btn-success:focus { background-color: #d8f0e2; border-color: #b6e0c6; color: #15803d; opacity: 1; }
+
+#content-blade .modal .btn-danger { background-color: #fdeaea; border-color: #f7cfcf; color: #dc2626; }
+#content-blade .modal .btn-danger:hover,
+#content-blade .modal .btn-danger:focus { background-color: #fbdcdc; border-color: #f2bcbc; color: #b91c1c; opacity: 1; }
+
+#content-blade .modal .btn-warning { background-color: #fef3e0; border-color: #fbe3bd; color: #b45309; }
+#content-blade .modal .btn-info { background-color: #ecfeff; border-color: #a5f3fc; color: #0891b2; }
+
+/* Tombol kecil di sel tabel modal: kotak 30x30. */
+#content-blade .modal table.table td .btn.btn-sm {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+}
+
+/* Bar tab dengan tombol halaman di kanan (Filter, Export, Tambah, dst - onclick tetap dari halaman). */
+#content-blade .wms-tab-bar {
+  display: flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#content-blade .wms-tab-aksi {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#content-blade .wms-tab-aksi .btn {
+  height: 32px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+#content-blade .wms-tab-aksi .btn-primary   { background-color: #e8edff; border-color: #cfdcff; color: #2563eb; }
+#content-blade .wms-tab-aksi .btn-secondary { background-color: #f1f3f5; border-color: #dee2e6; color: #495057; }
+#content-blade .wms-tab-aksi .btn-success   { background-color: #e7f7ed; border-color: #cdebd7; color: #16a34a; }
+#content-blade .wms-tab-aksi .btn-danger    { background-color: #fdeaea; border-color: #f7cfcf; color: #dc2626; }
+#content-blade .wms-tab-aksi .btn-warning   { background-color: #fef3e0; border-color: #fbe3bd; color: #b45309; }
+#content-blade .wms-tab-aksi .btn-info      { background-color: #ecfeff; border-color: #a5f3fc; color: #0891b2; }
+
+/* Pembungkus lama di dalam tab (row > col-12 > container-fluid) dibuat rata dengan tepi kartu,
+   sama seperti newpo (tabel menempel ke tepi kartu, toolbar punya padding sendiri). */
+#content-blade .card.wms-kartu .tab-pane > .row,
+#content-blade .card.wms-kartu > .card-body > .row { margin: 0; }
+#content-blade .card.wms-kartu .tab-pane > .row > [class*="col"],
+#content-blade .card.wms-kartu > .card-body > .row > [class*="col"] { padding: 0 !important; }
+#content-blade .card.wms-kartu .tab-pane > .row > [class*="col"] > .container-fluid,
+#content-blade .card.wms-kartu > .card-body > .row > [class*="col"] > .container-fluid { padding: 0; }
+
+/* Tinggi baris minimal sama dengan baris newpo (yang berisi tombol aksi 30px). */
+#content-blade table.data-table tbody td { height: 31px; }
+
+/* Tombol halaman di kanan toolbar tabel (data-wms-toolbar) - gaya sama dengan tombol bar tab. */
+#content-blade .wms-toolbar .po-toolbar-act { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+#content-blade .wms-toolbar .po-toolbar-act .btn,
+#content-blade .wms-tab-aksi .btn { height: 34px !important; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: none; }
+#content-blade .wms-toolbar .po-toolbar-act .btn-primary   { background-color: #e8edff; border-color: #cfdcff; color: #2563eb; }
+#content-blade .wms-toolbar .po-toolbar-act .btn-secondary { background-color: #f1f3f5; border-color: #dee2e6; color: #495057; }
+#content-blade .wms-toolbar .po-toolbar-act .btn-success   { background-color: #e7f7ed; border-color: #cdebd7; color: #16a34a; }
+
+/* ---------- Kartu form/filter halaman (Setup Periode, Ganti Password, Kartu Stok, dst) ----------
+   Gaya kartu form newSML: putih, sudut 12px, judul kecil huruf besar abu, input 38px. */
+#content-blade .card.wms-form-kartu {
+  background: var(--white, #fff) !important;
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: var(--radius, 12px);
+  box-shadow: none;
+  overflow: hidden;
+  padding: 0;
+}
+
+#content-blade .card.wms-form-kartu > .card-header {
+  background: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #6b7280;
+  border-bottom: 1px solid #eef0f3;
+  padding: 14px 18px;
+}
+
+#content-blade .card.wms-form-kartu > .card-body { padding: 16px 18px; }
+
+#content-blade .card.wms-form-kartu .card-title,
+#content-blade .card.wms-form-kartu h6,
+#content-blade .card.wms-form-kartu label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--rt-ink-soft, #6B7180);
+}
+
+#content-blade .card.wms-form-kartu h5.card-title {
+  font-size: 12.5px;
+  color: #6b7280;
+  border-bottom: 1px solid #eef0f3;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+#content-blade .card.wms-form-kartu .form-control,
+#content-blade .card.wms-form-kartu .form-select,
+#content-blade .card.wms-form-kartu select,
+#content-blade .card.wms-form-kartu input[type="text"],
+#content-blade .card.wms-form-kartu input[type="password"],
+#content-blade .card.wms-form-kartu input[type="date"],
+#content-blade .card.wms-form-kartu input[type="number"] {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--rt-border, #E7E8F0);
+  font-size: 13.5px;
+  color: var(--rt-ink, #1D2130);
+  background-color: #fff;
+  padding: 0 10px;
+  box-shadow: none;
+}
+
+#content-blade .card.wms-form-kartu .form-control:focus,
+#content-blade .card.wms-form-kartu select:focus,
+#content-blade .card.wms-form-kartu input:focus {
+  border-color: var(--rt-indigo, #4f46e5);
+  box-shadow: 0 0 0 3px var(--rt-indigo-soft, #eef0fe);
+  outline: none;
+}
+
+/* Kotak filter abu (#E8E8E8 inline) -> abu muda bersudut, seperti panel filter newSML. */
+#content-blade .card.wms-form-kartu .rounded[style*="background-color"] {
+  background-color: #f8f9fb !important;
+  border: 1px solid #eef0f3;
+  border-radius: 10px !important;
+}
+
+#content-blade .card.wms-form-kartu .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 16px;
+  box-shadow: none;
+}
+
+#content-blade .card.wms-form-kartu .btn-primary   { background-color: #e8edff; border-color: #cfdcff; color: #2563eb; }
+#content-blade .card.wms-form-kartu .btn-secondary { background-color: #f1f3f5; border-color: #dee2e6; color: #495057; }
+#content-blade .card.wms-form-kartu .btn-success   { background-color: #e7f7ed; border-color: #cdebd7; color: #16a34a; }
+#content-blade .card.wms-form-kartu .btn-danger    { background-color: #fdeaea; border-color: #f7cfcf; color: #dc2626; }
+
+/* Tombol di header layout (@section('buttons'), mis. Refresh di master Gudang/Barang) - versi soft. */
+.header-right .hdr-buttons .btn {
+  height: 32px !important;
+  min-width: 32px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.header-right .hdr-buttons .btn-primary   { background-color: #e8edff; border-color: #cfdcff; color: #2563eb; }
+.header-right .hdr-buttons .btn-secondary { background-color: #f1f3f5; border-color: #dee2e6; color: #495057; }
+.header-right .hdr-buttons .btn-success   { background-color: #e7f7ed; border-color: #cdebd7; color: #16a34a; }
+.header-right .hdr-buttons .btn-danger    { background-color: #fdeaea; border-color: #f7cfcf; color: #dc2626; }
+
+/* Input & tombol di luar modal (halaman scanner/dashboard): sudut membulat, garis halus.
+   Ukuran & susunan halaman tidak diubah (halaman scanner tetap besar & vertikal). */
+#content-blade .form-control { border-radius: 8px; border-color: var(--rt-border, #E7E8F0); box-shadow: none; }
+#content-blade .form-control:focus { border-color: var(--rt-indigo, #4f46e5); box-shadow: 0 0 0 3px var(--rt-indigo-soft, #eef0fe); }
+#content-blade .btn { border-radius: 8px; }
+
+/* Kartu statistik Dashboard Opname Harian - putih bersudut seperti kartu newSML. */
+#content-blade .card.col-lg-2.text-center {
+  background: var(--white, #fff) !important; /* menimpa style inline #edf0f5 */
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: var(--radius, 12px);
+  box-shadow: none;
+}
+
+/* Modal pemilih: baris dipilih dengan klik (tanpa tombol + per baris), seperti newSML. */
+#content-blade .modal table tr.pick-row { cursor: pointer; }
+#content-blade .modal table tr.pick-row:hover > td { background-color: #eef0fe !important; }
+
+/* Animasi "Memuat data..." - disalin dari newSML purchasing/purchaseOrder (.po-loading-chip).
+   wmsMemuat(true/false) menutup area tab/tabel; wmsProses(teks, kerja) menutup seluruh layar
+   selama pekerjaan sinkron (lihat public/js/wms-tampilan-baru.js). */
+.wms-memuat-wadah { position: relative; }
+.wms-memuat {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  min-height: 140px;
+  background: rgba(255, 255, 255, .62);
+  z-index: 40;
+  animation: wmsMunculLoading .34s ease-out both;
+}
+.wms-proses-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, .35);
+  z-index: 2000;
+  cursor: progress;
+  animation: wmsMunculLoading .34s ease-out both;
+}
+@keyframes wmsMunculLoading {
+  0%, 45% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.wms-loading-chip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(31, 36, 48, .92);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+}
+.wms-memuat .wms-loading-chip { top: 70px; }
+.wms-loading-spin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: wmsPutarLoading .6s linear infinite;
+}
+@keyframes wmsPutarLoading {
+  to { transform: rotate(360deg); }
+}
+
+/* Ditambahkan 2026-10-27: tombol browse kaca pembesar menempel di kanan kolom input
+   (input-group Bootstrap 4), warna soft sama dengan tombol primary di tabel. */
+.wms-browse .btn-browse {
+  color: #2563eb;
+  background: #e8edff;
+  border: 1px solid #cfdcff;
+  padding: 0 12px;
+  line-height: 1;
+  box-shadow: none;
+}
+.wms-browse .btn-browse:hover,
+.wms-browse .btn-browse:focus {
+  color: #1d4ed8;
+  background: #dbe4ff;
+  border-color: #b9cbff;
+  box-shadow: none;
+}
+.wms-browse .btn-browse:active { background: #cfdcff; }
+.wms-browse .btn-browse .bi { font-size: 14px; }
+.wms-browse > .form-control:focus { z-index: 3; }
+/* Menempel rapat: sudut yang bersentuhan dibuat siku (tema meniban radius bawaan input-group). */
+.wms-browse > .form-control {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.wms-browse > .input-group-append { margin-left: -1px; }
+.wms-browse > .input-group-append > .btn-browse {
+  height: 100%;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}

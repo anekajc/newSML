@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\NewMenu;
-use App\Models\NewAksesMenu;
-use App\Models\DBFLMENU;
-use App\Models\NewUsers;
+use App\Model\NewMenu;
+use App\Model\NewAksesMenu;
+use App\Model\DBFLMENU;
+use App\Model\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Models\VwPPL;
+use App\Model\VwPPL;
 use Illuminate\Auth;
 
 
@@ -38,46 +38,29 @@ class PermintaanTransferBarangController extends Controller
     $date2 = $req->date2 ?: date('Y-m-t', strtotime($periode->tahun . '-' . $periode->bulan . '-01'));
 
     // $outstanding = VwPPL::all()->where('Bulan',$periode->bulan )->where('Tahun', $periode->tahun)->where('IsJasa', 0)->where('pAgen', 1)->groupBy('NoBukti');
+    // Satu query untuk semua status otorisasi — filter Sudah/Belum dilakukan di sisi view (filterByOtorisasi).
+    // Query ini disamakan dengan loadAll().
     $tempOutstanding = DB::connection("SML")->select("
     DECLARE @Date1 date, @Date2 date
 
     select @Date1= :date1, @Date2= :date2
 
     Select A.nobukti, a.NoUrut, a.Tanggal,  A.Note Keterangan, A.NoPenyerahan,
-            A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-      A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-      A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-            Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+           A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+           A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+           A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
+           Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                           Case when A.IsOtorisasi2=1 then 1 else 0 end+
                           Case when A.IsOtorisasi3=1 then 1 else 0 end+
                           Case when A.IsOtorisasi4=1 then 1 else 0 end+
                           Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
                       else 1
-                end As Bit) NeedOtorisasi
+                end As Bit) NeedOtorisasi,
+           case when isnull(b.NOPRTRANSFER,'')='' then 'Belum' else 'Sudah' end statrans
     from dbPRTransfer a
-    where	A.Tanggal between @Date1 and @Date2 and A.IsOtorisasi1 = 0
-    order by A.NoBukti
-    ",["date1" => $date1 , "date2" => $date2]);
-
-    $tempOutstanding2 = DB::connection("SML")->select("
-    DECLARE @Date1 date, @Date2 date
-
-    select @Date1= :date1, @Date2= :date2
-
-    Select A.nobukti, a.NoUrut, a.Tanggal,  A.Note Keterangan, A.NoPenyerahan,
-            A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-      A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-      A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-            Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                      else 1
-                end As Bit) NeedOtorisasi
-    from dbPRTransfer a
-    where	A.Tanggal between @Date1 and @Date2 and A.IsOtorisasi1 = 1
-    order by A.NoBukti
+    left outer join (select NOPRTRANSFER from DBTRANSFERDET group by NOPRTRANSFER) b on b.NOPRTRANSFER=a.NOBUKTI
+    where A.Tanggal between @Date1 and @Date2
+    order by IsOtorisasi1, A.NoBukti
     ",["date1" => $date1 , "date2" => $date2]);
 
     return view('gudang.permintaantransferbarang' , [
@@ -87,7 +70,6 @@ class PermintaanTransferBarangController extends Controller
       "date2" => $date2,
       // "users"=> $users,
       "tempOutstanding" => $tempOutstanding,
-      "tempOutstanding2" => $tempOutstanding2,
       "listBarangAll" => [] ,
       "akses" => $akses
     ]);
@@ -110,45 +92,25 @@ class PermintaanTransferBarangController extends Controller
     select @Date1= :date1, @Date2= :date2
 
     Select A.nobukti, a.NoUrut, a.Tanggal,  A.Note Keterangan, A.NoPenyerahan,
-            A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-      A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-      A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-            Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
+           A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
+		   A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
+		   A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
+		   Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
                           Case when A.IsOtorisasi2=1 then 1 else 0 end+
                           Case when A.IsOtorisasi3=1 then 1 else 0 end+
                           Case when A.IsOtorisasi4=1 then 1 else 0 end+
                           Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
                       else 1
-                end As Bit) NeedOtorisasi
+                end As Bit) NeedOtorisasi,
+           case when isnull(b.NOPRTRANSFER,'')='' then 'Belum' else 'Sudah' end statrans
     from dbPRTransfer a
-    where	A.Tanggal between @Date1 and @Date2 and A.IsOtorisasi1 = 0
-    order by A.NoBukti
-    ",["date1" => $date1 , "date2" => $date2]);
-
-    $tempOutstanding2 = DB::connection("SML")->select("
-    DECLARE @Date1 date, @Date2 date
-
-    select @Date1= :date1, @Date2= :date2
-
-    Select A.nobukti, a.NoUrut, a.Tanggal,  A.Note Keterangan, A.NoPenyerahan,
-            A.IsOtorisasi1, A.OtoUser1, A.TglOto1, A.IsOtorisasi2, A.OtoUser2, A.TglOto2,
-      A.IsOtorisasi3, A.OtoUser3, A.TglOto3, A.IsOtorisasi4, A.OtoUser4, A.TglOto4,
-      A.IsOtorisasi5, A.OtoUser5, A.TglOto5,
-            Cast(Case when Case when A.IsOtorisasi1=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi2=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi3=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi4=1 then 1 else 0 end+
-                          Case when A.IsOtorisasi5=1 then 1 else 0 end=A.MaxOL then 0
-                      else 1
-                end As Bit) NeedOtorisasi
-    from dbPRTransfer a
-    where	A.Tanggal between @Date1 and @Date2 and A.IsOtorisasi1 = 1
-    order by A.NoBukti
+    left outer join (select NOPRTRANSFER from DBTRANSFERDET group by NOPRTRANSFER) b on b.NOPRTRANSFER=a.NOBUKTI
+    where	A.Tanggal between @Date1 and @Date2
+    order by IsOtorisasi1, A.NoBukti
     ",["date1" => $date1 , "date2" => $date2]);
 
     return [
-      "tempOutstanding" => $tempOutstanding,
-      "tempOutstanding2" => $tempOutstanding2
+      "tempOutstanding" => $tempOutstanding
     ];
 }
 

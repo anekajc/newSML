@@ -137,26 +137,6 @@
   color: #b45309; border-color: #fbe3bd; background: #fef3e0;
 }
 
-{{-- Badge kolom Status (IsOtorisasi1) di tabel SSP gabungan -- hijau untuk Sudah
-     Otorisasi, amber untuk Belum Otorisasi, warna sama dengan palet btn-success/
-     btn-warning di atas. --}}
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .03em;
-  white-space: nowrap;
-}
-.status-badge-sudah {
-  color: #16a34a; border: 1px solid #cdebd7; background: #e7f7ed;
-}
-.status-badge-belum {
-  color: #b45309; border: 1px solid #fbe3bd; background: #fef3e0;
-}
-
 {{-- Tabel statis (bukan #tabel/#tabel2) yang dulu pakai thead bg-primary text-white --
      diganti abu-abu + teks gelap, sesuai UI baru yang sama di semua halaman. --}}
 #addTable thead th,
@@ -202,6 +182,14 @@
   visibility: visible;
   transform: translateX(0);
 }
+
+{{-- Perbesar glyph + pada tombol Tambah (psTabelActionsCell) tanpa mengubah ukuran
+     bingkai tombol -- port 1:1 dari notareturpenjualan.blade.php. --}}
+#tabel .action-buttons-wrap .btn-primary .bi-plus {
+  font-size: 1.5rem;
+  line-height: 0;
+  vertical-align: middle;
+}
 </style>
 @endsection
 @section('content')
@@ -238,7 +226,7 @@
     <div class="card-body">
       <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
         <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true">Permintaan Sample</a>
-        <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">SSP</a>
+        <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">Serah Sample</a>
       </div>
     </div>
   </div>
@@ -358,18 +346,18 @@
 
 <div id="page2" style="display: none" class="mainpage container-fluid" >
 
-  <div class="row" style="margin-top:-80px">
+  <div class="row">
     <div class="col-8 text-left">
-      <h2>Form Penyerahan Sample</h2>
+      <h2></h2>
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-top:5px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
+      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-bottom:30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
     </div>
   </div>
 
   <div class="container-fluid">
     <input type="hidden" name="noUrut" id="input_add_nourut" value="" />
-    <div class="row">
+    <div id='formBsGrid' class="row">
       <div class="col-md-12">
         <div class="row">
           <div class="col-md-3">
@@ -456,11 +444,11 @@
     </div>
     <div class="row mt-2" style="margin-top: 0">
       <div class="col-md-12 text-right mt-4">
-        <button id="buttonSubmitAdd" type="button" onclick="submitAdd()" class="btn btn-primary" style="height: 30px;
+        <button id="buttonSubmitAdd" type="button" onclick="submitAdd()" class="btn btn-chip-biru" style="height: 30px;
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 600;
-        text-transform: uppercase;">Submit</button>
+        text-transform: uppercase;">Simpan</button>
         <!-- <button id="buttonSubmitAddEdit" type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> -->
       </div>
     </div>
@@ -469,16 +457,16 @@
 
 
 <div id="page3" style="display: none" class="mainpage container-fluid" >
-  <div class="row" style="margin-top:-80px">
+  <div class="row">
     <div class="col-8 text-left">
-      <h2>Koreksi Penyerahan Sample</h2>
+      <h2></h2>
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-top:5px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
+      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-bottom:30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
     </div>
   </div>
 
-  <div class="container-fluid">
+  <div id='formBsGrid' class="container-fluid">
     {{-- <input type="hidden" name="noUrut" id="input_koreksi_nourut" value="" /> --}}
     <div class="row">
         <input type="hidden" class="form-control" id="input_koreksi_nourut" placeholder="No Urut" disabled>
@@ -491,19 +479,6 @@
                 </div>
             </div>
             <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Sales</label>
-                <div class="col-sm-8">
-                    <div class="input-group">
-                        <input id="input_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
-                        <input id="input_koreksi_sales" type="hidden">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tengah -->
-        <div class="col-md-4">
-            <div class="mb-2 row">
                 <label class="col-sm-4 col-form-label">Customer</label>
                 <div class="col-sm-8">
                     <div class="input-group">
@@ -512,10 +487,23 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Tengah -->
+        <div class="col-md-4">
+            <div class="mb-2 row">
+                <label class="col-sm-4 col-form-label">Sales</label>
+                <div class="col-sm-8">
+                    <div class="input-group">
+                        <input id="input_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
+                        <input id="input_koreksi_sales" type="hidden">
+                    </div>
+                </div>
+            </div>
             <div class="mb-2 row">
                 <label class="col-sm-4 col-form-label">Keterangan</label>
                 <div class="col-sm-8">
-                    <textarea  style="width: 100%; resize: none" rows=3 placeholder="" class="form-control" id="input_koreksi_keterangan"  onblur="onChangeHeader('NOTE' , 'input_koreksi_keterangan')"></textarea>
+                    <textarea  style="width: 100%; height:75px !important; resize: none" rows=3 placeholder="" class="form-control" id="input_koreksi_keterangan"  onblur="onChangeHeader('NOTE' , 'input_koreksi_keterangan')"></textarea>
                 </div>
             </div>
         </div>
@@ -563,7 +551,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div id='formBsGrid' class="row">
       <div class="col-md-6">
         <div class="row">
           <div class="col-md-3" style="margin-top:5px;">
@@ -588,7 +576,7 @@
             <label class="form-label fw-bold">Quantity</label>
           </div>
           <div class="col-md-3">
-            <input id="KoreksiEditInputQty" type="number" step="0.01" class="form-control text-right" value="0.00">
+            <input id="KoreksiEditInputQty" type="text" inputmode="decimal" oninput="formatAngkaInput(event)" class="form-control text-right" value="0,00">
           </div>
           <div class="col-md-2" style="margin-top:5px;">
             <label class="form-label fw-bold">Satuan</label>
@@ -599,7 +587,7 @@
         </div>
       </div>
       <div class="col-md-6">
-        <div class="row">
+        <div class="row" hidden>
           <div class="col-md-3" style="margin-top:5px;">
             <label class="form-label fw-bold">Gudang Asal</label>
           </div>
@@ -609,7 +597,7 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="row" hidden>
           <div class="col-md-3" style="margin-top:5px;">
             <label class="form-label fw-bold">Gudang Tujuan</label>
           </div>
@@ -623,7 +611,7 @@
 
     <div class="row mt-3">
       <div class="col-md-12 text-right">
-        <button type="button" class="btn btn-secondary" onclick="buttonKoreksiItemBatal()" style="
+        <button type="button" class="btn btn-danger" onclick="buttonKoreksiItemBatal()" style="
           height: 30px; 
           padding: 4px 12px; 
           border-radius: 20px; 
@@ -633,7 +621,7 @@
           transition: background-color 0.3s, box-shadow 0.3s;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Batal</button>
 
-        <button id="buttonSubmitKoreksiEdit" type="button" onclick="submitKoreksiEdit()" class="btn btn-primary" style="
+        <button id="buttonSubmitKoreksiEdit" type="button" onclick="submitKoreksiEdit()" class="btn btn-chip-biru" style="
           height: 30px; 
           padding: 4px 12px; 
           border-radius: 20px; 
@@ -641,7 +629,7 @@
           font-weight: 600; 
           text-transform: uppercase; 
           transition: background-color 0.3s, box-shadow 0.3s;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Submit Edit</button>
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">Simpan</button>
       </div>
     </div>
   </div>
@@ -748,16 +736,16 @@
 {{-- End Modal List gudang tujuan --}}
 
 <div id="page4" style="display: none" class="mainpage container-fluid" >
-  <div class="row" style="margin-top:-80px">
+  <div class="row">
     <div class="col-8 text-left">
-      <h2>Detail Penyerahan Sample</h2>
+      <h2></h2>
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-top:5px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
+      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-bottom:30px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
     </div>
   </div>
 
-  <div class="container-fluid">
+  <div id='formBsGrid' class="container-fluid">
     <div class="row">
         <input type="hidden" class="form-control" id="input_detailkoreksi_nourut" placeholder="No Urut" disabled>
         <!-- Kiri -->
@@ -769,11 +757,11 @@
                 </div>
             </div>
             <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Sales</label>
+                <label class="col-sm-4 col-form-label">Customer</label>
                 <div class="col-sm-8">
                     <div class="input-group">
-                        <input id="input_detailkoreksi_salesnama" type="text" class="form-control text-center" placeholder="Sales" disabled>
-                        <input id="input_detailkoreksi_sales" type="hidden">
+                        <input id="input_detailkoreksi_customernama" type="text" class="form-control text-center" placeholder="Customer" disabled>
+                        <input id="input_detailkoreksi_customer" type="hidden">
                     </div>
                 </div>
             </div>
@@ -782,11 +770,11 @@
         <!-- Tengah -->
         <div class="col-md-4">
             <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Customer</label>
+                <label class="col-sm-4 col-form-label">Sales</label>
                 <div class="col-sm-8">
                     <div class="input-group">
-                        <input id="input_detailkoreksi_customernama" type="text" class="form-control text-center" placeholder="Customer" disabled>
-                        <input id="input_detailkoreksi_customer" type="hidden">
+                        <input id="input_detailkoreksi_salesnama" type="text" class="form-control text-center" placeholder="Sales" disabled>
+                        <input id="input_detailkoreksi_sales" type="hidden">
                     </div>
                 </div>
             </div>
@@ -836,16 +824,16 @@
 
 <div id="page5" style="display: none" class="mainpage container-fluid" >
 
-  <div class="row" style="margin-top:-80px">
+  <div class="row">
     <div class="col-8 text-left">
-      <h2>Form Detail Permintaan Sample</h2>
+      <h2></h2>
     </div>
     <div class="col-4 text-right">
-      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-top:5px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
+      <button type="button" class="btn btn-danger btn-lg " style="height: 30px; margin-bottom:20px; border-radius: 20px; font-size: 0.75rem;font-weight: 600; text-transform: uppercase " onclick="buttonCloseForm()">CLOSE</button>
     </div>
   </div>
 
-  <div class="container-fluid">
+  <div id='formBsGrid' class="container-fluid">
     <input type="hidden" name="noUrut" id="detail_nourut" value="" />
     <div class="row">
       <div class="col-md-12">
@@ -868,12 +856,12 @@
             <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-                <label>Sales</label>
+                <label>Customer</label>
               </div>
             </div>
             <div class="col-md-8">
               <div class="form-group">
-                <input id="detail_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
+                <input id="detail_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
                 <input id="detail_sales" type="hidden">
               </div>
             </div>
@@ -883,18 +871,18 @@
             <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-                <label>Customer</label>
+                <label>Sales</label>
               </div>
             </div>
             <div class="col-md-8">
               <div class="form-group">
-                <input id="detail_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
+                <input id="detail_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
                 <input id="detail_customer" type="hidden">
               </div>
             </div>
             </div>
           </div>
-          {{-- <div class="col-md-3">
+          <div class="col-md-3">
             <div class="row">
             <div class="col-md-4">
               <div class="form-group">
@@ -903,11 +891,11 @@
             </div>
             <div class="col-md-8">
               <div class="form-group">
-                <input type="date" class="form-control text-center" id="detail_tanggal" value="{!! date('Y-m-d') !!}"  >
+                <input type="date" class="form-control text-center" id="detail_tanggal" value="{!! date('Y-m-d') !!}" disabled>
               </div>
             </div>
           </div>
-          </div> --}}
+          </div>
         </div>
       </div>
     </div>
@@ -961,6 +949,24 @@ let dataTableAdd = []
 let dataTableKoreksi = []
 let barangKoreksiEdit = {}
 
+function parseAngka (str) {
+  if (str === undefined || str === null || str === '') { return 0; }
+  let n = Number(String(str).replace(/\./g, '').replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+function formatAngkaDisplay (n, decimals) {
+  decimals = decimals === undefined ? 2 : decimals;
+  return Number(n || 0).toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function formatAngkaInput (e) {
+  let el = e.target;
+  let parts = el.value.replace(/[^\d,]/g, '').split(',');
+  let intPart = parts[0].replace(/^0+(?=\d)/, '');
+  let decPart = parts.length > 1 ? parts.slice(1).join('').slice(0, 2) : null;
+  let formattedInt = intPart ? Number(intPart).toLocaleString('id-ID') : '';
+  el.value = decPart !== null ? formattedInt + ',' + decPart : formattedInt;
+}
+
 /* ============ Header tabel interaktif (window.ReportTable) ============
  * Port 1:1 dari pola opCart/opAktifkanTabel milik perintahopname.blade.php. SSP
  * Belum Otorisasi + SSP Sudah Otorisasi digabung jadi satu tabel (#tabel2), dengan
@@ -994,7 +1000,7 @@ function psDefaultCart (urut) {
       ['NAMASLS',      'Sales',        1, 'varchar', 0, 0],
       ['IDUSER',       'User',         1, 'varchar', 0, 0],
       ['RefPR',        'No. Ref',      1, 'varchar', 0, 0],
-      ['IsOtorisasi1', 'Status',       1, 'bool',    0, 0],
+      ['IsOtorisasi1', 'Otorisasi',       1, 'bool',    0, 0],
       ['OtoUser1',     'User Oto',     1, 'varchar', 0, 0],
       ['TglOto1',      'Tgl Oto',      1, 'date',    0, 0],
     ]
@@ -1148,12 +1154,12 @@ function psValueCell (row, col) {
   let raw = psPickCI(row, col[0]);
   let type = col[3];
 
-  {{-- Kolom Status (IsOtorisasi1) dirender sebagai badge hijau (Sudah Otorisasi)
-       atau amber (Belum Otorisasi), bukan ikon check/x bool biasa. --}}
+  {{-- Kolom Status (IsOtorisasi1) -- ikon check/silang hijau/merah biasa, sama seperti
+       kolom Otorisasi bool di perintahopname.blade.php/beritaacaraopname.blade.php. --}}
   if (col[0] === 'IsOtorisasi1') {
     return Number(raw) === 1
-      ? '<td class="text-center"><span class="status-badge status-badge-sudah">Sudah Otorisasi</span></td>'
-      : '<td class="text-center"><span class="status-badge status-badge-belum">Belum Otorisasi</span></td>';
+      ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
+      : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
   }
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
@@ -1171,7 +1177,7 @@ function psTabelActionsCell (row) {
   let nobukti = psPickCI(row, 'NoBukti');
   let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
   html += '<button class="btn btn-warning btn-sm" type="button" title="Detail" onclick="buttonDetailAdd(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
-  html += '<button class="btn btn-success btn-sm" type="button" title="Proses" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus"></i></button>';
+  html += '<button class="btn btn-primary btn-sm" type="button" title="Tambah" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus"></i></button>';
   html += '</div></td>';
   return html;
 }
@@ -1235,6 +1241,15 @@ function renderTabel2Rows (rows) {
 let lastTabelRows = []
 let lastTabel2Rows = []
 let psPanjangHalaman = { 1 : 10, 2 : 10 }
+
+// loadAll() dipanggil dari dalam aksi (Tambah/Hapus/Otorisasi) yang masih berada di
+// page2/3/4/5 (page1 tersembunyi) -- reinitTabel()/reinitTabel2() yang langsung
+// menginisialisasi DataTables di atas tabel yang hidden membuat instance-nya korup
+// (lebar kolom 0/salah), dan korupsi itu bertahan sampai halaman di-refresh manual,
+// termasuk mempengaruhi klik Otorisasi berikutnya walau saat itu page1 sudah
+// terlihat. Redraw ditunda lewat flag ini sampai page1 benar-benar tampil lagi
+// (lihat buttonCloseForm()), sama seperti pola tbPerluGambar di transferbarang.blade.php.
+let psPerluGambar = { tabel: false, tabel2: false }
 
 function psIkatSearch (urut) {
   let ids = { 1 : ['psSearch1', 'tabel'], 2 : ['psSearch2', 'tabel2'] }
@@ -1486,7 +1501,7 @@ function buttonKoreksiEditItem (i) {
   document.getElementById("KoreksiEditKodeBrg").value = barang.KODEBRG;
   document.getElementById("KoreksiEditNamaBrg").value = barang.NAMABRG;
 
-  document.getElementById("KoreksiEditInputQty").value = barang.QNT ? parseFloat(barang.QNT).toFixed(2) : "0.00";
+  document.getElementById("KoreksiEditInputQty").value = formatAngkaDisplay(barang.QNT || 0);
   document.getElementById("KoreksiEditInputSat").value = barang.NOSAT == 1 ? barang.SAT_1 : barang.SAT_2;
 
   document.getElementById("KoreksiEditGudangAsal").value = barang.NAMA_GDGASAL;
@@ -1527,8 +1542,8 @@ function refreshDataTableKoreksi (nobukti) {
         <tr>
           <td>${item.KODEBRG}</td>
           <td>${item.NAMABRG}</td>
-          <td>${item.GDGASAL}</td>
-          <td>${item.GDGTUJUAN}</td>
+          <td>${item.GDGASAL} - ${item.NAMA_GDGASAL}</td>
+          <td>${item.GDGTUJUAN} - ${item.NAMA_GDGTUJUAN}</td>
           <td class="text-right">${item.QNT ? parseFloat(item.QNT).toLocaleString() : '0.00'}</td>
           <td class="text-center">${item.SAT_1}</td>
           <td class="text-center">
@@ -1711,7 +1726,7 @@ function buttonBatalOtorisasi (nobukti) {
   }
 
 
-alertify.prompt("Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
+alertify.prompt("Batal Otorisasi","Masukkan keterangan batal otorisasi nomor   " + nobukti, "",
   function(evt, value) {
     // alertify.success("You entered: " + value);
     let xpket = value;
@@ -1754,11 +1769,7 @@ function submitKoreksiEdit () {
   let barang = barangKoreksiEdit;
   let choice = "U";
 
-  let qnt = parseFloat($("#KoreksiEditInputQty").val());
-  if (isNaN(qnt)) {
-    alertify.warning("Qty tidak valid");
-    return;
-  }
+  let qnt = parseAngka($("#KoreksiEditInputQty").val());
 
   if (qnt < 0) {
     alertify.warning("Qty tidak boleh kurang dari 0");
@@ -1880,8 +1891,8 @@ function buttonKoreksi (nobukti) {
         rowTable += `<tr> 
           <td>${item.KODEBRG}</td>
           <td>${item.NAMABRG}</td>
-          <td>${item.GDGASAL}</td>
-          <td>${item.GDGTUJUAN}</td>
+          <td>${item.GDGASAL} - ${item.NAMA_GDGASAL}</td>
+          <td>${item.GDGTUJUAN} - ${item.NAMA_GDGTUJUAN}</td>
           <td class="text-right">${parseFloat(item.QNT).toLocaleString()}</td>
           <td>${item.SAT_1}</td>
           <td class="text-center">
@@ -1943,8 +1954,8 @@ function buttonDetailKoreksi (nobukti) {
         rowTable += `<tr>
           <td>${item.KODEBRG}</td>
           <td>${item.NAMABRG}</td>
-          <td>${item.GDGASAL}</td>
-          <td>${item.GDGTUJUAN}</td>
+          <td>${item.GDGASAL} - ${item.NAMA_GDGASAL}</td>
+          <td>${item.GDGTUJUAN} - ${item.NAMA_GDGTUJUAN}</td>
           <td class="text-right">${parseFloat(item.QNT).toLocaleString()}</td>
           <td>${item.SAT_1}</td>
         </tr>`;
@@ -2001,7 +2012,8 @@ function buttonDetailAdd (nobukti) {
         $("#detail_sales_nama").val(firstItem.NamaSls || "");
         $("#detail_sales").val(firstItem.KodeSls || "");
         $("#detail_keterangan").val(firstItem.Note || "");
-        $("#detail_tanggal").val(firstItem.TANGGAL || "");
+        let detailTanggal = psPickCI(firstItem, 'TANGGAL');
+        $("#detail_tanggal").val(detailTanggal ? String(detailTanggal).slice(0, 10) : "");
       }
 
       let rowTable = "";
@@ -2010,12 +2022,8 @@ function buttonDetailAdd (nobukti) {
         let kodeBrg = item.KODEBRG || "";
         let namaBrg = item.NAMABRG || "";
         let satuan = item.SAT_1 || "";
-        let qntStock =
-          item.QNTSTOCK !== undefined
-            ? parseFloat(item.QNTSTOCK).toFixed(2)
-            : "0.00";
-        let qnt =
-          item.QNT !== undefined ? parseFloat(item.QNT).toFixed(2) : "0.00";
+        let qntStock = formatAngkaDisplay(item.QNTSTOCK || 0);
+        let qnt = formatAngkaDisplay(item.QNT || 0);
 
         // struktur tabel sama seperti buttonAdd tapi tanpa input/checkbox
         rowTable += `
@@ -2052,8 +2060,14 @@ function loadAll () {
     success: function (res) {
       lastTabelRows = res.tempOutstanding
       lastTabel2Rows = [].concat(res.tempPenerimaan, res.tempPenerimaan2)
-      reinitTabel()
-      reinitTabel2()
+
+      if ($('#page1').is(':visible')) {
+        reinitTabel()
+        reinitTabel2()
+      } else {
+        psPerluGambar.tabel = true
+        psPerluGambar.tabel2 = true
+      }
     }
   });
 }
@@ -2768,8 +2782,8 @@ function buttonAdd (nobukti) {
         let kodeBrg = item.KODEBRG;
         let namaBrg = item.NAMABRG;
         let satuan = item.SAT_1;
-        let qntStock = item.QNTSTOCK !== undefined ? parseFloat(item.QNTSTOCK).toFixed(2) : '0.00';
-        let qnt = item.QNT !== undefined ? parseFloat(item.QNT).toFixed(2) : '0.00';
+        let qntStock = formatAngkaDisplay(item.QNTSTOCK || 0);
+        let qnt = formatAngkaDisplay(item.QNT || 0);
 
         rowTable += `
           <tr>
@@ -2779,7 +2793,7 @@ function buttonAdd (nobukti) {
             <td>${kodeBrg}</td>
             <td>${namaBrg}</td>
             <td class="text-right">
-              <input id="input_add_qnt${i}" style="width: 100px;" class="text-right" type="number" min="0" value="${qnt}">
+              <input id="input_add_qnt${i}" style="width: 100px;" class="text-right" type="text" inputmode="decimal" oninput="formatAngkaInput(event)" value="${qnt}">
             </td>
             <td>${satuan}</td>
             <td class="text-right">${qntStock}</td>
@@ -2823,7 +2837,7 @@ function submitAdd () {
   dataTableAdd.forEach((item, i) => {
     const checkbox = document.getElementById(`add_checkbox${i}`);
     if (checkbox && checkbox.checked) {
-      const inputQty = $(`#input_add_qnt${i}`).val();
+      const inputQty = parseAngka($(`#input_add_qnt${i}`).val());
 
       if (inputQty < 0) {
         checkMinus = true;

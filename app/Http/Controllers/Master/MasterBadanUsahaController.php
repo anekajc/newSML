@@ -37,8 +37,8 @@ class MasterBadanUsahaController extends Controller
     /** Validasi isian; kembalikan pesan error atau null. */
     private function validasi($kode, $pph21, $pph23)
     {
-        if ($kode === '') {
-            return 'Kode Badan Usaha harus diisi';
+        if (! $this->kodeUsahaValid($kode)) {
+            return 'Kode Badan Usaha harus diisi huruf/angka (tidak boleh kosong atau -)';
         }
         if (strlen($kode) > 20) {
             return 'Kode Badan Usaha maksimal 20 karakter';

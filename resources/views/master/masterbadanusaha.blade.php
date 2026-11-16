@@ -255,8 +255,9 @@ function submitAdd () {
   let pph21 = $("#input_add_pph21").val();
   let pph23 = $("#input_add_pph23").val();
 
-  if (!kode) {
-    alertify.warning("Badan Usaha harus diisi");
+  // Harus ada huruf/angka: kosong, '-', '.', '--' tidak boleh.
+  if (!/[A-Z0-9]/.test(kode)) {
+    alertify.warning("Badan Usaha harus diisi huruf/angka (tidak boleh kosong atau -)");
     return
   }
   if (!cekPph(pph21, pph23)) return

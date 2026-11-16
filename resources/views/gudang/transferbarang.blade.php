@@ -9,19 +9,19 @@
 
   <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
 
-  {{-- Blok CSS lokal halaman ini -- disalin verbatim dari @section('css') so.blade.php
-       (custom-tabs/tab-card, #page1 .card override layout .card global, po-len-wrap/
-       po-len-inp, tombol aksi bulat kecil pastel + action-buttons-wrap hover-reveal di
-       kolom pertama, header/row tabel), hanya id tabelnya yang disesuaikan (#tabel_oto
-       milik SO -> #tabel3 di sini, yang juga tidak punya kolom Actions). Tidak ada CSS
-       baru -- report-table.js/po-table-header.css sudah menyediakan sisanya. --}}
   <style>
   {{-- po-table-header.css cuma punya .sp-badge.is-active/is-inactive/is-user/is-supervisor
-       -- kolom Status di tab Transfer Barang butuh state ketiga ("Batal"), jadi warnanya
-       (abu-abu) ditambah khusus di sini, bukan di file CSS bersama. --}}
+       -- kolom Status di tab Transfer Barang butuh state ketiga dan keempat ("Batal" abu-abu,
+       "Sebagian" kuning/amber var(--sp-amber)), jadi warnanya ditambah khusus di sini,
+       bukan di file CSS bersama. --}}
   .sp-badge.is-batal {
     background: #f3f4f6;
     color: #6b7280;
+  }
+
+  .sp-badge.is-partial {
+    background: var(--sp-amber-bg);
+    color: var(--sp-amber);
   }
 
   .toolbar {
@@ -378,6 +378,86 @@
     }
   </style>
 {{-- end tampilan search modal barang all --}}
+
+{{-- Header form Add/Edit/Detail (#formBsGrid di page2) -- disamakan tampilan dan ukurannya
+     dengan .ttb-header milik gudang/terimatransferbarang.blade.php: label langsung di atas
+     field (bukan kolom label sempit terpisah seperti sebelumnya, yang bikin "Gdg Asal"
+     terpotong jadi dua baris), grid 4 kolom x 2 baris supaya baris Tanggal/Nama Gudang
+     Asal/Nama Gudang Tujuan sejajar. Beda dari terimatransferbarang: Gdg Asal/Tujuan di sini
+     tetap <select> (bukan input disabled) karena pada mode Tambah gudangnya memang harus
+     bisa dipilih user -- lockFormAdd()/unlockFormAdd() yang menonaktifkannya pada mode
+     Detail/Edit. --}}
+<style>
+  #formBsGrid .tb-header {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+      "nobukti asal       tujuan       ket"
+      "tanggal alamatasal alamattujuan ket";
+    column-gap: 24px;
+    row-gap: 16px;
+    align-items: start;
+  }
+  #formBsGrid .tb-header .tb-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  #formBsGrid .tb-header .tb-field > label {
+    margin: 0 0 6px;
+  }
+  #formBsGrid .tb-f-nobukti      { grid-area: nobukti; }
+  #formBsGrid .tb-f-tanggal      { grid-area: tanggal; }
+  #formBsGrid .tb-f-asal         { grid-area: asal; }
+  #formBsGrid .tb-f-alamatasal   { grid-area: alamatasal; }
+  #formBsGrid .tb-f-tujuan       { grid-area: tujuan; }
+  #formBsGrid .tb-f-alamattujuan { grid-area: alamattujuan; }
+  #formBsGrid .tb-header .tb-f-ket {
+    grid-area: ket;
+    align-self: stretch;
+  }
+  #formBsGrid .tb-header .tb-f-ket textarea.form-control {
+    flex: 1 1 auto;
+    height: 100% !important;
+  }
+  #formBsGrid .tb-header .tb-f-alamatasal,
+  #formBsGrid .tb-header .tb-f-alamattujuan {
+    align-self: stretch;
+    position: relative;
+  }
+  #formBsGrid .tb-header .tb-f-alamatasal textarea.form-control,
+  #formBsGrid .tb-header .tb-f-alamattujuan textarea.form-control {
+    position: absolute;
+    inset: 0;
+    height: auto !important;
+  }
+  @media (max-width: 767.98px) {
+    #formBsGrid .tb-header {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "nobukti" "tanggal" "asal" "alamatasal" "tujuan" "alamattujuan" "ket";
+    }
+    #formBsGrid .tb-header .tb-f-alamatasal textarea.form-control,
+    #formBsGrid .tb-header .tb-f-alamattujuan textarea.form-control {
+      position: static;
+    }
+  }
+
+  /* Varian tanpa baris Tanggal (buttonDetailAdd's page4) -- baris 2 grid tidak punya
+     field apapun di kolom nobukti, jadi tingginya tidak lagi ditentukan oleh input
+     Tanggal seperti di page2. Textarea alamat jadi tidak boleh lagi position:absolute
+     + height:auto (sempat overlap ke <hr>/tabel di bawahnya) -- dikunci ke tinggi
+     tetap 55px, persis seperti hasil uji lewat inspect element. */
+  #formBsGrid .tb-header.tb-header-notanggal .tb-f-alamatasal,
+  #formBsGrid .tb-header.tb-header-notanggal .tb-f-alamattujuan {
+    position: static;
+  }
+  #formBsGrid .tb-header.tb-header-notanggal .tb-f-alamatasal textarea.form-control,
+  #formBsGrid .tb-header.tb-header-notanggal .tb-f-alamattujuan textarea.form-control {
+    position: static;
+    height: 55px !important;
+  }
+</style>
+{{-- end header form Add/Edit/Detail --}}
 @endsection
 @section('content')
 
@@ -445,13 +525,25 @@
             <div class="modal-body">
               <div class="rt-section">
                 <div class="rt-group-label">Status</div>
-                <div>
-                  <label class="rt-field-label" for="tbFilterOtorisasi">Otorisasi</label>
-                  <select class="rt-native" id="tbFilterOtorisasi">
-                    <option value="">Semua</option>
-                    <option value="0">Sudah Otorisasi</option>
-                    <option value="1">Belum Otorisasi</option>
-                  </select>
+                <div class="rt-grid-2">
+                  <div>
+                    <label class="rt-field-label" for="tbFilterOtorisasi">Otorisasi</label>
+                    <select class="rt-native" id="tbFilterOtorisasi">
+                      <option value="">Semua</option>
+                      <option value="0">Sudah Otorisasi</option>
+                      <option value="1">Belum Otorisasi</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="rt-field-label" for="tbFilterStatus">Status Transfer</label>
+                    <select class="rt-native" id="tbFilterStatus">
+                      <option value="">Semua Status</option>
+                      <option value="Belum">Belum</option>
+                      <option value="Sebagian">Sebagian</option>
+                      <option value="Sudah">Sudah</option>
+                      <option value="Batal">Batal</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -642,115 +734,44 @@
 
   <div id="modalBodyAddMain" class="">
     <div id='formBsGrid' class="modal-body">
-      <div class="row"> 
-        <div class="col-md-3">
-          <div class="row">
+      <input type="text" class="form-control text-center" id="input_add_nourut" placeholder="" readonly hidden>
+      <input type="text" class="form-control text-center" id="input_add_urut" placeholder="" readonly hidden>
 
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>No Bukti</label>
-              </div>
-            </div>
-            <div class="col-md-8">
-              <div class="form-group">
-                <input type="text" class="form-control text-center" id="input_add_nobukti" placeholder="" disabled>
-              </div>
-            </div>
-
-            <div class="col-md-4" style="margin-top:-12px;">
-              <div class="form-group">
-                <label>Tanggal</label>
-              </div>
-            </div>
-            <div class="col-md-8" style="margin-top:-12px;">
-              <div class="form-group">
-                <input type="date" class="form-control text-center" id="input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
-              </div>
-            </div>
-
-            <div class="col-md-4" style="margin-top:-12px;" hidden>
-              <div class="form-group">
-                <label>No Urut</label>
-              </div>
-            </div>
-            <div class="col-md-8" style="margin-top:-12px;"hidden>
-              <div class="form-group">
-                <input type="text" class="form-control text-center" id="input_add_nourut" placeholder="" readonly>
-              </div>
-            </div>
-            <div class="col-md-8" style="margin-top:-12px;" hidden>
-              <div class="form-group">
-                <input type="text" class="form-control text-center" id="input_add_urut" placeholder="" readonly>
-              </div>
-            </div>
-            
-          </div>
+      <div class="tb-header">
+        <div class="tb-field tb-f-nobukti">
+          <label>No Bukti</label>
+          <input type="text" class="form-control text-left" id="input_add_nobukti" placeholder="" disabled>
         </div>
-
-        <div class="col-md-3">
-          <div class="row">
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Gdg Asal</label>
-              </div>
-            </div>
-            <div class="col-md-9">
-              <div class="input-group mb-3">
-                <select class="form-control text-center" id="input_add_kodeGudangAsal" onchange="tbOnChangeGudang('Asal')">
-                  <option value="">-</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-md-12" style="margin-top:-22px;">
-              <div class="form-group">
-                <textarea style="width: 100%; height:75px !important; resize: none;" rows=3 placeholder="Gudang Asal" class="form-control text-center align-items-center" id="input_add_namaGudangAsal"  disabled></textarea>
-              </div>
-            </div>
-          </div>
+        <div class="tb-field tb-f-tanggal">
+          <label>Tanggal</label>
+          <input type="date" class="form-control text-left" id="input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
         </div>
-
-        <div class="col-md-3">
-          <div class="row">
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Gdg Tujuan</label>
-              </div>
-            </div>
-            <div class="col-md-9" >
-              <div class="input-group mb-3">
-                <select class="form-control text-center" id="input_add_kodeGudangTujuan" onchange="tbOnChangeGudang('Tujuan')">
-                  <option value="">-</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-md-12" style="margin-top:-22px;">
-              <div class="form-group">
-                <textarea style="width: 100%; height:75px !important; resize: none;" rows=3 placeholder="Gudang Tujuan" class="form-control text-center align-items-center" id="input_add_namaGudangTujuan"  disabled></textarea>
-              </div>
-            </div>
-          </div>
+        <div class="tb-field tb-f-asal">
+          <label>Gudang Asal</label>
+          <select class="form-control text-left" id="input_add_kodeGudangAsal" onchange="tbOnChangeGudang('Asal')">
+            <option value="">-</option>
+          </select>
         </div>
-
-      <div class="col-md-3">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <label style="visibility:hidden;">Keterangan</label>
-            </div>
-          </div>
-          <div class="col-md-12" style="margin-top:-15px;">
-            <div class="form-group">
-              <textarea style="width: 100%; height:120px !important; resize: none;" rows=5 onblur="onChangeKeterangan()" placeholder="Keterangan" class="form-control" id="input_add_keterangan"></textarea>
-            </div>
-          </div>
+        <div class="tb-field tb-f-alamatasal">
+          <textarea style="width: 100%; resize: none;" rows=3 placeholder="Gudang Asal"
+            class="form-control text-left" id="input_add_namaGudangAsal" disabled></textarea>
+        </div>
+        <div class="tb-field tb-f-tujuan">
+          <label>Gudang Tujuan</label>
+          <select class="form-control text-left" id="input_add_kodeGudangTujuan" onchange="tbOnChangeGudang('Tujuan')">
+            <option value="">-</option>
+          </select>
+        </div>
+        <div class="tb-field tb-f-alamattujuan">
+          <textarea style="width: 100%; resize: none;" rows=3 placeholder="Gudang Tujuan"
+            class="form-control text-left" id="input_add_namaGudangTujuan" disabled></textarea>
+        </div>
+        <div class="tb-field tb-f-ket">
+          <label>Keterangan</label>
+          <textarea style="width: 100%; resize: none;" rows=3 onblur="onChangeKeterangan()" placeholder="Keterangan"
+            class="form-control" id="input_add_keterangan"></textarea>
         </div>
       </div>
-
-    </div>
 
           <hr/>
           <div class="row" hidden>
@@ -815,7 +836,7 @@
                       <label>Keterangan</label>
                     </div>
                     <div class="col-md-12">
-                      <div class="form-group" style="margin-top: 14px">
+                      <div class="form-group" style="margin-top: -46px">
                         <textarea type="text" style="width: 100%; resize: none" rows=4  class="form-control" id="input_add_keterangan" onblur="onChangeCatatan()"></textarea>
                       </div>
                     </div>
@@ -2527,83 +2548,36 @@
   </div>
 
   <div id='formBsGrid' class="container-fluid">
-    <div class="row"> 
-        <div class="col-md-3">
-          <div class="row">
-
-            <div class="col-md-4">
-              <div class="form-group">
-                <label>No Bukti</label>
-              </div>
-            </div>
-            <div class="col-md-8">
-              <div class="form-group">
-                <input type="text" class="form-control text-left" id="detail_nobukti" placeholder="" disabled>
-              </div>
-            </div>
-            <div class="col-md-3" style="margin-top:-10px;">
-              <div class="form-group">
-                <label>Gdg Asal</label>
-              </div>
-            </div>
-            <div class="col-md-9" style="margin-top:-10px;">
-              <div class="input-group mb-3">
-                <input type="text" class="form-control text-left" value='-' id="detail_kodeGudangAsal" disabled>
-                {{-- <button class="btn btn-chip-biru btn-sm rounded-end shadow-sm" id="buttonAddListGudangAsal" onclick="buttonAddListGudangAsal()">
-                  <i class="bi bi-plus"></i>
-                </button> --}}
-              </div>
-            </div>
-            <div class="col-md-12" style="margin-top:-10px;">
-              <div class="form-group">
-                <textarea style="width: 100%; resize: none; height:75px !important;" rows=3 placeholder="Gudang Asal" class="form-control text-left align-items-center" id="detail_namaGudangAsal"  disabled></textarea>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="row">
-
-            <div class="col-md-3">
-              <div class="form-group">
-                <label>Gdg Tujuan</label>
-              </div>
-            </div>
-            <div class="col-md-9">
-              <div class="input-group mb-3">
-                <input type="text" class="form-control text-left" value='-' id="detail_kodeGudangTujuan" disabled>
-                {{-- <button class="btn btn-chip-biru btn-sm rounded-end shadow-sm" id="buttonAddListGudangTujuan" onclick="buttonAddListGudangTujuan()">
-                  <i class="bi bi-plus"></i>
-                </button> --}}
-              </div>
-            </div>
-
-            <div class="col-md-12" style="margin-top:-10px;">
-              <div class="form-group">
-                <textarea style="width: 100%; resize: none; height:75px !important;" rows=3 placeholder="Gudang Tujuan" class="form-control text-left align-items-center" id="detail_namaGudangTujuan"  disabled></textarea>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      <div class="col-md-3">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <label style="visibility:hidden;">Keterangan</label>
-            </div>
-          </div>
-          <div class="col-md-12" style="margin-top:-10px;">
-            <div class="form-group">
-              <textarea style="width: 100%; resize: none; height:75px !important;" rows=3 placeholder="Keterangan" class="form-control" id="detail_keterangan" disabled></textarea>
-            </div>
-          </div>
-        </div>
+    <div class="tb-header tb-header-notanggal">
+      <div class="tb-field tb-f-nobukti">
+        <label>No Bukti</label>
+        <input type="text" class="form-control text-left" id="detail_nobukti" placeholder="" disabled>
       </div>
-
+      <div class="tb-field tb-f-tanggal">
+        <label>Tanggal</label>
+        <input type="date" class="form-control text-left" id="detail_tanggal" disabled>
+      </div>
+      <div class="tb-field tb-f-asal">
+        <label>Gudang Asal</label>
+        <input type="text" class="form-control text-left" value='-' id="detail_kodeGudangAsal" disabled>
+      </div>
+      <div class="tb-field tb-f-alamatasal">
+        <textarea style="width: 100%; resize: none;" rows=3 placeholder="Gudang Asal"
+          class="form-control text-left" id="detail_namaGudangAsal" disabled></textarea>
+      </div>
+      <div class="tb-field tb-f-tujuan">
+        <label>Gudang Tujuan</label>
+        <input type="text" class="form-control text-left" value='-' id="detail_kodeGudangTujuan" disabled>
+      </div>
+      <div class="tb-field tb-f-alamattujuan">
+        <textarea style="width: 100%; resize: none;" rows=3 placeholder="Gudang Tujuan"
+          class="form-control text-left" id="detail_namaGudangTujuan" disabled></textarea>
+      </div>
+      <div class="tb-field tb-f-ket">
+        <label>Keterangan</label>
+        <textarea style="width: 100%; resize: none;" rows=3 placeholder="Keterangan"
+          class="form-control" id="detail_keterangan" disabled></textarea>
+      </div>
     </div>
     <hr/>
         <div class="container-fluid mt-4" style="overflow-x: auto; padding:0; margin:0;">
@@ -2979,27 +2953,34 @@ function deleteTransfer () {
 }
 
 function deleteTransferData (nobukti) {
-  
-  let _token  = $("#_token").val()
 
-  console.log(nobukti)
-  $.ajax({
-    url: "{!! url('trfbrgdeletetransfer') !!}",
-    type: "post",
-    async: false,
-    data: {
-      _token,
-      nobukti
+  alertify.confirm('Hapus Data', 'Hapus Data ' + nobukti + '?',
+    function () {
+      let _token  = $("#_token").val()
+
+      console.log(nobukti)
+      $.ajax({
+        url: "{!! url('trfbrgdeletetransfer') !!}",
+        type: "post",
+        async: false,
+        data: {
+          _token,
+          nobukti
+        },
+        success: function(res) {
+          alertify.success(`Transfer Telah Dihapus`)
+          loadAll();
+
+        },error: function (err) {
+          console.log(err)
+          alertify.warning('Terjadi kesalahan silahkan refresh browser')
+        }
+      })
     },
-    success: function(res) {
-      alertify.success(`Transfer Telah Dihapus`)
-      loadAll();
-
-    },error: function (err) {
-      console.log(err)
-      alertify.warning('Terjadi kesalahan silahkan refresh browser')
+    function () {
+      console.log('Hapus data dibatalkan')
     }
-  })
+  );
 }
 
 function deleteTransferSimpanData () {
@@ -4751,14 +4732,15 @@ function tbValueCell(row, col) {
   let raw = tbPickCI(row, col[0])
   let type = col[3]
 
-  {{-- Status (varchar "Belum"/"Sudah"/"Batal") -- badge titik+pill .sp-badge, sama
-       seperti kolom Status di perintahopname.blade.php/beritaacaraopname.blade.php
-       (hijau untuk Sudah, merah untuk Belum). "Batal" dipetakan ke .is-batal (abu-abu,
-       ditambahkan khusus di sini karena po-table-header.css cuma punya is-active/
-       is-inactive/is-user/is-supervisor). --}}
+  {{-- Status (varchar "belum"/"sebagian"/"Sudah"/"Batal", dari fetchHeaderList()) -- badge
+       titik+pill .sp-badge, sama seperti kolom Status di
+       perintahopname.blade.php/beritaacaraopname.blade.php (hijau utk Sudah, merah utk
+       Belum). "Batal" dipetakan ke .is-batal (abu-abu) dan "Sebagian" ke .is-partial
+       (amber) -- keduanya ditambah khusus di sini karena po-table-header.css cuma punya
+       is-active/is-inactive/is-user/is-supervisor. --}}
   if (col[0] === 'Status') {
     let s = String(raw || '').trim().toLowerCase()
-    let kelas = s === 'sudah' ? 'is-active' : (s === 'batal' ? 'is-batal' : 'is-inactive')
+    let kelas = s === 'sudah' ? 'is-active' : (s === 'batal' ? 'is-batal' : (s === 'sebagian' ? 'is-partial' : 'is-inactive'))
     return '<td><span class="sp-badge ' + kelas + '">' + (raw || '') + '</span></td>'
   }
   if (type === 'date') {
@@ -4956,24 +4938,28 @@ function reinitTabel3 () {
   }
 }
 
-// #tabel2 (Transaksi Transfer Barang) & #tabel3 (Outstanding) berbagi SATU sumber data
-// (tbRawListTransfer, dari fetchHeaderList()/trfbrgloadall) -- dipilah lagi di client
-// lewat dua fungsi ini, bukan dua panggilan server terpisah.
 function tbFilterListTransferOtorisasi (list) {
-  let sel = document.getElementById('tbFilterOtorisasi')
-  let val = sel ? sel.value : ''
-  if (val === '') { return list || [] }
-  return (list || []).filter(function (r) { return String(Number(tbPickCI(r, 'NeedOtorisasi'))) === val })
+  let selOto = document.getElementById('tbFilterOtorisasi')
+  let valOto = selOto ? selOto.value : ''
+  let selStatus = document.getElementById('tbFilterStatus')
+  let valStatus = selStatus ? selStatus.value : ''
+
+  return (list || []).filter(function (r) {
+    if (valOto !== '' && String(Number(tbPickCI(r, 'NeedOtorisasi'))) !== valOto) { return false }
+    if (valStatus !== '' && String(tbPickCI(r, 'Status') || '').toLowerCase() !== valStatus.toLowerCase()) { return false }
+    return true
+  })
 }
 
-// Dipanggil tombol "Terapkan" di #modalFilterTransaksi -- filter ulang di client saja,
-// tidak perlu memanggil server lagi. Port dari pola prjUpdateFilterBadge()/buttonFilterPRJ().
 function tbResetFilterFields () {
   $('#tbFilterOtorisasi').val('')
+  $('#tbFilterStatus').val('')
 }
 
 function tbUpdateFilterBadge () {
-  let aktif = $('#tbFilterOtorisasi').val() !== '' ? 1 : 0
+  let aktif = 0
+  if ($('#tbFilterOtorisasi').val() !== '') { aktif++ }
+  if ($('#tbFilterStatus').val() !== '') { aktif++ }
   $('#tbFilterBadge').text(aktif + ' aktif')
 }
 
@@ -6276,7 +6262,10 @@ function cleanFormAddAdd () {
 
 function lockFormAdd () {
   document.getElementById("input_add_keterangan").disabled = true;
+  document.getElementById("input_add_kodeGudangAsal").disabled = true;
+  document.getElementById("input_add_kodeGudangTujuan").disabled = true;
   document.getElementById("buttonSimpanData").hidden = true;
+  document.getElementById("buttonSimpanEdit").hidden = true;
 }
 
 function buttonShowHideHeader () 
@@ -6301,7 +6290,9 @@ function buttonShowHideHeaderDetail () {
 }
 
 function unlockFormAdd () {
-  document.getElementById("input_add_keterangan").disabled = false;
+  document.getElementById("input_add_keterangan").disabled = true;
+  document.getElementById("input_add_kodeGudangAsal").disabled = true;
+  document.getElementById("input_add_kodeGudangTujuan").disabled = true;
   document.getElementById("buttonSimpanData").hidden = false;
   // document.getElementById("input_add_tipeppn").disabled = false
   // document.getElementById("input_add_pembayaran").disabled = false
@@ -6589,8 +6580,8 @@ function changeQnt (urut, kodebrg, gudangAsal) {
       $('#divhargaterakhir').hide();
       $('#divStockProyeksi').hide();
 
-      alertify.success('Berhasil mengganti QNT (Urut ' + urut + ')'); 
-      console.log(' QNT tersimpan:', QNT, QNT2);
+      alertify.success('Berhasil mengganti QTY (Urut ' + urut + ')'); 
+      console.log(' QTY tersimpan:', QNT, QNT2);
     },
     error: function (err) {
       console.log(err);
@@ -7151,9 +7142,9 @@ function refreshDataTableEdit (NOBUKTI) {
           { width: "15%", targets: 0 },
           { width: "35%", targets: 1 },
           { width: "10%", targets: 2 },
-          { width: "10%", targets: 3, className: "text-end" },
-          { width: "10%", targets: 4, className: "text-end" },
-          { width: "20%", targets: 5, orderable: false, className: "text-end" },
+          { width: "10%", targets: 3, className: "text-right" },
+          { width: "10%", targets: 4, className: "text-right" },
+          { width: "20%", targets: 5, orderable: false, className: "text-right" },
         ]
       });
 
@@ -7231,7 +7222,7 @@ function refreshDataTableDetail (NOBUKTI) {
                   style="white-space:nowrap; text-align:right; vertical-align:middle;">
                   ${sisa}
               </td>
-              <td style="white-space:nowrap; text-align:center; vertical-align:middle;">
+              <td style="white-space:nowrap; vertical-align:middle; display:flex; justify-content:flex-end; align-items:center;">
                 <input
                   type="text"
                   class="form-control text-right"
@@ -7275,9 +7266,9 @@ function refreshDataTableDetail (NOBUKTI) {
           { width: "15%", targets: 0 },
           { width: "35%", targets: 1 },
           { width: "10%", targets: 2 },
-          { width: "10%", targets: 3, className: "text-end" },
-          { width: "10%", targets: 4, className: "text-end" },
-          { width: "20%", targets: 5, orderable: false, className: "text-end" },
+          { width: "10%", targets: 3, className: "text-right" },
+          { width: "10%", targets: 4, className: "text-right" },
+          { width: "20%", targets: 5, orderable: false, className: "text-right" },
         ]
       });
 
@@ -7323,6 +7314,7 @@ function refreshDataTableDetailAdd (NOBUKTI) {
       const list = res.list ?? [];
 
       $("#detail_nobukti").val(header.nobukti ?? '');
+      $("#detail_tanggal").val(header.Tanggal ? formatDate(header.Tanggal) : '');
       $("#detail_kodeGudangAsal").val(header.GDGASAL ?? '');
       $("#detail_kodeGudangTujuan").val(list[0]?.GdgTujuan ?? '');
       tbIsiDetailGudang();
