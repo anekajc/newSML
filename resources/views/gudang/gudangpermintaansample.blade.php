@@ -427,17 +427,18 @@
                 </div>
             </div>
             <div class="mb-2 row">
-            <label class="col-sm-4 col-form-label">Sales</label>
+                <label class="col-sm-4 col-form-label">Customer</label>
                 <div class="col-sm-8">
                     <div class="input-group">
-                        <input id="input_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
-                        <input id="input_sales" type="hidden">
-                        <button type="button" onclick="buttonAddListSales()" class="btn btn-chip-biru btn-sm">
-                            <i class="bi bi-search"></i>
+                        <input id="input_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
+                        <input id="input_customer" type="hidden">
+                        <button id="btn_customer" type="button" onclick="buttonAddListCustomer()" class="btn btn-chip-biru btn-sm">
+                          <i class="bi bi-search"></i>
                         </button>
                     </div>
                 </div>
             </div>
+            
             <div class="mb-2 row">
                 <label class="col-sm-4 col-form-label">Keterangan</label>
                 <div class="col-sm-8">
@@ -449,13 +450,13 @@
         <!-- Tengah -->
         <div class="col-md-4">
             <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Customer</label>
+            <label class="col-sm-4 col-form-label">Sales</label>
                 <div class="col-sm-8">
                     <div class="input-group">
-                        <input id="input_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
-                        <input id="input_customer" type="hidden">
-                        <button id="btn_customer" type="button" onclick="buttonAddListCustomer()" class="btn btn-chip-biru btn-sm">
-                          <i class="bi bi-search"></i>
+                        <input id="input_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
+                        <input id="input_sales" type="hidden">
+                        <button type="button" onclick="buttonAddListSales()" class="btn btn-chip-biru btn-sm">
+                            <i class="bi bi-search"></i>
                         </button>
                     </div>
                 </div>
@@ -501,20 +502,6 @@
         </div>
         </div>
     </div>
-    <div class="row ">
-      <div class="col-md-12 text-right">
-      <button type="button" class="btn btn-chip-biru" style="
-      height: 30px;  
-      padding: 4px 12px; 
-      border-radius: 20px; 
-      font-size: 0.75rem; 
-      font-weight: 600; 
-      text-transform: uppercase; 
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-      onclick="buttonAddAddItem()" class="btn btn-secondary">Tambah Item</button>
-      </div>
-    </div>
 
     <!-- ADD SUBGROUP -->
     <div class="container-fluid mt-4">
@@ -532,13 +519,13 @@
                   <th scope="col">Nama Barang</th>
                   <th scope="col">Gudang Asal</th>
                   <th scope="col">Gudang Tujuan</th>
-                  <th scope="col">Qty</th>
                   <th scope="col">Sat</th>
+                  <th scope="col">Qty</th>
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody id="tabel_data_add" class="text-left" >
-                <tr > 
+                <tr> 
                   <td></td>
                   <td></td>
                   <td></td>
@@ -569,6 +556,20 @@
             onclick="submitAdd()">Submit</button>
         </div> --}}
             <!-- <button onclick="buttonSubKategori()">tes</button> -->
+    <div class="row ">
+      <div class="col-md-12 text-right">
+      <button type="button" class="btn btn-chip-biru" style="
+      height: 30px;  
+      padding: 4px 12px; 
+      border-radius: 20px; 
+      font-size: 0.75rem; 
+      font-weight: 600; 
+      text-transform: uppercase; 
+      transition: background-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+      onclick="buttonAddAddItem()" class="btn btn-secondary">Tambah Item</button>
+      </div>
+    </div>
     </div>
     <div id="addAddItem" class="container-fluid showhide">
       <div id='formBsGrid'>
@@ -613,7 +614,7 @@
               </div>
               </div>
               <div class="col-md-3">
-                <input id="input_add_add_qnt" type="number" value=0.00 class="form-control text-right">
+                <input id="input_add_add_qnt" type="text" inputmode="decimal" oninput="formatAngkaInput(event)" value="0,00" class="form-control text-right">
               </div>
               <div class="col-md-2" style="margin-top:5px;">
                 <label for="input_add_add_satuan">Satuan</label>
@@ -655,7 +656,7 @@
                 font-size: 0.75rem; 
                 font-weight: 600; 
                 text-transform: uppercase; 
-                transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddEdit()" style="display: none;">Submit Edit</button>
+                transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddEdit()" style="display: none;">Simpan</button>
               </div>
             </div>
           </div>
@@ -1065,6 +1066,24 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <script type="text/javascript">
 
+function parseAngka (str) {
+  if (str === undefined || str === null || str === '') { return 0; }
+  let n = Number(String(str).replace(/\./g, '').replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+function formatAngkaDisplay (n, decimals) {
+  decimals = decimals === undefined ? 2 : decimals;
+  return Number(n || 0).toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function formatAngkaInput (e) {
+  let el = e.target;
+  let parts = el.value.replace(/[^\d,]/g, '').split(',');
+  let intPart = parts[0].replace(/^0+(?=\d)/, '');
+  let decPart = parts.length > 1 ? parts.slice(1).join('').slice(0, 2) : null;
+  let formattedInt = intPart ? Number(intPart).toLocaleString('id-ID') : '';
+  el.value = decPart !== null ? formattedInt + ',' + decPart : formattedInt;
+}
+
 /* ============ Header tabel interaktif (window.ReportTable) ============
  * Port 1:1 dari pola opCart/opAktifkanTabel milik perintahopname.blade.php. PRS
  * Belum Otorisasi + PRS Sudah Otorisasi digabung jadi satu tabel (#tabel), dengan
@@ -1094,15 +1113,15 @@ function gpDefaultCart (urut) {
     return [
       ['NoBukti',      'No. Bukti',      1, 'varchar', 0, 0],
       ['Tanggal',      'Tanggal',        1, 'date',    0, 0],
-      ['KodeCustSupp', 'Kode CustSupp',  1, 'varchar', 0, 0],
+      ['KodeCustSupp', 'Kode Cust Supp', 1, 'varchar', 0, 0],
       ['NAMACUSTSUPP', 'Nama Customer',  1, 'varchar', 0, 0],
       ['kodebrg',      'Kode Barang',    1, 'varchar', 0, 0],
       ['namabrg',      'Nama Barang',    1, 'varchar', 0, 0],
       ['namasls',      'Sales',          1, 'varchar', 0, 0],
-      ['QNT',          'Qnt',            1, 'float',   0, 2],
-      ['SAT',          'Sat',            1, 'varchar', 0, 0],
-      ['QNTSSKONSI',   'Qnt SS Konsi',   1, 'float',   0, 2],
-      ['QNTSISA',      'Qnt Sisa',       1, 'float',   0, 2],
+      ['QNT',          'Qty',            1, 'float',   0, 2],
+      ['SAT',          'Satuan',         1, 'varchar', 0, 0],
+      ['QNTSSKONSI',   'Qty SS Konsi',   1, 'float',   0, 2],
+      ['QNTSISA',      'Qty Sisa',       1, 'float',   0, 2],
     ]
   }
   {{-- PRS Belum + Sudah Otorisasi digabung -- kolom Status (IsOtorisasi1) dirender
@@ -1114,7 +1133,8 @@ function gpDefaultCart (urut) {
     ['NamaCustSupp', 'Customer',    1, 'varchar', 0, 0],
     ['NAMASLS',      'Sales',       1, 'varchar', 0, 0],
     ['RefPR',        'Ref PR',      1, 'varchar', 0, 0],
-    ['IsOtorisasi1', 'Status',      1, 'bool',    0, 0],
+    ['Statkirim',    'Status',      1, 'bool',    0, 0],
+    ['IsOtorisasi1', 'Otorisasi',   1, 'bool',    0, 0],
     ['OtoUser1',     'User Oto',    1, 'varchar', 0, 0],
     ['TglOto1',      'Tanggal Oto', 1, 'date',    0, 0],
   ]
@@ -1271,6 +1291,15 @@ function gpValueCell (row, col) {
       ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
       : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
   }
+  {{-- Statkirim (Belum/Sebagian/Sudah, dari loadAll()'s CASE expression) -- badge
+       titik+pill .sp-badge bawaan po-table-header.css, sama seperti kolom
+       Status di perintahopname.blade.php/beritaacaraopname.blade.php (hijau
+       utk Sudah, amber utk Sebagian, merah utk Belum). --}}
+  if (col[0] === 'Statkirim') {
+    let s = String(raw || '').trim().toLowerCase();
+    let kelas = s === 'sudah' ? 'is-active' : (s === 'sebagian' ? 'is-supervisor' : 'is-inactive');
+    return '<td><span class="sp-badge ' + kelas + '">' + (raw || '') + '</span></td>';
+  }
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
     return '<td>' + formatDate(raw, '/') + '</td>';
@@ -1344,6 +1373,16 @@ function renderTabel2Rows (rows) {
 let lastTabelRows = []
 let lastTabel2Rows = []
 let gpPanjangHalaman = { 1 : 10, 3 : 10 }
+
+// loadAll() dipanggil dari dalam aksi (Tambah/Hapus/Otorisasi) yang masih berada di
+// page2/3 (page1 tersembunyi) -- reinitTabel()/reinitTabel2() yang langsung
+// menginisialisasi DataTables di atas tabel yang hidden membuat instance-nya korup
+// (lebar kolom 0/salah), dan korupsi itu bertahan sampai halaman di-refresh manual,
+// termasuk mempengaruhi klik Otorisasi berikutnya walau saat itu page1 sudah
+// terlihat. Redraw ditunda lewat flag ini sampai page1 benar-benar tampil lagi
+// (lihat buttonCloseForm()), sama seperti pola psPerluGambar di
+// gudangpenyerahansample.blade.php/skPerluGambar di gudangpenyerahankonsinyasi.blade.php.
+let gpPerluGambar = { tabel: false, tabel2: false }
 
 function gpIkatSearch (urut) {
   let ids = { 1 : ['gpSearch1', 'tabel'], 3 : ['gpSearch3', 'tabel2'] }
@@ -1730,8 +1769,14 @@ function loadAll () {
     success: function (res) {
       lastTabelRows = [].concat(res.belum_otorisasi, res.sudah_otorisasi)
       lastTabel2Rows = res.outstanding
-      reinitTabel()
-      reinitTabel2()
+
+      if ($('#page1').is(':visible')) {
+        reinitTabel()
+        reinitTabel2()
+      } else {
+        gpPerluGambar.tabel = true
+        gpPerluGambar.tabel2 = true
+      }
     },
     error: function (xhr, status, error) {
       alert("Gagal load data: " + error);
@@ -2599,7 +2644,7 @@ function submitAddEdit () {
     let kodebarang = $("#input_add_add_kodebarang").val();
     let keterangannama = $("#input_add_add_keterangannama").val();
     let satuan = $("#input_add_add_satuan").val();
-    let qnt = parseFloat($("#input_add_add_qnt").val()) || 0;
+    let qnt = parseAngka($("#input_add_add_qnt").val());
     let keterangan = $("#input_keterangan").val() || '';
 
     if (!kodebarang || !satuan || qnt <= 0) {
@@ -2737,7 +2782,7 @@ function buttonAddEditItem (index) {
   // Isi input
   document.getElementById("input_add_add_kodebarang").value = tempEdit.KODEBRG;
   document.getElementById("input_add_add_keterangannama").value = tempEdit.NamaBrg;
-  document.getElementById("input_add_add_qnt").value = parseFloat(tempEdit.QNT).toFixed(2);
+  document.getElementById("input_add_add_qnt").value = formatAngkaDisplay(tempEdit.QNT);
   document.getElementById("input_add_add_satuan").value = String(tempEdit.NoSat);
 
   // Tampilkan mode edit
@@ -2813,8 +2858,8 @@ function buttonEdit (nobukti) {
             <td>${item.NamaBrg}</td>
             <td>${item.gdgAsal} - ${item.NamaGgdAsal}</td>
             <td>${item.gdgTujuan} - ${item.NamaGgdTujuan}</td>
-            <td class="text-right">${parseFloat(item.QNT).toLocaleString()}</td>
             <td>${item.SAT_1}</td>
+            <td class="text-right">${parseFloat(item.QNT).toLocaleString()}</td>
             <td class="text-center">
               <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})" title="Edit"><i class="bi bi-pen"></i></button>
               <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})" title="Hapus"><i class="bi bi-trash"></i></button>
@@ -2932,8 +2977,8 @@ function buttonDetail (nobukti) {
         <td>${item.NamaBrg}</td>
         <td>${item.gdgAsal} - ${item.NamaGgdAsal}</td>
         <td>${item.gdgTujuan} - ${item.NamaGgdTujuan}</td>
-        <td class="text-right">${parseFloat(item.QNT).toLocaleString()}</td>
         <td>${item.SAT_1}</td>
+        <td class="text-right">${parseFloat(item.QNT).toLocaleString()}</td>
         </tr>`
       });
 
@@ -3031,7 +3076,7 @@ function buttonCloseForm () {
   $('#page2').hide();
   $('#page3').hide();
   $('#page1').show();
-  // loadAll();
+  loadAll();
 }
 
 function buttonAddListKodeBarang () {
@@ -3176,7 +3221,7 @@ function buttonAddAddInsertItem (i) {
   let kodebarang = $("#input_add_add_kodebarang").val();
   let keterangannama = $("#input_add_add_keterangannama").val();
   let satuan = $("#input_add_add_satuan").val();
-  let qnt = parseFloat($("#input_add_add_qnt").val()) || 0;
+  let qnt = parseAngka($("#input_add_add_qnt").val());
   let keterangan = $("#input_keterangan").val() || '';
 
   console.log({
@@ -3338,7 +3383,7 @@ function buttonAddAddItem () {
   document.getElementById("input_add_add_kodebarang").disabled = false;
   document.getElementById("input_add_add_kodebarang").value = ""
   document.getElementById("input_add_add_keterangannama").value = ""
-  document.getElementById("input_add_add_qnt").value = "0.00"
+  document.getElementById("input_add_add_qnt").value = "0,00"
   // Menentukan isi dropdown berdasarkan tempAdd
   let satuanOptions = `<option value="" selected disabled>Pilih Satuan</option>`;
   
@@ -3445,7 +3490,7 @@ function refreshDataTableAdd (NOBUKTI = "") {
 function cleanFormAddAdd (){
   document.getElementById("input_add_add_kodebarang").value = ''
   document.getElementById("input_add_add_keterangannama").value = ''
-  document.getElementById("input_add_add_qnt").value = '0.00'
+  document.getElementById("input_add_add_qnt").value = '0,00'
   document.getElementById("input_add_add_satuan").innerHTML = '<option value=0 selected>Pilih Satuan</option>'
 }
 
@@ -3472,7 +3517,7 @@ function lockFormAdd (){
 function unlockFormAdd () {
   document.getElementById("input_add_tanggal").disabled = false
   document.getElementById("input_refpr").disabled = false
-  // document.getElementById("input_gudang").disabled = false
+  document.getElementById("input_gudang").disabled = false
   // document.getElementById("input_customer_nama").disabled = false
 }
 </script>

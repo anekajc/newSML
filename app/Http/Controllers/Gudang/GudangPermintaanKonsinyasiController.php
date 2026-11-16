@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\NewMenu;
-use App\Models\NewAksesMenu;
-use App\Models\NewPeriode;
-use App\Models\NewUsers;
+use App\Model\NewMenu;
+use App\Model\NewAksesMenu;
+use App\Model\NewPeriode;
+use App\Model\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Models\DBFLMENU;
+use App\Model\DBFLMENU;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -42,10 +42,11 @@ class GudangPermintaanKonsinyasiController extends Controller
           B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp, 
-          A.KODESLS, G.Nama NAMASLS, 
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
-          H.Nama NamaLokasi
+          A.KODECUSTSUPP, F.NamaCustSupp,
+          A.KODESLS, G.Nama NAMASLS,
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -54,31 +55,33 @@ class GudangPermintaanKonsinyasiController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where 
-          year(A.TANGGAL) = :tahun and 
-          month(A.TANGGAL) = :bulan and 
-          A.NOBUKTI <> '' 
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
+        where
+          year(A.TANGGAL) = :tahun and
+          month(A.TANGGAL) = :bulan and
+          A.NOBUKTI <> ''
           and A.IsOtorisasi1 = 0
           and ISNULL(A.pKonsi, 0) = 1
         order by B.URUT
     ", [
-    "tahun" => $periode->tahun, 
+    "tahun" => $periode->tahun,
     "bulan" => $periode->bulan
     ]);
 
     // Data sudah otorisasi
     $tempOutstanding3 = DB::connection("SML")->select("
-        select 
-          A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
+        select
+          A.IsOtorisasi1, A.OtoUser1, A.TglOto1,
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
-          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI, 
+          B.QNT, B.QNT2, B.SAT_1, B.SAT_2, B.NoSat, B.ISI,
           B.gdgAsal, D.NAMA + ' (' + B.gdgAsal + ')' NamaGgdAsal, 0.00 GSM,
           B.gdgTujuan, E.NAMA + ' (' + B.gdgTujuan + ')' NamaGgdTujuan,
-          A.KODECUSTSUPP, F.NamaCustSupp, 
-          A.KODESLS, G.Nama NAMASLS, 
-          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
-          H.Nama NamaLokasi
+          A.KODECUSTSUPP, F.NamaCustSupp,
+          A.KODESLS, G.Nama NAMASLS,
+          B.pbonus, A.TglKirim, A.RefPR, A.Lokasi,
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -87,15 +90,16 @@ class GudangPermintaanKonsinyasiController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
-        where 
-          year(A.TANGGAL) = :tahun and 
-          month(A.TANGGAL) = :bulan and 
-          A.NOBUKTI <> '' 
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
+        where
+          year(A.TANGGAL) = :tahun and
+          month(A.TANGGAL) = :bulan and
+          A.NOBUKTI <> ''
           and A.IsOtorisasi1 = 1
           and ISNULL(A.pKonsi, 0) = 1
         order by B.URUT
     ", [
-        "tahun" => $periode->tahun, 
+        "tahun" => $periode->tahun,
         "bulan" => $periode->bulan
     ]);
 
@@ -171,8 +175,7 @@ class GudangPermintaanKonsinyasiController extends Controller
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
 
     // Ambil data transaksi sample
-    $tempOutstanding = DB::connection("SML")->select("
-   select 
+    $tempOutstanding = DB::connection("SML")->select("select 
           A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
@@ -182,7 +185,8 @@ class GudangPermintaanKonsinyasiController extends Controller
           A.KODECUSTSUPP, F.NamaCustSupp, 
           A.KODESLS, G.Nama NAMASLS, 
           B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
-          H.Nama NamaLokasi
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else 
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -191,21 +195,20 @@ class GudangPermintaanKonsinyasiController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
         where 
           year(A.TANGGAL) = :tahun and 
           month(A.TANGGAL) = :bulan and 
           A.NOBUKTI <> '' 
           and ISNULL(A.IsOtorisasi1, 0) = 0
           and ISNULL(A.pKonsi, 0) = 1
-        order by B.URUT
-    ", [
+        order by B.URUT", [
         "tahun" => $periode->tahun,
         "bulan" => $periode->bulan
     ]);
 
     // Data sudah otorisasi
-    $tempOutstanding3 = DB::connection("SML")->select("
-        select 
+    $tempOutstanding3 = DB::connection("SML")->select("select 
           A.IsOtorisasi1, A.OtoUser1, A.TglOto1, 
           A.NOBUKTI, A.NOURUT, A.TANGGAL, A.note Keterangan,
           B.URUT, B.KODEBRG, C.NamaBrg, '' Jns_Kertas, '' Ukr_Kertas,
@@ -215,7 +218,8 @@ class GudangPermintaanKonsinyasiController extends Controller
           A.KODECUSTSUPP, F.NamaCustSupp, 
           A.KODESLS, G.Nama NAMASLS, 
           B.pbonus, A.TglKirim, A.RefPR, A.Lokasi, 
-          H.Nama NamaLokasi
+          H.Nama NamaLokasi,case when isnull(i.kirim,0)=0 then 'Belum' else 
+          case when b.qnt>i.kirim then 'Sebagian' else 'Sudah' end end Statkirim
         from DBPRSAMPLE A
         left outer join DBPRSAMPLEDET B on B.NoBukti = A.NoBukti
         left outer join dbBarang C on C.KodeBrg = B.KodeBrg
@@ -224,14 +228,14 @@ class GudangPermintaanKonsinyasiController extends Controller
         left outer join DbCustSupp F on F.KodeCustSupp = A.KODECUSTSUPP
         left outer join dbKaryawan G on A.KODESLS = G.KeyNIK
         left outer join DbKebunCustSupp H on A.Lokasi = H.KodeKebun and A.KODECUSTSUPP = H.KodeCustSupp
+        left outer join (select noprsample,kodebrg,SUM(qnt)kirim from DBSERAHSAMPLEDET group by noprsample,kodebrg ) i on i.NOPRSAMPLE=a.NOBUKTI and i.KODEBRG=b.KODEBRG
         where 
           year(A.TANGGAL) = :tahun and 
           month(A.TANGGAL) = :bulan and 
           A.NOBUKTI <> '' 
           and ISNULL(A.IsOtorisasi1, 0) = 1
           and ISNULL(A.pKonsi, 0) = 1
-        order by B.URUT
-    ", [
+        order by B.URUT", [
         "tahun" => $periode->tahun,
         "bulan" => $periode->bulan
     ]);
@@ -662,6 +666,7 @@ if ($choice =='D'){
 {
     $choice = $req->choice;
     $nobukti = $req->nobukti;
+    $xurut = (int) $req->urut;
     $username = \Auth::user()->username;
 
     $values = [

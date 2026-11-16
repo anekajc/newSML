@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\NewMenu;
-use App\Models\NewAksesMenu;
-use App\Models\DBFLMENU;
+use App\Model\NewMenu;
+use App\Model\NewAksesMenu;
+use App\Model\DBFLMENU;
 use App\Models\NewPeriode;
-use App\Models\NewUsers;
+use App\Model\NewUsers;
 use Illuminate\Support\Facades\DB;
 
 class ClosingPerintahOpnameController extends Controller
@@ -305,7 +305,7 @@ public function lock(Request $req)
                     "userbatal" => $user,
                     "ketbatal"  => $reason,
                     "nobukti"   => $nobukti,
-                    "kodebrg"   => $item->KODEBRG,
+                    "kodebrg"   => $item->KodeBrg,
                     "urut"      => $urut
                 ]
             );
@@ -327,9 +327,9 @@ public function lock(Request $req)
                         "qntbatal"  => $item->QtyComp,
                         "userbatal" => $user,
                         "ketbatal"  => $reason,
-                        "nobukti"   => $item->NOBUKTI,
-                        "kodebrg"   => $item->KODEBRG,
-                        "urut"      => $item->URUT
+                        "nobukti"   => $item->NoBukti,
+                        "kodebrg"   => $item->KodeBrg,
+                        "urut"      => $item->Urut
                     ]
                 );
             }
@@ -383,7 +383,7 @@ public function unlock(Request $req)
                 "update DBPerintahOpDet set QntBatal=0, UserBatal='', TglBatal=NULL, isbatal=0, Ketbatal='' where Nobukti=:nobukti and kodebrg=:kodebrg and Urut=:urut",
                 [
                     "nobukti" => $nobukti,
-                    "kodebrg" => $item->KODEBRG,
+                    "kodebrg" => $item->KodeBrg,
                     "urut"    => $urut
                 ]
             );
@@ -402,9 +402,9 @@ public function unlock(Request $req)
                 DB::connection('SML')->statement(
                     "update DBPerintahOpDet set QntBatal=0, UserBatal='', TglBatal=NULL, isbatal=0, Ketbatal='' where Nobukti=:nobukti and kodebrg=:kodebrg and Urut=:urut",
                     [
-                        "nobukti" => $item->NOBUKTI,
-                        "kodebrg" => $item->KODEBRG,
-                        "urut"    => $item->URUT
+                        "nobukti" => $item->NoBukti,
+                        "kodebrg" => $item->KodeBrg,
+                        "urut"    => $item->Urut
                     ]
                 );
             }

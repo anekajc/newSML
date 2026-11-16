@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Gudang;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\NewMenu;
-use App\Models\NewAksesMenu;
-use App\Models\NewPeriode;
-use App\Models\NewUsers;
+use App\Model\NewMenu;
+use App\Model\NewAksesMenu;
+use App\Model\NewPeriode;
+use App\Model\NewUsers;
 use Illuminate\Support\Facades\DB;
-use App\Models\DBFLMENU;
+use App\Model\DBFLMENU;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -333,6 +333,7 @@ public function SerahSample (Request $req)
         WHERE A.Qnt - ISNULL(D.Qnt, 0) > 0
           AND ISNULL(B.IsOtorisasi1, 0) = 1
           AND ISNULL(B.pkonsi, 0) = 0
+          AND ISNULL(A.ISBATAL, 0) = 0
     ";
 
     $bindings = [];

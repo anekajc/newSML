@@ -1695,13 +1695,14 @@ function baValueCell (row, col) {
   let type = col[3];
 
   {{-- Status -- badge titik+pill .sp-badge, sama seperti kolom Status di
-       permintaanpemakaian.blade.php/perintahopname.blade.php. Backend Berita Acara
-       Opname tidak punya kolom 'status' sendiri (tidak seperti Perintah Opname yang
-       punya CASE Belum/Batal/Sudah) dan tidak ada menu closing BAP, jadi di sini
-       Status diturunkan langsung dari IsOtorisasi1 -- cuma Sudah/Belum, tanpa Batal. --}}
+       permintaanpemakaian.blade.php/perintahopname.blade.php. vwMasterBAOP (lihat
+       BeritaAcaraOpnameController::index()/loadAll()) sudah mengembalikan kolom
+       'status' varchar ("Sudah"/"Belum") sendiri -- dibaca langsung dari `raw`,
+       BUKAN diturunkan ulang dari IsOtorisasi1. --}}
   if (col[0] === 'status') {
-    let sudah = Number(baPickCI(row, 'IsOtorisasi1')) === 1;
-    return '<td><span class="sp-badge ' + (sudah ? 'is-active' : 'is-inactive') + '">' + (sudah ? 'Sudah' : 'Belum') + '</span></td>';
+    let label = (raw !== undefined && raw !== null) ? raw : '';
+    let sudah = String(label).trim().toLowerCase() === 'sudah';
+    return '<td><span class="sp-badge ' + (sudah ? 'is-active' : 'is-inactive') + '">' + label + '</span></td>';
   }
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
@@ -1752,14 +1753,14 @@ function baFilterRows (rows) {
   let awal = $('#baTanggalAwal').val()
   let akhir = $('#baTanggalAkhir').val()
   return (rows || []).filter(function (row) {
-    {{-- Kolom Otorisasi dan Status sama-sama diturunkan dari IsOtorisasi1 (lihat
-         baValueCell() -- BAP tidak punya field 'status' sendiri di backend), tapi tetap
-         dua dropdown terpisah di UI (sama seperti Status Otorisasi + Status Opname di
-         perintahopname.blade.php), jadi disaring independen. --}}
+    {{-- Otorisasi (IsOtorisasi1 bool) dan Status (kolom 'status' varchar dari
+         vwMasterBAOP, lihat baValueCell()) adalah dua field BERBEDA di baris data --
+         disaring independen, sama seperti Status Otorisasi + Status Opname di
+         perintahopname.blade.php. --}}
     if (oto !== '' && String(Number(baPickCI(row, 'IsOtorisasi1'))) !== oto) { return false }
     if (statusOpname !== '') {
-      let sudah = Number(baPickCI(row, 'IsOtorisasi1')) === 1
-      if ((statusOpname === 'Sudah') !== sudah) { return false }
+      let statusText = String(baPickCI(row, 'status') ?? '').trim().toLowerCase()
+      if (statusText !== statusOpname.toLowerCase()) { return false }
     }
     if (awal || akhir) {
       let tgl = baPickCI(row, 'Tanggal')

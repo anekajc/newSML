@@ -1420,7 +1420,6 @@
             <div class="col-md-3">
               <div class="row">
 
-
             <div class="col-md-4">
               <div class="form-group">
                 <label>No Bukti</label>
@@ -1469,7 +1468,7 @@
             top: 0;
             z-index: 1;">
                 <tr>
-                  <th style="padding: 4px 12px;" scope="col" class="text-center">v</th>
+                  <th id="colHeaderV" style="padding: 4px 12px;" scope="col" class="text-center">v</th>
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Qty</th>
@@ -1572,12 +1571,11 @@ let listDataDet = []
 let listDataAdd = []
 let tempDataAdd = []
 
-/* ============ Separator ribuan untuk input Harga (koreksi_qnt${i}) ============
- * Field Harga sekarang type="text" (bukan type="number", yang tidak bisa menampilkan
- * titik ribuan) + oninput="formatAngkaInput(event)" supaya tampilannya "12.312" /
- * "123.123,50" gaya id-ID. Field disimpan sebagai STRING berformat di DOM, jadi
- * setiap tempat yang baca .val() untuk perhitungan/submit WAJIB lewat parseAngka()
- * dulu -- sama persis dengan pola di koreksistock.blade.php. */
+/* ============ Separator ribuan (Saldo Stock/Saldo Fisik/Harga/Selisih, QTY) ============
+ * Port 1:1 dari koreksistock.blade.php/beritaacaraopname.blade.php/transferbarang.blade.php.
+ * Input yang bisa diedit (koreksi_qnt${i}/koreksi_qntopname${i}) dipakai sebagai type="text"
+ * + oninput="formatAngkaInput(event)", jadi setiap tempat yang baca .val() untuk
+ * perhitungan/submit WAJIB lewat parseAngka() dulu. */
 function parseAngka (str) {
   if (str === undefined || str === null || str === '') { return 0; }
   let n = Number(String(str).replace(/\./g, '').replace(',', '.'));
@@ -1812,7 +1810,7 @@ function obValueCell (row, col) {
 function obTabelActionsCell (row) {
   let nobukti = obPickCI(row, 'NoBukti');
   let html = '<td class="text-center" style="white-space:nowrap;"><div class="action-buttons-wrap">';
-  html += '<button class="btn btn-warning btn-sm" title="Detail" type="button" onclick="buttonDetailBAP(\'' + nobukti + '\')"><i class="bi bi-info"></i></button>';
+  html += '<button class="btn btn-warning btn-sm" title="Detail" type="button" onclick="buttonDetailBAP(\'' + nobukti + '\')"><i class="bi bi-info-lg"></i></button>';
   html += '<button class="btn btn-primary btn-sm" title="Tambah" type="button" onclick="buttonAdd(\'' + nobukti + '\')"><i class="bi bi-plus-lg"></i></button>';
   html += '</div></td>';
   return html;
@@ -1827,7 +1825,7 @@ function obTabel2ActionsCell (row) {
     html += '<button class="btn btn-danger btn-sm" title="Batal Otorisasi" type="button" onclick="buttonBatalOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
     html += '<button class="btn btn-primary btn-sm" type="button" title="Print" onclick="submitPrint(\'' + nobukti + '\')"><i class="bi bi-printer"></i></button>';
   } else {
-    html += '<button class="btn btn-success btn-sm" title="Edit" type="button" onclick="buttonKoreksi(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button>';
+    html += '<button class="btn btn-success btn-sm" title="Koreksi" type="button" onclick="buttonKoreksi(\'' + nobukti + '\')"><i class="bi bi-pen"></i></button>';
     html += '<button class="btn btn-primary btn-sm" title="Otorisasi" type="button" onclick="submitOtorisasi(\'' + nobukti + '\')"><i class="bi bi-key"></i></button>';
   }
   html += '</div></td>';
@@ -2755,6 +2753,7 @@ function submitPrint (nobukti) {
 
 
 function buttonAdd (nobukti) {
+
     tempDataAdd = []
     let _token = $("#_token").val();
 
@@ -2763,7 +2762,6 @@ function buttonAdd (nobukti) {
       alertify.warning('No access')
       return
     }
-
 
     $.ajax({
       url: "{!! url('opnamebaranglistadd') !!}",
@@ -2788,7 +2786,7 @@ function buttonAdd (nobukti) {
 
           <td>${item.KODEBRG}</td>
           <td>${item.NAMABRG}</td>
-          <td class="text-right">${item.QNT ? parseFloat(item.QNT).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${formatAngkaDisplay(item.QNT || 0)}</td>
 
           </tr>`
         });
@@ -2798,11 +2796,10 @@ function buttonAdd (nobukti) {
         document.getElementById("tabel_data_add_list_modal").innerHTML = rowTable
         setNewNoBukti()
 
+      $("#colHeaderV").show()
       $("#formAddItemTitle").text('Tambah Item')
       $("#formAddItemSimpan").show()
       $("#formAddItem").modal('toggle');
-
-
 
       },
       error: function (err) {
@@ -2812,16 +2809,10 @@ function buttonAdd (nobukti) {
 
     })
 
-
-
-
-
 }
 
-{{-- Detail button tab1 (Berita Acara Opname) -- isinya sama persis dengan modal
-     #formAddItem punya buttonAdd() (opnamebaranglistadd, tabel Kode/Nama/Qty barang),
-     tapi read-only: tombol Simpan disembunyikan, No Bukti dipaksa ke Nobukti BAP-nya
-     sendiri (bukan nomor OPN baru dari setNewNoBukti()). --}}
+// Detail (read-only) counterpart of buttonAdd(): hides checkbox/V column and Simpan button,
+// forces No Bukti to the given BAP record instead of generating a new one.
 function buttonDetailBAP (nobukti) {
     let _token = $("#_token").val();
 
@@ -2839,10 +2830,9 @@ function buttonDetailBAP (nobukti) {
         res.forEach((item, i) => {
           rowTable += `
           <tr>
-          <td class="text-center">-</td>
           <td>${item.KODEBRG}</td>
           <td>${item.NAMABRG}</td>
-          <td class="text-right">${item.QNT ? parseFloat(item.QNT).toFixed(2) : '0.00'}</td>
+          <td class="text-right">${formatAngkaDisplay(item.QNT || 0)}</td>
           </tr>`
         });
 
@@ -2851,6 +2841,7 @@ function buttonDetailBAP (nobukti) {
         document.getElementById("input_modal_nobukti").value = nobukti
         document.getElementById("input_modal_nourut").value = ''
 
+        $("#colHeaderV").hide()
         $("#formAddItemTitle").text('Detail Item')
         $("#formAddItemSimpan").hide()
         $("#formAddItem").modal('toggle');
@@ -2913,11 +2904,11 @@ function buttonDetail (nobukti, tipe = "detail") {
                   <td>${item.kodebrg}</td>
                   <td>${item.namaBrg}</td>
                   <td class="text-center">${item.Satuan}</td>
-                  <td class="text-right">${item.SaldoComp ? parseFloat(item.SaldoComp).toFixed(2) : '0.00'}</td>
-                  <td class="text-right">${item.QntOpname ? parseFloat(item.QntOpname).toFixed(2) : '0.00'}</td>
+                  <td class="text-right">${formatAngkaDisplay(item.SaldoComp || 0)}</td>
+                  <td class="text-right">${formatAngkaDisplay(item.QntOpname || 0)}</td>
 
-                  <td class="text-right">${item.Harga ? parseFloat(item.Harga).toFixed(2) : '0.00'}</td>
-                  <td class="text-right">${item.Selisih ? parseFloat(item.Selisih).toFixed(2) : '0.00'}</td>
+                  <td class="text-right">${formatAngkaDisplay(item.Harga || 0)}</td>
+                  <td class="text-right">${formatAngkaDisplay(item.Selisih || 0)}</td>
 
 
                 </tr>
@@ -3233,7 +3224,7 @@ function submitKoreksi () {
       // if (document.getElementById(`add_checkbox${i}`).checked) {
         console.log($(`#koreksi_qnt${i}`).val())
         let x = parseAngka($(`#koreksi_qnt${i}`).val())
-        let inputqntopname = $(`#koreksi_qntopname${i}`).val()
+        let inputqntopname = parseAngka($(`#koreksi_qntopname${i}`).val())
         if (Number(inputqntopname)  < 0) {
                 checkQnt = 1
               }
@@ -4035,16 +4026,16 @@ function refreshDataTable (nobukti) {
                     <td>${item.kodebrg}</td>
                     <td>${item.namaBrg}</td>
                     <td class="text-center">${item.Satuan}</td>
-                    <td class="text-right">${item.SaldoComp ? parseFloat(item.SaldoComp).toFixed(2) : '0.00'}</td>
+                    <td class="text-right">${formatAngkaDisplay(item.SaldoComp || 0)}</td>
                     ${item.nonbap == 1 ?
-                      `<td class="text-center"><input onchange="" id="koreksi_qntopname${i}"  class="text-right" type="number" min=0 value=${item.QntOpname ? parseFloat(item.QntOpname).toFixed(2) : '0.00'}></td>`
+                      `<td class="text-center"><input onchange="" id="koreksi_qntopname${i}" class="text-right" type="text" inputmode="decimal" oninput="formatAngkaInput(event)" value="${formatAngkaDisplay(item.QntOpname || 0)}"></td>`
                       :
-                      `<td class="text-right">${item.QntOpname ? parseFloat(item.QntOpname).toFixed(2) : '0.00'}</td>`
+                      `<td class="text-right">${formatAngkaDisplay(item.QntOpname || 0)}</td>`
 
                     }
 
-                    <td class="text-center"><input id="koreksi_qnt${i}" class="text-right" type="text" inputmode="decimal" oninput="formatAngkaInput(event)" value="${formatAngkaDisplay(item.Harga || 0)}"></td>
-                    <td class="text-right">${item.Selisih ? parseFloat(item.Selisih).toFixed(2) : '0.00'}</td>
+                    <td class="text-center"><input onchange="" id="koreksi_qnt${i}" class="text-right" type="text" inputmode="decimal" oninput="formatAngkaInput(event)" value="${formatAngkaDisplay(item.Harga || 0)}"></td>
+                    <td class="text-right">${formatAngkaDisplay(item.Selisih || 0)}</td>
 
                     <td class='text-center'>
                       <button class="btn btn-danger btn-sm" type="button" onclick="buttonDeleteItem('${i}' )"><i class="bi bi-trash"></i></button>

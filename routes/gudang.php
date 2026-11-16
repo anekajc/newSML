@@ -70,6 +70,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/terimatransferbarangspkoreksi', [TerimaTransferBarangController::class, 'spKoreksi']);
     Route::post('/terimatransferbarangonchangeheader', [TerimaTransferBarangController::class, 'onChangeHeader']);
     Route::get('/terimatransferbarangloadall', [TerimaTransferBarangController::class, 'loadAll']);
+    Route::get('/terimatransferbarangloadterima', [TerimaTransferBarangController::class, 'loadTerima']);
+    Route::post('/terimatransferbarangspdelete', [TerimaTransferBarangController::class, 'spDelete']);
     Route::post('/terimatransferbarangspotorisasi', [TerimaTransferBarangController::class, 'spOtorisasi']);
     Route::post('/terimatransferbarangspbatalotorisasi', [TerimaTransferBarangController::class, 'spBatalOtorisasi']);
     Route::post('/trfbrgCekQntStock', [TransferBarangController::class, 'cekQntStock']);

@@ -80,6 +80,7 @@ Route::get('/gettanggalserver', [GlobalController::class, 'getTanggalServer'])->
 require __DIR__.'/accounting.php';
 require __DIR__.'/marketing.php';
 require __DIR__.'/gudang.php';
+require __DIR__.'/wms.php';
 require __DIR__.'/purchasing.php';
 require __DIR__.'/master.php';
 Route::middleware('auth')->group(function () {

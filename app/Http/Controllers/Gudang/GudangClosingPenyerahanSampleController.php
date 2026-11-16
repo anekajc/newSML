@@ -27,7 +27,7 @@ class GudangClosingPenyerahanSampleController extends Controller
 
     // sheet kiri
     $tempOutstanding = DB::connection("SML")->select("
-        SELECT 
+        SELECT
             nobukti,
             Tanggal,
             Keterangan,
@@ -40,7 +40,8 @@ class GudangClosingPenyerahanSampleController extends Controller
             QntCLose,
             Urut,
             nobukti + CAST(Urut AS VARCHAR(10)) AS KeyNobukti
-        FROM VWREPORToutSERAHSAMPLE");
+        FROM VWREPORToutSERAHSAMPLE
+        WHERE ISNULL(ISBATAL, 0) = 0");
 
     // sheet kanan
     $tempPenerimaan = DB::connection("SML")->select("

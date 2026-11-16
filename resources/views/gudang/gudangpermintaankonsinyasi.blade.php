@@ -1,550 +1,527 @@
 @extends('newmasterTest')
+
 @section('buttons')
-
-@section('page-title', 'Permintaan Konsinyasi')
-@section('title', 'SML - Permintaan Konsinyasi')
-
+  @section('page-title', 'Permintaan Konsinyasi')
+  @section('title', 'SML - Permintaan Konsinyasi')
 @endsection
 
 @section('css')
+  <link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
+  <link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
 
-<link rel="stylesheet" href="{!! URL::asset('css/po-table-header.css') !!}?v={{ @filemtime(base_path('public/css/po-table-header.css')) ?: '1' }}">
-<link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
+  {{-- Port 1:1 ke UI SO -- @extends newmasterTest (bukan lagi gudang.newmaster), sama
+       persis dengan pola di gudangpermintaansample.blade.php (PRK Belum+Sudah Otorisasi
+       digabung jadi satu tab dengan kolom Status + filter Status, tab OutStanding
+       terpisah tetap apa adanya). --}}
+  <style>
+    .custom-tabs {
+      display: inline-flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 2px;
+      background-color: #f1f3f5;
+      border-radius: 20px;
+      padding: 3px;
+    }
 
-{{-- Port 1:1 ke UI SO -- @extends newmasterTest (bukan lagi gudang.newmaster), sama
-     persis dengan pola di gudangpermintaansample.blade.php (PRK Belum+Sudah Otorisasi
-     digabung jadi satu tab dengan kolom Status + filter Status, tab OutStanding
-     terpisah tetap apa adanya). --}}
-<style>
-.custom-tabs {
-  display: inline-flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 2px;
-  background-color: #f1f3f5;
-  border-radius: 20px;
-  padding: 3px;
-}
+    .custom-tabs .nav-link {
+      display: inline-block !important;
+      padding: 5px 16px !important;
+      font-size: 0.75rem !important;
+      border: none;
+      border-radius: 17px;
+      color: #495057;
+      background: transparent;
+      font-weight: 600;
+      transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
 
-.custom-tabs .nav-link {
-  display: inline-block !important;
-  padding: 5px 16px !important;
-  font-size: 0.75rem !important;
-  border: none;
-  border-radius: 17px;
-  color: #495057;
-  background: transparent;
-  font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
+    .custom-tabs .nav-link:hover {
+      background: transparent;
+      color: #007bff;
+    }
 
-.custom-tabs .nav-link:hover {
-  background: transparent;
-  color: #007bff;
-}
+    .custom-tabs .nav-link.active {
+      background: #007bff;
+      border-color: #007bff;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
+    }
 
-.custom-tabs .nav-link.active {
-  background: #007bff;
-  border-color: #007bff;
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 123, 255, .35);
-}
+    .tab-card {
+      display: block !important;
+      align-items: flex-start !important;
+      padding: 0 !important;
+      border: none !important;
+      margin-bottom: 6px !important;
+    }
 
-.tab-card {
-  display: block !important;
-  align-items: flex-start !important;
-  padding: 0 !important;
-  border: none !important;
-  margin-bottom: 6px !important;
-}
+    .tab-card .card-body {
+      padding: 5px 10px !important;
+    }
 
-.tab-card .card-body {
-  padding: 5px 10px !important;
-}
+    #page1 .card {
+      display: block !important;
+      align-items: stretch !important;
+      padding: 0 !important;
+      text-align: left !important;
+      cursor: default !important;
+    }
 
-#page1 .card {
-  display: block !important;
-  align-items: stretch !important;
-  padding: 0 !important;
-  text-align: left !important;
-  cursor: default !important;
-}
+    #page1 .card:hover {
+      transform: none !important;
+      box-shadow: none !important;
+      border-color: var(--border) !important;
+    }
 
-#page1 .card:hover {
-  transform: none !important;
-  box-shadow: none !important;
-  border-color: var(--border) !important;
-}
+    #page1 .tab-content .col-md-12 {
+      min-width: 0;
+      max-width: 100%;
+    }
 
-#page1 .tab-content .col-md-12 {
-  min-width: 0;
-  max-width: 100%;
-}
+    {{-- #tabel sudah dapat width/min-width/warna tombol Aksi dari CSS terpusat
+         (:where(.po-list-page) ...) sejak #page1 diberi class "po-list-page" -- lihat
+         po-table-header.css. #tabel2 (tab OutStanding, tanpa kolom Actions) tidak disentuh
+         aturan #tabel di sana (id berbeda), jadi tetap butuh min-width manual, TANPA
+         flex/warna tombol td:first-child karena kolom pertamanya data biasa. --}}
+    #tabel2 {
+      min-width: 100%;
+    }
 
-{{-- #tabel sudah dapat width/min-width/warna tombol Aksi dari CSS terpusat
-     (:where(.po-list-page) ...) sejak #page1 diberi class "po-list-page" -- lihat
-     po-table-header.css. #tabel2 (tab OutStanding, tanpa kolom Actions) tidak disentuh
-     aturan #tabel di sana (id berbeda), jadi tetap butuh min-width manual, TANPA
-     flex/warna tombol td:first-child karena kolom pertamanya data biasa. --}}
-#tabel2 { min-width: 100%; }
+    #tabel td:first-child,
+    #tabel_add td:last-child {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+    }
 
-#tabel td:first-child,
-#tabel_add td:last-child {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  align-items: center;
-}
+    #tabel_add td:last-child .btn {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      font-size: 13px;
+      border: 1px solid transparent;
+      box-shadow: none;
+      transition: all .12s ease;
+    }
 
-#tabel_add td:last-child .btn {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 7px;
-  font-size: 13px;
-  border: 1px solid transparent;
-  box-shadow: none;
-  transition: all .12s ease;
-}
+    #tabel_add td:last-child .btn:hover {
+      filter: brightness(0.97);
+      transform: translateY(-1px);
+    }
 
-#tabel_add td:last-child .btn:hover {
-  filter: brightness(0.97);
-  transform: translateY(-1px);
-}
+    #tabel_add td:last-child .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
+    #tabel_add td:last-child .btn-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
+    #tabel_add td:last-child .btn-primary { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
+    #tabel_add td:last-child .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
+    #tabel_add td:last-child .btn-warning { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
 
-#tabel_add td:last-child .btn-success { color: #16a34a; border-color: #cdebd7; background: #e7f7ed; }
-#tabel_add td:last-child .btn-info    { color: #0891b2; border-color: #a5f3fc; background: #ecfeff; }
-#tabel_add td:last-child .btn-primary { color: #2563eb; border-color: #cfdcff; background: #e8edff; }
-#tabel_add td:last-child .btn-danger  { color: #dc2626; border-color: #f7cfcf; background: #fdeaea; }
-#tabel_add td:last-child .btn-warning { color: #b45309; border-color: #fbe3bd; background: #fef3e0; }
+    {{-- Tabel statis (bukan #tabel/#tabel2) yang dulu pakai thead bg-primary text-white --
+         diganti abu-abu + teks gelap, sesuai UI baru yang sama di semua halaman. --}}
+    #tabel_add thead th,
+    #tabel_detail thead th,
+    #tabel_add_list_customer thead th,
+    #tabel_add_list_sales thead th,
+    #tabel_add_list_lokasi thead th,
+    #tabel_add_list_item thead th,
+    #tabel thead th,
+    #tabel2 thead th {
+      background: #f8f9fb !important;
+      color: #6b7280 !important;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-weight: 600;
+      border-bottom: 1px solid #e7e9ee;
+      border-top: none;
+    }
 
-{{-- Badge kolom Status (IsOtorisasi1) di tabel PRK gabungan -- hijau untuk Sudah
-     Otorisasi, amber untuk Belum Otorisasi. --}}
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .03em;
-  white-space: nowrap;
-}
-.status-badge-sudah { color: #16a34a; border: 1px solid #cdebd7; background: #e7f7ed; }
-.status-badge-belum { color: #b45309; border: 1px solid #fbe3bd; background: #fef3e0; }
+    #tabel tbody tr:hover,
+    #tabel2 tbody tr:hover {
+      background-color: #f5f3ff;
+    }
 
-{{-- Tabel statis (bukan #tabel/#tabel2) yang dulu pakai thead bg-primary text-white --
-     diganti abu-abu + teks gelap, sesuai UI baru yang sama di semua halaman. --}}
-#tabel_add thead th,
-#tabel_detail thead th,
-#tabel_add_list_customer thead th,
-#tabel_add_list_sales thead th,
-#tabel_add_list_lokasi thead th,
-#tabel_add_list_item thead th,
-#tabel thead th,
-#tabel2 thead th {
-  background: #f8f9fb !important;
-  color: #6b7280 !important;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  font-weight: 600;
-  border-bottom: 1px solid #e7e9ee;
-  border-top: none;
-}
+    .data-table th,
+    .data-table td {
+      white-space: nowrap;
+    }
 
-#tabel tbody tr:hover,
-#tabel2 tbody tr:hover {
-  background-color: #f5f3ff;
-}
+    .pick-row {
+      cursor: pointer;
+    }
 
-.data-table th,
-.data-table td {
-  white-space: nowrap;
-}
+    .pick-row:hover {
+      background-color: #f5f3ff !important;
+    }
 
-.pick-row { cursor: pointer; }
-.pick-row:hover { background-color: #f5f3ff !important; }
+    #tabel tbody .action-buttons-wrap {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-6px);
+      transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+    }
 
-#tabel tbody .action-buttons-wrap {
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-6px);
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
-}
-#tabel tbody tr:hover .action-buttons-wrap,
-#tabel tbody tr:focus-within .action-buttons-wrap {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-}
-</style>
+    #tabel tbody tr:hover .action-buttons-wrap,
+    #tabel tbody tr:focus-within .action-buttons-wrap {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+  </style>
 @endsection
 
 @section('content')
 
-<div id="imagecontainer" class="d-none" style="">
-  <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
-</div>
-
-<div id='page1' class="container-fluid po-list-page">
-<div id="printContainer" style="display:none">
-
-</div>
-<div id="contentContainer" class="container-fluid">
-  {{-- Hidden Inputs --}}
-  <input type="hidden" id="periode_tahun" value="{{ $periode->tahun }}">
-  <input type="hidden" id="periode_bulan" value="{{ $periode->bulan }}">
-  <input type="hidden" id="akses_istambah" value="{{ $akses->ISTAMBAH }}">
-  <input type="hidden" id="akses_ishapus" value="{{ $akses->ISHAPUS }}">
-  <input type="hidden" id="akses_iskoreksi" value="{{ $akses->ISKOREKSI }}">
-  <input type="hidden" id="akses_iscetak" value="{{ $akses->ISCETAK }}">
-  <input type="hidden" id="akses_isotorisasi1" value="{{ $akses->IsOtorisasi1 }}">
-  <input type="hidden" id="akses_isbatal" value="{{ $akses->IsBatal }}">
-  <input type="hidden" name="_token" id="_token" value="{{ csrf_token() }}">
-
-  {{-- PRK Belum Otorisasi + Sudah Otorisasi digabung jadi satu tab, dengan kolom Status
-       dan filter Status di toolbar, sama seperti merge di
-       gudangpermintaansample.blade.php/gudangreturpenyerahansample.blade.php. Tab
-       OutStanding tetap terpisah (data item-level, bukan header), tidak digabung. --}}
-  <div class="card mb-3 tab-card">
-    <div class="card-body">
-      <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
-        <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true">Permintaan Konsinyasi</a>
-        <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">OutStanding</a>
-      </div>
-    </div>
+  <div id="imagecontainer" class="d-none" style="">
+    <img src="img/sml.png" style="height: 50px; width: 80px" alt="">
   </div>
 
-  <div class="card">
-    <div class="card-body" style="padding:0;">
-      <div class="tab-content" id="myTabContent">
-        {{-- Utama --}}
-        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
-                <div class="po-toolbar">
-                  <div class="po-filter-wrap">
-                    <label>Periode</label>
-                    <input type="date" onchange="gkFilterChanged()" class="po-filter-inp" id="gkTanggalAwal" value="{!! \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d') !!}">
-                    <span class="po-filter-sep">s/d</span>
-                    <input type="date" onchange="gkFilterChanged()" class="po-filter-inp" id="gkTanggalAkhir" value="{!! \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d') !!}">
-                  </div>
-                  <input type="search" id="gkSearch1" class="po-search-inp" placeholder="Cari data">
-                  <div class="po-len-wrap">
-                    <label for="gkLen1">Tampilkan</label>
-                    <select id="gkLen1" class="po-len-inp">
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                      <option value="-1">Semua</option>
-                    </select>
-                  </div>
-                  <button class="po-btn-filter" type="button" onclick="$('#modalFilterGK').modal('show')">
-                    <i class="bi bi-funnel"></i> Filter
-                  </button>
-                  <div class="po-toolbar-act">
-                    <button class="btn btn-chip-biru" type="button" onclick="buttonAdd()">Tambah</button>
-                  </div>
-                </div>
+  {{-- ===================== PAGE 1 : LIST ===================== --}}
+  <div id="page1" class="container-fluid po-list-page">
+    <div id="printContainer" style="display:none"></div>
 
-                <div class="modal fade rt-filter" id="modalFilterGK">
-                  <div class="modal-dialog modal-md">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title"><i class="bi bi-funnel"></i> Filter Data</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterGK').modal('hide')"><span aria-hidden="true">&times;</span></button>
+    <div id="contentContainer" class="container-fluid">
+
+      {{-- Hidden Inputs --}}
+      <input type="hidden" id="periode_tahun" value="{{ $periode->tahun }}">
+      <input type="hidden" id="periode_bulan" value="{{ $periode->bulan }}">
+      <input type="hidden" id="akses_istambah" value="{{ $akses->ISTAMBAH }}">
+      <input type="hidden" id="akses_ishapus" value="{{ $akses->ISHAPUS }}">
+      <input type="hidden" id="akses_iskoreksi" value="{{ $akses->ISKOREKSI }}">
+      <input type="hidden" id="akses_iscetak" value="{{ $akses->ISCETAK }}">
+      <input type="hidden" id="akses_isotorisasi1" value="{{ $akses->IsOtorisasi1 }}">
+      <input type="hidden" id="akses_isbatal" value="{{ $akses->IsBatal }}">
+      <input type="hidden" name="_token" id="_token" value="{{ csrf_token() }}">
+
+      {{-- PRK Belum Otorisasi + Sudah Otorisasi digabung jadi satu tab, dengan kolom Status
+           dan filter Status di toolbar, sama seperti merge di
+           gudangpermintaansample.blade.php/gudangreturpenyerahansample.blade.php. Tab
+           OutStanding tetap terpisah (data item-level, bukan header), tidak digabung. --}}
+      <div class="card mb-3 tab-card">
+        <div class="card-body">
+          <div class="nav nav-tabs border-0 custom-tabs" id="nav-tab" role="tablist">
+            <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="nav-home" aria-selected="true">Permintaan Konsinyasi</a>
+            <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="nav-profile" aria-selected="false">Outstanding</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="tab-content" id="myTabContent">
+
+            {{-- Utama --}}
+            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
+
+                    <div class="po-toolbar">
+                      <div class="po-filter-wrap">
+                        <label>Periode</label>
+                        <input type="date" onchange="gkFilterChanged()" class="po-filter-inp" id="gkTanggalAwal" value="{!! \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->startOfMonth()->format('Y-m-d') !!}">
+                        <span class="po-filter-sep">s/d</span>
+                        <input type="date" onchange="gkFilterChanged()" class="po-filter-inp" id="gkTanggalAkhir" value="{!! \Carbon\Carbon::createFromDate((int) $periode->tahun, (int) $periode->bulan, 1)->endOfMonth()->format('Y-m-d') !!}">
                       </div>
-                      <div class="modal-body">
-                        <div class="rt-section">
-                          <div class="rt-group-label">Status</div>
-                          <div>
-                            <label class="rt-field-label" for="gkStatus">Status Otorisasi</label>
-                            <select class="rt-native" id="gkStatus">
-                              <option value="" selected>Semua Status</option>
-                              <option value="0">Belum Otorisasi</option>
-                              <option value="1">Sudah Otorisasi</option>
-                            </select>
+
+                      <input type="search" id="gkSearch1" class="po-search-inp" placeholder="Cari data">
+
+                      <div class="po-len-wrap">
+                        <label for="gkLen1">Tampilkan</label>
+                        <select id="gkLen1" class="po-len-inp">
+                          <option value="10">10</option>
+                          <option value="25">25</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                          <option value="-1">Semua</option>
+                        </select>
+                      </div>
+
+                      <button class="po-btn-filter" type="button" onclick="$('#modalFilterGK').modal('show')">
+                        <i class="bi bi-funnel"></i> Filter
+                      </button>
+
+                      <div class="po-toolbar-act">
+                        <button class="btn btn-chip-biru" type="button" onclick="buttonAdd()">Tambah</button>
+                      </div>
+                    </div>
+
+                    {{-- Modal Filter --}}
+                    <div class="modal fade rt-filter" id="modalFilterGK">
+                      <div class="modal-dialog modal-md">
+                        <div class="modal-content">
+
+                          <div class="modal-header">
+                            <h5 class="modal-title"><i class="bi bi-funnel"></i> Filter Data</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modalFilterGK').modal('hide')">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
                           </div>
-                        </div>
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="rt-reset-link" onclick="$('#gkStatus').val('')">Reset semua</button>
-                        <div class="rt-footer-buttons">
-                          <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal" onclick="$('#modalFilterGK').modal('hide')">Batal</button>
-                          <button type="button" class="rt-btn rt-btn-primary" onclick="gkFilterChanged(); $('#modalFilterGK').modal('hide');">Terapkan</button>
+
+                          <div class="modal-body">
+                            <div class="rt-section">
+                              <div class="rt-group-label">Status</div>
+                              <div>
+                                <label class="rt-field-label" for="gkStatus">Status Otorisasi</label>
+                                <select class="rt-native" id="gkStatus">
+                                  <option value="" selected>Semua Status</option>
+                                  <option value="0">Belum Otorisasi</option>
+                                  <option value="1">Sudah Otorisasi</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="modal-footer">
+                            <button type="button" class="rt-reset-link" onclick="$('#gkStatus').val('')">Reset semua</button>
+                            <div class="rt-footer-buttons">
+                              <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal" onclick="$('#modalFilterGK').modal('hide')">Batal</button>
+                              <button type="button" class="rt-btn rt-btn-primary" onclick="gkFilterChanged(); $('#modalFilterGK').modal('hide');">Terapkan</button>
+                            </div>
+                          </div>
+
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div id="rtBarTabel"></div>
-                <table id="tabel" class="data-table">
-                  <thead style="white-space:nowrap;"></thead>
-                  <tbody id="tabel_data" class="text-left"></tbody>
-                </table>
-                <div class="po-rt-hint">
-                  <i class="bi bi-info-circle"></i>
-                  Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
-                  untuk menyembunyikan kolom atau mengatur jumlah desimal.
+                    <div id="rtBarTabel"></div>
+
+                    <table id="tabel" class="data-table">
+                      <thead style="white-space:nowrap;"></thead>
+                      <tbody id="tabel_data" class="text-left"></tbody>
+                    </table>
+
+                    <div class="po-rt-hint">
+                      <i class="bi bi-info-circle"></i>
+                      Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
+                      untuk menyembunyikan kolom atau mengatur jumlah desimal.
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </div>
+
+            {{-- OutStanding --}}
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
+
+                    <div class="po-toolbar">
+                      <input type="search" id="gkSearch2" class="po-search-inp" placeholder="Cari data">
+
+                      <div class="po-len-wrap">
+                        <label for="gkLen2">Tampilkan</label>
+                        <select id="gkLen2" class="po-len-inp">
+                          <option value="10">10</option>
+                          <option value="25">25</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                          <option value="-1">Semua</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div id="rtBarTabel2"></div>
+
+                    <table id="tabel2" class="data-table">
+                      <thead style="white-space:nowrap;"></thead>
+                      <tbody id="tabel2_data" class="text-left"></tbody>
+                    </table>
+
+                    <div class="po-rt-hint">
+                      <i class="bi bi-info-circle"></i>
+                      Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
+                      untuk menyembunyikan kolom atau mengatur jumlah desimal.
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+            {{-- End OutStanding --}}
+
           </div>
         </div>
-        {{-- OutStanding --}}
-        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="container-fluid col-sm-12" style="padding:0; margin:0; width:100%;">
-                <div class="po-toolbar">
-                  <input type="search" id="gkSearch2" class="po-search-inp" placeholder="Cari data">
-                  <div class="po-len-wrap">
-                    <label for="gkLen2">Tampilkan</label>
-                    <select id="gkLen2" class="po-len-inp">
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                      <option value="-1">Semua</option>
-                    </select>
-                  </div>
-                </div>
-                <div id="rtBarTabel2"></div>
-                <table id="tabel2" class="data-table">
-                  <thead style="white-space:nowrap;"></thead>
-                  <tbody id="tabel2_data" class="text-left"></tbody>
-                </table>
-                <div class="po-rt-hint">
-                  <i class="bi bi-info-circle"></i>
-                  Seret judul kolom untuk mengubah urutannya. Klik <i class="bi bi-gear"></i> pada judul kolom
-                  untuk menyembunyikan kolom atau mengatur jumlah desimal.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> {{-- End OutStanding --}}
       </div>
+
     </div>
   </div>
-</div>
-</div>
 
-<!-- start modal add -->
-{{-- <div class="modal fade"  id="form" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered"  role="document" >
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Add</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div> --}}
-<div id="page2" class="container-fluid" style="display: none;">
-  <div class="row">
-    <div class="col-6 text-left">
-      <h1></h1>
-    </div>
-    <div class="col-6 text-right">
-      <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.75rem; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" 
-        onclick="buttonCloseForm()">Close</button>
-    </div>
-      <div id='formBsGrid' class="modal-body">
-        <!-- <h1>Tes Modal</h1> -->
+  {{-- ===================== PAGE 2 : FORM ADD ===================== --}}
+  <div id="page2" class="container-fluid" style="display: none;">
+    <div class="row">
+
+      <div class="col-6 text-left">
+        <h1></h1>
+      </div>
+      <div class="col-6 text-right">
+        <button type="button" class="btn btn-danger btn-lg" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()">Close</button>
+      </div>
+
+      <div id="formBsGrid" class="modal-body">
         <div class="container-fluid">
-        <div class="row">
-        <input type="hidden" class="form-control" id="input_add_nourut" placeholder="No Urut" disabled>
-        <!-- Kiri -->
-        <div class="col-md-4">
-            <div class="mb-2 row">
+          <div class="row">
+            <input type="hidden" class="form-control" id="input_add_nourut" placeholder="No Urut" disabled>
+
+            {{-- Kiri --}}
+            <div class="col-md-4">
+              <div class="mb-2 row">
                 <label class="col-sm-4 col-form-label">No Bukti</label>
                 <div class="col-sm-8">
-                    <input type="text" class="form-control text-center" id="input_add_nobukti" placeholder="No Bukti" disabled>
+                  <input type="text" class="form-control text-center" id="input_add_nobukti" placeholder="No Bukti" disabled>
                 </div>
-            </div>
-            <div class="mb-2 row">
-            <label class="col-sm-4 col-form-label">Sales</label>
-                <div class="col-sm-8">
-                    <div class="input-group">
-                        <input id="input_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
-                        <input id="input_sales" type="hidden">
-                        <button type="button" onclick="buttonAddListSales()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Keterangan</label>
-                <div class="col-sm-8">
-                    <textarea class="form-control text-left" id="input_keterangan" rows="3" onblur="onChangeHeader('NOTE' , 'input_keterangan')" style="resize: none; height:75px !important;"></textarea>
-                </div>
-            </div>
-        </div>
+              </div>
 
-        <!-- Tengah -->
-        <div class="col-md-4">
-            <div class="mb-2 row">
+              <div class="mb-2 row">
                 <label class="col-sm-4 col-form-label">Customer</label>
                 <div class="col-sm-8">
-                    <div class="input-group">
-                        <input id="input_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
-                        <input id="input_customer" type="hidden">
-                        <button id="btn_customer" type="button" onclick="buttonAddListCustomer()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm">
-                          <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-           <div class="mb-2 row align-items-center">
-              <label class="col-sm-4 col-form-label text-nowrap" hidden>Lokasi cust</label>
-              <div class="col-sm-8" hidden>
-                <div class="input-group">
-                  <input id="input_gudang_nama" type="text" class="form-control text-center" value = '-' disabled>
-                  <input type="hidden" id="input_gudang" value= '-'>
-                  <button type="button" id="btn_gudang" onclick="buttonAddListGudang()" class="btn btn-primary btn-sm rounded-end shadow-sm">
-                    <i class="bi bi-plus"></i>
-                  </button>
+                  <div class="input-group">
+                    <input id="input_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
+                    <input id="input_customer" type="hidden">
+                    <button id="btn_customer" type="button" onclick="buttonAddListCustomer()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm">
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
-              
-              <label class="col-sm-4 col-form-label text-nowrap">Lokasi</label>
-              <div class="col-sm-8">
-                <div class="input-group">
-                  <input id="input_gudang_lokasi" type="text" class="form-control text-center" disabled>
-                  <input type="hidden" id="input_gudang">
-                  <button type="button" id="btn_gudang" onclick="buttonAddListLokasi()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm">
-                    <i class="bi bi-search"></i>
-                  </button>
+
+              <div class="mb-2 row">
+                <label class="col-sm-4 col-form-label">Keterangan</label>
+                <div class="col-sm-8">
+                  <textarea class="form-control text-left" id="input_keterangan" rows="3" onblur="onChangeHeader('NOTE' , 'input_keterangan')" style="resize: none; height:75px !important;"></textarea>
                 </div>
               </div>
             </div>
 
-            <div class="mb-2 row">
+            {{-- Tengah --}}
+            <div class="col-md-4">
+              <div class="mb-2 row">
+                <label class="col-sm-4 col-form-label">Sales</label>
+                <div class="col-sm-8">
+                  <div class="input-group">
+                    <input id="input_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
+                    <input id="input_sales" type="hidden">
+                    <button type="button" onclick="buttonAddListSales()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm">
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-2 row align-items-center">
+                <label class="col-sm-4 col-form-label text-nowrap">Gudang Asal</label>
+                <div class="col-sm-8">
+                  <div class="input-group">
+                    <select id="input_gudang" class="form-control">
+                      <option value="">- Pilih Gudang -</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-2 row">
                 <label class="col-sm-4 col-form-label">Ref PR</label>
                 <div class="col-sm-8">
-                    <input id="input_refpr" type="text" class="form-control text-left">
+                  <input id="input_refpr" type="text" class="form-control text-left">
                 </div>
+              </div>
             </div>
-        </div>
 
-        <!-- Kanan -->
-        <div class="col-md-4">
-            <div class="mb-2 row">
+            {{-- Kanan --}}
+            <div class="col-md-4">
+              <div class="mb-2 row align-items-center">
+                <label class="col-sm-4 col-form-label text-nowrap">Lokasi</label>
+                <div class="col-sm-8">
+                  <div class="input-group">
+                    <input id="input_gudang_lokasi" type="text" class="form-control text-center" disabled>
+                    <button type="button" id="btn_lokasi" onclick="buttonAddListLokasi()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm">
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-2 row">
                 <label class="col-sm-4 col-form-label">Tanggal</label>
                 <div class="col-sm-8">
-                    <input type="date" class="form-control text-center" id="input_add_tanggal" value="{!! date('Y-m-d') !!}">
+                  <input type="date" class="form-control text-center" id="input_add_tanggal" value="{!! date('Y-m-d') !!}">
                 </div>
-            </div>
-            <div class="mb-2 row align-items-center">
+              </div>
+
+              <div class="mb-2 row align-items-center">
                 <label class="col-sm-4 col-form-label text-nowrap">Tanggal Kirim</label>
                 <div class="col-sm-8">
-                    <input type="date" 
-                        class="form-control text-center" 
-                        id="input_add_tanggalkirim" 
-                        value="{!! date('Y-m-d') !!}" 
-                        onchange="onChangeHeader('TglKirim', 'input_add_tanggalkirim')">
+                  <input type="date" class="form-control text-center" id="input_add_tanggalkirim" value="{!! date('Y-m-d') !!}" onchange="onChangeHeader('TglKirim', 'input_add_tanggalkirim')">
                 </div>
+              </div>
             </div>
-          </div>
-        </div>
-        </div>
-        </div>
-    </div>
 
-    <!-- ADD SUBGROUP -->
-    <div class="container-fluid mt-4">
-          <!-- <input type="hidden" name="noUrut" id="input_add_noUrut" value="" /> -->
-          <div class="row">
-            <table id="tabel_add" class="table table-bordered table-striped"  >
-              <thead class="text-center bg-primary text-white">
-                <tr> 
-                  <th colspan="4">Deskripsi Barang</th>
-                  <th colspan="2">Satuan</th>
-                  <th colspan="1"></th>
-                </tr>
-                <tr>
-                  <th scope="col">Kode Barang</th>
-                  <th scope="col">Nama Barang</th>
-                  <th scope="col">Customer</th>
-                  <th scope="col">Lokasi Cust</th>
-                  <th scope="col">Qty</th>
-                  <th scope="col">Sat</th>  
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tabel_data_add" class="text-left" >
-                <tr >
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td> 
-                  <td class="text-center">
-                      <!-- <button class="btn btn-warning btn-sm" type="button" onclick="" ><i class="bi bi-info-lg"></i></button> -->
-                      <button class="btn btn-success btn-sm" type="button" title="Edit"><i class="bi bi-pen"></i></button>
-                      <button class="btn btn-danger btn-sm" type="button" ><i class="bi bi-trash"></i></button>
-                      <button class="btn btn-primary btn-sm" type="button" title="Details"><i class="bi bi-list"></i></button>
-                  </td>
-              </tr>
-              </tbody>
-            </table>          
           </div>
-          
-    <div class="row ">
-      <div class="col-md-12 text-right">
-      <button type="button" class="btn btn-chip-biru" style="
-      height: 30px;  
-      padding: 4px 12px; 
-      border-radius: 20px; 
-      font-size: 0.75rem; 
-      font-weight: 600; 
-      text-transform: uppercase; 
-      transition: background-color 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-      onclick="buttonAddAddItem()">Tambah Item</button>
+        </div>
       </div>
-    </div>
-          {{-- <div class="text-right">
-            <button type="button" class="btn btn-primary" style="
-            height: 30px; 
-            margin-top: 20px; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.75rem; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-            onclick="submitAdd()">Submit</button>
-        </div> --}}
-            <!-- <button onclick="buttonSubKategori()">tes</button> -->
-    </div>
-    <div id="addAddItem" class="container-fluid showhide">
-      <div id='formBsGrid'>
-            <!-- <div class="line"></div> -->
+
+      {{-- ADD SUBGROUP --}}
+      <div class="container-fluid mt-4">
+        <div class="row">
+          <table id="tabel_add" class="table table-bordered table-striped">
+            <thead class="text-center bg-primary text-white">
+              <tr>
+                <th colspan="4">Deskripsi Barang</th>
+                <th colspan="2">Satuan</th>
+                <th colspan="1"></th>
+              </tr>
+              <tr>
+                <th scope="col">Kode Barang</th>
+                <th scope="col">Nama Barang</th>
+                <th scope="col">Gudang Asal</th>
+                <th scope="col">Gudang Tujuan</th>
+                <th scope="col">Sat</th>
+                <th scope="col">Qty</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tabel_data_add" class="text-left">
+              <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-center">
+                  <button class="btn btn-success btn-sm" type="button" title="Edit"><i class="bi bi-pen"></i></button>
+                  <button class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                  <button class="btn btn-primary btn-sm" type="button" title="Details"><i class="bi bi-list"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12 text-right">
+            <button type="button" class="btn btn-chip-biru" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonAddAddItem()">Tambah Item</button>
+          </div>
+        </div>
+
+        {{-- ADD / EDIT ITEM --}}
+        <div id="addAddItem" class="container-fluid showhide">
+          <div id="formBsGrid">
+
             <div class="row">
               <div class="col-4">
                 <h4 id="h4AddAddItem" style="margin-left:-15px;">Add Item</h4>
                 <h4 id="h4AddEditItem" style="margin-left:-15px;">Edit Item</h4>
               </div>
             </div>
+
             <div class="row">
               <div class="col-md-6">
                 <div class="row">
@@ -553,556 +530,349 @@
                       <label>Kode Barang</label>
                     </div>
                   </div>
-                <div class="col-md-4">
-                  <div class="input-group mb-3">
-                  <input id="input_add_add_kodebarang" type="text" class="form-control text-center" placeholder="Kode Barang">
-                  <button type="button" id="buttonAddListKodeBarang" onclick="buttonAddListKodeBarang()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm"><i class="bi bi-search"></i></button>
+                  <div class="col-md-4">
+                    <div class="input-group mb-3">
+                      <input id="input_add_add_kodebarang" type="text" class="form-control text-center" placeholder="Kode Barang">
+                      <button type="button" id="buttonAddListKodeBarang" onclick="buttonAddListKodeBarang()" class="btn btn-chip-biru btn-sm rounded-end shadow-sm">
+                        <i class="bi bi-search"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row" style="margin-top:-10px;">
+                  <div class="col-md-3" style="margin-top:5px;">
+                    <div class="form-group">
+                      <label>Ket. Barang</label>
+                    </div>
+                  </div>
+                  <div class="col-md-8">
+                    <input id="input_add_add_keterangannama" type="text" class="form-control text-center" disabled>
                   </div>
                 </div>
               </div>
-            <div class="row" style="margin-top:-10px;">
-              <div class="col-md-3" style="margin-top:5px;">
-                <div class="form-group">
-                <label>Ket. Barang</label>
-              </div>
-              </div>
-              <div class="col-md-8">
-                <input id="input_add_add_keterangannama" type="text" class="form-control text-center" disabled>
-              </div>
-            </div>
-            </div>
-            <div class="col-md-6">
-            <div class="row">
-              <div class="col-md-2" style="margin-top:5px;">
-                <div class="form-group">
-                <label>Quantity</label>
-              </div>
-              </div>
-              <div class="col-md-3">
-                <input id="input_add_add_qnt" type="number" value=0.00 class="form-control text-right">
-              </div>
-              <div class="col-md-2" style="margin-top:5px;">
-                <label for="input_add_add_satuan">Satuan</label>
-              </div>
-              <div class="col-md-3">
-                <select id="input_add_add_satuan" class="form-control">
-                  <option value="" disabled selected>Pilih Satuan</option>
-                </select>                
-              </div>
-            </div>
-          </div>
-          </div>
-            <div class="row mt-2">
-              <div class="col-md-12 text-right">
-                <button type="button" class="btn btn-danger" style="
-                height: 30px; 
-                padding: 4px 12px; 
-                border-radius: 20px; 
-                font-size: 0.75rem; 
-                font-weight: 600; 
-                text-transform: uppercase; 
-                transition: background-color 0.3s, box-shadow 0.3s;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-                onclick="closeShowHideAdd()">Batal</button>
 
-                <button type="button" id="submitAddAdd" class="btn btn-chip-biru" style="
-                height: 30px; 
-                padding: 4px 12px; 
-                border-radius: 20px; 
-                font-size: 0.75rem; 
-                font-weight: 600; 
-                text-transform: uppercase; 
-                transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddAdd()">Simpan</button>
-
-                <button type="button" id="submitAddEdit" class="btn btn-chip-biru btn-lg" style="
-                height: 30px; 
-                padding: 4px 12px; 
-                border-radius: 20px; 
-                font-size: 0.75rem; 
-                font-weight: 600; 
-                text-transform: uppercase; 
-                transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddEdit()" style="display: none;">Simpan</button>
+              <div class="col-md-6">
+                <div class="row">
+                  <div class="col-md-2" style="margin-top:5px;">
+                    <div class="form-group">
+                      <label>Quantity</label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <input id="input_add_add_qnt" type="number" value="0.00" class="form-control text-right">
+                  </div>
+                  <div class="col-md-2" style="margin-top:5px;">
+                    <label for="input_add_add_satuan">Satuan</label>
+                  </div>
+                  <div class="col-md-3">
+                    <select id="input_add_add_satuan" class="form-control">
+                      <option value="" disabled selected>Pilih Satuan</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-    <!-- END ADD ADD -->
-
-    <!-- ADD EDIT -->
-
-    <div id="addEditItem" class="container-fluid showhide">
-            <!-- <div class="line"></div> -->
-            <div class="row">
-              <div class="col-4">
-                <h4>Edit Item Kedua</h4>
-              </div>
-            </div>
-
-            {{-- <div class="row">
-              <div class="col-2">
-                <div class="form-group">
-                <label>Ref SO</label>
-              </div>
-              </div>
-              <div class="col-3">
-                <input id="input_add_edit_refso" type="text" class="form-control" value="-" disabled>
-              </div>
-              <div class="col-1 text-right">
-
-                <button type="button" disabled onclick="" disabled class="btn btn-primary" >+</button>
-              </div>
-              <div class="col-2">
-                <div class="form-group">
-                <label>No PO Cust</label>
-              </div>
-              </div>
-              <div class="col-4">
-
-                <input id="input_add_edit_nopocust" type="text" class="form-control" disabled>
-              </div>
-            </div> --}}
-            <div class="row">
-              <div class="col-2">
-                <div class="form-group">
-                <label>Kode Barang</label>
-              </div>
-              </div>
-              <div class="col-3">
-                <input id="input_add_edit_kodebarang" type="text" class="form-control" disabled>
-              </div>
-              <div class="col-1 text-right">
-                <button type="button" disabled onclick="" class="btn btn-primary">+</button>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-2">
-                <div class="form-group">
-                <label>Ket. Barang</label>
-              </div>
-              </div>
-              <div class="col-4">
-                <input id="input_add_edit_keterangannama" type="text" class="form-control" disabled>
-              </div>
-
-            </div>
-            <div class="row">
-              <div class="col-2">
-                <div class="form-group">
-                <label>Quantity</label>
-              </div>
-              </div>
-              <div class="col-4">
-                <input id="input_add_edit_qnt" type="number" value=0.00 class="form-control text-right">
-              </div>
-              <div class="col-md-2">
-                <label for="input_add_edit_satuan">Satuan</label>
-              </div>
-              <div class="col-md-4">
-                <select id="input_add_edit_satuan" class="form-control" name="satuan">
-                  <option value="" selected disabled>Pilih Satuan</option>
-                </select>
-              </div>
-            </div>
-            <div class="row">
-            </div>
-            <div class="row">
-              <div class="col-2">
-                <div class="form-group">
-                <label>Keterangan</label>
-              </div>
-              </div>
-              <div class="col-10">
-                <input id="input_add_edit_keterangan" type="text" class="form-control">
-              </div>
-
             </div>
 
             <div class="row mt-2">
               <div class="col-md-12 text-right">
-                <button type="button" class="btn btn-danger" onclick="closeShowHideAdd()">Batal</button>
-                {{-- <button type="button" onclick="submitAddEdit()" class="btn btn-primary" >Edit</button> --}}
+                <button type="button" class="btn btn-danger" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="closeShowHideAdd()">Batal</button>
+
+                <button type="button" id="submitAddAdd" class="btn btn-chip-biru" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddAdd()">Simpan</button>
+
+                <button type="button" id="submitAddEdit" class="btn btn-chip-biru btn-lg" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="submitAddEdit()" style="display: none;">Simpan</button>
+              </div>
+            </div>
+
+          </div>
+          {{-- END ADD ADD --}}
+        </div>
+      </div>
+
+    </div>
+  </div>
+  {{-- end page 2 --}}
+
+  {{-- ===================== MODAL LIST CUSTOMER ===================== --}}
+  <div class="modal fade" id="modalAddListCustomer" role="dialog" aria-labelledby="labelCustomer" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="labelCustomer">Pilih Customer</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body" style="margin-top:-30px;">
+          <div class="container-fluid px-3 mt-4">
+            <div class="row">
+              <div class="table-responsive">
+                <table id="tabel_add_list_customer" class="table table-bordered table-striped">
+                  <thead class="text-center bg-primary text-white">
+                    <tr>
+                      <th>Kode</th>
+                      <th>Nama</th>
+                      <th>Alamat</th>
+                      <th>Kota</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabel_data_add_list_customer" class="text-left">
+                    <!-- Diisi lewat JS -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-
-    <!-- END ADD EDIT -->
         </div>
-  </div>
-    <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-</div>
 
-</div> {{-- end page 2 --}}
-
-
-<!-- End modal add-->
-
-{{-- Start Modal List Customer --}}
-<div class="modal fade" id="modalAddListCustomer" role="dialog" aria-labelledby="labelCustomer" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title" id="labelCustomer">Pilih Customer</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
       </div>
+    </div>
+  </div>
 
-      <div class="modal-body" style="margin-top:-30px;">
-        <div class="container-fluid px-3 mt-4">
-          <div class="row">
-            <div class="table-responsive">
-              <table id="tabel_add_list_customer" class="table table-bordered table-striped">
-                <thead class="text-center bg-primary text-white">
-                  <tr>
-                    <th>Kode</th>
-                    <th>Nama</th>
-                    <th>Alamat</th>
-                    <th>Kota</th>
-                  </tr>
-                </thead>
-                <tbody id="tabel_data_add_list_customer" class="text-left">
-                  <!-- Diisi lewat JS -->
-                </tbody>
-              </table>
+  {{-- ===================== MODAL LIST SALES ===================== --}}
+  <div class="modal fade" id="modalAddListSales" role="dialog" aria-labelledby="labelSales" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="labelSales">Pilih Sales</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body" style="margin-top:-30px;">
+          <div class="container-fluid px-3 mt-4">
+            <div class="row">
+              <div class="table-responsive">
+                <table id="tabel_add_list_sales" class="table table-bordered table-striped">
+                  <thead class="text-center bg-primary text-white">
+                    <tr>
+                      <th>NIK</th>
+                      <th>Nama</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabel_data_add_list_sales" class="text-left">
+                    <!-- Diisi lewat JS -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-          <div class="d-flex justify-content-end mt-3">
-            {{-- <button type="button" class="btn btn-danger btn-lg"
-              style="height: 30px; padding: 4px 12px; border-radius: 20px;
-              font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"
-              onclick="buttonAddListBatal()">Batal</button> --}}
-          </div>
         </div>
-      </div>
 
+      </div>
     </div>
   </div>
-</div>
-{{-- End Modal List Customer --}}
 
-{{-- Start Modal List Sales --}}
-<div class="modal fade" id="modalAddListSales" role="dialog" aria-labelledby="labelSales" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-    <div class="modal-content">
+  {{-- ===================== MODAL LIST LOKASI ===================== --}}
+  <div class="modal fade" id="modalAddListLokasi" role="dialog" aria-labelledby="labelGudang" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
 
-      <div class="modal-header">
-        <h5 class="modal-title" id="labelSales">Pilih Sales</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
+        <div class="modal-header">
+          <h5 class="modal-title" id="labelGudang">Pilih Lokasi</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
 
-      <div class="modal-body" style="margin-top:-30px;">
-        <div class="container-fluid px-3 mt-4">
-          <div class="row">
-            <div class="table-responsive">
-              <table id="tabel_add_list_sales" class="table table-bordered table-striped">
-                <thead class="text-center bg-primary text-white">
-                  <tr>
-                    <th>NIK</th>
-                    <th>Nama</th>
-                  </tr>
-                </thead>
-                <tbody id="tabel_data_add_list_sales" class="text-left">
-                  <!-- Diisi lewat JS -->
-                </tbody>
-              </table>
+        <div class="modal-body" style="margin-top:-30px;">
+          <div class="container-fluid px-3 mt-4">
+            <div class="row">
+              <div class="table-responsive">
+                <table id="tabel_add_list_lokasi" class="table table-bordered table-striped">
+                  <thead class="text-center bg-primary text-white">
+                    <tr>
+                      <th>Kode</th>
+                      <th>Nama Lokasi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabel_data_add_list_lokasi" class="text-left">
+                    <!-- Diisi lewat JS -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-          <div class="d-flex justify-content-end mt-3">
-            {{-- <button type="button" class="btn btn-danger btn-lg"
-              style="height: 30px; padding: 4px 12px; border-radius: 20px;
-              font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"
-              onclick="buttonAddListBatal()">Batal</button> --}}
-          </div>
         </div>
+
       </div>
     </div>
   </div>
-</div>
-{{-- End Modal List Sales --}}
 
-{{-- Start Modal List gudang --}}
-<div class="modal fade" id="modalAddListGudang" role="dialog" aria-labelledby="labelGudang" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-    <div class="modal-content">
+  {{-- ===================== MODAL LIST ITEM ===================== --}}
+  <div class="modal fade" id="formAddListItem" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+      <div class="modal-content">
 
-      <div class="modal-header">
-        <h5 class="modal-title" id="labelGudang">Pilih Gudang</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-
-      <div class="modal-body" style="margin-top:-30px;">
-        <div class="container-fluid px-3 mt-4">
-          <div class="row">
-            <div class="table-responsive">
-              <table id="tabel_add_list_gudang" class="table table-bordered table-striped">
-                <thead class="text-center bg-primary text-white">
-                  <tr>
-                    <th>Kode</th>
-                    <th>Nama Gudang</th>
-                  </tr>
-                </thead>
-                <tbody id="tabel_data_add_list_gudang" class="text-left">
-                  <!-- Diisi lewat JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="d-flex justify-content-end mt-3">
-            {{-- <button type="button" class="btn btn-danger btn-lg"
-              style="height: 30px; padding: 4px 12px; border-radius: 20px;
-              font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"
-              onclick="buttonAddListBatal()">Batal</button> --}}
-          </div>
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel"></h5>
+          <button type="button" class="btn btn-sm btn-danger rounded-circle shadow-sm ms-auto" data-dismiss="modal" aria-label="Close" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <span aria-hidden="true" style="font-size: 1.2rem; font-weight: bold;">&times;</span>
+          </button>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-{{-- End Modal List gudang --}}
 
-{{-- Start Modal List gudang --}}
-<div class="modal fade" id="modalAddListLokasi" role="dialog" aria-labelledby="labelGudang" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title" id="labelGudang">Pilih Lokasi</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-
-      <div class="modal-body" style="margin-top:-30px;">
-        <div class="container-fluid px-3 mt-4">
-          <div class="row">
-            <div class="table-responsive">
-              <table id="tabel_add_list_lokasi" class="table table-bordered table-striped">
-                <thead class="text-center bg-primary text-white">
-                  <tr>
-                    <th>Kode</th>
-                    <th>Nama Lokasi</th>
-                  </tr>
-                </thead>
-                <tbody id="tabel_data_add_list_lokasi" class="text-left">
-                  <!-- Diisi lewat JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="d-flex justify-content-end mt-3">
-            {{-- <button type="button" class="btn btn-danger btn-lg"
-              style="height: 30px; padding: 4px 12px; border-radius: 20px;
-              font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"
-              onclick="buttonAddListBatal()">Batal</button> --}}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-{{-- End Modal List gudang --}}
-
-<!-- start modal list item add -->
-<div class="modal fade" id="formAddListItem" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel"></h5>
-        <button type="button" class="btn btn-sm btn-danger rounded-circle shadow-sm ms-auto" 
-          data-dismiss="modal" aria-label="Close"
-          style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-          <span aria-hidden="true" style="font-size: 1.2rem; font-weight: bold;">&times;</span>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="container-fluid mt-4">
-
-          <div class="row">
-            <div class="table-responsive">
-            <table id="tabel_add_list_item" class="table table-bordered table-striped">
-              <thead class="text-center bg-primary text-white">
-                <tr>
-                  <th scope="col">Kode Barang</th>
-                  <th scope="col">Nama Barang</th>
-                  <th scope="col">Merk</th>
-                  <th scope="col">Part Number</th>
-                </tr>
-              </thead>
-              <tbody id="tabel_data_add_list_item" class="text-left">
-                <!-- Diisi lewat JS -->
-              </tbody>
-            </table>
-          </div>
-          </div>
-
-          <div class="d-flex justify-content-end mt-3">
-            {{-- <button type="button" class="btn btn-danger btn-lg"
-              style="height: 30px; padding: 4px 12px; border-radius: 20px;
-              font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
-              transition: background-color 0.3s, box-shadow 0.3s;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-              onclick="closeListItemAdd()">Close</button> --}}
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-<!-- End modal list item add-->
-
-<!-- start modal detail -->
-<div id="page3" class="container-fluid" style="display: none;" class="mainpage container-fluid">
-        <div class="row" style="margin-top:-80px;">
-          <div class="col-6 text-left">
-            <h2>Detail Permintaan Konsinyasi</h2>
-          </div>
-          <div class="col-6 text-right">
-            <button type="button" class="btn btn-danger btn-lg" style="
-            height: 30px; 
-            margin-top: 20px; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.75rem; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" 
-            onclick="buttonCloseForm()">Close</button>
-          </div>
-        </div>  
         <div class="modal-body">
-        <!-- <h1>Tes Modal</h1> -->
-        <div class="container-fluid">
-        <div class="row">
-        <!-- Kiri -->
-        <div class="col-md-4">
-            <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">No Bukti</label>
-                <div class="col-sm-8">
-                    <input type="text" class="form-control text-center" id="input_detail_nobukti" placeholder="No Bukti" disabled>
-                </div>
+          <div class="container-fluid mt-4">
+            <div class="row">
+              <div class="table-responsive">
+                <table id="tabel_add_list_item" class="table table-bordered table-striped">
+                  <thead class="text-center bg-primary text-white">
+                    <tr>
+                      <th scope="col">Kode Barang</th>
+                      <th scope="col">Nama Barang</th>
+                      <th scope="col">Merk</th>
+                      <th scope="col">Part Number</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabel_data_add_list_item" class="text-left">
+                    <!-- Diisi lewat JS -->
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Sales</label>
-                <div class="col-sm-8">
-                    <div class="input-group">
-                        <input id="input_detail_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
-                        <input id="input_detail_sales" type="hidden">
-                    </div>
-                </div>
-            </div>
-            <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Keterangan</label>
-                <div class="col-sm-8">
-                    <textarea class="form-control text-left" id="input_detail_keterangan" rows="3" style="resize: none;" disabled></textarea>
-                </div>
-            </div>
+          </div>
         </div>
 
-        <!-- Tengah -->
-        <div class="col-md-4">
+      </div>
+    </div>
+  </div>
+
+  {{-- ===================== PAGE 3 : DETAIL ===================== --}}
+  <div id="page3" class="container-fluid" style="display: none;" class="mainpage container-fluid">
+    <div class="row">
+      <div class="col-6 text-left">
+        <h2></h2>
+      </div>
+      <div class="col-6 text-right">
+        <button type="button" class="btn btn-danger btn-lg" style="height: 30px; margin-top: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; transition: background-color 0.3s, box-shadow 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);" onclick="buttonCloseForm()">Close</button>
+      </div>
+    </div>
+
+    <div id='formBsGrid' class="modal-body">
+      <div class="container-fluid">
+        <div class="row">
+
+          {{-- Kiri --}}
+          <div class="col-md-4">
             <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Customer</label>
-                <div class="col-sm-8">
-                    <div class="input-group">
-                        <input id="input_detail_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
-                        <input id="input_detail_customer" type="hidden">
-                    </div>
-                </div>
-            </div>
-           <div class="mb-2 row align-items-center">
-              <label class="col-sm-4 col-form-label text-nowrap" hidden>Lokasi cust</label>
-              <div class="col-sm-8" hidden>
-                <div class="input-group">
-                  <input id="input_detail_gudang_nama" type="text" class="form-control text-center" placeholder="Lokasi cust" disabled>
-                  <input type="hidden" id="input_detail_gudang">
-                </div>
+              <label class="col-sm-4 col-form-label">No Bukti</label>
+              <div class="col-sm-8">
+                <input type="text" class="form-control text-center" id="input_detail_nobukti" placeholder="No Bukti" disabled>
               </div>
-              
-              <label class="col-sm-4 col-form-label text-nowrap">Lokasi</label>
+            </div>
+
+            <div class="mb-2 row">
+              <label class="col-sm-4 col-form-label">Customer</label>
               <div class="col-sm-8">
                 <div class="input-group">
-                  <input id="input_detail_lokasi" type="text" class="form-control text-center" disabled>
-                  <input type="hidden" id="input_detail_gudang">
+                  <input id="input_detail_customer_nama" type="text" class="form-control text-center" placeholder="Customer" disabled>
+                  <input id="input_detail_customer" type="hidden">
                 </div>
               </div>
             </div>
-            <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Ref PR</label>
-                <div class="col-sm-8">
-                    <input id="input_detail_refpr" type="text" class="form-control text-center" disabled>
-                </div>
-            </div>
-        </div>
 
-        <!-- Kanan -->
-        <div class="col-md-4">
             <div class="mb-2 row">
-                <label class="col-sm-4 col-form-label">Tanggal</label>
-                <div class="col-sm-8">
-                    <input type="date" class="form-control text-center" id="input_detail_tanggal" value="{!! date('Y-m-d') !!}" disabled>
-                </div>
+              <label class="col-sm-4 col-form-label">Keterangan</label>
+              <div class="col-sm-8">
+                <textarea class="form-control text-left" id="input_detail_keterangan" rows="3" style="resize: none; height:75px !important;" disabled></textarea>
+              </div>
             </div>
+          </div>
+
+          {{-- Tengah --}}
+          <div class="col-md-4">
+            <div class="mb-2 row">
+              <label class="col-sm-4 col-form-label">Sales</label>
+              <div class="col-sm-8">
+                <div class="input-group">
+                  <input id="input_detail_sales_nama" type="text" class="form-control text-center" placeholder="Sales" disabled>
+                  <input id="input_detail_sales" type="hidden">
+                </div>
+              </div>
+            </div>
+
             <div class="mb-2 row align-items-center">
-                <label class="col-sm-4 col-form-label text-nowrap">Tanggal Kirim</label>
-                <div class="col-sm-8">
-                    <input type="date" class="form-control text-center" id="input_detail_tanggalkirim" value="{!! date('Y-m-d') !!}" disabled>
+              <label class="col-sm-4 col-form-label text-nowrap">Gudang Asal</label>
+              <div class="col-sm-8">
+                <div class="input-group">
+                  <input id="input_detail_gudang" type="text" class="form-control text-center" disabled>
                 </div>
+              </div>
+            </div>
+
+            <div class="mb-2 row">
+              <label class="col-sm-4 col-form-label">Ref PR</label>
+              <div class="col-sm-8">
+                <input id="input_detail_refpr" type="text" class="form-control text-center" disabled>
+              </div>
             </div>
           </div>
-        </div>
-        </div>
-        <div class="container-fluid mt-4">
-          <!-- <input type="hidden" name="noUrut" id="input_detail_noUrut" value="" /> -->
-          <div class="row">
-            <table id="tabel_detail" class="table table-bordered table-striped"  >
-              <thead class="text-center bg-primary text-white">
-                <tr>
-                  <th colspan="4">Deskripsi Barang</th>
-                  <th colspan="2">Satuan</th>
-                </tr>
-                <tr>
-                  <th scope="col">Kode Barang</th>
-                  <th scope="col">Nama Barang</th>
-                  <th scope="col">Customer</th>
-                  <th scope="col">Loaksi cust</th>
-                  <th scope="col">Sat</th>
-                  <th scope="col">Qty</th>
-                </tr>
-              </thead>
-              <tbody id="tabel_data_detail" class="text-left" >
-                <tr>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-              </tr>
-              </tbody>
-            </table>
+
+          {{-- Kanan --}}
+          <div class="col-md-4">
+            <div class="mb-2 row align-items-center">
+              <label class="col-sm-4 col-form-label text-nowrap">Lokasi</label>
+              <div class="col-sm-8">
+                <input id="input_detail_lokasi" type="text" class="form-control text-center" disabled>
+              </div>
+            </div>
+
+            <div class="mb-2 row">
+              <label class="col-sm-4 col-form-label">Tanggal</label>
+              <div class="col-sm-8">
+                <input type="date" class="form-control text-center" id="input_detail_tanggal" value="{!! date('Y-m-d') !!}" disabled>
+              </div>
+            </div>
+
+            <div class="mb-2 row align-items-center">
+              <label class="col-sm-4 col-form-label text-nowrap">Tanggal Kirim</label>
+              <div class="col-sm-8">
+                <input type="date" class="form-control text-center" id="input_detail_tanggalkirim" value="{!! date('Y-m-d') !!}" disabled>
+              </div>
+            </div>
           </div>
-            <!-- <button onclick="buttonSubKategori()">tes</button> -->
+
+        </div>
+      </div>
+
+      <div class="container-fluid mt-4">
+        <div class="row">
+          <table id="tabel_detail" class="table table-bordered table-striped">
+            <thead class="text-center bg-primary text-white">
+              <tr>
+                <th colspan="4">Deskripsi Barang</th>
+                <th colspan="2">Satuan</th>
+              </tr>
+              <tr>
+                <th scope="col">Kode Barang</th>
+                <th scope="col">Nama Barang</th>
+                <th scope="col">Gudang Asal</th>
+                <th scope="col">Gudang Tujuan</th>
+                <th scope="col">Sat</th>
+                <th scope="col">Qty</th>
+              </tr>
+            </thead>
+            <tbody id="tabel_data_detail" class="text-left">
+              <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="modal-footer">
-    <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal" >Batal</button> -->
-    <!-- <button type="button" class="btn btn-primary" onclick="submitAdd()">Submit</button> -->
-  </div>
-</div>
-</div>
-</div>
-<!-- End modal detail-->
-
+  {{-- End page 3 --}}
 
 @endsection
 
@@ -1112,9 +882,10 @@
 {{-- Modal pemilih Customer/Sales/Barang disamakan persis dengan modal pemilih menu Kas,
      pola yang sama persis dengan gudangpermintaansample.blade.php. --}}
 <script>
+
 document.addEventListener('DOMContentLoaded', function () {
-  jQuery('#modalAddListCustomer, #modalAddListSales, #modalAddListGudang, #modalAddListLokasi, #formAddListItem').addClass('picker-kas')
-  jQuery('#modalAddListCustomer .modal-footer .btn, #modalAddListSales .modal-footer .btn, #modalAddListGudang .modal-footer .btn, #modalAddListLokasi .modal-footer .btn, #formAddListItem .modal-footer .btn').filter(function () {
+  jQuery('#modalAddListCustomer, #modalAddListSales, #modalAddListLokasi, #formAddListItem').addClass('picker-kas')
+  jQuery('#modalAddListCustomer .modal-footer .btn, #modalAddListSales .modal-footer .btn, #modalAddListLokasi .modal-footer .btn, #formAddListItem .modal-footer .btn').filter(function () {
     return jQuery.trim(jQuery(this).text()) === 'Batal'
   }).addClass('picker-kas-batal')
 })
@@ -1136,15 +907,6 @@ let tempEditEdit = {}
 let tipeform = ''
 let tipeformitem = ''
 
-/* ============ Header tabel interaktif (window.ReportTable) ============
- * Port 1:1 dari pola gpCart/gpAktifkanTabel milik gudangpermintaansample.blade.php.
- * PRK Belum + Sudah Otorisasi digabung jadi satu tabel (#tabel, urut 1), dengan kolom
- * Status dan filter Status di toolbar. Tab OutStanding (#tabel2, urut 2) tetap data
- * item-level terpisah, tidak digabung. Baris di urut 1 masih berbentuk GROUP (array
- * item per NOBUKTI, bukan objek datar) -- sama seperti versi lama halaman ini
- * (res.belum_otorisasi.forEach((Group) => { const item = Group[0] ... })) dan sama
- * seperti gpFilterRows/gpTabelActionsCell di gudangpermintaansample, jadi
- * renderTabelRows()/gkFilterRows() selalu ambil group[0] dulu sebelum baca field. */
 let gkCart = { 1 : [], 2 : [] }
 let gkActiveUrut = 0
 const GK_HREF = 'gudangpermintaankonsinyasi'
@@ -1186,7 +948,8 @@ function gkDefaultCart (urut) {
     ['NamaCustSupp', 'Customer',    1, 'varchar', 0, 0],
     ['NAMASLS',      'Sales',       1, 'varchar', 0, 0],
     ['RefPR',        'Ref PR',      1, 'varchar', 0, 0],
-    ['IsOtorisasi1', 'Status',      1, 'bool',    0, 0],
+    ['Statkirim',    'Status',      1, 'bool',    0, 0],
+    ['IsOtorisasi1', 'Otorisasi',   1, 'bool',    0, 0],
     ['OtoUser1',     'User Oto',    1, 'varchar', 0, 0],
     ['TglOto1',      'Tanggal Oto', 1, 'date',    0, 0],
   ]
@@ -1336,12 +1099,21 @@ function gkValueCell (row, col) {
   let raw = gkPickCI(row, col[0]);
   let type = col[3];
 
-  {{-- Kolom Status (IsOtorisasi1) dirender sebagai badge hijau (Sudah Otorisasi) atau
-       amber (Belum Otorisasi), bukan ikon check/x bool biasa. --}}
+  // {{-- Kolom Status (IsOtorisasi1) -- ikon check/silang hijau/merah biasa, sama seperti
+  //      kolom Otorisasi bool di perintahopname.blade.php/beritaacaraopname.blade.php. --}}
   if (col[0] === 'IsOtorisasi1') {
     return Number(raw) === 1
-      ? '<td class="text-center"><span class="status-badge status-badge-sudah">Sudah Otorisasi</span></td>'
-      : '<td class="text-center"><span class="status-badge status-badge-belum">Belum Otorisasi</span></td>';
+      ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
+      : '<td class="text-danger text-center"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></td>';
+  }
+  {{-- Statkirim (Belum/Sebagian/Sudah, dari loadAll()'s CASE expression) -- badge
+       titik+pill .sp-badge bawaan po-table-header.css, sama seperti kolom
+       Status di perintahopname.blade.php/beritaacaraopname.blade.php (hijau
+       utk Sudah, amber utk Sebagian, merah utk Belum). --}}
+  if (col[0] === 'Statkirim') {
+    let s = String(raw || '').trim().toLowerCase();
+    let kelas = s === 'sudah' ? 'is-active' : (s === 'sebagian' ? 'is-supervisor' : 'is-inactive');
+    return '<td><span class="sp-badge ' + kelas + '">' + (raw || '') + '</span></td>';
   }
   if (type === 'date') {
     if (!raw) { return '<td></td>'; }
@@ -1506,6 +1278,8 @@ $(document).ready(function(){
 
   gkInitReportTableSekali();
 
+  loadGudangOptions();
+
   $('#nav-home-tab').on('shown.bs.tab', function () {
     gkAktifkanTabel(1);
     if (typeof ReportTable !== 'undefined') { ReportTable.refresh(); }
@@ -1529,7 +1303,7 @@ $(document).ready(function(){
 
       const sales = document.getElementById("input_sales_nama").value.trim();
       const customer = document.getElementById("input_customer_nama").value.trim();
-      const gudang = document.getElementById("input_gudang_nama").value.trim();
+      const gudang = document.getElementById("input_gudang").value.trim();
 
       if (!sales || !customer ) {
         alertify.warning("Silakan isi terlebih dahulu Customer, Sales, dan Gudang Asal");
@@ -1684,58 +1458,6 @@ $(document).ready(function(){
           error: function (err) {
             console.log(err);
             alertify.warning("Terjadi kesalahan, silakan refresh browser.");
-          },
-        });
-      }
-    });
-  }
-
-  // gudang
-  const elGdg = document.getElementById("input_gudang_nama");
-  if (elGdg) {
-    elGdg.addEventListener("keypress", function (e) {
-      if (e.which == 13) {
-        const search = this.value.trim();
-        if (!search) {
-          alertify.warning("Silakan ketik kode/nama gudang terlebih dahulu.");
-          return;
-        }
-
-        $.ajax({
-          url: "{{ url('permintaankonsinyasilistgudang') }}",
-          type: "get",
-          async: false,
-          data: { search: search },
-          success: function (res) {
-            if (!res.length) {
-              $("#tabel_data_add_list_gudang").empty();
-              pickerKasInit('tabel_add_list_gudang', { language: { emptyTable: 'Tidak ada data' } });
-              $("#modalAddListGudang").modal("show");
-              return;
-            }
-
-            if (res.length === 1) {
-              const g = res[0];
-              buttonAddPickGudang(g.NamaGdg, g.KodeGdg);
-              return;
-            }
-
-            let rows = "";
-            res.forEach((item) => {
-              rows += `
-                <tr class="pick-row" onclick="buttonAddPickGudang('${item.NamaGdg ?? ""}', '${item.KodeGdg ?? ""}')">
-                  <td>${item.KodeGdg ?? ""}</td>
-                  <td>${item.NamaGdg ?? ""}</td>
-                </tr>`;
-            });
-
-            $("#tabel_data_add_list_gudang").html(rows);
-            pickerKasInit('tabel_add_list_gudang');
-            $("#modalAddListGudang").modal("show");
-          },
-          error: function (err) {
-            console.log(err);
-            alertify.warning("Terjadi kesalahan saat mengambil data gudang.");
           },
         });
       }
@@ -2628,31 +2350,21 @@ function buttonAddPickSales (nama, kode) {
   onChangeHeader('KODESLS', 'input_sales');
 }
 
-function buttonAddListGudang () {
-  console.log('buttonAddListGudang');
-
+{{-- Gdg Asal sekarang <select> biasa (bukan picker modal lagi), sama seperti
+     gudangpermintaansample.blade.php/koreksistock.blade.php/perintahopname.blade.php. --}}
+function loadGudangOptions () {
   $.ajax({
     url: "{{ url('permintaankonsinyasilistgudang') }}",
     type: "get",
     async: false,
-    success: function(res) {
-      console.log(res);
-
-      let rowTable = ``;
-      res.forEach((item, i) => {
-        rowTable += `
-          <tr class="pick-row" onclick="buttonAddPickGudang('${item.NamaGdg}', '${item.KodeGdg}')">
-            <td>${item.KodeGdg}</td>
-            <td>${item.NamaGdg}</td>
-          </tr>`;
+    success: function (res) {
+      let options = '<option value="">- Pilih Gudang -</option>'
+      res.forEach((item) => {
+        options += `<option value="${item.KodeGdg}">${item.KodeGdg} - ${item.NamaGdg}</option>`
       });
-
-      document.getElementById("tabel_data_add_list_gudang").innerHTML = rowTable;
-      pickerKasInit('tabel_add_list_gudang');
-
-      $('#modalAddListGudang').modal('show');
+      document.getElementById("input_gudang").innerHTML = options
     },
-    error: function(err) {
+    error: function (err) {
       console.log(err);
       alertify.warning('Terjadi kesalahan saat mengambil data gudang.');
     }
@@ -2699,13 +2411,6 @@ if (kodeCustSuppBuatLokasiTemp === '') {
   });
 }
 
-function buttonAddPickGudang (nama, kode) {
-  $('#input_gudang_nama').val(nama);
-  $('#input_gudang').val(kode);
-  $('#modalAddListGudang').modal('hide');
-  
-}
-
 function buttonAddPickLokasi (nama, kode) {
   $('#input_gudang_lokasi').val(kode);
   $('#modalAddListLokasi').modal('hide');
@@ -2715,7 +2420,6 @@ function buttonAddPickLokasi (nama, kode) {
 function buttonAddListBatal() {
   $('#modalAddListCustomer').modal('hide');
   $('#modalAddListSales').modal('hide');
-  $('#modalAddListGudang').modal('hide');
 }
 
 // function closeListItemAdd () {
@@ -2951,7 +2655,6 @@ function buttonEdit (nobukti) {
       $('#input_sales').val(data.KODESLS);
       $('#input_customer_nama').val(data.NamaCustSupp);
       $('#input_customer').val(data.KODECUSTSUPP);
-      $('#input_gudang_nama').val(data.NamaGgdAsal);
       $('#input_gudang').val(data.gdgAsal);
       $('#input_gudang_lokasi').val(data.Lokasi);
 
@@ -2964,10 +2667,11 @@ function buttonEdit (nobukti) {
           <tr>
             <td>${item.KODEBRG}</td>
             <td>${item.NamaBrg}</td>
-            <td>${item.NamaCustSupp}</td>
-            <td>${item.gdgTujuan} - ${item.lokasi}</td>
-            <td>${parseFloat(item.QNT).toLocaleString()}</td>
+            <td>${item.gdgAsal} - ${item.NamaGgdAsal || ''}</td>
+            <td>${item.gdgTujuan} - ${item.NamaGgdTujuan}</td>
+
             <td>${item.SAT_1}</td>
+            <td>${parseFloat(item.QNT).toLocaleString()}</td>
             <td class="text-center">
               <button class="btn btn-success btn-sm" type="button" onclick="buttonAddEditItem(${i})" title="Edit"><i class="bi bi-pen"></i></button>
               <button class="btn btn-danger btn-sm" type="button" onclick="buttonAddDeleteItem(${i})" title="Hapus"><i class="bi bi-trash"></i></button>
@@ -3049,7 +2753,7 @@ function buttonAddDeleteItem (index) {
 
           if (!dataTableAdd || dataTableAdd.length === 0) {
             document.getElementById("btn_customer").disabled = false;
-            document.getElementById("btn_gudang").disabled = false;
+            document.getElementById("input_gudang").disabled = false;
             unlockFormAdd();
             tipeform = 'new';
           }
@@ -3081,11 +2785,11 @@ function buttonDetail (nobukti) {
         rowTable += `<tr>
         <td>${item.KODEBRG}</td>
         <td>${item.NamaBrg}</td>
-        <td>${item.NamaCustSupp}</td>
-        <td>${item.gdgTujuan} - ${item.lokasi}</td>
+        <td>${item.gdgAsal} - ${item.NamaGgdAsal || ''}</td>
+        <td>${item.gdgTujuan} - ${item.NamaGgdTujuan}</td>
 
-        <td>${parseFloat(item.QNT).toLocaleString()}</td>
         <td>${item.SAT_1}</td>
+        <td>${parseFloat(item.QNT).toLocaleString()}</td>
         </tr>`
       });
 
@@ -3105,7 +2809,7 @@ function buttonDetail (nobukti) {
       document.getElementById("input_detail_nobukti").value  = res[0].NOBUKTI
       document.getElementById("input_detail_customer_nama").value  = res[0].NamaCustSupp
       document.getElementById("input_detail_sales_nama").value  = res[0].NAMASLS
-      document.getElementById("input_detail_gudang_nama").value  = res[0].NamaGgdAsal
+      document.getElementById("input_detail_gudang").value  = res[0].gdgAsal
       document.getElementById("input_detail_refpr").value  = res[0].RefPR
       document.getElementById("input_detail_keterangan").value  = res[0].Keterangan
       document.getElementById("input_detail_lokasi").value  = res[0].Lokasi
@@ -3194,7 +2898,7 @@ function buttonCloseForm () {
 function buttonAddListKodeBarang () {
   const sales = document.getElementById("input_sales_nama").value.trim();
   const customer = document.getElementById("input_customer_nama").value.trim();
-  const gudang = document.getElementById("input_gudang_nama").value.trim();
+  const gudang = document.getElementById("input_gudang").value.trim();
 
   if (!sales || !customer ) {
     alertify.warning("Silakan isi terlebih dahulu Customer, Sales, dan Gudang Asal");
@@ -3296,6 +3000,7 @@ function buttonAddAddInsertItem (i) {
 }
 
   function submitAddAdd () {
+    
   console.log('submitAddAdd');
 
   let checkDate = new Date($("#input_add_tanggal").val());
@@ -3435,8 +3140,7 @@ function buttonAddAddInsertItem (i) {
 
         document.getElementById("btn_customer").disabled = true;
         document.getElementById("input_customer_nama").disabled = true;
-        document.getElementById("btn_gudang").disabled = true;
-        document.getElementById("input_gudang_nama").disabled = true;
+        document.getElementById("input_gudang").disabled = true;
         document.getElementById("input_add_tanggal").disabled = true;
 
         alertify.success('Berhasil menambah item');
@@ -3530,7 +3234,7 @@ function refreshDataTableAdd (NOBUKTI = "") {
       </tr>`;
     
     document.getElementById("btn_customer").disabled = false;
-    document.getElementById("btn_gudang").disabled = false;
+    document.getElementById("input_gudang").disabled = false;
     tipeform = "new";
     return;
   }
@@ -3557,7 +3261,7 @@ function refreshDataTableAdd (NOBUKTI = "") {
         $('#page2').hide();
         $('#page1').show();
         document.getElementById("btn_customer").disabled = false;
-        document.getElementById("btn_gudang").disabled = false;
+        document.getElementById("input_gudang").disabled = false;
         tipeform = "new";
         return;
       }
@@ -3615,13 +3319,13 @@ function lockFormAdd (){
   document.getElementById("input_add_tanggal").disabled = true
   document.getElementById("btn_customer").disabled = true
   document.getElementById("input_customer_nama").disabled = true
-  document.getElementById("btn_gudang").disabled = true
-  document.getElementById("input_gudang_nama").disabled = true
+  document.getElementById("input_gudang").disabled = true
   document.getElementById("input_refpr").disabled = true
 }
 
 function unlockFormAdd () {
   document.getElementById("input_add_tanggal").disabled = false
+  document.getElementById("input_gudang").disabled = false
   document.getElementById("input_refpr").disabled = false
 }
 </script>

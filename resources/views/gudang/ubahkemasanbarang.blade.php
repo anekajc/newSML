@@ -29,6 +29,14 @@
             margin-left: auto;
         }
 
+        /* newmaster.css memaku `#formBsGrid .form-control` setinggi 38px, sehingga atribut rows pada
+           textarea (Keterangan rows=5, alamat Gudang rows=3) tidak berefek dan kotaknya hanya satu
+           baris. Textarea dikembalikan ke tinggi aslinya — pengecualian yang sama seperti di
+           accounting/memorialkoreksi.blade.php. */
+        #formBsGrid textarea.form-control {
+            height: auto;
+        }
+
         /* Tabel item form Add/Edit/Detail (#tabelitem) — tampilannya disamakan dengan tabel daftar
                #tabel di #pageHome: kartu berbingkai (sama seperti .card di layout newmasterTest), judul
                kolom abu huruf besar yang menempel (sticky) di kotak scroll, garis baris tipis, dan warna

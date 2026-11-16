@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Model;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class DBBarangLokasi extends Model
 {
-		protected $connection = 'sqlsrv';
+		protected $connection = 'SML';
     // protected $primaryKey = 'KODEGDG';
     protected $table = 'dbBarangLokasiSIG';
     protected $fillable = array(

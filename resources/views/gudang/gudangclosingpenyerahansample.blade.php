@@ -80,10 +80,10 @@
   max-width: 100%;
 }
 
-{{-- #tabel sudah dapat width/min-width/warna tombol Aksi dari CSS terpusat
+/* {{-- #tabel sudah dapat width/min-width/warna tombol Aksi dari CSS terpusat
      (:where(.po-list-page) ...) sejak #page1 diberi class "po-list-page" -- lihat
      po-table-header.css. #tabel2 tidak disentuh aturan #tabel di sana (id berbeda), jadi
-     tetap butuh aturan manual di sini. --}}
+     tetap butuh aturan manual di sini. --}} */
 #tabel2 { min-width: 100%; }
 
 #tabel2 td:first-child {
@@ -176,13 +176,9 @@
 <div id='page1' class="container-fluid mainpage po-list-page">
 <div class="container-fluid" >
 
-
-
 </div>
 
 <div id="printContainer" style="display:none">
-
-
 
 </div>
 <div id="contentContainer" class="container-fluid">
@@ -298,8 +294,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" onclick="buttonCloseForm()" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary" onclick="submitLock()">Kunci</button>
+        <button type="button" onclick="buttonCloseForm()" class="btn btn-danger" data-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-chip-biru" onclick="submitLock()">Kunci</button>
       </div>
     </div>
   </div>
@@ -341,7 +337,7 @@ function csDefaultCart (urut) {
       ['KODEBRG',   'Kode Barang',      1, 'varchar', 0, 0],
       ['NAMABRG',   'Nama Barang',      1, 'varchar', 0, 0],
       ['Satuan',    'Satuan',           1, 'varchar', 0, 0],
-      ['QntCLose',  'Qnt Close',        1, 'float',   0, 2],
+      ['QntCLose',  'Qty Close',        1, 'float',   0, 2],
       ['UserBatal', 'User Batal',       1, 'varchar', 0, 0],
       ['tglbatal',  'Tgl Batal',        1, 'date',    0, 0],
       ['ketBatal',  'Keterangan Batal', 1, 'varchar', 0, 0],

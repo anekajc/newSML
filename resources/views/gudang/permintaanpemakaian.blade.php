@@ -159,8 +159,8 @@
                                 <label class="rt-field-label" for="modalStatus">Status</label>
                                 <select class="rt-native" id="modalStatus">
                                     <option value="2">Semua</option>
-                                    <option value="1">Terkirim</option>
-                                    <option value="0">Belum Terkirim</option>
+                                    <option value="1">Sudah</option>
+                                    <option value="0">Belum</option>
                                 </select>
                             </div>
                         </div>
@@ -995,8 +995,8 @@
                     const v = pickCI(r, c[0]);
                     if (c[0] === 'QntOS') {
                         return isTerkirim(r) ?
-                            '<td><span class="sp-badge is-active">Terkirim</span></td>' :
-                            '<td><span class="sp-badge is-inactive">Belum Terkirim</span></td>';
+                            '<td><span class="sp-badge is-active">Sudah</span></td>' :
+                            '<td><span class="sp-badge is-inactive">Belum</span></td>';
                     }
                     if (c[3] === 'date') {
                         return '<td>' + fmtYMD(v) + '</td>';

@@ -302,13 +302,15 @@ class GudangPenyerahanSampleController extends Controller
     DB::connection('SML')->statement('exec sp_RefreshTempSerahSample ?,?,?', [\Auth::User()->username, $req->nobukti, date('Y-m-d')]);
 
     $tempOutstanding = DB::connection("SML")->select("
-        SELECT 
+        SELECT
             A.*,
             C.NAMACUSTSUPP,
-            K.Nama AS NamaSls
+            K.Nama AS NamaSls,
+            P.TANGGAL
         FROM TempSerahSample A
         LEFT JOIN DBCUSTSUPP C ON A.KodeCustSupp = C.KODECUSTSUPP
         LEFT JOIN dbKaryawan K ON A.KodeSls = K.KeyNIK
+        LEFT JOIN DBPRSAMPLE P ON P.NOBUKTI = A.NOBUKTI
         WHERE A.IDUser = :username
     ", [
         "username" => \Auth::user()->username
