@@ -932,6 +932,17 @@ td input[type="checkbox"] {
     }
   </style>
 {{-- end tampilan search modal barang all --}}
+<style>
+  /* Kolom Jenis (daftar PO & Outstanding PR) */
+  .po-badge-jenis { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .po-badge-jenis-stock    { background: #e8edff; color: #2563eb; }
+  .po-badge-jenis-nonstock { background: #fef3e0; color: #b45309; }
+  .po-badge-jenis-agen     { background: #e7f7ed; color: #16a34a; }
+  /* Saran supplier saat diketik (sama seperti input Pelanggan menu SO) */
+  .po-dropdown-supplier { max-height: 300px; overflow-y: auto; top: 100%; left: 0; min-width: 340px; z-index: 1050; }
+  .po-dropdown-supplier .dropdown-item { cursor: pointer; font-size: 13px; }
+</style>
+@include('purchasing.partials.poNonStockCss')
 @endsection
 @section('content')
 
@@ -955,7 +966,16 @@ td input[type="checkbox"] {
     <input type="hidden" id="akses_isotorisasi1" value="{!! $akses->IsOtorisasi1 !!}" />
     <input type="hidden" id="akses_isbatal" value="{!! $akses->IsBatal !!}" />
     <input type="hidden" name="_token" id="_token" value="{!! csrf_token() !!}" />
+    {{-- level = jumlah kolom level otorisasi di daftar PO gabungan (terbesar dari PO Stock & Non Stock). --}}
     <input type="hidden" id="level" value="{!! $level !!}" />
+    {{-- Hak akses PO Non Stock (DBFLMENUWEB 030202) untuk form Non Stock (partials/poNonStock*). --}}
+    <input type="hidden" id="ns_akses_istambah" value="{!! $aksesNS->ISTAMBAH !!}" />
+    <input type="hidden" id="ns_akses_ishapus" value="{!! $aksesNS->ISHAPUS !!}" />
+    <input type="hidden" id="ns_akses_iskoreksi" value="{!! $aksesNS->ISKOREKSI !!}" />
+    <input type="hidden" id="ns_akses_iscetak" value="{!! $aksesNS->ISCETAK !!}" />
+    <input type="hidden" id="ns_akses_isotorisasi1" value="{!! $aksesNS->IsOtorisasi1 !!}" />
+    <input type="hidden" id="ns_akses_isbatal" value="{!! $aksesNS->IsBatal !!}" />
+    <input type="hidden" id="ns_level" value="{!! $levelNS !!}" />
 
     <div class="po-kpi-strip" id="poKpiStrip"></div>
 
@@ -1080,6 +1100,10 @@ td input[type="checkbox"] {
                         <option value="-1">Semua</option>
                       </select>
                     </div>
+                    {{-- Outstanding PR gabungan (Agen / Non Agen / Non Stock): filter Jenis PR. --}}
+                    <button class="po-btn-filter" type="button" id="poBtnFilterOutPR" onclick="$('#modalFilterOutPR').modal('show')">
+                      <i class="bi bi-funnel"></i> Filter
+                    </button>
                   </div>
                   {{-- Bar kolom tersembunyi + tombol "Reset kolom" (diisi report-table.js).
                        Satu elemen dipakai bersama #tabel dan #tabel2, dipindah lewat JS
@@ -1209,7 +1233,9 @@ td input[type="checkbox"] {
                       <i class="bi bi-funnel"></i> Filter
                     </button>
                     <div class="po-toolbar-act">
-                      <button class="btn btn-chip-biru" onclick="buttonAdd()">Tambah</button>
+                      {{-- Tambah: langsung buka form Add, jenis PO dipilih lewat dropdown Jenis PO
+                           di atas Supplier (seperti Jenis PR di pembelianpermintaanagen). --}}
+                      <button class="btn btn-chip-biru" onclick="poBukaFormTambah()">Tambah</button>
                       <button class="btn btn-chip-biru" id="buttonTambahPr" onclick="buttonAddPr()">Tambah PR</button>
                     </div>
                   </div>
@@ -1221,9 +1247,9 @@ td input[type="checkbox"] {
                         <th style="padding: 4px 12px; " scope="col">No Bukti</th>
                         <th style="padding: 4px 12px; " scope="col">Tanggal</th>
                         <th style="padding: 4px 12px; " scope="col">Supplier</th>
-                        <th style="padding: 4px 12px; " scope="col">Tanggal Kirim</th>
-                        <th style="padding: 4px 12px; " scope="col">No. SO</th>
-                        <th style="padding: 4px 12px; " scope="col">PO. Cust</th>
+                        <th style="padding: 4px 12px; " scope="col">Tgl Kirim</th>
+                        <th style="padding: 4px 12px; " scope="col">No So</th>
+                        <th style="padding: 4px 12px; " scope="col">No Po Cust</th>
                         <th style="padding: 4px 12px; " scope="col">DPP</th>
                         <th style="padding: 4px 12px; " scope="col">PPN</th>
                         <th style="padding: 4px 12px; " scope="col">Grand Total</th>
@@ -1545,18 +1571,36 @@ td input[type="checkbox"] {
         <div class="col-md-3">
           <div class="row">
 
+            {{-- Jenis PO (PO Stock / PO Non Stock), pasangannya #ns_input_add_jenispo di
+                 partials/poNonStockForm. Diisi & dikunci oleh poIsiDropdownJenisPO(). --}}
             <div class="col-md-4">
+              <div class="form-group">
+                <label for="input_add_jenispo">Jenis PO</label>
+              </div>
+            </div>
+
+            <div class="col-md-8">
+              <div class="form-group">
+                <select id="input_add_jenispo" class="form-control text-left" onchange="poGantiJenisPO(this, 'stock')">
+                  <option value="stock">PO Stock</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-4" style="margin-top:-12px;">
               <div class="form-group">
                 <label>Supplier</label>
               </div>
             </div>
 
-            <div class="col-md-8">
-              <div class="input-group mb-3">
-                <input type="text" class="form-control text-left" placeholder="Kode Supplier" id="input_add_kodesupplier">
+            <div class="col-md-8" style="margin-top:-12px;">
+              {{-- Supplier bisa diketik: saran muncul di bawah (sama seperti Pelanggan menu SO). --}}
+              <div class="input-group mb-3 position-relative">
+                <input type="text" class="form-control text-left" placeholder="Cari Supplier..." id="input_add_kodesupplier" autocomplete="off">
                 <button type="button" class="btn btn-chip-biru btn-sm" id="buttonAddListPelanggan" style="height:32px; border-radius:0;" onclick="performSearchSupplier()">
                   <i class="bi bi-search"></i>
                 </button>
+                <div id="po_dropdown_supplier" class="dropdown-menu w-100 po-dropdown-supplier"></div>
               </div>
             </div>
 
@@ -1572,17 +1616,7 @@ td input[type="checkbox"] {
               </div>
             </div>
 
-            <div class="col-md-4" style="margin-top:-10px;">
-              <div class="form-group">
-                <label>Tanggal</label>
-              </div>
-            </div>
-
-            <div class="col-md-8" style="margin-top:-10px;">
-              <div class="form-group">
-                <input type="date" class="form-control text-left" id="input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
-              </div>
-            </div>
+            {{-- Tanggal dipindah ke kolom Valas/Kurs, tepat di bawah Kurs. --}}
 
           </div>
         </div>
@@ -1639,6 +1673,21 @@ td input[type="checkbox"] {
                 <div class="col-md-6">
                   <div class="form-group">
                     <input type="text" class="form-control text-right" id="input_add_kurs"  disabled>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-12" style="margin-top:-12px;">
+              <div class="row">
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>Tanggal</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <input type="date" class="form-control text-left" id="input_add_tanggal" value="{!! date('Y-m-d') !!}" disabled>
                   </div>
                 </div>
               </div>
@@ -3868,6 +3917,15 @@ td input[type="checkbox"] {
                 <option value="Belum">Belum</option>
               </select>
             </div>
+            {{-- Jenis PO: hanya jenis yang user punya aksesnya (PO Stock 030201 / PO Non Stock 030202). --}}
+            <div>
+              <label class="rt-field-label" for="poModalJenis">Jenis</label>
+              <select class="rt-native" id="poModalJenis">
+                <option value="SEMUA">Semua</option>
+                @if ($aksesStock->HASACCESS)<option value="stock">PO Stock</option>@endif
+                @if ($aksesNS->HASACCESS)<option value="nonstock">PO Non Stock</option>@endif
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -3885,6 +3943,48 @@ td input[type="checkbox"] {
   </div>
 </div>
 <!-- end modal filter status Purchase Order -->
+
+<!-- modal filter tab Outstanding PR (Jenis PR) -->
+<div class="modal fade rt-filter" id="modalFilterOutPR">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-funnel"></i>
+          Filter Outstanding PR
+          <span class="rt-active-badge" id="poFilterOutPRBadge">0 aktif</span>
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="rt-section">
+          <div class="rt-group-label">Penyaringan Data</div>
+          <div class="rt-grid-2">
+            <div>
+              <label class="rt-field-label" for="poModalJenisPR">Jenis PR</label>
+              <select class="rt-native" id="poModalJenisPR">
+                <option value="SEMUA">Semua</option>
+                <option value="agen">Agen</option>
+                <option value="nonagen">Non Agen</option>
+                <option value="nonstock">Non Stock</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="rt-reset-link" onclick="poResetFilterOutPR()">Reset semua</button>
+        <div class="rt-footer-buttons">
+          <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal">Batal</button>
+          <button type="button" class="rt-btn rt-btn-primary" onclick="poTerapkanFilterOutPR()">Terapkan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal filter tab Outstanding PR -->
 
 <!-- start modal print-->
 <div class="modal fade" id="modalPrint" tabindex="-1">
@@ -3982,6 +4082,11 @@ td input[type="checkbox"] {
 --}}
 
 @include('purchasing/modals/modalPOAdd')
+
+{{-- ── PO NON STOCK (menu PO Stock & PO Non Stock digabung di halaman ini) ──
+     Form & modal Non Stock dari purchaseOrderNonStock.blade.php, id/fungsinya berawalan ns_. --}}
+@include('purchasing.partials.poNonStockForm')
+@include('purchasing.partials.poNonStockModal')
 
 @endsection
 
@@ -5031,6 +5136,7 @@ function submitAddTambahSOAllKerja () {
                   tipeform = 'edit'
                   document.getElementById("buttonAddListPelanggan").disabled = true
                   document.getElementById("input_add_kodesupplier").disabled = true
+                  poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
                   $('#divhargaterakhir').hide();
                   $('#divStockProyeksi').hide();
                   cleanFormAddAdd()
@@ -5415,6 +5521,7 @@ function submitAddAddKerja () {
                         tipeform = 'edit'
                         document.getElementById("buttonAddListPelanggan").disabled = true
                         document.getElementById("input_add_kodesupplier").disabled = true
+                        poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
                         $('#divhargaterakhir').hide();
                         $('#divStockProyeksi').hide();
                         cleanFormAddAdd()
@@ -5538,6 +5645,7 @@ function submitAddAddKerja () {
                         tipeform = 'edit'
                         document.getElementById("buttonAddListPelanggan").disabled = true
                         document.getElementById("input_add_kodesupplier").disabled = true
+                        poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
                         $('#divhargaterakhir').hide();
                         $('#divStockProyeksi').hide();
                         cleanFormAddAdd()
@@ -7682,7 +7790,10 @@ const PO_OUT = {
     // item PO sekarang lewat form Purchase Order, lihat memory
     // tab-outstanding-pr-hanya-informasi. Kedua tab outstanding jadi tampilan
     // informasi saja, tanpa kolom aksi.
-    aksi   : false
+    aksi   : false,
+    // Outstanding PR gabungan (Agen / Non Agen / Non Stock): kolom Jenis PR dipasang
+    // langsung di sini (bukan dari konfigurasi kolom HeaderTable) supaya selalu tampil.
+    jenis  : true
   },
   3 : {
     tabel  : 'tabelso',
@@ -7738,6 +7849,24 @@ function poKolomOutSO (cart) {
       if (String(c[6]).toLowerCase() === 'sisappl') { c[1] = 'SisaSO' }
       return c
     })
+}
+
+// Tab Purchase Order (urut 2): judul kolom yang tampil ke user dirapikan di sini. Nama field
+// di DBHEADERTABLE (NoBukti, NamaCustSupp, NOSO, NOPOCUST, TglKirim) tetap - dicocokkan tanpa
+// peduli huruf besar/kecil, dan yang disimpan balik tetap header aslinya (c[6]).
+const PO_LABEL_PO = {
+  nobukti      : 'No Bukti',
+  namacustsupp : 'Supplier',
+  noso         : 'No So',
+  nopocust     : 'No Po Cust',
+  tglkirim     : 'Tgl Kirim'
+}
+function poLabelPO (cart) {
+  return (cart || []).map(c => {
+    let label = PO_LABEL_PO[String(c[6]).toLowerCase()]
+    if (label) { c[1] = label }
+    return c
+  })
 }
 
 // labelQty: judul kolom "Qnt..." ditampilkan sebagai "Qty..." (hanya tab outstanding;
@@ -8033,10 +8162,164 @@ function poOtorisasiPO (item) {
 let poFilterStatus = 'SEMUA'
 let poFilterOtorisasi = 'SEMUA'
 
+// ---- Menu PO Stock & PO Non Stock digabung ----
+// Hak akses per jenis dari controller (DBFLMENUWEB 030201 / 030202), hanya angka 0/1.
+const PO_AKSES_JENIS = {!! json_encode($aksesJenis) !!}
+// Filter Jenis tab Purchase Order: SEMUA / stock / nonstock. Awalnya dari ?jenis= di URL
+// (dulu menu /pononstock diarahkan ke sini dengan ?jenis=nonstock).
+let poFilterJenis = {!! json_encode($jenisAwal) !!} || 'SEMUA'
+// Filter Jenis PR tab Outstanding PR: SEMUA / agen / nonagen / nonstock.
+let poFilterJenisPR = 'SEMUA'
+
+const PO_LABEL_JENIS = { stock : 'PO Stock', nonstock : 'PO Non Stock' }
+const PO_LABEL_JENIS_PR = { agen : 'Agen', nonagen : 'Non Agen', nonstock : 'Non Stock' }
+
+// Jenis sebuah baris tab Purchase Order (kolom pJasa dari POController::daftarPO).
+function poJenisBaris (item) {
+  return Number(item.pJasa) === 1 ? 'nonstock' : 'stock'
+}
+
+function poBadgeJenis (jenis) {
+  return `<span class="po-badge-jenis po-badge-jenis-${jenis}">${PO_LABEL_JENIS[jenis] || ''}</span>`
+}
+
+function poBadgeJenisPR (jenis) {
+  if (!PO_LABEL_JENIS_PR[jenis]) { return '' }
+  let kelas = jenis === 'nonstock' ? 'nonstock' : (jenis === 'agen' ? 'agen' : 'stock')
+  return `<span class="po-badge-jenis po-badge-jenis-${kelas}">${PO_LABEL_JENIS_PR[jenis]}</span>`
+}
+
+// Indeks kolom No Bukti di daftar kolom tampil (-1 kalau disembunyikan user).
+function poIndeksNoBukti (kolomRender) {
+  return kolomRender.findIndex((c) => String(c.field).toLowerCase() === 'nobukti')
+}
+
+// Sisipkan judul kolom Jenis sesudah <th> ke-(posisi) di baris judul (posisi < 0 = paling depan).
+// <th> ini tidak punya data-gidx, jadi tidak ikut diseret/diatur report-table.js.
+function poSisipJudulJenis (baris, posisi, label) {
+  let th = `<th style="padding: 4px 12px;" scope="col">${label}</th>`
+  let acuan = posisi >= 0 ? baris.children[posisi] : null
+  if (acuan) {
+    acuan.insertAdjacentHTML('afterend', th)
+  } else {
+    baris.insertAdjacentHTML('afterbegin', th)
+  }
+}
+
+// ---- Jenis PO di form Add/Edit (seperti Jenis PR di pembelianpermintaanagen) ----
+// Form PO Stock (#page2, fungsi tanpa awalan) & PO Non Stock (#ns_page2, awalan ns_) tetap
+// dua form terpisah karena isi Add Item, Harga Terakhir, Stock Proyeksi, PPH dan no bukti
+// (PO/PON vs POB) berbeda. Dropdown Jenis PO (#input_add_jenispo / #ns_input_add_jenispo)
+// ada di atas Supplier pada kedua form; mengganti pilihannya menutup form yang sedang
+// tampil dan membuka form Add jenis lainnya dari awal.
+
+// Jenis PO yang boleh dibuat user (hak tambah per jenis: 030201 / 030202).
+function poJenisBolehTambah () {
+  return ['stock', 'nonstock'].filter((j) => PO_AKSES_JENIS[j] && Number(PO_AKSES_JENIS[j].ISTAMBAH))
+}
+
+// Tombol Tambah: langsung buka form Add. Default PO Stock, kalau user tidak punya hak tambah
+// PO Stock langsung PO Non Stock.
+function poBukaFormTambah () {
+  let bisa = poJenisBolehTambah()
+  if (!bisa.length) {
+    alertify.warning('No access')
+    return
+  }
+  poBukaFormAddJenis(bisa[0])
+}
+
+// noBuktiPR diisi kalau form dibuka dari tombol Buat PO di tab Outstanding PR.
+function poBukaFormAddJenis (jenis, noBuktiPR) {
+  if (jenis === 'nonstock') {
+    ns_buttonAdd(noBuktiPR)
+  } else {
+    buttonAdd(noBuktiPR)
+  }
+}
+
+// Buat PO dari Outstanding PR: PR Non Stock dibuatkan PO Non Stock, PR Agen/Non Agen PO Stock.
+function poBuatPODariPR (noBuktiPR, jenisPR) {
+  poBukaFormAddJenis(jenisPR === 'nonstock' ? 'nonstock' : 'stock', noBuktiPR)
+}
+
+// Isi dropdown Jenis PO sebuah form. bisaGanti = true hanya untuk PO baru yang belum punya
+// item (bukan dari Outstanding PR): pilihannya jenis yang boleh ditambah user. Selain itu
+// (edit, detail, item pertama sudah tersimpan) dropdown hanya berisi jenis form itu & dikunci.
+function poIsiDropdownJenisPO (idSelect, jenis, bisaGanti) {
+  let sel = document.getElementById(idSelect)
+  if (!sel) { return }
+  let daftar = bisaGanti ? poJenisBolehTambah() : []
+  if (!daftar.includes(jenis)) { daftar.push(jenis) }
+  sel.innerHTML = ['stock', 'nonstock']
+    .filter((j) => daftar.includes(j))
+    .map((j) => `<option value="${j}">${PO_LABEL_JENIS[j]}</option>`)
+    .join('')
+  sel.value = jenis
+  sel.disabled = !bisaGanti || daftar.length < 2
+}
+
+// onchange dropdown Jenis PO. jenisForm = jenis form tempat dropdown itu berada.
+function poGantiJenisPO (sel, jenisForm) {
+  let baru = sel.value
+  // Pilihan dikembalikan dulu: form lama baru disembunyikan oleh buttonAddKerja /
+  // ns_buttonAddKerja setelah form baru berhasil dibuka (gagal = form lama tetap utuh).
+  sel.value = jenisForm
+  if (baru === jenisForm || !PO_LABEL_JENIS[baru]) { return }
+
+  let isNS = jenisForm === 'nonstock'
+  let modeForm = isNS ? ns_tipeform : tipeform
+  let jmlItem = isNS ? ns_dataTableAdd.length : dataTableAdd.length
+  let dariPR = isNS ? ns_noBuktiUntukAdd : noBuktiUntukAdd
+  if (modeForm !== 'add' || jmlItem) {
+    alertify.warning('Jenis PO tidak bisa diganti setelah PO punya item')
+    return
+  }
+  if (dariPR) {
+    alertify.warning('Jenis PO mengikuti jenis PR yang dipilih')
+    return
+  }
+  if (!poJenisBolehTambah().includes(baru)) {
+    alertify.warning('Anda tidak punya akses tambah ' + PO_LABEL_JENIS[baru])
+    return
+  }
+  // Form jenis baru dibuka dari awal: semua isian kosong, no bukti dibuat saat supplier dipilih.
+  poBukaFormAddJenis(baru)
+}
+
+function poUpdateFilterOutPRBadge () {
+  let badge = document.getElementById('poFilterOutPRBadge')
+  if (badge) { badge.textContent = (poFilterJenisPR !== 'SEMUA' ? 1 : 0) + ' aktif' }
+}
+
+function poMuatUlangOutPR () {
+  poCacheOut[1] = null
+  poPakaiCacheOut[1] = false
+  if ($.fn.DataTable.isDataTable('#' + PO_OUT[1].tabel)) {
+    $('#' + PO_OUT[1].tabel).DataTable().ajax.reload(null, true)
+  }
+}
+
+function poTerapkanFilterOutPR () {
+  poFilterJenisPR = $('#poModalJenisPR').val() || 'SEMUA'
+  poUpdateFilterOutPRBadge()
+  $('#modalFilterOutPR').modal('hide')
+  poMuatUlangOutPR()
+}
+
+function poResetFilterOutPR () {
+  poFilterJenisPR = 'SEMUA'
+  $('#poModalJenisPR').val('SEMUA')
+  poUpdateFilterOutPRBadge()
+  $('#modalFilterOutPR').modal('hide')
+  poMuatUlangOutPR()
+}
+
 function poUpdateFilterBadge () {
   let jml = 0
   if (poFilterStatus !== 'SEMUA') { jml++ }
   if (poFilterOtorisasi !== 'SEMUA') { jml++ }
+  if (poFilterJenis !== 'SEMUA') { jml++ }
   let badge = document.getElementById('poFilterBadge')
   if (badge) { badge.textContent = jml + ' aktif' }
 }
@@ -8044,6 +8327,7 @@ function poUpdateFilterBadge () {
 function poTerapkanFilter () {
   poFilterStatus = $('#poModalStatus').val() || 'SEMUA'
   poFilterOtorisasi = $('#poModalOtorisasi').val() || 'SEMUA'
+  poFilterJenis = $('#poModalJenis').val() || 'SEMUA'
   poUpdateFilterBadge()
   $('#modalFilterPO').modal('hide')
   loadTabelPO(true, true)
@@ -8052,8 +8336,10 @@ function poTerapkanFilter () {
 function poResetFilter () {
   poFilterStatus = 'SEMUA'
   poFilterOtorisasi = 'SEMUA'
+  poFilterJenis = 'SEMUA'
   $('#poModalStatus').val('SEMUA')
   $('#poModalOtorisasi').val('SEMUA')
+  $('#poModalJenis').val('SEMUA')
   poUpdateFilterBadge()
   $('#modalFilterPO').modal('hide')
   loadTabelPO(true, true)
@@ -8156,7 +8442,7 @@ window.doSetHeader = function (mode, reset) {
     },
     success : function (res) {
       if (urut === 2) {
-        poCart[2] = poBuatCart(res.headertableheader2, res.headertablevalue2, res.isnumeric2, res.isshown2, res.desimal2, res.aliasordered2)
+        poCart[2] = poLabelPO(poBuatCart(res.headertableheader2, res.headertablevalue2, res.isnumeric2, res.isshown2, res.desimal2, res.aliasordered2))
       } else if (urut === 3) {
         poCart[3] = poKolomOutSO(poBuatCart(res.headertableheader3, res.headertablevalue3, res.isnumeric3, res.isshown3, res.desimal3, res.aliasordered3, true))
       } else {
@@ -8281,20 +8567,36 @@ function initTabelOutstanding (urut, pakaiCache) {
   if (baris && cfg.aksi) {
     baris.insertAdjacentHTML('afterbegin', '<th style="padding: 4px 12px;" scope="col">Actions</th>')
   }
+  // Posisi kolom Jenis PR: tepat sesudah kolom No Bukti (indeks di kolomRender), -1 = paling depan.
+  let jenisSesudah = cfg.jenis ? poIndeksNoBukti(kolomRender) : -1
+  if (baris && cfg.jenis) {
+    poSisipJudulJenis(baris, jenisSesudah + (cfg.aksi ? 1 : 0), 'Jenis PR')
+  }
 
+  // Nama field tiap kolom DataTables (null = kolom tanpa urutan server) - dipakai memetakan sort.
+  let fieldOut = []
   let columns = []
   if (cfg.aksi) {
+    fieldOut.push(null)
     columns.push({
       data : null,
       orderable : false,
       className : 'text-center',
       render : function (data, type, row) {
-        return `<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Buat PO" onclick="buttonAdd('${row.Nobukti}')"><i class="bi bi-plus-lg"></i></button>`
+        // Jenis PO mengikuti jenis PR (PR Non Stock -> PO Non Stock). JenisPR hanya kunci tetap.
+        return `<button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Buat PO" onclick="poBuatPODariPR('${row.Nobukti}', '${row.JenisPR || ''}')"><i class="bi bi-plus-lg"></i></button>`
       }
     })
   }
 
-  kolomRender.forEach((c) => {
+  let kolomJenisPR = {
+    data : null,
+    orderable : false,
+    className : 'text-center',
+    render : function (data, type, row) { return poBadgeJenisPR(row.JenisPR) }
+  }
+  if (cfg.jenis && jenisSesudah < 0) { columns.push(kolomJenisPR); fieldOut.push(null) }
+  kolomRender.forEach((c, i) => {
     columns.push({
       data : null,
       className : c.tipe === 1 ? 'text-right' : '',
@@ -8302,6 +8604,8 @@ function initTabelOutstanding (urut, pakaiCache) {
         return poRenderNilai(c, row)
       }
     })
+    fieldOut.push(c.field)
+    if (cfg.jenis && i === jenisSesudah) { columns.push(kolomJenisPR); fieldOut.push(null) }
   });
 
   poPakaiCacheOut[urut] = !!(pakaiCache && poCacheOut[urut])
@@ -8377,28 +8681,28 @@ function initTabelOutstanding (urut, pakaiCache) {
       // Kolom pertama tabel Outstanding PR adalah kolom Actions yang tidak ada di
       // kolomRender, jadi indeks sort dari DataTables harus digeser satu. Tabel
       // Outstanding SO tidak punya kolom itu, jadi indeksnya sudah pas.
-      let geser = cfg.aksi ? 1 : 0
+      // Kolom Actions/Jenis PR tidak ada di kolomRender - pemetaan sort lewat fieldOut.
       let kolom = null
       let arah = 'asc'
-      if (data.order && data.order.length && data.order[0].column >= geser) {
-        let c = kolomRender[data.order[0].column - geser]
-        if (c) {
-          kolom = c.field
-          arah = data.order[0].dir
-        }
+      if (data.order && data.order.length && fieldOut[data.order[0].column]) {
+        kolom = fieldOut[data.order[0].column]
+        arah = data.order[0].dir
       }
+
+      let kirim = {
+        draw : data.draw,
+        start : data.start,
+        length : data.length,
+        search : data.search ? data.search.value : '',
+        orderCol : kolom,
+        orderDir : arah
+      }
+      if (cfg.jenis) { kirim.jenis = poFilterJenisPR }
 
       $.ajax({
         url : cfg.url,
         type : "get",
-        data : {
-          draw : data.draw,
-          start : data.start,
-          length : data.length,
-          search : data.search ? data.search.value : '',
-          orderCol : kolom,
-          orderDir : arah
-        },
+        data : kirim,
         success : function (res) {
           poCacheOut[urut] = res
           callback(res)
@@ -8568,7 +8872,11 @@ headerTable2 += `<th style="padding: 4px 12px;" scope="col">Batal</th>
 // "Actions" disisipkan di depan dan kolom otorisasi/batal di belakangnya.
 thead2.innerHTML = poHeadHtml(cols2)
 let baris2 = thead2.querySelector('tr')
+// Kolom Jenis (PO Stock / PO Non Stock) tepat sesudah No Bukti. Dipasang langsung di sini,
+// bukan lewat konfigurasi kolom HeaderTable, supaya selalu tampil apa pun pengaturan kolom user.
+let jenisSesudah2 = poIndeksNoBukti(kolomRender2)
 if (baris2) {
+  poSisipJudulJenis(baris2, jenisSesudah2, 'Jenis')
   baris2.insertAdjacentHTML('afterbegin', '<th style="padding: 4px 12px;" scope="col">Actions</th>')
   baris2.insertAdjacentHTML('beforeend', headerTable2)
 }
@@ -8604,33 +8912,45 @@ if (baris2) {
     orderable : false,
     className : 'text-center',
     render : function (data, type, item) {
-      let tombolAksiPO = `<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="buttonDetail('${item.NoBukti}')"><i class="bi bi-info"></i></button>`
+      // Baris PO Non Stock memakai fungsi form Non Stock (awalan ns_, partials/poNonStockScript).
+      let p = poJenisBaris(item) === 'nonstock' ? 'ns_' : ''
+      let tombolAksiPO = `<button class="btn btn-warning btn-sm" type="button" data-toggle="tooltip" title="Detail" onclick="${p}buttonDetail('${item.NoBukti}')"><i class="bi bi-info"></i></button>`
       if (Number(item.IsOtorisasi1)) {
         // Level 1 sudah terisi tapi level otorisasinya belum lengkap (mis. PO > 200 jt yang
         // diotorisasi Dept. Head) - tombol Otorisasi tetap tampil supaya Direktur bisa mengisi
         // level 2. Edit tetap tidak ditampilkan.
         if (Number(item.NeedOtorisasi)) {
           tombolAksiPO += `
-          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi Level 2" onclick="buttonOtorisasi('${item.NoBukti}' , ${item.IsOtorisasi1})"><i class="bi bi-key"></i></button>`
+          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi Level 2" onclick="${p}buttonOtorisasi('${item.NoBukti}' , ${item.IsOtorisasi1})"><i class="bi bi-key"></i></button>`
         }
         tombolAksiPO += `
-          <button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="buttonBatalOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
-          <button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="openPrintModal('${item.NoBukti}')"><i class="bi bi-printer"></i></button>`
+          <button class="btn btn-danger btn-sm" type="button" data-toggle="tooltip" title="Batal Otorisasi" onclick="${p}buttonBatalOtorisasi('${item.NoBukti}')"><i class="bi bi-key"></i></button>
+          <button class="btn btn-primary btn-sm" type="button" data-toggle="tooltip" title="Print" onclick="${p ? 'submitPrintcopy' : 'openPrintModal'}('${item.NoBukti}')"><i class="bi bi-printer"></i></button>`
       } else {
         tombolAksiPO += `
-          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="buttonOtorisasi('${item.NoBukti}' , ${item.IsOtorisasi1})"><i class="bi bi-key"></i></button>
-          <button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="buttonEdit('${item.NoBukti}')"><i class="bi bi-pen"></i></button>`
+          <button class="btn btn-info btn-sm" type="button" data-toggle="tooltip" title="Otorisasi" onclick="${p}buttonOtorisasi('${item.NoBukti}' , ${item.IsOtorisasi1})"><i class="bi bi-key"></i></button>
+          <button class="btn btn-success btn-sm" type="button" data-toggle="tooltip" title="Edit" onclick="${p}buttonEdit('${item.NoBukti}')"><i class="bi bi-pen"></i></button>`
       }
       return tombolAksiPO
     }
   })
 
-  // Daftar kolom yang sama persis dengan yang dipakai header di atas.
-  kolomRender2.forEach((c) => {
+  let kolomJenis2 = function () {
+    tambahKolom(null, {
+      orderable : false,
+      className : 'text-center',
+      render : function (data, type, item) { return poBadgeJenis(poJenisBaris(item)) }
+    })
+  }
+
+  // Daftar kolom yang sama persis dengan yang dipakai header di atas (+ Jenis sesudah No Bukti).
+  if (jenisSesudah2 < 0) { kolomJenis2() }
+  kolomRender2.forEach((c, i) => {
     tambahKolom(c.field, {
       className : c.tipe === 1 ? 'text-right' : '',
       render : function (data, type, item) { return poRenderNilai(c, item) }
     })
+    if (i === jenisSesudah2) { kolomJenis2() }
   });
 
   kolomOto(1, '')
@@ -8728,7 +9048,8 @@ if (baris2) {
           tglawal : $('#poTglAwal').val(),
           tglakhir : $('#poTglAkhir').val(),
           status : poFilterStatus,
-          otorisasi : poFilterOtorisasi
+          otorisasi : poFilterOtorisasi,
+          jenis : poFilterJenis
         },
         success : function (res) {
           poCachePO = res
@@ -8860,7 +9181,7 @@ function loadAll () {
       laaliasordered2 = meta.aliasordered2
 
       poCart[1] = poBuatCart(laheadertable, laheadertablevalue, laisnumeric, laisshown, ladesimal, laaliasordered, true)
-      poCart[2] = poBuatCart(laheadertable2, laheadertablevalue2, laisnumeric2, laisshown2, ladesimal2, laaliasordered2)
+      poCart[2] = poLabelPO(poBuatCart(laheadertable2, laheadertablevalue2, laisnumeric2, laisshown2, ladesimal2, laaliasordered2))
       poCart[3] = poKolomOutSO(poBuatCart(meta.headertableheader3, meta.headertablevalue3, meta.isnumeric3, meta.isshown3, meta.desimal3, meta.aliasordered3, true))
 
       poMetaSudah = true
@@ -9005,8 +9326,15 @@ $(function () {
   $('#modalFilterPO').on('show.bs.modal', function () {
     $('#poModalStatus').val(poFilterStatus)
     $('#poModalOtorisasi').val(poFilterOtorisasi)
+    $('#poModalJenis').val(poFilterJenis)
     poUpdateFilterBadge()
   })
+  $('#modalFilterOutPR').on('show.bs.modal', function () {
+    $('#poModalJenisPR').val(poFilterJenisPR)
+    poUpdateFilterOutPRBadge()
+  })
+  // Filter Jenis awal dari ?jenis= langsung terlihat di badge tombol Filter.
+  poUpdateFilterBadge()
 
   // Pindah tab TIDAK menggambar ulang tabelnya lagi (itu sebabnya pindah tab dulu
   // terasa lambat) - cukup arahkan komponen (poAktifkanTabel, poPindahBar,
@@ -10160,7 +10488,9 @@ if (pcekglobal) {
   $('#modalBodyAddMain').show();
   refreshDataTableEdit(NOBUKTI)
   // $("#form").modal('toggle')
+  poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
   $('#page1').hide();
+  $('#ns_page2').hide();
   $('#page2').show();
 }
 
@@ -10237,7 +10567,13 @@ if (pcekglobal) {
     }
   })
 
+  // Jenis PO bisa diganti selama PO belum punya item, kecuali form dibuka dari Outstanding PR
+  // (Buat PO) - jenisnya mengikuti jenis PR.
+  poIsiDropdownJenisPO('input_add_jenispo', 'stock', !noBuktiUntukAdd)
   $('#page1').hide();
+  // Saat Jenis PO diganti dari form PO Non Stock, form Non Stock ditutup di sini (bukan
+  // sebelum membuka) supaya kalau pembukaan gagal (periode dikunci, dll.) form lama tetap tampil.
+  $('#ns_page2').hide();
   $('#page2').show();
   $('#modalBodyAddMainHeader').show();
 
@@ -10337,7 +10673,9 @@ function buttonDetailKerja (NOBUKTI) {
   $('#modalBodyAddMain').show();
   refreshDataTableDetail(NOBUKTI)
   // $("#form").modal('toggle')
+  poIsiDropdownJenisPO('input_add_jenispo', 'stock', false)
   $('#page1').hide();
+  $('#ns_page2').hide();
   $('#page2').show();
 }
 
@@ -12755,9 +13093,105 @@ function LockFreeOfCharge(){
     document.getElementById('input_add_kodesupplier').addEventListener('keypress', function(event) {
       if (event.key === 'Enter') {
           event.preventDefault();
+          $('#po_dropdown_supplier').hide();
           performSearchSupplier();
       }
     });
+
+    // ---- Supplier bisa diketik (PO Stock & PO Non Stock), sama seperti Pelanggan di menu SO ----
+    // Daftar supplier (polistpelanggan) diambil sekali lalu disimpan; tiap ketikan menyaring
+    // kode/nama dan menampilkan 10 saran teratas. Klik saran = sama dengan memilih baris di
+    // modal Supplier (fungsi pilih milik form masing-masing). Enter / tombol cari tetap
+    // membuka modal Supplier seperti sebelumnya.
+    let poCacheSupplier = null
+    let poSupplierDimuat = false
+    let poAntreanSupplier = []
+
+    function poAmbilSupplier (lanjut) {
+      if (poCacheSupplier) { lanjut(poCacheSupplier); return }
+      poAntreanSupplier.push(lanjut)
+      if (poSupplierDimuat) { return }
+      poSupplierDimuat = true
+      $.ajax({
+        url: "{!! url('polistpelanggan') !!}",
+        type: "get",
+        success: function (res) {
+          poCacheSupplier = res || []
+          let antre = poAntreanSupplier
+          poAntreanSupplier = []
+          antre.forEach((f) => f(poCacheSupplier))
+        },
+        error: function (err) {
+          console.log(err)
+          poAntreanSupplier = []
+          alertify.warning('Gagal memuat daftar supplier')
+        },
+        complete: function () { poSupplierDimuat = false }
+      })
+    }
+
+    function poPasangKetikSupplier (idInput, idDropdown, pilih) {
+      let input = document.getElementById(idInput)
+      let dropdown = document.getElementById(idDropdown)
+      if (!input || !dropdown) { return }
+      let hasil = []
+
+      let tutup = function () { dropdown.style.display = 'none' }
+      let gambar = function (kata) {
+        let k = kata.toLowerCase()
+        hasil = poCacheSupplier.filter((s) =>
+          String(s.KodeCustSupp || '').toLowerCase().includes(k) ||
+          String(s.NamaCustSupp || '').toLowerCase().includes(k)
+        ).slice(0, 10)
+        dropdown.innerHTML = ''
+        if (!hasil.length) {
+          dropdown.innerHTML = '<span class="dropdown-item text-muted">Tidak ditemukan</span>'
+        }
+        hasil.forEach((s, i) => {
+          let el = document.createElement('div')
+          el.className = 'dropdown-item'
+          el.style.whiteSpace = 'normal'
+          el.style.wordBreak = 'break-word'
+          el.dataset.idx = i
+          let b = document.createElement('b')
+          b.textContent = s.KodeCustSupp || ''
+          el.appendChild(b)
+          el.appendChild(document.createTextNode(' - ' + (s.NamaCustSupp || '')))
+          dropdown.appendChild(el)
+        })
+        dropdown.style.display = 'block'
+      }
+
+      input.addEventListener('input', function () {
+        let kata = input.value.trim()
+        if (!kata || input.disabled) { tutup(); return }
+        poAmbilSupplier(function () {
+          // Isi kotak bisa sudah berubah selama daftar diambil.
+          if (input.value.trim()) { gambar(input.value.trim()) }
+        })
+      })
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { tutup() }
+      })
+      // mousedown (bukan click) supaya pilihan terambil sebelum input kehilangan fokus.
+      dropdown.addEventListener('mousedown', function (e) {
+        let el = e.target.closest('[data-idx]')
+        if (!el) { return }
+        e.preventDefault()
+        let s = hasil[Number(el.dataset.idx)]
+        tutup()
+        if (s) { pilih(s) }
+      })
+      document.addEventListener('click', function (e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) { tutup() }
+      })
+    }
+
+    // Argumen dikirim sebagai teks (String) - persis seperti onclick baris modal Supplier,
+    // yang menulisnya lewat template literal.
+    poPasangKetikSupplier('input_add_kodesupplier', 'po_dropdown_supplier', function (s) {
+      buttonAddPickPelanggan(String(s.KodeCustSupp), String(s.NamaCustSupp), String(s.Alamat), String(s.HARIHUTPIUT), String(s.PPN))
+    })
 
     // autoPick hanya true kalau dipanggil dari Enter. Menekan tombol browse berarti user
     // memang ingin melihat daftarnya, jadi modal selalu dibuka - tetap terfilter kalau
@@ -12791,5 +13225,17 @@ function LockFreeOfCharge(){
     };
 
   </script>
+
+{{-- Script form PO Non Stock (id/fungsi berawalan ns_). Modal pemilih Non Stock (#ns_form)
+     disamakan dengan modal pemilih menu Kas, sama seperti #form di atas. --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  jQuery('#ns_form').addClass('picker-kas')
+  jQuery('#ns_form .modal-footer .btn').filter(function () {
+    return jQuery.trim(jQuery(this).text()) === 'Batal'
+  }).addClass('picker-kas-batal')
+})
+</script>
+@include('purchasing.partials.poNonStockScript')
 
 @endsection
