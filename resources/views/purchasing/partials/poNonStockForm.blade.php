@@ -503,6 +503,7 @@
                   <th style="padding: 4px 12px;" scope="col">Kode Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Barang</th>
                   <th style="padding: 4px 12px;" scope="col">Nama Alias</th>
+                  <th style="padding: 4px 12px;" scope="col">Perkiraan</th>
                   <th style="padding: 4px 12px;" scope="col">Qty</th>
                   <th style="padding: 4px 12px;" scope="col">Sat</th>
                   <th style="padding: 4px 12px;" scope="col">Harga</th>

@@ -711,18 +711,21 @@ where a.KodeCost=b.KodeCost and b.Perkiraan= :perkiraan
 
   /**
    * NPPH23 / NPPH21 / PERKIRAAN header untuk sp_PO (PO Non Stock), lihat catatan di spAdd().
-   * PO yang sudah ada memakai nilai tersimpan; PO baru dari supplier & COA Biaya barang.
+   * PPH: PO yang sudah ada memakai nilai tersimpan, PO baru dari supplier.
+   * PERKIRAAN header selalu kosong (perkiraan sudah per item di DBPODET).
    */
   private function nilaiHeaderNonStock ($nobukti, $kodeSupp, $kodeBrg) {
+    // Perkiraan header sudah tidak dipakai: perkiraan pindah ke detail (DBPODET.PERKIRAAN,
+    // mengikuti COA Biaya barang). Header selalu dikirim kosong ke sp_PO.
     $po = DB::connection('SML')->select(
-      'select isnull(NPPH23,0) NPPH23, isnull(NPPH21,0) NPPH21, isnull(PERKIRAAN,\'\') PERKIRAAN from DBPO where NOBUKTI = :nobukti',
+      'select isnull(NPPH23,0) NPPH23, isnull(NPPH21,0) NPPH21 from DBPO where NOBUKTI = :nobukti',
       ['nobukti' => (string) $nobukti]
     );
     if ($po) {
       return [
         'npph23'    => $po[0]->NPPH23,
         'npph21'    => $po[0]->NPPH21,
-        'perkiraan' => $po[0]->PERKIRAAN,
+        'perkiraan' => '',
       ];
     }
 
@@ -730,18 +733,11 @@ where a.KodeCost=b.KodeCost and b.Perkiraan= :perkiraan
       'select isnull(NPPH23,0) NPPH23, isnull(NPPH22,0) NPPH21 from DBCUSTSUPP where KODECUSTSUPP = :kode',
       ['kode' => (string) $kodeSupp]
     );
-    $coa = DB::connection('SML')->select(
-      "select top 1 isnull(s.PerkPers,'') Perkiraan
-         from DBBARANG b
-         left outer join dbSubGroup s on s.KodeHDGrp = b.KodeHdGrp and s.KodeSubGrp = b.KODESUBGRP
-        where b.KODEBRG = :kodebrg",
-      ['kodebrg' => (string) $kodeBrg]
-    );
 
     return [
       'npph23'    => $supp ? $supp[0]->NPPH23 : 0,
       'npph21'    => $supp ? $supp[0]->NPPH21 : 0,
-      'perkiraan' => $coa ? (string) $coa[0]->Perkiraan : '',
+      'perkiraan' => '',
     ];
   }
 
@@ -810,15 +806,13 @@ if ($choice =='D'){
       }
     }
 
-    // PPH23, PPH21 & Perkiraan header PO Non Stock tidak lagi diisi user (di form hanya
-    // informatif / disembunyikan), nilainya ditentukan di sini - apa pun yang dikirim browser
-    // diabaikan:
+    // PPH23 & PPH21 header PO Non Stock tidak lagi diisi user (di form hanya informatif),
+    // nilainya ditentukan di sini - apa pun yang dikirim browser diabaikan:
     // - PO sudah ada di DBPO  -> pakai nilai yang tersimpan. Penting karena sp_PO Choice 'U'
-    //   menimpa DBPO.NPPH23 & DBPO.PERKIRAAN dengan parameter, jadi edit item tidak boleh
-    //   mengosongkan / mengganti nilai header PO lama.
-    // - PO baru (item pertama) -> PPH dari supplier (DBCUSTSUPP.NPPH23, NPPH22 = PPH21) dan
-    //   Perkiraan = COA Biaya barang item pertama (DBBARANG -> dbSubGroup.PerkPers, diatur di
-    //   Master Headgroup). Perkiraan per item tetap dibaca dari master barang masing-masing.
+    //   menimpa DBPO.NPPH23 dengan parameter, jadi edit item tidak boleh mengganti PPH PO lama.
+    // - PO baru (item pertama) -> PPH dari supplier (DBCUSTSUPP.NPPH23, NPPH22 = PPH21).
+    // Perkiraan header tidak dipakai lagi (dikirim kosong). Perkiraan pindah ke detail:
+    // DBPODET.PERKIRAAN per item dari COA Biaya barang (lihat di bawah exec sp_PO).
     $nilaiHeader = $this->nilaiHeaderNonStock($nobukti, $req->KodeSupp, $req->KodeBrg);
 
       $values = [
@@ -907,8 +901,24 @@ if ($choice =='D'){
         }
       }
 
+      // Perkiraan per item (1 PO bisa banyak barang dengan COA berbeda): DBPODET.PERKIRAAN diisi
+      // dari COA Biaya barang masing-masing (DBBARANG -> dbSubGroup.PerkPers, Master Headgroup).
+      // sp_PO tidak mengenal kolom ini, jadi diisi di sini untuk baris yang belum punya perkiraan
+      // (item baru). Barang item tidak bisa diganti saat edit, jadi baris lama tetap benar.
+      // Kolom ditambahkan lewat docs/update-db-DBSMLBARU/purchasing/31_dbpodet_perkiraan.sql.
+      if ($choice != 'D') {
+        DB::connection('SML')->update(
+          "update d set d.PERKIRAAN = s.PerkPers
+             from DBPODET d
+             join DBBARANG b on b.KODEBRG = d.KODEBRG
+             join dbSubGroup s on s.KodeHDGrp = b.KodeHdGrp and s.KodeSubGrp = b.KODESUBGRP
+            where d.NOBUKTI = :nobukti and isnull(d.PERKIRAAN, '') = '' and isnull(s.PerkPers, '') <> ''",
+          ['nobukti' => (string) $nobukti]
+        );
+      }
+
       DB::connection('SML')->update('exec Sp_UpdatePO ?', [$nobukti]);
-     
+
       if ($choice !='D'){
       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( $choice,'PO',$nobukti,'',$xurut,'DBPODET');
       }

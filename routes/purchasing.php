@@ -241,8 +241,7 @@ Route::middleware('auth')->group(function () {
     // Route::get('/pononstock',              [PONonStockController::class, 'index']);
     Route::get('/pononstock', fn () => redirect('/purchaseorder?jenis=nonstock'));
     Route::get('/polistperkiraan',         [PONonStockController::class, 'listPerkiraan']);
-    Route::post('/polistcosting',          [PONonStockController::class, 'listCosting']);
-    Route::post('/polistsubcosting',       [PONonStockController::class, 'listSubCosting']);
+    Route::post('/polistcosting',          [PONonStockController::class, 'listCosting']);    Route::post('/polistsubcosting',       [PONonStockController::class, 'listSubCosting']);
     Route::get('/polistbarangjasa',        [PONonStockController::class, 'listBarangJasa']);
     Route::get('/polistbarangjasanobukti', [PONonStockController::class, 'listBarangJasaNoBukti']);
     Route::post('/ponsspadd',              [PONonStockController::class, 'spAdd']);

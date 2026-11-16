@@ -13,6 +13,7 @@ Catatan ini mendaftar perubahan database DBSMLBARU dari pekerjaan menu **marketi
 | 11 | `11_kreditnote_perkhp_dan_akun_bk.sql` | Default `''` untuk `DBKreditNoteDET.perkHP` + akun posting `DBPOSTHUTPIUT` Kode `BK` = 41200 | **Wajib**, tanpa ini item Kredit Note tidak tersimpan dan akun debet jurnal KN kosong |
 | 22 | `22_penawaranso_disc_header_nilaippn.sql` | Penawaran SO: kolom `DISC` & `NILAIPPN` di `DBPENAWARANSODET`, rumus DPP/PPN/Net ikut Disc header, SP `Sp_UpdatePenawaranSO` | **Wajib** sebelum kode Penawaran SO versi 22 Oktober 2026 dipasang, tanpa ini simpan item gagal (SP tidak ditemukan) |
 | 23 | `23_vwposthutpiut_kreditnote_valas.sql` | `vwPostHutPiut` bagian Kredit Note: nilai valas masuk `KreditD` (dulu `DebetD`) | **Wajib** kalau ada Kredit Note valas, tanpa ini KN valas malah menambah saldo valas piutang |
+| 33 | `33_dbpocustsupp_draftpo.sql` | PO Customer: kolom `DBPOCUSTSUPP.pPO` (Draft PO, default 0) + parameter `@pPO` di `Sp_POCustomer`. Rollback SP: `33_sp_pocustomer_ROLLBACK.sql` | **Wajib** sebelum kode Terima PO Customer & SO versi 16 November 2026 dipasang, tanpa ini simpan PO Customer gagal (SP kelebihan parameter) |
 
 **Sebelum mulai:** backup database DBSMLBARU di server.
 
@@ -141,3 +142,19 @@ and ( (? = 0)
 - **Sudah dijalankan langsung di DBSMLBARU dan DBSMLNEW** (server 36.88.190.218) pada 22 Oktober 2026 atas izin user. Dijalankan ulang untuk cek: keluar pesan "sudah benar, tidak ada yang diubah". Untuk server client, jalankan skrip ini setelah backup. Untuk DBSMLNEW pakai `newProgramAJC/docs/update-db-DBSMLNEW/marketing/23_vwposthutpiut_kreditnote_valas.sql`.
 - Saat dicek, belum ada data KN di kedua DB, jadi tidak ada data lama yang perlu diposting ulang.
 - **Kode (tanpa perubahan database):** menu Kredit Note diberi separator ribuan di tabel Add/Edit/Detail, modal Invoice, dan form Edit Item. Input Nilai/Kurs diketik dengan separator (`formatRibuanLive`/`formatRibuan`), lalu dikirim sebagai angka bersih. Controller juga membuang koma (`angka()`), supaya `(float) '1,000.00'` tidak terbaca 1 di `cekNilai`. Kolom **Nilai Inv** untuk invoice valas sekarang menampilkan `SaldoD` (dulu `Saldo` Rp).
+
+---
+
+## 33 — PO Customer: Draft PO otomatis ke SO (16 November 2026)
+
+- **Permintaan user:** menu Terima PO Customer (`terimapocustomer`) mendapat dropdown **Draft PO** (Tidak = 0, Ya = 1) di form Tambah dan Koreksi. Di menu SO, dropdown Draft PO dikunci (disabled) dan otomatis terisi dari PO Customer saat No PO dipilih. Nilainya disalin **sekali saja** saat SO dibuat; kalau PO Customer diubah sesudahnya, SO yang sudah ada tidak berubah.
+- **Perubahan database:**
+  - `DBPOCUSTSUPP.pPO bit NOT NULL`, default 0 (constraint `DF_DBPOCUSTSUPP_pPO`). Semua PO Customer lama (28.043 baris) terisi 0.
+  - `Sp_POCustomer`: parameter baru `@pPO bit = NULL` (paling belakang). Insert memakai `isnull(@pPO,0)`. Update memakai `isnull(@pPO,pPO)`, jadi pemanggil lama dengan 6 parameter (programajcSML Terima/Ubah PO Customer) tidak mereset Draft PO.
+- **Perilaku di kode newSML:**
+  - SO mengambil `pPO` sendiri dari `DBPOCUSTSUPP` (No PO + customer, `pGanti` = 0), bukan dari nilai dropdown yang dikirim browser. No PO yang tidak terdaftar di PO Customer = 0. Berlaku untuk input SO biasa (`sp_SO`, yang hanya mengisi `pPO` saat header dibuat), Tambah SO dari penawaran (`spAddTambahSO` & `spAddTambahSOAll`).
+  - `soonchangeheader` menolak field `PPO`, jadi Draft PO SO tidak bisa diubah lagi dari form edit.
+  - SO lama dengan `pPO` NULL ditampilkan Tidak (0) di form. Data `dbso` tidak diubah.
+  - Menu Ubah PO Customer (ganti No PO pada SO) tidak menyentuh `dbso.pPO`.
+- Diuji di DBSMLBARU di dalam transaksi yang di-rollback: insert 7 parameter → 1, update 6 parameter → tetap 1, update `@pPO` = 0 → 0, insert 6 parameter → 0. Tidak ada data uji yang tersisa.
+- Sudah dijalankan langsung di DBSMLBARU (server 36.88.190.218) pada 16 November 2026. Skrip aman dijalankan ulang.

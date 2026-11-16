@@ -63,7 +63,7 @@ class TerimaPoCustomerController extends Controller
       select A.ID,a.TglInput,a.TglTerima,a.POCustomer,a.KodeCustSupp,b.NAMACUSTSUPP,
       ltrim(B.ALAMAT1+case when ltrim(B.ALAMAT2)<>'' then char(13)+B.ALAMAT2 else '' end+
       	case when ltrim(isnull(B.KOTA,''))<>'' then char(13)+isnull(B.KOTA,'')+' '+B.KodePos else '' end) ALAMAT
-        ,A.rppo,A.isclose,A.userclose,A.tglclose,A.ketclose
+        ,A.rppo,A.isclose,A.userclose,A.tglclose,A.ketclose,isnull(A.pPO,0) pPO
       from DBPOCUSTSUPP a
       left outer join DBCUSTSUPP b on a.KodeCustSupp=b.KODECUSTSUPP
 
@@ -214,10 +214,12 @@ class TerimaPoCustomerController extends Controller
           $kodecust,
           $req->id,
           $req->totalpo ?: 0,
+          // Draft PO (Tidak = 0, Ya = 1), parameter @pPO -- lihat docs/update-db-DBSMLBARU/marketing/33.
+          ((string) $req->draftpo === '1') ? 1 : 0,
       ];
 
       try {
-        DB::connection('SML')->statement('exec Sp_POCustomer ?,?,?,?,?,?' ,$values);
+        DB::connection('SML')->statement('exec Sp_POCustomer ?,?,?,?,?,?,?' ,$values);
       } catch (\Exception $e) {
         return 'Gagal menyimpan PO Customer: ' . $e->getMessage();
       }

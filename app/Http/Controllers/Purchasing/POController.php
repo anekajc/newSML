@@ -2138,6 +2138,7 @@ Select 	b.nosat,E.ISI1,E.ISI2,E.ISI3,E.SAT1,E.SAT2,E.SAT3,A.NoBukti, A.NoUrut, A
         A.PPN PPNTrans,isnull(B.Tolerate,0) ToleratePO,Isnull(B.Isjasa,0) Isjasa,
         B.Discp DiscP1,x1.NosoCust,Isnull(B.pFoc,0) PFOC,A.NOSO,M1.Nopesanan,A.npph23,A.perkiraan,m2.Keterangan Nmperkiraan,B.SatX
         ,B.Cost,b.subcost, Cs.NamaCost, SCs.NamaSubCost,A.TglKirim ,H.TOtSubtotalRP ,A.NPPH21,'' NoPNW,0 UrutPNW,A.FlagTipe,
+        isnull(B.PERKIRAAN,'') PerkiraanBrg, isnull(M3.Keterangan,'') NmPerkiraanBrg,
         Stk.SaldoQnt,stk.SaldoRP
          ,(  select sum(saldorp) from (
        
@@ -2164,6 +2165,7 @@ Left Outer join dbgudang I on I.Kodegdg=A.kodegdg
 Left Outer Join DBPPLDet X1 on B.Noppl=X1.Nobukti and B.UrutPPL=X1.Urut
 Left Outer join DbSo M1 on A.Noso=M1.nobukti
 Left Outer join dbperkiraan M2 on A.perkiraan=M2.Perkiraan
+Left Outer join dbperkiraan M3 on B.PERKIRAAN=M3.Perkiraan
 left outer join dbCost Cs on Cs.KodeCost=B.Cost
 left outer join vwSubCost SCs on SCs.KodeCost=b.Cost and SCs.KodeSubCost=b.SubCost
 left outer join (select kodebrg,BULAN,TAHUN,SUM(isNULL(SALDOQNT,0)) SaldoQnt,SUM(isnull(SALDORP,0)) SaldoRP

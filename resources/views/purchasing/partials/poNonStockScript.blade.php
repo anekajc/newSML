@@ -1503,8 +1503,7 @@ function ns_buttonAddEditItem (i) {
   document.getElementById("ns_input_add_add_nopnwpo").value = ns_tempAddEdit.NoPNW
   document.getElementById("input_add_add_costing").value = ns_tempAddEdit.Cost ? ns_tempAddEdit.Cost : ''
   document.getElementById("input_add_add_subcosting").value = ns_tempAddEdit.subcost ? ns_tempAddEdit.subcost : ''
-  document.getElementById("input_add_add_satuanAlias").value = ns_tempAddEdit.SatX ? ns_tempAddEdit.SatX : ''
-  $('#ns_divStockProyeksi').hide();
+  document.getElementById("input_add_add_satuanAlias").value = ns_tempAddEdit.SatX ? ns_tempAddEdit.SatX : ''  $('#ns_divStockProyeksi').hide();
 
   document.getElementById("ns_input_add_add_foc").value = ns_tempAddEdit.PFOC
   document.getElementById("ns_input_add_add_kodebarang").value = ns_tempAddEdit.KodeBrg
@@ -4196,7 +4195,6 @@ function ns_cleanFormAddAdd () {
   document.getElementById("input_add_add_costing").value = ''
   document.getElementById("input_add_add_subcosting").value = ''
   document.getElementById("input_add_add_satuanAlias").value = ''
-
   // Field referensi milik item yang tadi dipilih - kosongkan supaya memulai entri item
   // baru tidak menampilkan sisa asal barang dari item sebelumnya sebelum user memilih
   // barang baru lewat modal browse.
@@ -4638,7 +4636,7 @@ function ns_refreshDataTableAdd (NOBUKTI) {
 
     // if(!ns_dataTableAdd.length) {
       let rowTable = `<tr>
-      <td class="text-center" colspan="10">Belum ada barang</td>
+      <td class="text-center" colspan="11">Belum ada barang</td>
       </tr>`
     // }
     document.getElementById("ns_tabel_data_add").innerHTML = rowTable
@@ -4677,6 +4675,7 @@ function ns_refreshDataTableAdd (NOBUKTI) {
               <td>${item.KodeBrg}</td>
               <td>${item.NamaBrg}</td>
               <td>${item.NamaAlias || ''}</td>
+              <td>${item.PerkiraanBrg || ''}${item.NmPerkiraanBrg ? ' - ' + item.NmPerkiraanBrg : ''}</td>
               <td class="text-right">${item.Qnt ? ns_formatAngka(item.Qnt) : '0.00'}</td>
               <td class="text-center">${item.Satuan}</td>
               <td class="text-right">${item.Harga ? ns_formatAngka(parseFloat(item.Harga).toFixed(2)) : '0.00'}</td>
@@ -4695,7 +4694,7 @@ function ns_refreshDataTableAdd (NOBUKTI) {
 
           if(!ns_dataTableAdd.length) {
             rowTable = `<tr>
-            <td class="text-center" colspan="10">Belum ada barang</td>
+            <td class="text-center" colspan="11">Belum ada barang</td>
             </tr>`
           }
           document.getElementById("ns_tabel_data_add").innerHTML = rowTable
@@ -5540,10 +5539,11 @@ function submitPrintcopy (nobukti) {
                 <thead>
                   <tr>
                     <td class="text-center" style="width: 2%" >No.</td>
-                    <td class="text-center" style="width: 35%">NAMA BARANG</td>
-                    <td class="text-center" style="width: 15%">KODE BRG</td>
-                    <td class="text-center" style="width: 10%">MERK</td>
-                    <td class="text-center" style="width: 8%">QTY</td>
+                    <td class="text-center" style="width: 30%">NAMA BARANG</td>
+                    <td class="text-center" style="width: 12%">KODE BRG</td>
+                    <td class="text-center" style="width: 8%">MERK</td>
+                    <td class="text-center" style="width: 11%">PERKIRAAN</td>
+                    <td class="text-center" style="width: 7%">QTY</td>
                     <td class="text-center" style="width: 5%">SAT</td>
                     <td class="text-center" style="width: 10%">HARGA</td>
                     <td class="text-center" style="width: 15%">JUMLAH</td>
@@ -5583,6 +5583,7 @@ item.forEach((itemSub, j) => {
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 35%;">${itemSub.NAMABRG}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 15%; text-align: center;">${itemSub.PartNumber}</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class="no-border" style="width: 10%;">${itemSub.NAMAMERK ?? ''}</td>
+      <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 11%; text-align: center;" title="${itemSub.ketperk ?? ''}">${itemSub.PERKIRAAN ?? ''}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 8%; text-align: right;">${itemSub.QNT ? parseFloat(itemSub.QNT).toFixed(2) : ''}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 5%; text-align: center;">${itemSub.SATX}</td>
       <td class="no-border" style="border-left:1px solid black; border-right:1px solid black; width: 10%; text-align: right;">${ns_formatAngka(parseFloat(itemSub.harga).toFixed(2))}</td>
@@ -5597,6 +5598,7 @@ const ns_fillerCount = Math.max(0, ns_maxRows - item.length);
 for (let f = 0; f < ns_fillerCount; f++) {
   tempPrintStr += `
     <tr style="height: 18px;">
+      <td style='border-left:1px solid black; border-right:1px solid black;' class='no-border'>&nbsp;</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class='no-border'>&nbsp;</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class='no-border'>&nbsp;</td>
       <td style='border-left:1px solid black; border-right:1px solid black;' class='no-border'>&nbsp;</td>

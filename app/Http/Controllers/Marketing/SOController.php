@@ -1172,7 +1172,11 @@ $d['URUT']
   }
 
   if ($soBaru) {
-    $this->isiHeaderDariForm($req->nobukti, $req->input('header', []));
+    $header = $req->input('header', []);
+    if (is_array($header)) {
+      $header['draftpo'] = $this->draftPODariPOCust($req->nopo, $req->kodecust);
+    }
+    $this->isiHeaderDariForm($req->nobukti, $header);
   }
    DB::connection('SML')->update('exec Sp_UpdateSO ?', [$req->nobukti]);
 
@@ -1206,6 +1210,21 @@ private function sesuaikanBarisPenawaran ($noBukti, $noTawar, $urutTawar, $sisa)
     ["sisa" => $sisa, "sisa2" => $sisa, "sisa3" => $sisa, "sisa4" => $sisa,
      "nobukti" => $noBukti, "notawar" => $noTawar, "uruttawar" => $urutTawar,
      "nobukti2" => $noBukti, "notawar2" => $noTawar, "uruttawar2" => $urutTawar]);
+}
+
+// Draft PO SO (dbso.pPO) diambil dari PO Customer yang dipilih (DBPOCUSTSUPP.pPO), bukan
+// dari dropdown di browser. Hanya dipakai saat header SO dibuat -- perubahan PO Customer
+// sesudahnya tidak mengubah SO. No PO yang tidak terdaftar di PO Customer = 0.
+private function draftPODariPOCust ($nopo, $kodecust) {
+  $nopo = trim((string) $nopo);
+  if ($nopo === '') {
+    return 0;
+  }
+  $po = DB::connection('SML')->select("
+    select top 1 isnull(pPO,0) pPO from DBPOCUSTSUPP
+    where POCustomer = :nopo and KodeCustSupp = :kodecust and isnull(pGanti,0) = 0
+    order by ID desc", ["nopo" => $nopo, "kodecust" => (string) $kodecust]);
+  return ($po && (int) $po[0]->pPO === 1) ? 1 : 0;
 }
 
 // Header SO yang baru dibuat SP_InsertPSOweb diisi dengan isian form header.
@@ -1326,6 +1345,9 @@ $d['URUT']
     DB::connection("SML")->statement('exec SP_InsertPSOweb ?,?,?,?,?,?,?,?,?,?,?',$values1);
     $this->sesuaikanBarisPenawaran($noBukti[0]->Nobukti, $d['NoBukti'], $d['URUT'], $sisa);
   }
+   // SO baru: Draft PO ikut PO Customer yang dipilih (SP_InsertPSOweb tidak mengisi pPO).
+   DB::connection('SML')->update('update dbso set pPO = ? where nobukti = ?',
+     [$this->draftPODariPOCust($req->nopo, $req->kodecust), $noBukti[0]->Nobukti]);
    DB::connection('SML')->update('exec Sp_UpdateSO ?', [$noBukti[0]->Nobukti]);
    $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData('I','SO',$noBukti[0]->Nobukti,'',0,'DBSO');
 
@@ -1341,6 +1363,10 @@ return $noBukti[0]->Nobukti;
   }
 
   public function onChangeHeader (Request $req) {
+    // Draft PO dikunci: hanya diisi dari PO Customer saat SO dibuat.
+    if (strtolower(trim((string) $req->field)) === 'ppo') {
+      return 0;
+    }
     $query = 'update dbso set ' . $req->field . ' = :value where nobukti = :nobukti';
     $res = DB::connection('SML')->update($query, ["value" => $req->value , "nobukti" => $req->nobukti]);
     return $res;
@@ -1982,7 +2008,8 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
         $req->booking, //60
         $req->nopenyerahan,
         $req->urgent,
-        $req->draftpo,
+        // @pPO: dari PO Customer yang dipilih; sp_SO hanya memakainya saat header SO dibuat.
+        $this->draftPODariPOCust($req->nopo, $req->kodepelanggan),
         $req->kodebackoffice,
         $req->tanggalpo,
         $req->idpocust,
