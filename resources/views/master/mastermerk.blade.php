@@ -37,6 +37,7 @@
             <th style="padding: 4px 12px;" scope="col">Actions</th>
             <th style="padding: 4px 12px;" scope="col">Kode Merk</th>
             <th style="padding: 4px 12px;" scope="col">Nama Merk</th>
+            <th style="padding: 4px 12px;" scope="col">Agen</th>
           </tr>
         </thead>
         <tbody id="tabel_data" class="text-left">
@@ -175,7 +176,7 @@ function loadAll () {
     </td>
     <td>${item.KODEMERK || ''}</td>
     <td>${item.NAMAMERK || ''}</td>
-  
+    <td class='text-center'><input type="checkbox" ${Number(item.pAgen) ? 'checked' : ''}></td>
     </tr>`
   });
 
