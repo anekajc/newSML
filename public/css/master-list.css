@@ -293,7 +293,8 @@
 .sp-badge::before {
   content: "";
   width: 6px;
-  height: 10px;
+  height: 6px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: currentColor;
 }
