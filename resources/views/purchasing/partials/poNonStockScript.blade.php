@@ -1503,7 +1503,8 @@ function ns_buttonAddEditItem (i) {
   document.getElementById("ns_input_add_add_nopnwpo").value = ns_tempAddEdit.NoPNW
   document.getElementById("input_add_add_costing").value = ns_tempAddEdit.Cost ? ns_tempAddEdit.Cost : ''
   document.getElementById("input_add_add_subcosting").value = ns_tempAddEdit.subcost ? ns_tempAddEdit.subcost : ''
-  document.getElementById("input_add_add_satuanAlias").value = ns_tempAddEdit.SatX ? ns_tempAddEdit.SatX : ''  $('#ns_divStockProyeksi').hide();
+  document.getElementById("input_add_add_satuanAlias").value = ns_tempAddEdit.SatX ? ns_tempAddEdit.SatX : ''
+  $('#ns_divStockProyeksi').hide();
 
   document.getElementById("ns_input_add_add_foc").value = ns_tempAddEdit.PFOC
   document.getElementById("ns_input_add_add_kodebarang").value = ns_tempAddEdit.KodeBrg

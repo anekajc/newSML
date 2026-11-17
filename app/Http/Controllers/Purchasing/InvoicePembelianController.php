@@ -156,6 +156,25 @@ order by A.NOBUKTI
     return $tampilinvoicebeli;
   }
 
+  // Sumber item LPB yang masih outstanding untuk di-invoice (per item dbBeliDet).
+  // vwBrowsOutBeli sudah menyaring Qnt1Sisa > 0 per item (sisa dihitung dari
+  // DBInvoiceDET.UrutBeli); NOT EXISTS menjaga item yang sudah masuk invoice mana pun
+  // tidak ikut lagi. Alias: A = vwBrowsOutBeli, C = dbBeli (header LPB), D = dbBeliDet,
+  // P = dbPO. Dipakai modal Buat Invoice (daftar LPB) dan saat simpan invoice.
+  private function sqlItemOutstanding () {
+    return "
+      from vwBrowsOutBeli A
+      inner join DBBELI C on C.NOBUKTI = A.NOBUKTI
+      inner join DBBELIDET D on D.NOBUKTI = A.NOBUKTI and D.URUT = A.URUT
+      left outer join DBPO P on P.NOBUKTI = A.NOPO
+      where A.FlagTipe <> 9
+        and A.TNDPP is not null
+        and year(C.TANGGAL) > 2017
+        and isnull(C.pCloseInv, 0) = 0
+        and not exists (select 1 from DBInvoiceDET I where I.NoBeli = A.NOBUKTI and I.UrutBeli = A.URUT)
+    ";
+  }
+
   public function getAllPembelian (Request $req) {
 
     $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
@@ -311,17 +330,129 @@ order by A.NOBUKTI
             }
           }
 
+          // Biaya per LPB (tombol + di form Edit) hanya disinkronkan kalau user membuka modal
+          // Biaya (biayaSync = 1); daftar yang dikirim = isi akhir biaya invoice ini.
+          $sync = (string) $req->input('biayaSync') === '1';
+          $biayaBersih = [];
+          if ($sync) {
+            $lpbInv = array_map(function ($r) { return trim($r->NoBeli); },
+              DB::connection('SML')->select("select distinct NoBeli from DBInvoiceDET where NOBUKTI = :nobukti", ['nobukti' => $nobukti]));
+            $biaya = $req->input('biaya');
+            list($err, $biayaBersih) = $this->validasiBiaya(is_array($biaya) ? $biaya : [], $lpbInv);
+            if ($err) { return $this->tolak($err); }
+          }
+
           // Tanggal transaksi (kolom Tanggal) tidak boleh diubah dari modal kelengkapan
           // dokumen, dan hanya dokumen yang belum diotorisasi yang boleh diedit.
-          $update = DB::connection('SML')->update("update dbinvoice set
-          Tglfakturpajak =:tglfpajak, nofakturpajak =:nopajak,nobuktipotong=:nobuktipotong,
-          tglbuktipotong=:tglbuktipotong,noinvoice=:noinvoice,tglinvoice=:tglinvoice
-          where nobukti = :nobukti and isnull(IsOtorisasi1,0) = 0",
-        ['tglfpajak'=>$tglfpajak,'nopajak'=>$nopajak,'nobuktipotong'=>$nobuktipotong,
-          'tglbuktipotong'=>$tglbpotong,'noinvoice'=>$noinvoice,'tglinvoice'=>$tglinvoice, 'nobukti' => $nobukti ] );
+          $db = DB::connection('SML');
+          $db->beginTransaction();
+          try {
+            $update = $db->update("update dbinvoice set
+            Tglfakturpajak =:tglfpajak, nofakturpajak =:nopajak,nobuktipotong=:nobuktipotong,
+            tglbuktipotong=:tglbuktipotong,noinvoice=:noinvoice,tglinvoice=:tglinvoice
+            where nobukti = :nobukti and isnull(IsOtorisasi1,0) = 0",
+          ['tglfpajak'=>$tglfpajak,'nopajak'=>$nopajak,'nobuktipotong'=>$nobuktipotong,
+            'tglbuktipotong'=>$tglbpotong,'noinvoice'=>$noinvoice,'tglinvoice'=>$tglinvoice, 'nobukti' => $nobukti ] );
+            if (!$update) {
+              $db->rollBack();
+              return $update;
+            }
+            if ($sync) {
+              $this->sinkronBiaya($nobukti, $biayaBersih);
+            }
+            $db->commit();
+          } catch (\Throwable $e) {
+            $db->rollBack();
+            return $this->tolak('Gagal menyimpan: ' . $e->getMessage());
+          }
           return $update;
 
         }
+
+// Validasi daftar biaya dari form (Add / Edit). $lpbBoleh = LPB yang boleh punya biaya.
+// Hasil: [pesanError|null, daftar bersih]. Urut/OldKode diisi untuk biaya yang sudah ada.
+private function validasiBiaya (array $biaya, array $lpbBoleh) {
+  $valas = [];
+  foreach (DB::connection('SML')->select("select KODEVLS from DBVALAS") as $v) {
+    $valas[strtoupper(trim($v->KODEVLS))] = trim($v->KODEVLS);
+  }
+  $bersih = [];
+  foreach ($biaya as $b) {
+    $lpb = trim((string) ($b['NoBukti'] ?? ''));
+    if (!in_array($lpb, $lpbBoleh, true)) {
+      return ['LPB ' . $lpb . ' punya biaya tapi belum dicentang.', []];
+    }
+    $vls = $valas[strtoupper(trim((string) ($b['KodeVls'] ?? '')))] ?? null;
+    $nilai = (float) ($b['Nilai'] ?? 0);
+    $kurs = strtoupper((string) $vls) === 'IDR' ? 1 : (float) ($b['Kurs'] ?? 0);
+    $eksp = trim((string) ($b['KodeCustSupp'] ?? ''));
+    if (!$vls) { return ['Valas biaya LPB ' . $lpb . ' tidak valid.', []]; }
+    if ($nilai <= 0) { return ['Nilai biaya LPB ' . $lpb . ' harus lebih dari 0.', []]; }
+    if ($kurs <= 0) { return ['Kurs biaya LPB ' . $lpb . ' harus lebih dari 0.', []]; }
+    if ($eksp === '') { return ['Ekspedisi biaya LPB ' . $lpb . ' belum dipilih.', []]; }
+    $bersih[] = [
+      'lpb' => $lpb, 'vls' => $vls, 'nilai' => $nilai, 'kurs' => $kurs, 'eksp' => $eksp,
+      'ket' => mb_substr(trim((string) ($b['Keterangan'] ?? '')), 0, 200),
+      'urut' => (int) ($b['Urut'] ?? 0),
+    ];
+  }
+  return [null, $bersih];
+}
+
+// Samakan dbPBiaya milik invoice ini (KodeBiaya = No Bukti invoice) dengan daftar dari form
+// Edit: yang hilang dihapus (sp_PBiaya 'D'), yang ada Urut-nya diubah ('U'), sisanya
+// ditambah ('I'). Dipanggil di dalam transaksi.
+private function sinkronBiaya ($nobukti, array $biayaBersih) {
+  $db = DB::connection('SML');
+  $lama = $db->select("select Kodebiaya, NoBuktiInv, Urut from dbPBiaya where Kodebiaya = :kode", ['kode' => $nobukti]);
+  $dipakai = [];
+  foreach ($biayaBersih as $b) {
+    if ($b['urut'] > 0) { $dipakai[$b['lpb'] . '|' . $b['urut']] = 1; }
+  }
+  foreach ($lama as $l) {
+    if (!isset($dipakai[trim($l->NoBuktiInv) . '|' . (int) $l->Urut])) {
+      $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?', ['D', $nobukti, '', 0, '', 0, trim($l->NoBuktiInv), $nobukti, (int) $l->Urut]);
+    }
+  }
+  foreach ($biayaBersih as $b) {
+    if ($b['urut'] > 0) {
+      $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?,?,?,?', [
+        'U', $nobukti, $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'], $nobukti, $b['urut'], '', 0, $b['eksp'],
+      ]);
+    } else {
+      $po = $db->selectOne("select NoPOHd from DBBELI where NOBUKTI = :lpb", ['lpb' => $b['lpb']]);
+      $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?,?,?,?', [
+        'I', $nobukti, $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'], '', 0, (string) ($po->NoPOHd ?? ''), 0, $b['eksp'],
+      ]);
+    }
+  }
+}
+
+// Biaya yang sudah tersimpan untuk satu invoice + info LPB-nya (PO & ekspedisi PO), untuk
+// modal Biaya yang dibuka dari form Edit tab Pembelian Invoice.
+public function getBiayaInvoice (Request $req) {
+  $nobukti = (string) $req->input('nobukti');
+  $biaya = DB::connection('SML')->select("
+    select rtrim(B.NoBuktiInv) NoBukti, B.Urut, B.Keterangan, B.Nilai, rtrim(B.KodeVls) KodeVls, B.Kurs,
+      rtrim(B.KODECUSTSUPP) KodeCustSupp,
+      rtrim(B.KODECUSTSUPP) + ' - ' + isnull(E.NAMACUSTSUPP, '') NamaCustSupp
+    from dbPBiaya B
+    left outer join DBCUSTSUPP E on E.KODECUSTSUPP = B.KODECUSTSUPP
+    where B.Kodebiaya = :nobukti
+    order by B.NoBuktiInv, B.Urut
+  ", ['nobukti' => $nobukti]);
+  $lpb = DB::connection('SML')->select("
+    select L.NoBukti, L.Tanggal, L.NoPO, P.TANGGAL TglPO,
+      ltrim(rtrim(isnull(P.KODEEXP, ''))) KODEEXP, isnull(E.NAMACUSTSUPP, '') NAMAEXP
+    from (select distinct rtrim(D.NoBeli) NoBukti, B.TANGGAL Tanggal, B.NoPOHd NoPO
+          from DBInvoiceDET D left outer join DBBELI B on B.NOBUKTI = D.NoBeli
+          where D.NOBUKTI = :nobukti) L
+    left outer join DBPO P on P.NOBUKTI = L.NoPO
+    left outer join DBCUSTSUPP E on E.KODECUSTSUPP = P.KODEEXP
+    order by L.Tanggal, L.NoBukti
+  ", ['nobukti' => $nobukti]);
+  return ['biaya' => $biaya, 'lpb' => $lpb];
+}
 
 
 // Detail satu dokumen invoice cukup dicari lewat NoBukti. Dulu ikut disaring bulan/tahun
@@ -371,96 +502,206 @@ order by A.NOBUKTI
 }
 
 
+// Modal Buat Invoice: daftar LPB outstanding (satu baris per LPB) yang Supplier, Tipe PPN dan
+// Valuta-nya sama dengan LPB yang diklik di tab Outstanding, dalam rentang PERIODE yang sama
+// dengan tab Outstanding (tglawal/tglakhir, default satu bulan periode kerja).
 public function getDetailPO (Request $req) {
+  $acuan = DB::connection("SML")->selectOne("
+    select KODESUPP, PPN, isnull(KODEVLS, '') KODEVLS from DBBELI where NOBUKTI = :nobukti
+  ", ['nobukti' => (string) $req->input('NoBukti')]);
+  if (!$acuan) {
+    return [];
+  }
 
-$tempBeli = DB::connection("SML")->select("
+  $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
+  list($tglawal, $tglakhir) = $this->periodeRange($periode);
+  if (preg_match('/^(19|20)\d{2}-\d{2}-\d{2}$/', (string) $req->input('tglawal')))  { $tglawal  = $req->input('tglawal'); }
+  if (preg_match('/^(19|20)\d{2}-\d{2}-\d{2}$/', (string) $req->input('tglakhir'))) { $tglakhir = $req->input('tglakhir'); }
+  if ($tglawal > $tglakhir) { $tglakhir = $tglawal; }
+  $tglakhirPlus = date('Y-m-d', strtotime($tglakhir . ' +1 day'));
 
-select distinct 0 isterima,A.NoBukti, A.Tanggal, A.NoPO, S.Tanggal TglPO,a.NAMACUSTSUPP,case when a.PPN= 0 then 'NONE' when a.PPN=1 then 'EXCLUDE' when a.PPN=2 then 'INCLUDE' end MyPPN
-from vwBrowsOutBeli A
-left outer join dbPO S on S.NoBukti=A.NOPO
-where  A.NoPO = :nobukti
-and isnull(A.QntSisa,0)>0
-order by A.Tanggal, A.NoBukti" ,["nobukti"=>  $req->input('NoBukti')] );
-
-   return $tempBeli;
+  // KODEEXP/NAMAEXP = ekspedisi di PO LPB itu. WajibBiaya = 1 kalau PO punya ekspedisi
+  // (KODEEXP bukan kosong / '-'); LPB seperti itu wajib diisi biaya sebelum invoice disimpan.
+  return DB::connection("SML")->select("
+    select L.*, isnull(E.NAMACUSTSUPP, '') NAMAEXP,
+      case when isnull(L.KODEEXP, '') in ('', '-') then 0 else 1 end WajibBiaya
+    from (
+      select A.NOBUKTI NoBukti, max(A.TANGGAL) Tanggal, max(A.NOPO) NoPO, max(P.TANGGAL) TglPO,
+        max(A.KODECUSTSUPP) KODECUSTSUPP, max(A.NAMACUSTSUPP) NAMACUSTSUPP, max(A.PPN) PPN,
+        max(isnull(C.KODEVLS, '')) KODEVLS, max(ltrim(rtrim(isnull(P.KODEEXP, '')))) KODEEXP,
+        case max(A.PPN) when 0 then 'NONE' when 1 then 'EXCLUDE' when 2 then 'INCLUDE' end MyPPN
+      " . $this->sqlItemOutstanding() . "
+        and A.KODECUSTSUPP = :kodesupp and A.PPN = :ppn and isnull(C.KODEVLS, '') = :kodevls
+        and A.TANGGAL >= :tglawal and A.TANGGAL < :tglakhirplus
+      group by A.NOBUKTI
+    ) L
+    left outer join DBCUSTSUPP E on E.KODECUSTSUPP = L.KODEEXP
+    order by L.Tanggal, L.NoBukti
+  ", ['kodesupp' => $acuan->KODESUPP, 'ppn' => (int) $acuan->PPN, 'kodevls' => $acuan->KODEVLS,
+      'tglawal' => $tglawal, 'tglakhirplus' => $tglakhirPlus]);
 }
 
+
+// Dropdown valas di modal Biaya
+public function listValas () {
+  // IDR paling atas (default di form Biaya), sisanya urut kode
+  return DB::connection('SML')->select("
+    select rtrim(KODEVLS) KODEVLS, NAMAVLS, KURS from DBVALAS
+    order by case when rtrim(KODEVLS) = 'IDR' then 0 else 1 end, KODEVLS
+  ");
+}
+
+// Browse ekspedisi di modal Biaya (master ekspedisi = dbcustsupp JENIS 3)
+public function listEkspedisi () {
+  return DB::connection('SML')->select("select KODECUSTSUPP, NAMACUSTSUPP from DBCUSTSUPP where JENIS = 3 order by NAMACUSTSUPP");
+}
+
+// Simpan invoice per LPB: setiap LPB yang dicentang masuk beserta SEMUA item outstanding-nya
+// (qty penuh, kolom sama dengan SP_INVB). LPB boleh dari beberapa PO selama Supplier + Tipe
+// PPN + Valuta sama. Header dibuat dari PO LPB pertama (salinan bagian header SP_INVB) dengan
+// No/Tgl Invoice, Faktur Pajak dan Bukti Potong kosong (diisi nanti lewat tab Pembelian
+// Invoice > Edit). Biaya per LPB disimpan lewat sp_PBiaya 'I' dalam transaksi yang sama -
+// kalau invoice gagal, biaya ikut batal.
 public function spBeliGudang (Request $req) {
-$username = \Auth::user()->username;
-$tempData = $req->input('tempData');
-if (!is_array($tempData) || !count($tempData)) {
-  return $this->tolak('Tidak ada LPB dipilih.');
-}
-$nobuktiInv = $req->input('reqNobukti');
-$inv = $this->headerDokumen('DBINVOICE', $nobuktiInv);
-if ($inv && (int) $inv->isotorisasi1 === 1) {
-  return $this->tolak('Invoice ' . $nobuktiInv . ' sudah diotorisasi, tidak bisa diubah.');
-}
-// LPB yang sudah masuk invoice lain (atau invoice ini) tidak boleh di-invoice lagi
-foreach ($tempData as $d) {
-  $sudah = $this->dipakaiOleh('DBInvoiceDET', 'NoBeli', $d['NoBukti'] ?? '');
-  if ($sudah) {
-    return $this->tolak('LPB ' . ($d['NoBukti'] ?? '') . ' sudah masuk invoice ' . $sudah . '.');
+  $username = \Auth::user()->username;
+  $lpbs = $req->input('lpbs');
+  if (!is_array($lpbs) || !count($lpbs)) {
+    return $this->tolak('Tidak ada LPB dipilih.');
   }
-}
-// Semua LPB disimpan dalam satu transaksi. SP_INVB menomori URUT detail mulai 1 di SETIAP
-// panggilan (ROW_NUMBER tanpa offset), sehingga LPB kedua dalam satu invoice melanggar
-// PK_DBInvoiceDET (NOBUKTI, URUT) - dulu error 500 dengan LPB pertama sudah terlanjur tersimpan.
-// LPB pertama tetap lewat SP_INVB (membuat header), LPB berikutnya disisipkan dengan URUT
-// lanjutan memakai kolom yang sama persis dengan SP_INVB.
-DB::connection('SML')->beginTransaction();
-try {
-foreach ($tempData as $d) {
-  if ($this->jumlahBaris('DBInvoiceDET', $nobuktiInv) > 0) {
-    DB::connection('SML')->insert("
-      insert into DBInvoiceDET (NOBUKTI, URUT, NoBeli, KODEBRG, KodeGdg,
-        PPN, KURS, DISC, QNT, NOSAT, SATUAN, SAT_1, SAT_2, ISI,
-        HARGA, DISCP, DISCTOT, BYANGKUT, NoPO, UrutPO,
-        QntTerima, Qnt1Terima, Qnt2Terima, UrutBeli,
-        KetReject, DiscP2, DiscP3, DiscP4, DiscP5, NoSPJ, NamaBrg, NILAIPPN)
-      select :nobukti, (select max(URUT) from DBInvoiceDET where NOBUKTI = :nobukti2) + ROW_NUMBER() over (order by A.URUT),
-        A.NOBUKTI, A.KODEBRG, A.KodeGdg, A.PPN, A.KURS, A.DISC, A.QntTerima, A.NOSAT, A.SATUAN, A.Sat_1, A.Sat_2,
-        A.ISI, A.HARGA, A.DISCP, A.DISCTOT, A.BYANGKUT, A.NoPO, A.UrutPO, A.QntTerima, A.Qnt1Terima, A.Qnt2Terima, A.URUT,
-        A.KetReject, A.DiscP2, A.DiscP3, A.DiscP4, A.DiscP5, '', A.NamaBrg, A.NilaiPPN
-      from DBBELIDET A
-      where A.NoPO = :nopo and A.NOBUKTI = :nolpb
-    ", ['nobukti' => $nobuktiInv, 'nobukti2' => $nobuktiInv, 'nopo' => $req->input('reqNopo'), 'nolpb' => $d['NoBukti']]);
-    continue;
+  $lpbs = array_values(array_unique(array_filter(array_map(function ($x) { return trim((string) $x); }, $lpbs), 'strlen')));
+  $biaya = $req->input('biaya');
+  $biaya = is_array($biaya) ? $biaya : [];
+
+  $nobuktiInv = trim((string) $req->input('reqNobukti'));
+  if ($nobuktiInv === '') {
+    return $this->tolak('No bukti invoice kosong. Silakan buka ulang form.');
   }
-      $values = [
-    $req->input('reqNobukti'), //1
-    $req->input('reqNourut'),  //1
-    $req->input('reqTanggal'),  //1
-    $req->input('reqNopo'),   //1
-    $req->input('reqTglpajak'),
-    $req->input('reqTglbpotong'),
-    $req->input('reqTglinvoice'),
-    $req->input('reqNopajak'),
-    $req->input('reqNobpotong'),
-    $req->input('reqNoinvoice'),
-    $username,
-    $d['NoBukti']
+  $tanggal = (string) $req->input('reqTanggal');
+  if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $tanggal, $m) || (int) $m[1] < 1900 || !checkdate((int) $m[2], (int) $m[3], (int) $m[1])) {
+    return $this->tolak('Tanggal tidak valid.');
+  }
+  $inv = $this->headerDokumen('DBINVOICE', $nobuktiInv);
+  if ($inv && (int) $inv->isotorisasi1 === 1) {
+    return $this->tolak('Invoice ' . $nobuktiInv . ' sudah diotorisasi, tidak bisa diubah.');
+  }
 
+  // Validasi biaya sebelum menyentuh database
+  list($errBiaya, $biayaBersih) = $this->validasiBiaya($biaya, $lpbs);
+  if ($errBiaya) { return $this->tolak($errBiaya); }
+  $lpbAdaBiaya = array_flip(array_column($biayaBersih, 'lpb'));
 
-  ];
-
-  DB::connection('SML')->statement('exec SP_INVB ?,?,?,?,?,?,?,?,?,?,?,?', $values);
-
-
+  // Catatan kecepatan: server DB jauh (tiap query bolak-balik jaringan), jadi jumlah query
+  // ditekan - kunci + ambil item + data ekspedisi PO digabung SATU query per LPB, dan item
+  // satu LPB di-INSERT dengan SATU statement (bukan per item).
+  $db = DB::connection('SML');
+  $db->beginTransaction();
+  try {
+    $rows = [];
+    $poLpb = [];
+    $urutLpb = [];
+    foreach ($lpbs as $lpb) {
+      // Baris pertama: kunci DBInvoiceDET LPB ini supaya dua user tidak meng-invoice LPB
+      // yang sama bersamaan (hasilnya ditampung variabel, tidak dikembalikan).
+      $items = $db->select("
+        set nocount on;
+        declare @kunci varchar(30);
+        select top 1 @kunci = NOBUKTI from DBInvoiceDET with (updlock, holdlock) where NoBeli = :lpbkunci;
+        select A.NOBUKTI, A.URUT, A.NOPO, A.KODECUSTSUPP, A.PPN, isnull(C.KODEVLS, '') KODEVLS,
+          ltrim(rtrim(isnull(P.KODEEXP, ''))) KODEEXP
+        " . $this->sqlItemOutstanding() . "
+          and A.NOBUKTI = :lpb
+        order by A.URUT
+      ", ['lpbkunci' => $lpb, 'lpb' => $lpb]);
+      if (!$items) {
+        $db->rollBack();
+        return $this->tolak('LPB ' . $lpb . ' sudah tidak outstanding (sudah masuk invoice lain). Silakan refresh.');
+      }
+      // PO memakai ekspedisi (KODEEXP bukan kosong / '-') -> biaya wajib diisi
+      if (!isset($lpbAdaBiaya[$lpb]) && !in_array($items[0]->KODEEXP, ['', '-'], true)) {
+        $db->rollBack();
+        return $this->tolak('Biaya wajib diisi karena PO dari LPB ' . $lpb . ' memiliki ekspedisi.');
+      }
+      $poLpb[$lpb] = $items[0]->NOPO;
+      foreach ($items as $it) {
+        $rows[] = $it;
+        $urutLpb[$lpb][] = (int) $it->URUT;
+      }
     }
-  if (!$this->headerDokumen('DBINVOICE', $nobuktiInv) || $this->jumlahBaris('DBInvoiceDET', $nobuktiInv) == 0) {
-    DB::connection('SML')->rollBack();
-    return $this->tolak('Invoice gagal disimpan. Silakan coba lagi.');
+
+    $acuan = $rows[0];
+    foreach ($rows as $r) {
+      if ($r->KODECUSTSUPP !== $acuan->KODECUSTSUPP || (int) $r->PPN !== (int) $acuan->PPN || $r->KODEVLS !== $acuan->KODEVLS) {
+        $db->rollBack();
+        return $this->tolak('LPB yang dipilih harus satu supplier, tipe PPN dan valuta yang sama.');
+      }
+    }
+
+    if ($inv) {
+      if (trim((string) $inv->kodesupp) !== trim((string) $acuan->KODECUSTSUPP)) {
+        $db->rollBack();
+        return $this->tolak('Invoice ' . $nobuktiInv . ' milik supplier lain. Silakan buka ulang form.');
+      }
+    } else {
+      $db->insert("
+        insert into DBInvoice (NOBUKTI, NOURUT, TANGGAL, KETERANGAN, KodeSupp, NoPO, NoFaktur, TglJatuhTempo,
+          KodeVls, Kurs, PPN, TipeBayar, Hari, TipeDisc, DISC, DISCRP, ISCETAK, NilaiCetak, IDUser,
+          IsBatal, UserBatal, KodeExp, cetakke,
+          Flagtipe, TipePPN, TglInvoice, TglFakturPajak, TglBuktiPotong, NoInvoice, NoFakturPajak, NoBuktiPotong, PN)
+        select top 1 :nobukti, :nourut, :tanggal, '', A.KODESUPP, A.NOBUKTI, '', A.TglJatuhTempo,
+          A.KODEVLS, A.KURS, A.PPN, A.TIPEBAYAR, A.HARI, A.TipeDisc, A.DISC, A.DISCRP, A.ISCETAK, A.NilaiCetak, :iduser,
+          0, '', A.KODEEXP, 0,
+          A.flagtipe, A.TipePPN, null, null, null, '', '', '', 0
+        from DBPO A
+        where A.NOBUKTI = :nopo
+      ", [
+        'nobukti' => $nobuktiInv, 'nourut' => (string) $req->input('reqNourut'), 'tanggal' => $tanggal,
+        'iduser' => $username, 'nopo' => $acuan->NOPO,
+      ]);
+      if (!$this->headerDokumen('DBINVOICE', $nobuktiInv)) {
+        $db->rollBack();
+        return $this->tolak('PO ' . $acuan->NOPO . ' tidak ditemukan, invoice gagal dibuat.');
+      }
+    }
+
+    // Satu INSERT per LPB untuk semua item outstanding-nya. URUT invoice melanjutkan urut
+    // terakhir + nomor baris (urut item LPB), hasilnya sama dengan insert per item dulu.
+    foreach ($urutLpb as $lpb => $daftarUrut) {
+      $inUrut = implode(',', array_map('intval', $daftarUrut));
+      $db->insert("
+        insert into DBInvoiceDET (NOBUKTI, URUT, NoBeli, KODEBRG, KodeGdg,
+          PPN, KURS, DISC, QNT, NOSAT, SATUAN, SAT_1, SAT_2, ISI,
+          HARGA, DISCP, DISCTOT, BYANGKUT, NoPO, UrutPO,
+          QntTerima, Qnt1Terima, Qnt2Terima, UrutBeli,
+          KetReject, DiscP2, DiscP3, DiscP4, DiscP5, NoSPJ, NamaBrg, NILAIPPN)
+        select :nobukti, isnull((select max(URUT) from DBInvoiceDET where NOBUKTI = :nobukti2), 0) + ROW_NUMBER() over (order by A.URUT),
+          A.NOBUKTI, A.KODEBRG, A.KodeGdg, A.PPN, A.KURS, A.DISC, A.QntTerima, A.NOSAT, A.SATUAN, A.Sat_1, A.Sat_2,
+          A.ISI, A.HARGA, A.DISCP, A.DISCTOT, A.BYANGKUT, A.NoPO, A.UrutPO, A.QntTerima, A.Qnt1Terima, A.Qnt2Terima, A.URUT,
+          A.KetReject, A.DiscP2, A.DiscP3, A.DiscP4, A.DiscP5, '', A.NamaBrg, A.NilaiPPN
+        from DBBELIDET A
+        where A.NOBUKTI = :lpb and A.URUT in ($inUrut)
+      ", ['nobukti' => $nobuktiInv, 'nobukti2' => $nobuktiInv, 'lpb' => $lpb]);
+    }
+
+    // Biaya per LPB: KodeBiaya = No Bukti invoice, NoBuktiInv = No LPB, NoBiayaPO = PO LPB,
+    // UrutBiayaPO = 0. Urut dinomori sp_PBiaya sendiri (max urut per LPB + 1).
+    foreach ($biayaBersih as $b) {
+      $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?,?,?,?', [
+        'I', $nobuktiInv, $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'],
+        '', 0, (string) $poLpb[$b['lpb']], 0, $b['eksp'],
+      ]);
+    }
+
+    if ($this->jumlahBaris('DBInvoiceDET', $nobuktiInv) == 0) {
+      $db->rollBack();
+      return $this->tolak('Invoice gagal disimpan. Silakan coba lagi.');
+    }
+    $db->commit();
+  } catch (\Throwable $e) {
+    $db->rollBack();
+    return $this->tolak('Invoice gagal disimpan: ' . $e->getMessage());
   }
-  DB::connection('SML')->commit();
-} catch (\Throwable $e) {
-  DB::connection('SML')->rollBack();
-  return $this->tolak('Invoice gagal disimpan: ' . $e->getMessage());
-}
 
-   return 1;
-
-
+  return 1;
 }
 
 
