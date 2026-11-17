@@ -8,6 +8,7 @@ use App\Http\Controllers\Wms\GudangController;
 use App\Http\Controllers\Wms\BarangJadiController;
 use App\Http\Controllers\Wms\BarcodeBarangController;
 use App\Http\Controllers\Wms\NewQCLPBController;
+use App\Http\Controllers\Wms\NewPOWmsController;
 use App\Http\Controllers\Wms\NewPutAwayController;
 use App\Http\Controllers\Wms\NewReturJualController;
 use App\Http\Controllers\Wms\NewReturSuratJalanController;
@@ -62,6 +63,16 @@ Route::get('/barcodebarang', [BarcodeBarangController::class, 'index'])->middlew
 Route::get('/loadAllbarcodebarang', [BarcodeBarangController::class, 'loadAll'])->middleware('auth');
 Route::post('/barcodebarangdata', [BarcodeBarangController::class, 'dataTabel'])->middleware('auth');
 
+// NewPOWmsController (Penerimaan Barang WMS, menu 210200). Href '/newpowms' dipisah dari '/newpo' (purchasing, 030301).
+Route::get('/newpowms', [NewPOWmsController::class, 'index'])->middleware('auth');
+Route::post('/addDBBeliwms', [NewPOWmsController::class, 'addDBBeli'])->middleware('auth');
+Route::post('/detailPOwms', [NewPOWmsController::class, 'getDetailPO'])->middleware('auth');
+Route::post('/detailPembelianwms', [NewPOWmsController::class, 'getDetailPembelian'])->middleware('auth');
+Route::get('/getNoBuktiwms', [NewPOWmsController::class, 'getNoBukti'])->middleware('auth');
+Route::get('/getAksesNewPOwms', [NewPOWmsController::class, 'getAkses'])->middleware('auth');
+Route::get('/getAllPOwms', [NewPOWmsController::class, 'getAllPO'])->middleware('auth');
+Route::get('/getAllPembelianwms', [NewPOWmsController::class, 'getAllPembelian'])->middleware('auth');
+Route::post('/sp_beligudangwms', [NewPOWmsController::class, 'spBeliGudang'])->middleware('auth');
 // NewQCLPBController
 Route::get('/qclpb', [NewQCLPBController::class, 'index'])->middleware('auth');
 Route::post('/detailLPB', [NewQCLPBController::class, 'detailLPB'])->middleware('auth');
