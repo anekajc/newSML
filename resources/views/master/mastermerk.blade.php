@@ -176,7 +176,7 @@ function loadAll () {
     </td>
     <td>${item.KODEMERK || ''}</td>
     <td>${item.NAMAMERK || ''}</td>
-    <td class='text-center'><input type="checkbox" ${Number(item.pAgen) ? 'checked' : ''}></td>
+    <td class='text-center'><span class="sp-badge ${Number(item.pAgen) ? 'is-active' : 'is-inactive'}">${Number(item.pAgen) ? 'Agen' : 'Non-Agen'}</span></td>
     </tr>`
   });
 
