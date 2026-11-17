@@ -301,6 +301,15 @@
     setGroupBy(globalGroupBy);
     setModeReport();                   // muat gcart_header + customize
     loadPerkiraanDropdown();           // isi dropdown Perkiraan (default akun pertama)
+    // pulihkan Perkiraan + Urutan + Group terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalPerkiraan !== undefined) {
+        setPerkiraan(v.modalPerkiraan, $('#modalPerkiraan option:selected').data('ket') || '');
+      }
+      if (v.modalOrder !== undefined) { setOrderBy(v.modalOrder); }
+      if (v.modalGroup !== undefined) { setGroupBy(v.modalGroup); }
+    });
 
     // Header tabel interaktif (drag/gear/hide/decimal/total). Halaman ini tidak punya
     // mode Valas, jadi tanpa switcher "Tampilan".
@@ -450,6 +459,7 @@
     setPerkiraan(kode, ket);
     if ($('#modalOrder').length) { setOrderBy($('#modalOrder').val()); }
     if ($('#modalGroup').length) { setGroupBy($('#modalGroup').val()); }
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

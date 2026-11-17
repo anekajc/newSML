@@ -177,6 +177,12 @@
     setDefaultHeader();
     setOrderBy(globalOrderBy);
 
+    // pulihkan Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+    });
+
     // Header tabel interaktif: drag-reorder + gear (sembunyikan/desimal/total) + bar
     // "Reset kolom"/kolom tersembunyi + switcher "Order By". Tidak ada "Tampilan" switcher --
     // jenisreport tidak pernah punya kontrol UI di halaman ini (selalu 0), sama seperti
@@ -303,6 +309,7 @@
   function applyModalFilter() {
     setOtorisasi($("#modalOtorisasi").val());
 
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

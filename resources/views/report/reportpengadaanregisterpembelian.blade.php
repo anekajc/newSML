@@ -324,6 +324,15 @@
         $(document).ready(function() {
             setOrderBy(globalOrderBy);
 
+            // pulihkan PPN + Jasa + Tipe bayar + Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalPPN !== undefined) { globalPPN = v.modalPPN; }
+              if (v.modalPjasa !== undefined) { globalPjasa = v.modalPjasa; }
+              if (v.modalTipe !== undefined) { globalTipebayar = v.modalTipe; }
+              if (v.modalOtorisasi !== undefined) { globalOtorisasi = v.modalOtorisasi; }
+            });
+
             // Header tabel interaktif standar (drag-reorder + gear per kolom + bar "kolom
             // tersembunyi"/"Reset kolom"), plus "Tampilan" switcher untuk Order By.
             ReportTable.init({
@@ -401,6 +410,7 @@
             globalTipebayar = $("#modalTipe").val();
             globalOtorisasi = $("#modalOtorisasi").val();
 
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 
@@ -701,12 +711,14 @@
         let _charts = {};
 
         function fmtShort(v) {
-            v = Math.round(num(v));
-            const a = Math.abs(v);
-            if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + ' M';
-            if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + ' jt';
-            if (a >= 1e3) return (v / 1e3).toFixed(0) + ' rb';
-            return String(v);
+            v = Math.round(num(v)); const a = Math.abs(v);
+            const id = (x) => String(x).replace('.', ',');              // desimal pakai koma
+            let s;
+            if (a >= 1e9) s = id((a / 1e9).toFixed(1).replace(/\.0$/, '')) + ' M';
+            else if (a >= 1e6) s = id((a / 1e6).toFixed(1).replace(/\.0$/, '')) + ' jt';
+            else if (a >= 1e3) s = (a / 1e3).toFixed(0) + ' rb';
+            else s = String(a);
+            return v < 0 ? '(' + s + ')' : s;                           // negatif dalam kurung, tanpa minus
         }
 
         function _destroyChart(id) {

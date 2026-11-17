@@ -206,7 +206,7 @@
           <div class="rt-grid-2" style="margin-top:10px">
             <div>
               <label class="rt-field-label" for="modalReportMode">Valas</label>
-              <select class="rt-native" id="modalReportMode">
+              <select data-nosave class="rt-native" id="modalReportMode">
                 <option value="IDR">IDR</option>
                 <option value="$">$ (Valas)</option>
               </select>
@@ -281,6 +281,15 @@
     setReportMode(globalReportMode);   // set mode + muat gcart_header
     setOrderBy(globalOrderBy);
     loadPerkiraanDropdown();           // isi dropdown Perkiraan (default akun pertama)
+    // pulihkan Perkiraan + Urutan terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    // Mode Valas (#modalReportMode) sengaja TIDAK disimpan (data-nosave): mode $ mengharuskan pilih ulang mata uang.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalPerkiraan !== undefined) {
+        setPerkiraan(v.modalPerkiraan, $('#modalPerkiraan option:selected').data('ket') || '');
+      }
+      if (v.modalOrder !== undefined) { setOrderBy(v.modalOrder); }
+    });
 
     // Header tabel interaktif (drag/gear/hide/decimal/total). "Tampilan" di sini hanya
     // MENCERMINKAN select "Valas" di modal Filter Laporan -- keduanya lewat setReportMode(),
@@ -494,6 +503,7 @@
     setPerkiraan(kode, ket);
     if ($('#modalOrder').length) { setOrderBy($('#modalOrder').val()); }
     if ($('#modalReportMode').length) { setReportMode($('#modalReportMode').val()); }
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

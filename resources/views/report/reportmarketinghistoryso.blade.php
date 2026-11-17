@@ -211,6 +211,12 @@
 
             setDefaultHeader();
 
+            // pulihkan Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+            });
+
             // Tidak ada switcher (Detail/Rekap dihapus, Order By tidak punya UI di halaman
             // ini) -- #rtBar cuma menampilkan kolom tersembunyi + Reset kolom.
             ReportTable.init({
@@ -353,6 +359,7 @@
         function applyModalFilter() {
             setOtorisasi($("#modalOtorisasi").val());
 
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 

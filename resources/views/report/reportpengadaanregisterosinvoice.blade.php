@@ -151,6 +151,12 @@
   let currentGroupby = 'NoBukti'; // groupby aktif untuk render ulang saat search
 
   $(document).ready(function () {
+      // pulihkan PPN terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+      // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+      UserFilter.restore('#modalFilter', function (v) {
+        if (v.modalPPN !== undefined) { globalPPN = v.modalPPN; }
+      });
+
       // Header tabel interaktif standar (drag-reorder + gear per kolom + bar "kolom
       // tersembunyi"/"Reset kolom"). Tidak ada "Tampilan" switcher di halaman ini -- hanya satu
       // mode/urutan yang genuinely ada (lihat catatan di makeTable()).
@@ -182,6 +188,7 @@
 
   function applyModalFilter() {
     globalPPN = $("#modalPPN").val();
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

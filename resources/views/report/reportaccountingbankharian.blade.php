@@ -177,6 +177,12 @@
   $(document).ready(function () {
     setReportMode(globalReportMode);   // memuat gcart_header untuk mode aktif
     loadPerkiraanDropdown();           // isi dropdown Perkiraan + pilih akun pertama
+    // pulihkan Perkiraan terakhir yang di-Terapkan user ini (DBUSERFILTER); kalau akunnya
+    // sudah tidak ada di dropdown, tetap akun pertama. Laporan tetap dimuat lewat Tampilkan.
+    // Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalPerkiraan) { setPerkiraan(v.modalPerkiraan); }
+    });
 
     // Header tabel interaktif. "Tampilan" = mode report halaman ini (Rp = detail,
     // Valas = rekap), satu-satunya switcher mode sekarang (lihat §3a di
@@ -279,6 +285,7 @@
 
   function applyModalFilter() {
     setPerkiraan($('#modalPerkiraan').val());
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 
@@ -502,7 +509,7 @@
     let saldoAkhirD = - ( Number(r2.SaldoAwal ?? 0) + totalDebet - totalKredit );
     let saldoAkhirK = Number(r2.SaldoAwal ?? 0) + totalDebet - totalKredit;
 
-    let f = (v) => Number(v).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let f = (v) => fmtRp(v);
 
     let spacing = `<tr><td colspan="10" style="border:0 !important; height:10px;"></td></tr>`;
 
@@ -563,7 +570,7 @@
     // hitungan saldo akhir
     let saldoAkhirD = (DebetD + SaldoAwalD) - kreditD;
 
-    let f = (v) => Number(v).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let f = (v) => fmtRp(v);
 
     let spacing = `<tr><td colspan="15" style="border:0 !important; height:10px;"></td></tr>`;
 

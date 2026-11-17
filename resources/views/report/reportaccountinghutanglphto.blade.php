@@ -222,6 +222,13 @@
     if (printTimeEl) { printTimeEl.textContent = new Date().toLocaleString('id-ID'); }
     setModeReport();                   // set mode + muat gcart_header
     loadPerkiraanDropdown();           // isi dropdown Perkiraan (default akun HT pertama)
+    // pulihkan Perkiraan terakhir yang di-Terapkan user ini (DBUSERFILTER); kalau pilihannya sudah tidak ada di
+    // dropdown, tetap default. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalPerkiraan !== undefined) {
+        setPerkiraan(v.modalPerkiraan, $('#modalPerkiraan option:selected').data('ket') || '');
+      }
+    });
 
     // Header tabel interaktif (drag/gear/hide/decimal/total). Tanpa "Tampilan": laporan ini
     // cuma punya satu mode (tanpa valas/Order By), jadi tak ada apa pun untuk di-switch.
@@ -611,6 +618,7 @@
     const kode = $('#modalPerkiraan').val();
     const ket = $('#modalPerkiraan option:selected').data('ket') || '';
     setPerkiraan(kode, ket);
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

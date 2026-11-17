@@ -87,20 +87,22 @@
       return isNaN(n) ? 0 : n;
     };
   }
-  // Indonesian currency, e.g. 1000000 -> "1.000.000,00"
+  // Indonesian currency, 2 decimals, negative in brackets: 1000000 -> "1.000.000,00", -1234.5 -> "(1.234,50)"
   if (typeof window.fmtRp !== 'function') {
     window.fmtRp = function (v) {
-      return window.num(v).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var n = window.num(v);
+      var s = Math.abs(n).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return (n < 0 && s !== '0,00') ? '(' + s + ')' : s;
     };
   }
-  // Full Rupiah, no abbreviation: 3500000 -> "Rp 3.500.000". Zero -> "Rp 0";
-  // null/undefined/'' -> "-". Used by report tables/KPIs (replaces the old
-  // abbreviated fmtN that produced "jt"/"rb"/"M"). fmtFull is the same format.
+  // fmtN: tanpa desimal (default toLocaleString), negatif -> (1.234). Komentar lama menyebut "Rp" tetapi kodenya tidak
+  // pernah menambahkannya -- jangan tambahkan. Zero -> "0"; null/undefined/'' -> "-". fmtFull is the same format.
   if (typeof window.fmtN !== 'function') {
     window.fmtN = function (v) {
       if (v === null || v === undefined || v === '') return '-';
       var n = window.num(v);
-      return (n < 0 ? '-' : '')  + Math.abs(n).toLocaleString('id-ID');
+      var s = Math.abs(n).toLocaleString('id-ID');
+      return (n < 0 && s !== '0') ? '(' + s + ')' : s;
     };
   }
   if (typeof window.fmtFull !== 'function') {

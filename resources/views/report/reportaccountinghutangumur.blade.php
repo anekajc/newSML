@@ -259,7 +259,7 @@
           <div class="rt-grid-2">
             <div>
               <label class="rt-field-label" for="modalReportMode">Valas</label>
-              <select class="rt-native" id="modalReportMode">
+              <select data-nosave class="rt-native" id="modalReportMode">
                 <option value="IDR">IDR</option>
                 <option value="$">$ (Valas)</option>
               </select>
@@ -332,6 +332,15 @@
   $(document).ready(function () {
     setReportMode(globalReportMode);   // set mode + muat gcart_header
     loadPerkiraanDropdown();           // isi dropdown Perkiraan (default akun HT pertama)
+    // pulihkan Perkiraan terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    // Mode Valas (#modalReportMode) sengaja TIDAK disimpan (data-nosave): mode $ mengharuskan pilih ulang mata uang.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalPerkiraan !== undefined) {
+        setPerkiraan(v.modalPerkiraan, $('#modalPerkiraan option:selected').data('ket') || '');
+        autoSelectSuppRange();   // rentang pelanggan/supplier ikut akun yang dipulihkan (sama seperti saat load)
+      }
+    });
 
     // Header tabel interaktif (drag/gear/hide/decimal/total). Tanpa "Tampilan": IDR/$ di sini
     // TIDAK mengubah susunan kolom (lihat setDefaultHeader), cuma nilai — mode dipilih lewat
@@ -693,10 +702,13 @@
 
   function fmtShort(v) {
     v = Math.round(num(v)); const a = Math.abs(v);
-    if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + ' M';
-    if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + ' jt';
-    if (a >= 1e3) return (v / 1e3).toFixed(0) + ' rb';
-    return String(v);
+    const id = (x) => String(x).replace('.', ',');              // desimal pakai koma
+    let s;
+    if (a >= 1e9) s = id((a / 1e9).toFixed(1).replace(/\.0$/, '')) + ' M';
+    else if (a >= 1e6) s = id((a / 1e6).toFixed(1).replace(/\.0$/, '')) + ' jt';
+    else if (a >= 1e3) s = (a / 1e3).toFixed(0) + ' rb';
+    else s = String(a);
+    return v < 0 ? '(' + s + ')' : s;                           // negatif dalam kurung, tanpa minus
   }
   function _destroyChart(id) { if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; } }
 
@@ -1050,6 +1062,7 @@
     const ket = $('#modalPerkiraan option:selected').data('ket') || '';
     setPerkiraan(kode, ket);
     if ($('#modalReportMode').length) { setReportMode($('#modalReportMode').val()); }
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 
