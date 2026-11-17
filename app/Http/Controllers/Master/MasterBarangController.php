@@ -203,13 +203,23 @@ join DBMERK f on a.KodeMerk = f.KODEMERK where a.KODEGRP = 'BJ'");
     return $edit;
   }
 
+  // Keagenan barang selalu mengikuti DBMERK.pAgen dari merk-nya (tidak diisi manual user).
+  private function agenDariMerk ($kodemerk) {
+    $row = DB::connection('SML')->select('select top 1 pAgen from DBMERK where KODEMERK = :kode', ['kode' => $kodemerk]);
+    return ($row && (int)$row[0]->pAgen) ? 1 : 0;
+  }
+
   public function spEdit (Request $req) {
+    // Merk di form edit dikunci, jadi pakai merk yang tersimpan di DBBARANG.
+    $barang = DB::connection('SML')->select('select top 1 KodeMerk from DBBARANG where KODEBRG = :kodebarang', ['kodebarang' => $req->kodebarang]);
+    $isagen = $this->agenDariMerk($barang ? $barang[0]->KodeMerk : $req->kodemerk);
+
     $edit = DB::connection('SML')->update('update DBBARANG set NAMABRG = :namabarang , NamaBrg2 = :namabarang2 , pAgen = :isagen , SAT1 = :satuan , SAT2 = :satuan2  , SAT3 = :satuan3, 
     ISI1 = :isi , ISI2 = :isi2 , ISI3 = :isi3 , QntMin = :qtymin , QntMax = :qtymax , Tolerate = :toleransi , pBerat = :isberat , ISAKTIF = :isaktif , Berat = :beratvolume , 
     PartNumber = :partnumber , Mlokasi = :lokasi , SKU = :kodesku , pKontrak = :iskontrak , Hrg1_1 = :harga , Hrg2_1 = :harga2 , Hrg3_1 = :harga3  where KODEBRG = :kodebarang' , [
       'namabarang' => $req->namabarang ,
       'namabarang2' => $req->namabarang2 ,
-      'isagen' => $req->isagen ,
+      'isagen' => $isagen ,
       'satuan' => $req->satuan ,
       'satuan2' => $req->satuan2 ,
       'satuan3' => $req->satuan3 ,
@@ -341,7 +351,7 @@ join DBMERK f on a.KodeMerk = f.KODEMERK where a.KODEGRP = 'BJ'");
         'kodebarang' => $req->kodebarang ,
         'namabarang' => $req->namabarang ,
         'namabarang2' => $req->namabarang2 ,
-        'isagen' => $req->isagen ,
+        'isagen' => $this->agenDariMerk($req->kodemerk) ,
         'satuan' => $req->satuan ,
         'satuan2' => $req->satuan2 ,
         'satuan3' => $req->satuan3 ,

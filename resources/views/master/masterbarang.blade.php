@@ -83,7 +83,7 @@
             <input type="text" class="form-control" value='Barang Jadi' disabled>
           </div>
           <label for="input_add_isagen">Keagenan</label>
-          <div class="bs-check"><input type="checkbox" id="input_add_isagen" name="" value=""></div>
+          <div class="bs-check"><input type="checkbox" id="input_add_isagen" name="" value="" disabled title="Otomatis mengikuti Keagenan di Master Merk"></div>
 
           <label for="input_add_kodeheadgroup">HeadGroup</label>
           <select id="input_add_kodeheadgroup" onchange="changeInputHeadGroup()" class="form-control" aria-label="Default select example">
@@ -260,7 +260,7 @@
             <input type="text" class="form-control" value='Barang Jadi' disabled>
           </div>
           <label for="input_edit_isagen">Keagenan</label>
-          <div class="bs-check"><input type="checkbox" id="input_edit_isagen" name="" value=""></div>
+          <div class="bs-check"><input type="checkbox" id="input_edit_isagen" name="" value="" disabled title="Otomatis mengikuti Keagenan di Master Merk"></div>
 
           <label for="input_edit_kodeheadgroup">HeadGroup</label>
           <select disabled id="input_edit_kodeheadgroup" onchange="changeInputHeadGroup()" class="form-control" aria-label="Default select example">
@@ -539,6 +539,16 @@
 let dataRefresh = []
 
 let listSelectHeadGroup = []
+// Peta KODEMERK -> pAgen (Keagenan barang otomatis mengikuti Master Merk)
+let mapMerkAgen = {}
+function simpanMapMerkAgen (listMerk) {
+  mapMerkAgen = {}
+  ;(listMerk || []).forEach(m => { mapMerkAgen[m.KODEMERK] = Number(m.pAgen) ? 1 : 0 })
+}
+function setAgenDariMerk (idSelectMerk, idCheckAgen) {
+  let kode = $("#" + idSelectMerk).val()
+  document.getElementById(idCheckAgen).checked = !!(kode && mapMerkAgen[kode])
+}
 let listSelectSubGroup = []
 let listSelectSubKategori = []
 
@@ -659,6 +669,8 @@ function buttonAdd () {
           `
         });
         document.getElementById("input_add_kodemerk").innerHTML = rowSelectMerk
+        simpanMapMerkAgen(res.listMerk)
+        setAgenDariMerk("input_add_kodemerk", "input_add_isagen")
 
       }})
 
@@ -812,6 +824,7 @@ function changeInputSubKategori () {
 
 
 function changeInputMerk () {
+  setAgenDariMerk("input_add_kodemerk", "input_add_isagen")
 
   let valueSubKategori = $("#input_add_kodesubkategori").val()
   if (valueSubKategori) {
@@ -890,6 +903,7 @@ function buttonEdit (kodebarang) {
         `
       });
       document.getElementById("input_edit_kodemerk").innerHTML = rowSelectMerk
+      simpanMapMerkAgen(res.listMerk)
 
     }})
 
@@ -936,11 +950,8 @@ function buttonEdit (kodebarang) {
     document.getElementById("input_edit_kodesku").value = res[0].SKU
     document.getElementById("input_edit_kodemerk").value = res[0].KodeMerk
 
-    if (Number(res[0].pAgen)) {
-      document.getElementById("input_edit_isagen").checked = true
-    } else {
-      document.getElementById("input_edit_isagen").checked = false
-    }
+    // Keagenan mengikuti Master Merk, bukan nilai lama di DBBARANG
+    setAgenDariMerk("input_edit_kodemerk", "input_edit_isagen")
 
     if (Number(res[0].pKontrak)) {
       document.getElementById("input_edit_iskontrak").checked = true

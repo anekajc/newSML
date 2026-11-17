@@ -70,7 +70,15 @@ class MasterMerkController extends Controller
   }
 
   public function spEdit (Request $req) {
-    $edit = DB::connection('SML')->update('update DBMERK set NAMAMERK = :nama , pAgen = :isagen where KODEMERK = :kode' , ['kode' => $req->kode , 'isagen' => $req->isagen , 'nama' => $req->nama ]);
+    $isagen = (int)$req->isagen ? 1 : 0;
+    $edit = DB::connection('SML')->transaction(function () use ($req, $isagen) {
+      $edit = DB::connection('SML')->update('update DBMERK set NAMAMERK = :nama , pAgen = :isagen where KODEMERK = :kode' , ['kode' => $req->kode , 'isagen' => $isagen , 'nama' => $req->nama ]);
+
+      // Keagenan barang selalu mengikuti merk-nya.
+      DB::connection('SML')->update('update DBBARANG set pAgen = :isagen where KodeMerk = :kode and isnull(pAgen,0) <> :isagen2' , ['kode' => $req->kode , 'isagen' => $isagen , 'isagen2' => $isagen ]);
+
+      return $edit;
+    });
 
     return $edit;
   }
