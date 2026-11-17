@@ -173,6 +173,11 @@
 
     populatePeriodSelectors();
     loadDivisiDropdown();   // isi dropdown Divisi (default: divisi pertama)
+    // pulihkan Divisi terakhir yang di-Terapkan user ini (DBUSERFILTER); kalau pilihannya sudah tidak ada di
+    // dropdown, tetap default. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalDivisi !== undefined) { setDivisi(v.modalDivisi); }
+    });
 
     // Header tabel interaktif: seret kolom, menu roda gigi (sembunyikan/desimal/total).
     // Tidak ada "Tampilan" switcher -- halaman ini cuma satu mode (g_modeReport tetap).
@@ -465,6 +470,7 @@
 
   function applyModalFilter() {
     setDivisi($('#modalDivisi').val());
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

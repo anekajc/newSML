@@ -151,6 +151,12 @@
   let currentGroupby = 'NoBukti'; // groupby aktif untuk render ulang saat search
 
   $(document).ready(function () {
+      // pulihkan Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+      // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+      UserFilter.restore('#modalFilter', function (v) {
+        if (v.modalOtorisasi !== undefined) { globalOtorisasi = v.modalOtorisasi; }
+      });
+
       // Header tabel interaktif standar (drag-reorder + gear per kolom + bar "kolom
       // tersembunyi"/"Reset kolom"). Tidak ada "Tampilan" switcher di halaman ini -- hanya satu
       // mode/urutan yang genuinely ada (lihat catatan di makeTable()).
@@ -182,6 +188,7 @@
 
   function applyModalFilter() {
     globalOtorisasi = $("#modalOtorisasi").val();
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

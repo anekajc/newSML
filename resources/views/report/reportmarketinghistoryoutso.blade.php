@@ -177,6 +177,11 @@
             showPeriode();
             setDefaultHeader();
 
+            // pulihkan Outstanding terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            // Nilai halaman ini dibaca langsung dari <select> saat Tampilkan (tanpa setter), jadi cukup dipulihkan ke select-nya.
+            UserFilter.restore('#modalFilter');
+
             ReportTable.init({
                 table: '#mainTable', // the <table class="tb">
                 bar: '#rtBar', // the div from Step 1
@@ -260,6 +265,7 @@
         // jadi cukup ditutup — nilainya sudah dibaca langsung dari #inputCustomer/#inputLokasi
         // saat makeTable() jalan.
         function applyModalFilter() {
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 

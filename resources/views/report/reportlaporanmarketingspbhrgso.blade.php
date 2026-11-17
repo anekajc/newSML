@@ -231,6 +231,14 @@
 
     setDefaultHeader();
 
+    // pulihkan Otorisasi + Tgl. Terima + Outstanding terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+      if (v.modalTerima !== undefined) { setTerima(v.modalTerima); }
+      if (v.modalOutstanding !== undefined) { setOutstanding(v.modalOutstanding); }
+    });
+
     // Switcher "Order By" di #rtBar (Detail/Rekap sudah dihapus sebelumnya).
     ReportTable.init({
       table: '#mainTable',
@@ -327,6 +335,7 @@
     setTerima($('#modalTerima').val());
     setOutstanding($('#modalOutstanding').val());
 
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

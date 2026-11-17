@@ -78,11 +78,18 @@ class PembelianPermintaanDebetNoteController extends Controller
             Convert(varchar(10), A.TANGGAL, 23)    as [Tanggal],
             A.KodeSupp                             as [Kode Supp],
             B.NAMACUSTSUPP                         as [Supplier],
-            Isnull(D.NilaiRp,0)                    as [Nilai DN],
+            -- Kredit disimpan sebagai NilaiRp minus. Di layar Debet & Kredit dipisah dan
+            -- keduanya tampil positif. Field 'Nilai DN' (= Debet) namanya dipertahankan supaya
+            -- susunan kolom yang sudah tersimpan per user (dbheadertable) tetap cocok.
+            Isnull(D.Debet,0)                      as [Nilai DN],
+            Isnull(D.Kredit,0)                     as [Kredit DN],
             A.IsOtorisasi1, A.OtoUser1, A.TglOto1
         FROM dbdebetnote A
         JOIN DBCUSTSUPP B ON A.KodeSupp = B.KODECUSTSUPP
-        LEFT OUTER JOIN (select NoBukti, Sum(NilaiRp) NilaiRp from dbDebetNoteDet group by NoBukti) D
+        LEFT OUTER JOIN (select NoBukti,
+                                Sum(case when NilaiRp > 0 then NilaiRp else 0 end) Debet,
+                                Sum(case when NilaiRp < 0 then -NilaiRp else 0 end) Kredit
+                         from dbDebetNoteDet group by NoBukti) D
                ON D.NoBukti = A.NoBukti
         WHERE A.TANGGAL BETWEEN :tglawal AND :tglakhir
         ORDER BY A.TANGGAL DESC, A.NOBUKTI DESC
@@ -107,7 +114,9 @@ class PembelianPermintaanDebetNoteController extends Controller
         $tempOutstanding = DB::connection("SML")->select("Select  c.KodeSupp,d.NamaCustSupp,d.Alamat1,Right(a.noBukti,4)NoUrut,a.Urut,a.NoBukti,c.tanggal,Keterangan,A.NoInv, b.Saldo, b.SaldoD,
         a.Nilai,
         Case when a.kodevls='IDR' then 0.00 else a.Nilai end NilaiValas,
-        a.kodeVls, a.Kurs, a.NilaiRp , c.IsOtorisasi1
+        a.kodeVls, a.Kurs, a.NilaiRp , c.IsOtorisasi1,
+        Convert(Numeric(18,2), isnull(s.SaldoInv,0) - isnull(p.Sebelum,0)) Sisa,
+        s.TglInv, s.JatuhTempoInv
   From  dbDebetNoteDet a
   Left Outer Join dbDebetNote c On c.NoBukti=a.NoBukti
   Left Outer Join (select a.NoFaktur,Sum(Saldo) Saldo, Sum(SaldoD) SaldoD
@@ -115,6 +124,23 @@ class PembelianPermintaanDebetNoteController extends Controller
                   where a.Tipe='HT'
                   Group by a.NoFaktur) b On a.NoInv=B.Nofaktur
   Left Outer Join dbCustSupp d On d.KodeCustSupp=c.KodeSupp
+  -- Sisa (kolom Nilai) berjalan per baris = nilai invoice SEBELUM baris DN ini:
+  -- saldo DBHUTPIUT tanpa posting DN (NoInvoice 'DN'), dikurangi semua baris DN (sudah/belum
+  -- diotorisasi) untuk invoice itu yang urutannya lebih dulu (Tanggal, NoBukti, Urut).
+  -- Debet (Nilai +) mengurangi, Kredit (Nilai -) menambah. Baris pertama = saldo invoice.
+  Outer Apply (select case when max(case when isnull(h.Valas,'') not in ('','IDR') then 1 else 0 end)=1
+                           then Sum(h.SaldoD) else Sum(h.Saldo) end SaldoInv,
+                      Min(h.Tanggal) TglInv, Min(h.JatuhTempo) JatuhTempoInv
+               from DBHUTPIUT h
+               where h.NoFaktur=a.NoInv and h.KodeCustSupp=c.KodeSupp and h.Tipe='HT'
+                 and isnull(h.NoInvoice,'')<>'DN') s
+  Outer Apply (select sum(x.Nilai) Sebelum
+               from dbDebetNoteDet x
+               join dbDebetNote n on n.NoBukti=x.NoBukti
+               where x.NoInv=a.NoInv and n.KodeSupp=c.KodeSupp
+                 and (n.Tanggal < c.Tanggal
+                      or (n.Tanggal = c.Tanggal and n.NoBukti < c.NoBukti)
+                      or (n.NoBukti = c.NoBukti and x.Urut < a.Urut))) p
   where a.NOBUKTI = :nobukti
   order by a.urut" , ["nobukti" => $req->nobukti]);
     return $tempOutstanding;
@@ -142,7 +168,14 @@ class PembelianPermintaanDebetNoteController extends Controller
 
   public function listCustomer (Request $req) {
 
-    $listData = DB::connection('SML')->select("select * from vwBrowsCustSupp where IsCustomer=0");
+    // vwBrowsCustSupp berisi satu baris per perkiraan supplier (DBPERKCUSTSUPP), jadi supplier
+    // yang punya 2 perkiraan hutang (mis. A091 AHOK PLASTIK: 21201 & 21203) tampil kembar.
+    // Kolom yang diambil hanya data supplier (sama di semua baris perkiraan), lalu di-DISTINCT.
+    $listData = DB::connection('SML')->select("
+        select distinct KODECUSTSUPP, NAMACUSTSUPP, ALAMAT, ALAMAT1, NamaKota
+        from vwBrowsCustSupp
+        where IsCustomer=0
+        order by KODECUSTSUPP");
     return $listData;
   }
 
@@ -154,21 +187,31 @@ class PembelianPermintaanDebetNoteController extends Controller
     // Lunas dinilai per mata uang invoice (IDR: Saldo, valas: SaldoD). Sisa < 1 (hanya selisih
     // pembulatan di belakang koma, mis. 0,07) dianggap lunas, keputusan user 22 Okt 2026.
     // Valas/Kurs diambil dari baris pertama invoice dengan valas tsb.
+    //
+    // Sisa (kolom Nilai di modal) = saldo invoice (mata uang invoice) dikurangi DN yang BELUM
+    // diotorisasi untuk invoice itu (Nilai minus = kredit, jadi menambah sisa). DN yang sudah
+    // diotorisasi sudah terposting ke DBHUTPIUT, jadi sudah ikut di Saldo/SaldoD. Invoice yang
+    // sudah pernah di-DN tetap tampil selama sisanya belum habis (dulu invoice yang sudah ada di
+    // dbDebetNoteDet langsung disembunyikan, jadi hanya bisa di-DN sekali).
     $listData = DB::connection('SML')->select("declare @awal Varchar(15)
     Select @Awal= :kodecustsupp
     select Cast(1 as Bit) Pilih,Convert(Numeric(18,2),0) Nilai, isnull(v.Valas,'IDR') KodeVls, isnull(v.Kurs,1) Kurs, s.NoFaktur, s.Tanggal, s.JatuhTempo,
-           s.Saldo, s.SaldoD
+           s.Saldo, s.SaldoD,
+           Convert(Numeric(18,2), case when s.ValasAsing is null then s.Saldo else s.SaldoD end - isnull(p.Pending,0)) Sisa
     from (select a.NoFaktur, Min(a.Tanggal) Tanggal, Min(a.JatuhTempo) JatuhTempo, SUM(a.Saldo) Saldo, SUM(a.SaldoD) SaldoD,
                  nullif(max(case when isnull(a.Valas,'') not in ('','IDR') then a.Valas else '' end),'') ValasAsing
           from DBHUTPIUT a
           where a.KodeCustSupp=@Awal and a.Tipe='HT'
-            and not exists (select 1 from dbdebetNoteDet b where b.NoInv=a.NoFaktur)
           Group by a.NoFaktur) s
     outer apply (select top 1 h.Valas, h.Kurs from DBHUTPIUT h
                  where h.NoFaktur=s.NoFaktur and h.KodeCustSupp=@Awal and h.Tipe='HT'
                    and isnull(h.Valas,'IDR')=isnull(s.ValasAsing,'IDR')
                  order by h.Tanggal, h.Urut) v
-    where case when s.ValasAsing is null then s.Saldo else s.SaldoD end >= 1
+    outer apply (select sum(d.Nilai) Pending
+                 from dbDebetNoteDet d
+                 join dbDebetNote n on n.NoBukti=d.NoBukti
+                 where d.NoInv=s.NoFaktur and n.KodeSupp=@Awal and isnull(n.IsOtorisasi1,0)=0) p
+    where case when s.ValasAsing is null then s.Saldo else s.SaldoD end - isnull(p.Pending,0) >= 1
     Order by s.Nofaktur" ,["kodecustsupp" => $req->kodecustsupp]);
     return $listData;
 
@@ -272,39 +315,43 @@ public function updateBatalOtorisasi(Request $req) {
       }
 
       // Semua invoice disimpan dalam SATU transaksi: kalau satu gagal, semuanya dibatalkan
-      // (tidak ada DN yang tersimpan setengah). Sengaja memakai BEGIN TRAN eksplisit, bukan
-      // $conn->beginTransaction(): pdo_sqlsrv memakai mode implicit transaction sehingga
-      // @@TRANCOUNT masih 0 saat SP pertama dipanggil, dan Sp_DebetNote (yang punya
-      // BEGIN/COMMIT TRAN sendiri) bisa memicu error 266. Dengan BEGIN TRAN di sini, COMMIT di
-      // dalam SP hanya menurunkan @@TRANCOUNT; ROLLBACK di dalam SP (JikaSalah) membatalkan
-      // semuanya, termasuk transaksi luar ini.
+      // (tidak ada DN yang tersimpan setengah).
+      //
+      // BEGIN TRAN, semua EXEC Sp_DebetNote, dan COMMIT dikirim sebagai SATU batch. Dulu
+      // BEGIN TRAN dikirim sendiri lewat unprepared(): koneksi pdo_sqlsrv memakai MARS, dan
+      // SQL Server menolak transaksi yang masih terbuka di akhir batch MARS ("A transaction
+      // that was started in a MARS batch is still active at the end of the batch"), jadi
+      // simpan selalu gagal. $conn->beginTransaction() juga tidak dipakai: mode implicit
+      // transaction pdo_sqlsrv bentrok dengan BEGIN/COMMIT TRAN di dalam Sp_DebetNote (error 266).
+      //
+      // Sp_DebetNote bisa me-ROLLBACK diam-diam (goto JikaSalah) tanpa error; sesudah tiap EXEC
+      // @@TRANCOUNT dicek, kalau sudah 0 batch dihentikan dengan RAISERROR (dianggap gagal).
+      // XACT_ABORT ON: error apa pun membatalkan seluruh transaksi.
       $conn = DB::connection('SML');
-      $conn->unprepared('BEGIN TRAN');
-      try {
-        foreach ($tempData as $d)  {
-          $conn->statement('exec Sp_DebetNote ?,?,?,?,?,?,?,?,?,?,?,?', [
-            "I",
-            $req->nobukti,
-            $req->tanggal,
-            $d['Keterangan'] ?? '',
-            0,
-            $d['NoFaktur'],
-            $req->kodecustsupp,
-            $this->angka($d['inputNilai'] ?? 0),
-            $d['KodeVls'],
-            $this->angka($d['inputKurs'] ?? 0),
-            $this->angka($d['inputNilaiRp'] ?? 0),
-            $req->nourut
-          ]);
+      $sql = "SET NOCOUNT ON; SET XACT_ABORT ON; BEGIN TRAN;\n";
+      $bindings = [];
+      foreach ($tempData as $d)  {
+        $sql .= "EXEC Sp_DebetNote ?,?,?,?,?,?,?,?,?,?,?,?;\n"
+              . "IF @@TRANCOUNT = 0 BEGIN RAISERROR('Sp_DebetNote membatalkan transaksi', 16, 1); RETURN; END;\n";
+        array_push($bindings,
+          "I",
+          $req->nobukti,
+          $req->tanggal,
+          $d['Keterangan'] ?? '',
+          0,
+          $d['NoFaktur'],
+          $req->kodecustsupp,
+          $this->angka($d['inputNilai'] ?? 0),
+          $d['KodeVls'],
+          $this->angka($d['inputKurs'] ?? 0),
+          $this->angka($d['inputNilaiRp'] ?? 0),
+          $req->nourut
+        );
+      }
+      $sql .= "COMMIT TRAN;";
 
-          // SP bisa me-ROLLBACK diam-diam (goto JikaSalah) tanpa melempar error ke PHP;
-          // kalau itu terjadi transaksi luar ikut hilang, jadi dianggap gagal.
-          $tc = $conn->select('select @@TRANCOUNT as tc');
-          if (!$tc || (int) $tc[0]->tc < 1) {
-            throw new \Exception('Sp_DebetNote membatalkan transaksi (invoice ' . $d['NoFaktur'] . ')');
-          }
-        }
-        $conn->unprepared('COMMIT TRAN');
+      try {
+        $conn->statement($sql, $bindings);
       } catch (\Throwable $e) {
         try { $conn->unprepared('IF @@TRANCOUNT > 0 ROLLBACK TRAN'); } catch (\Throwable $e2) {}
         \Log::error('Debet Note spAdd gagal (' . $req->nobukti . '): ' . $e->getMessage());

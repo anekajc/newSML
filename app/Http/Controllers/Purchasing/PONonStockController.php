@@ -466,10 +466,23 @@ class PONonStockController extends Controller
   }
 
   public function listCosting (Request $req) {
+    // Input Perkiraan header PO Non Stock sudah tidak dipakai - Costing disaring dari COA Biaya
+    // barang yang dipilih (DBBARANG -> dbSubGroup.PerkPers, diatur di Master Headgroup).
+    // Parameter perkiraan lama tetap diterima kalau kodebrg tidak dikirim.
+    if ((string) $req->kodebrg !== '') {
+      return DB::connection('SML')->select("select a.KodeCost, a.NamaCost from dbCost a, dbPerkCost b
+        where a.KodeCost=b.KodeCost
+          and b.Perkiraan = (select top 1 s.PerkPers
+                               from DBBARANG x
+                               join dbSubGroup s on s.KodeHDGrp = x.KodeHdGrp and s.KodeSubGrp = x.KODESUBGRP
+                              where x.KODEBRG = :kodebrg)
+        group by a.KodeCost, a.NamaCost
+        order by a.KodeCost", ["kodebrg" => (string) $req->kodebrg]);
+    }
 
-    $listData = DB::connection('SML')->select("select a.KodeCost, a.NamaCost from dbCost a, dbPerkCost b 
+    $listData = DB::connection('SML')->select("select a.KodeCost, a.NamaCost from dbCost a, dbPerkCost b
 where a.KodeCost=b.KodeCost and b.Perkiraan= :perkiraan
-  group by a.KodeCost, a.NamaCost 
+  group by a.KodeCost, a.NamaCost
  order by a.KodeCost",["perkiraan"=>$req->perkiraan]);
     return $listData;
   }
@@ -696,6 +709,38 @@ where a.KodeCost=b.KodeCost and b.Perkiraan= :perkiraan
 
   }
 
+  /**
+   * NPPH23 / NPPH21 / PERKIRAAN header untuk sp_PO (PO Non Stock), lihat catatan di spAdd().
+   * PPH: PO yang sudah ada memakai nilai tersimpan, PO baru dari supplier.
+   * PERKIRAAN header selalu kosong (perkiraan sudah per item di DBPODET).
+   */
+  private function nilaiHeaderNonStock ($nobukti, $kodeSupp, $kodeBrg) {
+    // Perkiraan header sudah tidak dipakai: perkiraan pindah ke detail (DBPODET.PERKIRAAN,
+    // mengikuti COA Biaya barang). Header selalu dikirim kosong ke sp_PO.
+    $po = DB::connection('SML')->select(
+      'select isnull(NPPH23,0) NPPH23, isnull(NPPH21,0) NPPH21 from DBPO where NOBUKTI = :nobukti',
+      ['nobukti' => (string) $nobukti]
+    );
+    if ($po) {
+      return [
+        'npph23'    => $po[0]->NPPH23,
+        'npph21'    => $po[0]->NPPH21,
+        'perkiraan' => '',
+      ];
+    }
+
+    $supp = DB::connection('SML')->select(
+      'select isnull(NPPH23,0) NPPH23, isnull(NPPH22,0) NPPH21 from DBCUSTSUPP where KODECUSTSUPP = :kode',
+      ['kode' => (string) $kodeSupp]
+    );
+
+    return [
+      'npph23'    => $supp ? $supp[0]->NPPH23 : 0,
+      'npph21'    => $supp ? $supp[0]->NPPH21 : 0,
+      'perkiraan' => '',
+    ];
+  }
+
   public function spAdd (Request $req) {
     $choice = $req->Choice;
     $jmlrecord = $req->Jmlrecord;
@@ -761,6 +806,15 @@ if ($choice =='D'){
       }
     }
 
+    // PPH23 & PPH21 header PO Non Stock tidak lagi diisi user (di form hanya informatif),
+    // nilainya ditentukan di sini - apa pun yang dikirim browser diabaikan:
+    // - PO sudah ada di DBPO  -> pakai nilai yang tersimpan. Penting karena sp_PO Choice 'U'
+    //   menimpa DBPO.NPPH23 dengan parameter, jadi edit item tidak boleh mengganti PPH PO lama.
+    // - PO baru (item pertama) -> PPH dari supplier (DBCUSTSUPP.NPPH23, NPPH22 = PPH21).
+    // Perkiraan header tidak dipakai lagi (dikirim kosong). Perkiraan pindah ke detail:
+    // DBPODET.PERKIRAAN per item dari COA Biaya barang (lihat di bawah exec sp_PO).
+    $nilaiHeader = $this->nilaiHeaderNonStock($nobukti, $req->KodeSupp, $req->KodeBrg);
+
       $values = [
         $choice, //Choice
         $nobukti, //NoBukti
@@ -820,15 +874,15 @@ if ($choice =='D'){
         $req->NOPOCUST, //NOPOCUST
         Auth::User()->username, //IdUser
         1,  //pJasa
-        $req->NPPH23,  //NPPH23
+        $nilaiHeader['npph23'],  //NPPH23 (lihat nilaiHeaderNonStock)
 
-        $req->PERKIRAAN, //PERKIRAAN
+        $nilaiHeader['perkiraan'], //PERKIRAAN (lihat nilaiHeaderNonStock)
         $req->SatX, //SatX 
         $req->COST, //COST
         $req->SUBCOST, //SUBCOST
         $req->TglKirim, //Tglkirim
 
-        $req->PPH21, //PPH21
+        $nilaiHeader['npph21'], //PPH21 (lihat nilaiHeaderNonStock)
         $req->NOPNw, //NOPNw
         $req->UrutPNW //UrutPNW
 
@@ -847,8 +901,24 @@ if ($choice =='D'){
         }
       }
 
+      // Perkiraan per item (1 PO bisa banyak barang dengan COA berbeda): DBPODET.PERKIRAAN diisi
+      // dari COA Biaya barang masing-masing (DBBARANG -> dbSubGroup.PerkPers, Master Headgroup).
+      // sp_PO tidak mengenal kolom ini, jadi diisi di sini untuk baris yang belum punya perkiraan
+      // (item baru). Barang item tidak bisa diganti saat edit, jadi baris lama tetap benar.
+      // Kolom ditambahkan lewat docs/update-db-DBSMLBARU/purchasing/31_dbpodet_perkiraan.sql.
+      if ($choice != 'D') {
+        DB::connection('SML')->update(
+          "update d set d.PERKIRAAN = s.PerkPers
+             from DBPODET d
+             join DBBARANG b on b.KODEBRG = d.KODEBRG
+             join dbSubGroup s on s.KodeHDGrp = b.KodeHdGrp and s.KodeSubGrp = b.KODESUBGRP
+            where d.NOBUKTI = :nobukti and isnull(d.PERKIRAAN, '') = '' and isnull(s.PerkPers, '') <> ''",
+          ['nobukti' => (string) $nobukti]
+        );
+      }
+
       DB::connection('SML')->update('exec Sp_UpdatePO ?', [$nobukti]);
-     
+
       if ($choice !='D'){
       $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData( $choice,'PO',$nobukti,'',$xurut,'DBPODET');
       }

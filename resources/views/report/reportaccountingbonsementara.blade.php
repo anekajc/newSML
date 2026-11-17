@@ -186,6 +186,11 @@
             setDefaultHeader();
             doSetHeader(g_modeReport); // muat susunan kolom (default / hasil kustomisasi user) + gsum flags
             loadPerkiraanDropdown(); // isi dropdown Perkiraan (default: Semua)
+            // pulihkan Perkiraan terakhir yang di-Terapkan user ini (DBUSERFILTER); kalau pilihannya sudah tidak ada di
+            // dropdown, tetap default. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalPerkiraan !== undefined) { setPerkiraan(v.modalPerkiraan); }
+            });
 
             // Header interaktif: seret judul kolom untuk mengurutkan, gear per kolom untuk
             // sembunyikan/atur total, + bar "Reset kolom"/kolom tersembunyi.
@@ -477,6 +482,7 @@
 
         function applyModalFilter() {
             setPerkiraan($('#modalPerkiraan').val());
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
     </script>

@@ -191,7 +191,7 @@
           <button type="button" class="rt-reset-link" onclick="resetAllFilters()">Reset semua</button>
           <div class="rt-footer-buttons">
             <button type="button" class="rt-btn rt-btn-ghost" data-bs-dismiss="modal">Batal</button>
-            <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal">Terapkan</button>
+            <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.save('#modalFilter')">Terapkan</button>
           </div>
         </div>
 
@@ -338,6 +338,9 @@
         });
 
         $('#inputGudang').html(rowSelect);
+        // pulihkan Gudang terakhir yang di-Terapkan user ini (DBUSERFILTER). Option baru terisi di sini (AJAX), jadi dipulihkan
+        // SESUDAH ini, bukan di ready(). Nilai dibaca langsung dari <select> saat Tampilkan (tanpa setter). Lihat docs/save-filter-guide.md.
+        UserFilter.restore('#modalFilter', function () { updateFilterBadge(); });
       },
       error: function () {
         console.error('loadGudangDropdown: gagal memuat daftar gudang');

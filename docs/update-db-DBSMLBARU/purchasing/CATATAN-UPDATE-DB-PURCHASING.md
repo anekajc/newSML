@@ -40,6 +40,8 @@ Buka di SSMS, lalu jalankan berurutan:
 | 25 | `25_gabung_menu_pr.sql` | Kosongkan href menu lama PR Non Agen & PR Non Stock di `DBMENUWEB`/`DBMENU` (menu PR digabung) | Ya, bersamaan dengan update kode menu PR gabungan. Tanpa ini menu lama di sidebar mengarah ke halaman 404 |
 | 26 | `26_sembunyikan_menu_pr_lama.sql` | Sembunyikan menu PR Non Agen & PR Non Stock dari sidebar (`DBMENUWEB.HeaderMenu` = NULL) | Ya, sesudah file 25 |
 | 28 | `28_label_menu_pr.sql` | Label sidebar `DBMENUWEB` `030102` "PR (Keagenan)" diganti "PR" | Ya, sesudah file 26 (hanya label) |
+| 31 | `31_dbpodet_perkiraan.sql` | Tambah kolom `DBPODET.PERKIRAAN` (perkiraan per item PO) + isi PO Non Stock lama dari COA Biaya barang | Ya, **sebelum** kode bagian 31 dipasang. Tanpa ini detail PO Stock & PO Non Stock error |
+| 32 | `32_sp_cetakpo_perkiraan_item.sql` | `Sp_CetakPO`: kolom `PERKIRAAN`/`ketperk` dari detail item (fallback header). Rollback: `32_sp_cetakpo_ROLLBACK.sql` | Ya, sesudah file 31 |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -266,3 +268,63 @@ Jalan keluarnya, pilih salah satu:
 - **Perubahan (`28_label_menu_pr.sql`):** `DBMENUWEB.Keterangan` untuk `030102` diubah dari `PR (Keagenan)` menjadi `PR`. Hak akses `DBFLMENUWEB` `030102` tidak diubah.
 - **Hasil sidebar:** Pembelian > PR > PR, Closing PR.
 - **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 12 November 2026. Rollback ada di bagian bawah file skrip.
+
+---
+
+## 29 — Menu PO Stock & PO Non Stock digabung jadi satu (12 November 2026)
+
+- **Perubahan kode:** kedua menu PO digabung di halaman `/purchaseorder` (`POController` + `purchasing/purchaseOrder.blade.php`).
+  - Tab **Purchase Order** memuat PO Stock dan PO Non Stock sekaligus. Ada kolom baru **Jenis** (PO Stock / PO Non Stock) tepat sesudah No Bukti, dan filter **Jenis** di modal Filter. `?jenis=stock|nonstock` di URL dipakai sebagai filter awal.
+  - Kolom Jenis dipasang langsung di JS, **tidak** lewat konfigurasi kolom `dbheadertable`, supaya selalu tampil apa pun pengaturan kolom user (di PR dulu kolom Jenis bisa hilang karena itu).
+  - Tombol **Tambah** membuka modal pilihan PO Stock / PO Non Stock. Kalau user hanya boleh menambah satu jenis, form jenis itu langsung terbuka. Tombol **Tambah PR** tetap berdiri sendiri (PO Stock).
+  - Edit / Detail / Otorisasi / Batal / Print di tiap baris memakai fungsi sesuai jenis PO-nya.
+  - Form PO Non Stock dipindah ke `purchasing/partials/poNonStockForm|Modal|Script|Css.blade.php`. Semua id, fungsi, variabel global, `name`, dan class show/hide yang bentrok dengan form PO Stock diberi awalan `ns_`. **Perubahan form PO Non Stock dilakukan di partial ini**, bukan di `purchaseOrderNonStock.blade.php` (blade lama dibiarkan sebagai cadangan).
+  - Tab **Outstanding PR** menampilkan semua PR (Agen / Non Agen / Non Stock) dengan kolom **Jenis PR** sesudah No Bukti dan tombol Filter Jenis PR. Jenis = `vwOutPPL.pjasa` + `DBPPL.pAgen`, sama dengan menu PR.
+  - Supplier di form PO Stock dan PO Non Stock bisa diketik. Saran 10 teratas (kode/nama) tampil seperti Pelanggan di menu SO. Enter / tombol cari tetap membuka modal Supplier.
+  - **Hak akses per jenis:** memakai `DBFLMENUWEB` kode menu lama, PO Stock `030201` dan PO Non Stock `030202` (dibaca per KODEMENU). Halaman bisa dibuka kalau punya `HASACCESS` di salah satunya. Daftar PO hanya memuat jenis yang boleh diakses.
+  - Route `/pononstock` diarahkan ke `/purchaseorder?jenis=nonstock`. Route AJAX `pons*`/`polist*` tetap dipakai form Non Stock.
+- **Perubahan database (`29_gabung_menu_po.sql`):**
+  - `DBMENUWEB` `030202` (PO Non Stock): `href` dan `HeaderMenu` dikosongkan (NULL), sehingga hilang dari sidebar.
+  - `DBMENU` `030022` (PO Jasa, `pononstock`): `href` dikosongkan.
+  - `DBMENUWEB` `030201`: label `PO Stock` diganti `PO`.
+  - Hak akses `DBFLMENUWEB` `030201`/`030202` **tidak** diubah.
+  - Rollback ada di bagian bawah file skrip.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 12 November 2026, dengan hasil sesuai. Untuk server client, jalankan `29_gabung_menu_po.sql` bersamaan dengan update kodenya.
+
+---
+
+## 30 — Form PO: dropdown Jenis PO, PPH dari supplier, Perkiraan otomatis dari COA barang (13 November 2026, tanpa perubahan database)
+
+- **Tombol Tambah** langsung membuka form Add (modal pilihan PO Stock / PO Non Stock dihapus). Default PO Stock, atau PO Non Stock kalau user tidak punya hak tambah PO Stock.
+- **Dropdown Jenis PO** ada di atas Supplier pada kedua form (`#input_add_jenispo`, `#ns_input_add_jenispo`). Isinya hanya jenis yang boleh ditambah user. Kalau diganti, form direset total dan no bukti dibuat sesuai jenisnya: PO Stock `PO`/`PON`, PO Non Stock `POB`. Dropdown terkunci saat Edit/Detail, setelah item pertama tersimpan, dan saat form dibuka dari Buat PO (Outstanding PR).
+- **Buat PO dari Outstanding PR:** PR Non Stock sekarang membuka form PO Non Stock. PR Agen/Non Agen tetap membuka form PO Stock. Dulu semua PR membuka form PO Stock.
+- **PO Non Stock, PPH23 & PPH21:** hanya informatif dan selalu disabled. Waktu supplier dipilih, nilainya diisi dari `DBCUSTSUPP.NPPH23` / `NPPH22`. Waktu Edit/Detail, nilainya dari yang tersimpan di DBPO. Nilai yang disimpan ditentukan server (`PONonStockController@nilaiHeaderNonStock`), nilai kiriman browser diabaikan.
+- **PO Non Stock, Perkiraan header:** input dikomentari. `DBPO.PERKIRAAN` pada PO baru diisi otomatis dari COA Biaya (`dbSubGroup.PerkPers`, Master Headgroup) barang item pertama. PO yang sudah ada mempertahankan nilai yang tersimpan, karena `sp_PO` Choice `U` menimpa `NPPH23`/`PERKIRAAN` header. Perkiraan per item tetap dibaca dari master barang masing-masing.
+- **PO Non Stock, Costing:** daftar Costing (`polistcosting`) disaring dari COA Biaya barang yang dipilih (`kodebrg`), bukan lagi dari Perkiraan header. Costing/Sub-Costing dikosongkan setiap kali barang dipilih ulang.
+- **Belum dikerjakan:** cetak PO Non Stock masih memakai `DBPO.PERKIRAAN` header (`Sp_CetakPO`). Rencananya nanti diganti ke perkiraan per barang.
+
+---
+
+## 31 — PO Non Stock: Perkiraan disimpan per item di DBPODET (16 November 2026)
+
+- **Alasan:** 1 No Bukti PO bisa berisi banyak barang dengan COA Biaya berbeda, jadi perkiraan disimpan per baris detail, tidak cukup di header.
+- **Perubahan database (`31_dbpodet_perkiraan.sql`):**
+  - Kolom baru `DBPODET.PERKIRAAN varchar(25) NULL`.
+  - Baris PO Non Stock lama (`DBPO.pJasa = 1`) diisi dari COA Biaya barang (`DBBARANG` -> `dbSubGroup.PerkPers`). Di akhir skrip ada SELECT untuk melihat baris yang masih kosong (COA Biaya barangnya belum diatur).
+  - `sp_PO` **tidak** diubah.
+- **Perubahan kode:**
+  - `PONonStockController@spAdd`: sesudah `exec sp_PO`, `DBPODET.PERKIRAAN` diisi dari COA Biaya barang untuk baris PO itu yang masih kosong (item baru). Barang item tidak bisa diganti waktu edit, jadi baris lama tetap benar.
+  - `POController@getDetail` (`pogetdetail`): tambah kolom `PerkiraanBrg` (= `B.PERKIRAAN`) dan `NmPerkiraanBrg`.
+  - Form PO Non Stock: tabel detail barang dapat kolom **Perkiraan** (kode - nama). Form input item **tidak** punya field perkiraan, karena perkiraan otomatis mengikuti barang.
+- **Header `DBPO.PERKIRAAN` tidak dipakai lagi** (menggantikan aturan bagian 30). `PONonStockController@nilaiHeaderNonStock` selalu mengirim perkiraan kosong ke `sp_PO`, jadi PO Non Stock baru dan PO lama yang item-nya diedit akan punya header perkiraan kosong. PO lama yang tidak disentuh tetap menyimpan nilai lamanya.
+- **Cetak:** sudah diganti ke perkiraan per item, lihat bagian 32.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 16 November 2026. Hasil backfill: dari 2.203 baris detail PO Non Stock, 444 terisi dan 1.759 masih kosong. Hampir semuanya (1.757 baris) barang HeadGroup `20` / SubGroup `03` yang `dbSubGroup.PerkPers`-nya kosong. COA Biaya subgroup itu perlu diisi di Master Headgroup, lalu jalankan ulang `31_dbpodet_perkiraan.sql` untuk mengisi baris lama.
+
+---
+
+## 32 — Cetak PO: Perkiraan per item (16 November 2026)
+
+- **Perubahan database (`32_sp_cetakpo_perkiraan_item.sql`):** `Sp_CetakPO` mengambil `PERKIRAAN` dan `ketperk` dari `DBPODET.PERKIRAAN` tiap baris. Kalau kosong, memakai `DBPO.PERKIRAAN` header (PO lama / PO Stock). Nama dan urutan kolom hasil tidak berubah, jadi cetak PO Stock dan Closing PO yang memakai SP yang sama tidak terpengaruh. Definisi lama disimpan di `32_sp_cetakpo_ROLLBACK.sql`.
+- **Perubahan kode:** cetak PO Non Stock (`submitPrintcopy` di `partials/poNonStockScript.blade.php`) dapat kolom **PERKIRAAN** (kode perkiraan per baris; nama perkiraan muncul sebagai tooltip) di antara MERK dan QTY.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 16 November 2026, dan sudah dicoba `exec Sp_CetakPO` pada PO Non Stock: berjalan normal.
+- **Urutan pasang:** jalankan `31_dbpodet_perkiraan.sql` dulu, baru update kode.

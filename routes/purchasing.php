@@ -235,10 +235,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/purchaseorderspaddpr',            [POController::class, 'spAddPr']);
 
     // ── PURCHASE ORDER NONSTOCK ───────────────────────────────────────────
-    Route::get('/pononstock',              [PONonStockController::class, 'index']);
+    // Menu PO Non Stock sudah digabung ke /purchaseorder (form Non Stock = partials/poNonStock*,
+    // filter & kolom Jenis). URL lama diarahkan ke sana dengan filter Jenis = PO Non Stock.
+    // Route AJAX pons* / polist* di bawah tetap dipakai form Non Stock di halaman gabungan.
+    // Route::get('/pononstock',              [PONonStockController::class, 'index']);
+    Route::get('/pononstock', fn () => redirect('/purchaseorder?jenis=nonstock'));
     Route::get('/polistperkiraan',         [PONonStockController::class, 'listPerkiraan']);
-    Route::post('/polistcosting',          [PONonStockController::class, 'listCosting']);
-    Route::post('/polistsubcosting',       [PONonStockController::class, 'listSubCosting']);
+    Route::post('/polistcosting',          [PONonStockController::class, 'listCosting']);    Route::post('/polistsubcosting',       [PONonStockController::class, 'listSubCosting']);
     Route::get('/polistbarangjasa',        [PONonStockController::class, 'listBarangJasa']);
     Route::get('/polistbarangjasanobukti', [PONonStockController::class, 'listBarangJasaNoBukti']);
     Route::post('/ponsspadd',              [PONonStockController::class, 'spAdd']);

@@ -359,6 +359,14 @@
             setDefaultHeader();
             buildKpis([]);
 
+            // pulihkan Otorisasi + Outstanding + Agen terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+              if (v.modalOutstanding !== undefined) { setOutstanding(v.modalOutstanding); }
+              if (v.modalAgen !== undefined) { setAgen(v.modalAgen); }
+            });
+
             // Header tabel interaktif + switcher "Order By" di #rtBar (bukan lagi Detail/Rekap).
             ReportTable.init({
                 table: '#mainTable',
@@ -562,6 +570,7 @@
             setOutstanding($("#modalOutstanding").val());
             setAgen($("#modalAgen").val());
 
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 
@@ -661,12 +670,14 @@
 
         /* -- KPI STRIP -- */
         function fmtShort(v) {
-            v = Math.round(currencyNormalizer(v));
-            const a = Math.abs(v);
-            if (a >= 1e9) return (v / 1e9).toFixed(1).replace(/\.0$/, '') + ' M';
-            if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + ' jt';
-            if (a >= 1e3) return (v / 1e3).toFixed(0) + ' rb';
-            return String(v);
+            v = Math.round(currencyNormalizer(v)); const a = Math.abs(v);
+            const id = (x) => String(x).replace('.', ',');              // desimal pakai koma
+            let s;
+            if (a >= 1e9) s = id((a / 1e9).toFixed(1).replace(/\.0$/, '')) + ' M';
+            else if (a >= 1e6) s = id((a / 1e6).toFixed(1).replace(/\.0$/, '')) + ' jt';
+            else if (a >= 1e3) s = (a / 1e3).toFixed(0) + ' rb';
+            else s = String(a);
+            return v < 0 ? '(' + s + ')' : s;                           // negatif dalam kurung, tanpa minus
         }
 
         // Dihitung dari baris yang SEDANG TAMPIL (setelah search + filter Otorisasi/Status),

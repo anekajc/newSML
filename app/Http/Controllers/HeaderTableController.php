@@ -886,6 +886,23 @@ class HeaderTableController extends Controller
         $headertableheader = json_decode($headertable[0]->header);
         $headerisshown = json_decode($headertable[0]->isshown);
         $isparsed = 0;
+
+        // Kolom 'Kredit DN' ditambah belakangan (13 Nov 2026). Susunan kolom yang sudah
+        // tersimpan sebelum itu belum punya kolom ini - disisipkan tepat sesudah 'Nilai DN'
+        // (Debet), di semua array sekaligus supaya indeksnya tetap sejajar.
+        if (is_array($headertablevalue) && !in_array('Kredit DN', $headertablevalue, true)) {
+          $pos = array_search('Nilai DN', $headertablevalue, true);
+          $pos = ($pos === false) ? count($headertablevalue) : $pos + 1;
+          array_splice($headertablevalue, $pos, 0, ['Kredit DN']);
+          array_splice($headertableheader, $pos, 0, ['Kredit DN']);
+          array_splice($isnumberheadertable, $pos, 0, [1]);
+          array_splice($headerisshown, $pos, 0, [1]);
+          $tipeSimpan = json_decode($headertable[0]->tipe);
+          if (is_array($tipeSimpan)) {
+            array_splice($tipeSimpan, $pos, 0, [2]);
+            $headertable[0]->tipe = json_encode($tipeSimpan);
+          }
+        }
       } else {
         $isparsed = 1;
         // Sama seperti cabang 'uangmukabeli' - kolom default DITULIS EKSPLISIT supaya tabel
@@ -901,7 +918,8 @@ class HeaderTableController extends Controller
           'Tanggal'   => 2,
           'Kode Supp' => 0,
           'Supplier'  => 0,
-          'Nilai DN'  => 1,
+          'Nilai DN'  => 1,   // tampil sebagai 'Debet'
+          'Kredit DN' => 1,   // tampil sebagai 'Kredit'
         ];
         foreach ($default as $key => $tipe) {
           array_push($headertablevalue, $key);

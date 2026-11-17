@@ -1066,7 +1066,8 @@
 
               <div class="col-md-4" style="margin-top:-10px;"><div class="form-group"><label>Draft PO</label></div></div>
               <div class="col-md-8" style="margin-top:-10px;">
-                <select onchange="onChangeDraftPO()" id="input_add_draftpo" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example">
+                {{-- Draft PO terkunci: otomatis dari PO Customer (DBPOCUSTSUPP.pPO) saat No PO dipilih. --}}
+                <select id="input_add_draftpo" class="form-control form-select-lg mb-3" aria-label=".form-select-lg example" disabled>
                   <option value=0 selected>Tidak</option>
                   <option value=1>Ya</option>
                 </select>
@@ -3622,8 +3623,24 @@ function formatRupiah(el) {
 }
 
 ///// search no po
+// Draft PO SO ikut PO Customer yang dipilih. Kalau teks No PO diubah lagi sesudah memilih,
+// Draft PO kembali Tidak (0) sampai No PO dipilih ulang dari daftar. Server tetap mengambil
+// nilainya sendiri dari DBPOCUSTSUPP (SOController@draftPODariPOCust).
+let soNoPODipilih = null
+function soSetDraftPODariPO (noPo, ppo) {
+  soNoPODipilih = noPo
+  document.getElementById("input_add_draftpo").value = (Number(ppo) === 1) ? 1 : 0
+}
+function soResetDraftPOJikaNoPOBerubah (keyword) {
+  if (tipeform == 'edit' || soNoPODipilih === null || keyword === soNoPODipilih) { return }
+  soNoPODipilih = null
+  $("#input_add_idpo").val('')
+  document.getElementById("input_add_draftpo").value = 0
+}
+
 function searchNoPO(keyword) {
 console.log('searchnopo')
+soResetDraftPOJikaNoPOBerubah(keyword)
  console.log($("#input_add_kodepelanggan").val(),'================')
 if (keyword.length < 2) {
   $("#dropdown_nopo").hide()
@@ -3647,7 +3664,7 @@ $.ajax({
       html += `
         <a class="dropdown-item"
           style="white-space: normal; word-break: break-word;"
-          onclick="selectNoPO('${item.POCustomer}', '${item.namacustsupp}' , '${item.ID}')">
+          onclick="selectNoPO('${item.POCustomer}', '${item.namacustsupp}' , '${item.ID}', '${item.pPO}')">
           ${item.POCustomer} - ${item.namacustsupp}
         </a>
       `
@@ -3666,10 +3683,11 @@ $.ajax({
 })
 }
 
-function selectNoPO(noPo, nama , id = 0) {
+function selectNoPO(noPo, nama , id = 0, ppo = 0) {
   console.log(noPo, nama , id)
   $("#input_add_nopo").val(noPo)
   $("#input_add_idpo").val(id)
+  soSetDraftPODariPO(noPo, ppo)
   $("#input_nama_pelanggan_nopo").val(nama)
   $("#dropdown_nopo").hide()
   idpocust = id
@@ -6182,7 +6200,7 @@ function buttonAddListNoPo () {
       let rowTable = ``
       res.forEach((item, i) => {
         rowTable += `
-        <tr class="pick-row" onclick="buttonAddPickNoPo('${item.POCustomer}' , '${item.ID}')">
+        <tr class="pick-row" onclick="buttonAddPickNoPo('${item.POCustomer}' , '${item.ID}', '${item.pPO}')">
 
         <td>${item.ID}</td>
         <td>${item.namacustsupp}</td>
@@ -8459,18 +8477,21 @@ function buttonAddPickSattax (kode, nama ) {
 }
 
 
-function buttonAddPickNoPo (pocust, pickedIdPocust ) {
+function buttonAddPickNoPo (pocust, pickedIdPocust, ppo = 0) {
   console.log('buttonAddPickPIC')
   // console.log(kode,nama)
 
   idpocust = pickedIdPocust
 
   if (tipeform == 'edit') {
-    onChangeHeader('ppo' , 1)
+    // Draft PO SO tidak diubah lagi sesudah SO dibuat (dulu di sini diset ppo = 1).
     onChangeHeader('idpocust' , idpocust)
 
   }
   document.getElementById("input_add_nopo").value = pocust
+  if (tipeform != 'edit') {
+    soSetDraftPODariPO(pocust, ppo)
+  }
   // document.getElementById("input_add_namapic").value = nama
   buttonAddListBatal()
 }
@@ -8667,7 +8688,7 @@ function unlockFormAdd () {
   document.getElementById("input_add_tanggalpo").disabled = false
   document.getElementById("input_add_tanggalkirim").disabled = false
   document.getElementById("input_add_hari").disabled = false
-  document.getElementById("input_add_draftpo").disabled = false
+  document.getElementById("input_add_draftpo").disabled = true // terkunci, ikut PO Customer
 
   // document.getElementById("buttonAddListPelanggan").disabled = false
   document.getElementById("buttonAddListAlamatKirim").disabled = false
@@ -8776,6 +8797,7 @@ function cleanFormAdd () {
   document.getElementById("input_add_namasales").value = ''
   document.getElementById("input_add_hari").value = 0
   document.getElementById("input_add_draftpo").value = 0
+  soNoPODipilih = null
 
   document.getElementById("input_add_tipeppn").disabled = false
   document.getElementById("input_add_pembayaran").disabled = false
@@ -8785,7 +8807,7 @@ function cleanFormAdd () {
   document.getElementById("input_add_tanggalpo").disabled = false
   document.getElementById("input_add_tanggalkirim").disabled = false
   document.getElementById("input_add_hari").disabled = false
-  document.getElementById("input_add_draftpo").disabled = false
+  document.getElementById("input_add_draftpo").disabled = true // terkunci, ikut PO Customer
 
   document.getElementById("input_add_kodepelanggan").disabled = true
   document.getElementById("buttonAddListAlamatKirim").disabled = false
@@ -9153,7 +9175,7 @@ function buttonDetail (NOBUKTI) {
         document.getElementById("input_detail_hari").value = dataHeaderDetail.Hari
         document.getElementById("input_detail_pembayaran").value = dataHeaderDetail.TipeBayar
         document.getElementById("input_detail_ppn").value = dataHeaderDetail.PPN
-        document.getElementById("input_detail_draftpo").value = dataHeaderDetail.PPO
+        document.getElementById("input_detail_draftpo").value = (Number(dataHeaderDetail.PPO) === 1) ? 1 : 0
         document.getElementById("input_detail_tanggal").value = formatDate(dataHeaderDetail.Tanggal)
         document.getElementById("input_detail_tanggalpo").value = formatDate(dataHeaderDetail.TglPO)
         document.getElementById("input_detail_tanggalkirim").value = formatDate(dataHeaderDetail.TglKirim)
@@ -9330,7 +9352,8 @@ function refreshDataTableAdd (NOBUKTI = "") {
           }
 
           document.getElementById("input_add_tipeppn").value = dataHeaderAdd.PPN
-          document.getElementById("input_add_draftpo").value = dataHeaderAdd.PPO
+          // SO lama bisa ber-pPO NULL; dropdown terkunci jadi ditampilkan Tidak (0).
+          document.getElementById("input_add_draftpo").value = (Number(dataHeaderAdd.PPO) === 1) ? 1 : 0
           document.getElementById("input_add_tanggal").value = formatDate(dataHeaderAdd.Tanggal)
           document.getElementById("input_add_tanggalpo").value = formatDate(dataHeaderAdd.TglPO)
           document.getElementById("input_add_tanggalkirim").value = formatDate(dataHeaderAdd.TglKirim)
