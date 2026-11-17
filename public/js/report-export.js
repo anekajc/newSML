@@ -412,7 +412,8 @@
   var FONT_BOLD  = { name: 'Calibri', size: 11, bold: true };
 
   function numFmt(decimals) {
-    return decimals > 0 ? '#,##0.' + new Array(decimals + 1).join('0') : '#,##0';
+    var pos = decimals > 0 ? '#,##0.' + new Array(decimals + 1).join('0') : '#,##0';
+    return pos + ';(' + pos + ')';        // positif;negatif-dalam-kurung (nilai tetap angka negatif asli)
   }
 
   function sheetName(opts) {

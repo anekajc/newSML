@@ -535,7 +535,7 @@
     let saldoKasir  = saldoAkhir;
     let tunai       = saldoAkhir - totalBon;
 
-    let f = (v) => Number(v).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let f = (v) => fmtRp(v);
 
     let spacing = `<tr><td colspan="10" style="border:0 !important; height:10px;"></td></tr>`;
 
@@ -608,7 +608,7 @@
     let saldoAkhir  = (DebetRp + SaldoAwal)  - kreditRp;
     let saldoAkhirD = (DebetD  + SaldoAwalD) - kreditD;
 
-    let f = (v) => Number(v).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let f = (v) => fmtRp(v);
 
     let spacing = `<tr><td colspan="9" style="border:0 !important; height:10px;"></td></tr>`;
 

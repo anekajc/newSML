@@ -1412,8 +1412,16 @@ $iconMap = [
             return (withDay) ? _day + _separator + _month + _separator + _year : _month + _separator + _year
         }
 
+        // Angka untuk TAMPILAN laporan: 1.234.567,89 ; negatif di dalam kurung tanpa minus: (1.234.567,89).
+        // _comma = false -> nilai mentah n.toFixed(d) (titik desimal, tanpa pemisah/kurung) utk input & perhitungan.
         function format_number(n, _decimal = 0, _comma = true) {
-            return (_comma) ? numberWithCommas(n.toFixed(_decimal)) : n.toFixed(_decimal);
+            var s = n.toFixed(_decimal);
+            if (!_comma) { return s; }
+            var neg = s.charAt(0) === '-' && /[1-9]/.test(s);      // "-0.00" itu nol, bukan negatif
+            if (s.charAt(0) === '-') { s = s.slice(1); }
+            var p = s.split('.');
+            var out = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (p[1] ? ',' + p[1] : '');
+            return neg ? '(' + out + ')' : out;
         }
 
         function messageRequired(_input_name) {

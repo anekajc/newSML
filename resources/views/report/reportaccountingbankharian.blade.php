@@ -509,7 +509,7 @@
     let saldoAkhirD = - ( Number(r2.SaldoAwal ?? 0) + totalDebet - totalKredit );
     let saldoAkhirK = Number(r2.SaldoAwal ?? 0) + totalDebet - totalKredit;
 
-    let f = (v) => Number(v).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let f = (v) => fmtRp(v);
 
     let spacing = `<tr><td colspan="10" style="border:0 !important; height:10px;"></td></tr>`;
 
@@ -570,7 +570,7 @@
     // hitungan saldo akhir
     let saldoAkhirD = (DebetD + SaldoAwalD) - kreditD;
 
-    let f = (v) => Number(v).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let f = (v) => fmtRp(v);
 
     let spacing = `<tr><td colspan="15" style="border:0 !important; height:10px;"></td></tr>`;
 

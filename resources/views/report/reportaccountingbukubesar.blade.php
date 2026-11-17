@@ -408,16 +408,19 @@
         function money(v, col) {
             if (!v) return '-';
             const dec = col ? Number(col[5]) : 2;
-            return (v < 0 ? '-' : '') + 'Rp ' + Math.abs(v).toLocaleString('id-ID', {
-                minimumFractionDigits: dec, maximumFractionDigits: dec
-            });
+            return rpBracket(v, dec);
         }
         // Running saldo always shows a value (incl. 0)
         function saldo(v, col) {
             const dec = col ? Number(col[5]) : 2;
-            return (v < 0 ? '-' : '') + 'Rp ' + Math.abs(v).toLocaleString('id-ID', {
-                minimumFractionDigits: dec, maximumFractionDigits: dec
-            });
+            return rpBracket(v, dec);
+        }
+        // Negatif -> (Rp 1.234,00): kurung membungkus seluruh teks termasuk "Rp", tanpa tanda minus.
+        // Nilai yang membulat ke nol tidak diberi kurung.
+        function rpBracket(v, dec) {
+            const s = Math.abs(v).toLocaleString('id-ID', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+            const isZero = !/[1-9]/.test(s);
+            return (v < 0 && !isZero) ? '(Rp ' + s + ')' : 'Rp ' + s;
         }
 
         // HTML-escape teks bebas (Keterangan/Lawan/No. Bukti/nama akun bisa diisi user).
