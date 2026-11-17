@@ -162,6 +162,12 @@
     showPeriode();
     setDefaultHeader();
 
+    // pulihkan Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+    });
+
     // Header tabel interaktif. "Tampilan" = Report Mode (Detail/Rekap) -- SATU-SATUNYA tempat
     // kontrol ini muncul (tidak diulang di modal Filter). Report Mode hanya mengubah susunan
     // kolom (bukan query), jadi cukup render() ulang -- tidak perlu makeTable().
@@ -224,6 +230,7 @@
   function applyModalFilter() {
     setOtorisasi($('#modalOtorisasi').val());
 
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

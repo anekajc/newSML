@@ -189,6 +189,12 @@
             setDefaultHeader();
             setOrderBy(globalOrderBy);
 
+            // pulihkan Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+            });
+
             ReportTable.init({
                 table: '#mainTable',
                 bar: '#rtBar',
@@ -238,6 +244,7 @@
 
         function applyModalFilter() {
             setOtorisasi($('#modalOtorisasi').val());
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 

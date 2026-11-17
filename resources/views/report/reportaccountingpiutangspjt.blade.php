@@ -229,6 +229,13 @@
     // document.getElementById('printTime').textContent = new Date().toLocaleString('id-ID');
     setModeReport();                   // muat gcart_header + customize
     loadPerkiraanDropdown();           // isi dropdown Perkiraan (default akun PT pertama)
+    // pulihkan Perkiraan terakhir yang di-Terapkan user ini (DBUSERFILTER); kalau pilihannya sudah tidak ada di
+    // dropdown, tetap default. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalPerkiraan !== undefined) {
+        setPerkiraan(v.modalPerkiraan, $('#modalPerkiraan option:selected').data('ket') || '');
+      }
+    });
 
     // Header tabel interaktif (drag/gear/hide/decimal/total). Tanpa "Tampilan": report ini
     // mode tunggal IDR, setDefaultHeader() tidak bercabang per mode.
@@ -580,6 +587,7 @@
     const kode = $('#modalPerkiraan').val();
     const ket  = $('#modalPerkiraan option:selected').data('ket') || '';
     setPerkiraan(kode, ket);
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

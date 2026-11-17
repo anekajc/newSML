@@ -359,6 +359,14 @@
             setDefaultHeader();
             buildKpis([]);
 
+            // pulihkan Otorisasi + Outstanding + Agen terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+              if (v.modalOutstanding !== undefined) { setOutstanding(v.modalOutstanding); }
+              if (v.modalAgen !== undefined) { setAgen(v.modalAgen); }
+            });
+
             // Header tabel interaktif + switcher "Order By" di #rtBar (bukan lagi Detail/Rekap).
             ReportTable.init({
                 table: '#mainTable',
@@ -562,6 +570,7 @@
             setOutstanding($("#modalOutstanding").val());
             setAgen($("#modalAgen").val());
 
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 

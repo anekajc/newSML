@@ -273,6 +273,13 @@
     setDefaultHeader();
     setOrderBy(globalOrderBy);
 
+    // pulihkan Otorisasi + Agen terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+      if (v.modalAgen !== undefined) { setAgen(v.modalAgen); }
+    });
+
     ReportTable.init({
       table: '#mainTable',
       bar: '#rtBar',
@@ -389,6 +396,7 @@
     setOtorisasi($('#modalOtorisasi').val());
     setAgen($('#modalAgen').val());
 
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

@@ -324,6 +324,15 @@
         $(document).ready(function() {
             setOrderBy(globalOrderBy);
 
+            // pulihkan PPN + Jasa + Tipe bayar + Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalPPN !== undefined) { globalPPN = v.modalPPN; }
+              if (v.modalPjasa !== undefined) { globalPjasa = v.modalPjasa; }
+              if (v.modalTipe !== undefined) { globalTipebayar = v.modalTipe; }
+              if (v.modalOtorisasi !== undefined) { globalOtorisasi = v.modalOtorisasi; }
+            });
+
             // Header tabel interaktif standar (drag-reorder + gear per kolom + bar "kolom
             // tersembunyi"/"Reset kolom"), plus "Tampilan" switcher untuk Order By.
             ReportTable.init({
@@ -401,6 +410,7 @@
             globalTipebayar = $("#modalTipe").val();
             globalOtorisasi = $("#modalOtorisasi").val();
 
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 

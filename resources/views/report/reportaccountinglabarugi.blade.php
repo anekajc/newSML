@@ -260,6 +260,11 @@
     doSetHeader(g_modeReport);   // muat gcart_header (default / hasil Reset kolom tersimpan)
     populatePeriodSelectors();
     loadDivisiDropdown();   // isi dropdown Divisi (default: divisi pertama)
+    // pulihkan Divisi terakhir yang di-Terapkan user ini (DBUSERFILTER); kalau pilihannya sudah tidak ada di
+    // dropdown, tetap default. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalDivisi !== undefined) { setDivisi(v.modalDivisi); }
+    });
 
     // Header tabel interaktif TANPA drag (lihat komentar di atas file): gear per kolom untuk
     // sembunyikan/total, + bar "Reset kolom"/kolom tersembunyi. Tidak ada "Tampilan" switcher --
@@ -705,6 +710,7 @@
 
   function applyModalFilter() {
     setDivisi($('#modalDivisi').val());
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 </script>

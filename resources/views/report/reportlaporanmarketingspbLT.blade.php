@@ -176,6 +176,13 @@
             showPeriode();
             setDefaultHeader();
 
+            // pulihkan Otorisasi + Tgl. Terima terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+            // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+              if (v.modalTerima !== undefined) { setTerima(v.modalTerima); }
+            });
+
             // Tidak ada switcher (Detail/Rekap dihapus, Order By selalu "LT") -- #rtBar cuma
             // menampilkan kolom tersembunyi + Reset kolom.
             ReportTable.init({
@@ -226,6 +233,7 @@
         function applyModalFilter() {
             setOtorisasi($('#modalOtorisasi').val());
             setTerima($('#modalTerima').val());
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 

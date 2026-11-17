@@ -223,6 +223,13 @@
       doSetHeader(g_modeReport);
       doShowCustomize();
 
+      // pulihkan Otorisasi + Diterima terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+      // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+      UserFilter.restore('#modalFilter', function (v) {
+        if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+        if (v.modalDiterima !== undefined) { setDiterima(v.modalDiterima); }
+      });
+
       // Header tabel interaktif: drag-reorder + gear (sembunyikan/desimal/total) + bar
       // "Reset kolom"/kolom tersembunyi, plus switcher "Tampilan" (Order By) yang sekarang
       // sama di kedua mode (lihat viewsCfg). Otorisasi & Diterima tetap di modal Filter
@@ -263,6 +270,7 @@
     setOtorisasi($("#modalOtorisasi").val());
     setDiterima($("#modalDiterima").val());
 
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 

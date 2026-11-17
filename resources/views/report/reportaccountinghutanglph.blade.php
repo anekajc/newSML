@@ -174,7 +174,7 @@
             {{-- Selalu punya nilai (IDR = default) -- pilihan wajib, TIDAK dihitung di badge.
                  Ganti langsung memuat ulang susunan kolom (gcart_header) mode ini, sama seperti
                  perilaku dropdown lama. --}}
-            <select class="rt-native" id="modalReportMode" onchange="setReportMode(this.value)">
+            <select data-nosave class="rt-native" id="modalReportMode" onchange="setReportMode(this.value)">
               <option value="IDR">IDR</option>
               <option value="$">$ (Valas)</option>
             </select>
@@ -337,13 +337,16 @@
   };
 
   $(document).ready(function () {
-    // #printTime tidak ada di markup halaman ini (blok page-title/page-sub dikomentari) --
-    // dijaga null supaya TIDAK melempar exception yang membatalkan sisa ready() (setReportMode
-    // & loadPerkiraanDropdown di bawah tidak akan jalan kalau baris ini error).
-    var pt = document.getElementById('printTime');
-    if (pt) pt.textContent = new Date().toLocaleString('id-ID');
     setReportMode(globalReportMode);   // set mode + muat gcart_header
     loadPerkiraanDropdown();           // isi dropdown Perkiraan (default akun HT pertama)
+    // pulihkan Perkiraan terakhir yang di-Terapkan user ini (DBUSERFILTER); pilihan yang sudah tidak ada di dropdown
+    // dilewati. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+    // Mode Valas (#modalReportMode) sengaja TIDAK disimpan (data-nosave): mode $ mengharuskan pilih ulang mata uang.
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalPerkiraan !== undefined) {
+        setPerkiraan(v.modalPerkiraan, $('#modalPerkiraan option:selected').data('ket') || '');
+      }
+    });
 
     // Header tabel interaktif: seret kolom, menu roda gigi (sembunyikan/desimal/total).
     ReportTable.init({
@@ -991,6 +994,7 @@
   // Mode Valas / Perkiraan sudah menerapkan diri sendiri langsung lewat onchange (sama seperti
   // perilaku dropdown lama) -- Terapkan hanya menutup modal.
   function applyModalFilter() {
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
     $('#modalFilter').modal('hide');
   }
 </script>

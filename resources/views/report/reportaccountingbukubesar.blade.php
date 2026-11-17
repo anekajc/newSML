@@ -239,6 +239,11 @@
             if (pt) pt.textContent = new Date().toLocaleString('id-ID');
 
             loadDivisiDropdown(); // isi dropdown Divisi (default: divisi pertama)
+            // pulihkan Divisi terakhir yang di-Terapkan user ini (DBUSERFILTER); kalau pilihannya sudah tidak ada di
+            // dropdown, tetap default. Laporan tetap dimuat lewat Tampilkan. Lihat docs/save-filter-guide.md.
+            UserFilter.restore('#modalFilter', function (v) {
+              if (v.modalDivisi !== undefined) { setDivisi(v.modalDivisi); }
+            });
 
             doSetHeader(g_modeReport);   // muat susunan kolom (default / hasil kustomisasi user) + gsum flags
 
@@ -359,6 +364,7 @@
 
         function applyModalFilter() {
             setDivisi($('#modalDivisi').val());
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
             $('#modalFilter').modal('hide');
         }
 
