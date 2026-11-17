@@ -609,11 +609,11 @@ function loadAll () {
       `;
     }, {
       pAgen: {
+        // Sama dengan kolom Agen di Master Merk
         render: function (data) {
-          if (data == 0) {
-            return '<span class="text-danger"><i class="bi bi-x" style="-webkit-text-stroke-width: 2px;"></i></span>';
-          }
-          return '<span class="text-success"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></span>';
+          return Number(data)
+            ? '<span class="sp-badge is-active">Agen</span>'
+            : '<span class="sp-badge is-inactive">Non-Agen</span>';
         },
         searchable: false,
         className: "text-center"
