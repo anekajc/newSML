@@ -308,6 +308,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/sp_beligudangInvoiceBeli',        [InvoicePembelianController::class, 'spBeliGudang']);
     Route::post('/sp_edittransaksi',                [InvoicePembelianController::class, 'spedit']);
     Route::post('/sp_hapusinvoice',                 [InvoicePembelianController::class, 'deleteinvoice']);
+    Route::get('/invoicebelilistvalas',             [InvoicePembelianController::class, 'listValas']);
+    Route::get('/invoicebelilistekspedisi',         [InvoicePembelianController::class, 'listEkspedisi']);
+    Route::post('/invoicebelibiaya',                [InvoicePembelianController::class, 'getBiayaInvoice']);
 
     // ── UANG MUKA BELI ────────────────────────────────────────────────────
     Route::get('/uangmukabeli',                  [UangMukaBeliController::class, 'index']);

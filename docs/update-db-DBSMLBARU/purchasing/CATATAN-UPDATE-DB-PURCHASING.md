@@ -42,6 +42,7 @@ Buka di SSMS, lalu jalankan berurutan:
 | 28 | `28_label_menu_pr.sql` | Label sidebar `DBMENUWEB` `030102` "PR (Keagenan)" diganti "PR" | Ya, sesudah file 26 (hanya label) |
 | 31 | `31_dbpodet_perkiraan.sql` | Tambah kolom `DBPODET.PERKIRAAN` (perkiraan per item PO) + isi PO Non Stock lama dari COA Biaya barang | Ya, **sebelum** kode bagian 31 dipasang. Tanpa ini detail PO Stock & PO Non Stock error |
 | 32 | `32_sp_cetakpo_perkiraan_item.sql` | `Sp_CetakPO`: kolom `PERKIRAAN`/`ketperk` dari detail item (fallback header). Rollback: `32_sp_cetakpo_ROLLBACK.sql` | Ya, sesudah file 31 |
+| 34 | `34_dbpbiaya_kodebiaya_30.sql` | `dbPBiaya.Kodebiaya` + parameter `@KodeBiaya`/`@OldKode` di `sp_PBiaya` jadi `varchar(30)` (KodeBiaya diisi No Bukti BPL). Rollback SP: `34_sp_pbiaya_ROLLBACK.sql` | Ya, **sebelum** kode bagian 34 dipasang. Tanpa ini simpan invoice yang punya biaya gagal (KodeBiaya terpotong/error) |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -328,3 +329,14 @@ Jalan keluarnya, pilih salah satu:
 - **Perubahan kode:** cetak PO Non Stock (`submitPrintcopy` di `partials/poNonStockScript.blade.php`) dapat kolom **PERKIRAAN** (kode perkiraan per baris; nama perkiraan muncul sebagai tooltip) di antara MERK dan QTY.
 - **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 16 November 2026, dan sudah dicoba `exec Sp_CetakPO` pada PO Non Stock: berjalan normal.
 - **Urutan pasang:** jalankan `31_dbpodet_perkiraan.sql` dulu, baru update kode.
+
+## 34 — Pembelian Invoice: modal Add per LPB + biaya per LPB (17 November 2026)
+
+- **Perubahan database (`34_dbpbiaya_kodebiaya_30.sql`):** kolom `dbPBiaya.Kodebiaya` dan parameter `@KodeBiaya`/`@OldKode` di `sp_PBiaya` diperbesar dari `varchar(15)` ke `varchar(30)`, karena KodeBiaya sekarang diisi No Bukti invoice (mis. `SML/BPL/00004/1126`, 18 karakter). Isi SP lain tidak berubah. Data lama tidak berubah. Rollback SP: `34_sp_pbiaya_ROLLBACK.sql` (kolom dibiarkan 30).
+- **Perubahan kode (`invoicepembelian`, tanpa perubahan database lain):**
+  - Tab Outstanding Pembelian dan halaman Detail tetap seperti semula (satu baris per LPB).
+  - Tombol **+** membuka modal berisi **semua LPB outstanding** dengan supplier, tipe PPN dan valuta yang sama dengan LPB yang diklik, dalam rentang PERIODE tab Outstanding. LPB yang dicentang masuk invoice beserta semua item outstanding-nya (`DBINVOICE`/`DBInvoiceDET`, kolom sama dengan `SP_INVB`; `SP_INVB` tidak dipanggil lagi dari halaman ini). No/Tgl Invoice, Faktur Pajak, Bukti Potong disimpan kosong (diisi lewat tab Pembelian Invoice > Edit).
+  - Kolom **Action** (tombol + biru) per LPB membuka modal Biaya: KodeBiaya = No Bukti BPL, Keterangan, Nilai, Valas (`DBVALAS`, IDR kurs 1 terkunci), Kurs, Ekspedisi (browse `DBCUSTSUPP` JENIS 3). Biaya baru disimpan lewat `exec sp_PBiaya 'I'` (NoBuktiInv = No LPB, NoBiayaPO = PO LPB, UrutBiayaPO = 0) **saat invoice disimpan**, dalam transaksi yang sama.
+  - LPB yang PO-nya memakai ekspedisi (`DBPO.KODEEXP` bukan kosong/`-`) wajib punya biaya. LPB yang punya biaya wajib dicentang.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 17 November 2026: `COL_LENGTH('dbPBiaya','Kodebiaya')` = 30, parameter SP = 30. Dicoba `exec sp_PBiaya 'I'` dengan KodeBiaya 18 karakter di dalam transaksi lalu ROLLBACK: tersimpan utuh, urut 1, 2 per LPB.
+- **Urutan pasang:** jalankan `34_dbpbiaya_kodebiaya_30.sql` dulu, baru update kode.
