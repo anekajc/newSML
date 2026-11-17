@@ -551,9 +551,9 @@ public function listValas () {
   ");
 }
 
-// Browse ekspedisi di modal Biaya (master ekspedisi = dbcustsupp JENIS 3)
+// Browse ekspedisi di modal Biaya (master ekspedisi = dbcustsupp JENIS 3, hanya yang aktif)
 public function listEkspedisi () {
-  return DB::connection('SML')->select("select KODECUSTSUPP, NAMACUSTSUPP from DBCUSTSUPP where JENIS = 3 order by NAMACUSTSUPP");
+  return DB::connection('SML')->select("select KODECUSTSUPP, NAMACUSTSUPP from DBCUSTSUPP where JENIS = 3 and IsAktif = 1 order by NAMACUSTSUPP");
 }
 
 // Simpan invoice per LPB: setiap LPB yang dicentang masuk beserta SEMUA item outstanding-nya
