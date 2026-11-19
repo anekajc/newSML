@@ -153,6 +153,9 @@ Route::get('/socheckhargaddd', [SOController::class, 'SOCheckHargaAdd']);
   Route::get('/soloadheader', [SOController::class, 'loadHeader']);
   Route::get('/sosimpanheader', [SOController::class, 'simpanHeader']);
   Route::get('/sochecknoposo', [SOController::class, 'checknoposo']);
+  // Ditambahkan 2026-11-19: PRU (Permintaan Ubah Kemasan) untuk item Assembly dari SO.
+  Route::post('/sogetpruitem', [SOController::class, 'getPRUItem']);
+  Route::get('/solistbarangkomponenpru', [SOController::class, 'listBarangKomponenPRU']);
 
 
   // closing so

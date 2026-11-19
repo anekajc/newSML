@@ -1033,6 +1033,7 @@ function submitAddEdit () {
         setNewNoBukti()
         alertify.warning('Nobukti telah di proses picking');
       }
+      pesanKunciSO(res)
     },
     error: function(err) {
       console.log('masuk error')
@@ -1222,6 +1223,11 @@ function submitAddAdd() {
       if (res == 2) {
         setNewNoBukti()
         alertify.warning('Nobukti telah di refresh, silahkan submit ulang');
+      }
+      if (res == 4 && !jmlRecord) {
+        alertify.warning("Keterangan tidak boleh diawali 'SO:' (khusus PRU dari menu SO)");
+      } else {
+        pesanKunciSO(res)
       }
       // if (res == 3) {
       //   setNewNoBukti()
@@ -1862,6 +1868,12 @@ function refreshTableAdd ( action = 'I') {
     // addTableData
     let tableRow = ''
     listItemForm.forEach((item, i) => {
+      // Ditambahkan 2026-11-19: PRU dari menu SO -> baris Qty DB dikunci (ubah / hapus lewat SO).
+      let aksi = `<button class="btn btn-danger btn-sm" type="button" onclick="buttonDelete('${item.NOBUKTI}', ${item.URUT} , ${item.pPicking})" ><i class="bi bi-trash"></i></button>
+      <button class="btn btn-success btn-sm" type="button" onclick="buttonEdit(${i})" ><i class="bi bi-pen"></i></button>`
+      if (pruDariSO(item) && Number(item.pDebet)) {
+        aksi = `<i class="bi bi-lock" title="Dari SO, ubah / hapus lewat menu SO"></i>`
+      }
       tableRow += `
       <tr class="text-left">
       <td>${item.KODEBRG}</td>
@@ -1870,8 +1882,7 @@ function refreshTableAdd ( action = 'I') {
       <td class="text-right">${Number(item.pDebet) ? item.QNT : '0.00' }</td>
       <td class="text-right">${Number(item.pDebet) ? '0.00' : item.QNT }</td>
       <td>${item.SATUAN}</td>
-      <td class="text-center"><button class="btn btn-danger btn-sm" type="button" onclick="buttonDelete('${item.NOBUKTI}', ${item.URUT} , ${item.pPicking})" ><i class="bi bi-trash"></i></button>
-      <button class="btn btn-success btn-sm" type="button" onclick="buttonEdit(${i})" ><i class="bi bi-pen"></i></button>
+      <td class="text-center">${aksi}
 
       </td>
       </tr>
@@ -1908,6 +1919,19 @@ function refreshTableAdd ( action = 'I') {
     }
 
     document.getElementById("addTableData").innerHTML = tableRow
+}
+
+// Ditambahkan 2026-11-19: PRU yang dibuat dari menu SO (KETERANGAN diawali 'SO:').
+function pruDariSO (item) {
+  return !!item && String(item.KETERANGAN || '').indexOf('SO:') === 0
+}
+
+function pesanKunciSO (res) {
+  if (res == 4) {
+    alertify.warning('PRU ini dibuat dari SO: baris Qty DB tidak bisa ditambah / diubah / dihapus di sini, ubah lewat menu SO')
+    return true
+  }
+  return false
 }
 
 function buttonDelete (nobukti, urut , pPicking) {
@@ -1982,6 +2006,7 @@ function buttonDelete (nobukti, urut , pPicking) {
             setNewNoBukti()
             alertify.warning('Nobukti telah di proses picking');
           }
+          pesanKunciSO(res)
         },
         error: function(err) {
           console.log('masuk error')
