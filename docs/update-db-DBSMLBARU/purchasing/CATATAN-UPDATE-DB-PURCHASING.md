@@ -42,7 +42,8 @@ Buka di SSMS, lalu jalankan berurutan:
 | 28 | `28_label_menu_pr.sql` | Label sidebar `DBMENUWEB` `030102` "PR (Keagenan)" diganti "PR" | Ya, sesudah file 26 (hanya label) |
 | 31 | `31_dbpodet_perkiraan.sql` | Tambah kolom `DBPODET.PERKIRAAN` (perkiraan per item PO) + isi PO Non Stock lama dari COA Biaya barang | Ya, **sebelum** kode bagian 31 dipasang. Tanpa ini detail PO Stock & PO Non Stock error |
 | 32 | `32_sp_cetakpo_perkiraan_item.sql` | `Sp_CetakPO`: kolom `PERKIRAAN`/`ketperk` dari detail item (fallback header). Rollback: `32_sp_cetakpo_ROLLBACK.sql` | Ya, sesudah file 31 |
-| 34 | `34_dbpbiaya_kodebiaya_30.sql` | `dbPBiaya.Kodebiaya` + parameter `@KodeBiaya`/`@OldKode` di `sp_PBiaya` jadi `varchar(30)` (KodeBiaya diisi No Bukti BPL). Rollback SP: `34_sp_pbiaya_ROLLBACK.sql` | Ya, **sebelum** kode bagian 34 dipasang. Tanpa ini simpan invoice yang punya biaya gagal (KodeBiaya terpotong/error) |
+| 34 | `34_dbpbiaya_kodebiaya_30.sql` | `dbPBiaya.Kodebiaya` + parameter `@KodeBiaya`/`@OldKode` di `sp_PBiaya` jadi `varchar(30)` (dulu KodeBiaya diisi No Bukti BPL; sejak bagian 35 diisi kode master `DBBIAYA`, file ini tetap dipakai). Rollback SP: `34_sp_pbiaya_ROLLBACK.sql` | Ya, **sebelum** kode bagian 34 dipasang. Tanpa ini simpan invoice yang punya biaya gagal (KodeBiaya terpotong/error) |
+| 36 | `36_label_menu_pembelian_invoice.sql` | Label sidebar `DBMENUWEB` `0305` "Kelengkapan Dokumen" diganti "Pembelian Invoice" | Ya, kapan saja (hanya label) |
 
 **Sebelum mulai:**
 - **Backup database DBSMLBARU di server.**
@@ -340,3 +341,18 @@ Jalan keluarnya, pilih salah satu:
   - LPB yang PO-nya memakai ekspedisi (`DBPO.KODEEXP` bukan kosong/`-`) wajib punya biaya. LPB yang punya biaya wajib dicentang.
 - **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 17 November 2026: `COL_LENGTH('dbPBiaya','Kodebiaya')` = 30, parameter SP = 30. Dicoba `exec sp_PBiaya 'I'` dengan KodeBiaya 18 karakter di dalam transaksi lalu ROLLBACK: tersimpan utuh, urut 1, 2 per LPB.
 - **Urutan pasang:** jalankan `34_dbpbiaya_kodebiaya_30.sql` dulu, baru update kode.
+
+## 35 — Pembelian Invoice: Kode Biaya di-browse dari master Daftar Biaya (19 November 2026, tanpa perubahan database)
+
+- **Koreksi bagian 34:** KodeBiaya di modal Biaya **bukan lagi No Bukti BPL**. Sekarang field Kode Biaya dipilih lewat browse master Daftar Biaya (`DBBIAYA`, menu Master > Daftar Biaya), sama seperti data lama di `dbPBiaya` (mis. `BY1`). Keterangan otomatis diisi nama biaya kalau masih kosong (boleh diubah).
+- Simpan tetap lewat `exec sp_PBiaya` (`I`/`U`/`D`) dengan `@KodeBiaya` = kode master, `NoBuktiInv` = No LPB. Saat Edit, `@OldKode` = KodeBiaya lama baris itu, jadi kode biaya boleh diganti.
+- Biaya milik satu invoice sekarang dicari lewat LPB di `DBInvoiceDET` invoice itu (`dbPBiaya.NoBuktiInv in (select NoBeli from DBInvoiceDET where NOBUKTI = <invoice>)`), bukan lewat `Kodebiaya = No Bukti invoice`.
+- Server menolak kode biaya yang tidak ada di `DBBIAYA`.
+- **Tidak ada perubahan database.** Kolom `dbPBiaya.Kodebiaya` dan parameter SP tetap `varchar(30)` dari bagian 34 (tetap cukup untuk kode `DBBIAYA` yang `varchar(15)`), jadi file 34 tidak perlu di-rollback.
+- **Data uji dari bagian 34:** per 19 November 2026 di DBSMLBARU ada 2 baris `dbPBiaya` dengan Kodebiaya berisi No Bukti BPL (`SML/BPL/00004/1126`, `SML/BPL/00005/1126`). Sudah **dihapus** di DBSMLBARU (server 36.88.190.218) pada 19 November 2026 (`delete from dbPBiaya where Kodebiaya in ('SML/BPL/00004/1126','SML/BPL/00005/1126')`, 2 baris; LPB `SML/LPB/00092/0926` dan `SML/LPB/00011/0926`). Ini hanya data uji di DBSMLBARU, **tidak perlu dijalankan di server client**.
+
+## 36 — Label menu "Kelengkapan Dokumen" diganti "Pembelian Invoice" (19 November 2026)
+
+- **Alasan:** judul halaman `/invoicepembelian` sudah "Pembelian Invoice", tapi label sidebar masih "Kelengkapan Dokumen".
+- **Perubahan (`36_label_menu_pembelian_invoice.sql`):** `DBMENUWEB.Keterangan` untuk `0305` diubah dari `Kelengkapan Dokumen` menjadi `Pembelian Invoice`. Hak akses `DBFLMENUWEB` `0305` dan href tidak diubah.
+- **Sudah dijalankan** di DBSMLBARU (server 36.88.190.218) pada 19 November 2026: 1 baris, `0305` = `Pembelian Invoice`. Rollback ada di bagian bawah file skrip.

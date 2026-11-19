@@ -59,6 +59,13 @@
     #formBsGrid .bs-form.bs-form-3 { grid-template-columns: 1fr; }
     #formBsGrid .bs-form.bs-form-3 .bs-full-3 { grid-column: 1 / -1; }
   }
+  /* Baris Satuan/Isi: dropdown satuan & isi dibuat pendek (kolom harga sementara di-hide). */
+  .sat-row > .form-group, .sat-head > .sat-h { flex: 0 0 150px; max-width: 150px; }
+  .sat-row > input, .sat-head > .isi-h { flex: 0 0 110px; max-width: 110px; }
+  /* Centangan PPN/Cetak Barcode/Buffer Stock/Full Supply + Job Costing di kanan Satuan/Isi. */
+  .sat-row > .sat-ext { display: grid; grid-template-columns: 100px 32px 100px 32px; column-gap: 8px; align-items: center; margin-left: 24px; }
+  .sat-row > .sat-ext .sat-ext-full { grid-column: 2 / -1; width: 100%; }
+  .sat-row > .sat-ext .bs-check input[type="checkbox"] { margin: 0; transform: scale(1.3); }
 </style>
 
 <!-- start modal add -->
@@ -124,12 +131,12 @@
 
             <div class="bs-form bs-form-1">
           <label></label>
-          <div class="d-flex" style="gap:8px"><b class="form-control border-0 bg-transparent px-0">Satuan</b><b class="form-control border-0 bg-transparent px-0">Isi</b><b class="form-control border-0 bg-transparent px-0">Harga</b></div>
+          <div class="d-flex sat-head" style="gap:8px"><b class="form-control border-0 bg-transparent px-0 sat-h">Satuan</b><b class="form-control border-0 bg-transparent px-0 isi-h">Isi</b><b class="form-control border-0 bg-transparent px-0 d-none">Harga</b></div>
         </div>
 
             <div class="bs-form bs-form-1">
           <label for="input_add_satuan">Satuan</label>
-          <div class="bs-full"><div class="d-flex align-items-center" style="gap:8px"><!-- <div class="form-group">
+          <div class="bs-full"><div class="d-flex align-items-center sat-row" style="gap:8px"><!-- <div class="form-group">
                   <input type="text" class="form-control" id="input_add_satuan" >
                 </div> -->
 
@@ -143,12 +150,18 @@
                   </select>
                 </div>
             <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_add_isi" >
-            <input type="text" inputmode="decimal" value=1000 min=0 class="form-control text-right format-number" id="input_add_harga" ></div></div>
+            <input type="text" inputmode="decimal" value=1000 min=0 class="form-control text-right format-number d-none" id="input_add_harga" >
+            <div class="sat-ext">
+              <label for="input_add_isppn">PPN</label>
+              <div class="bs-check"><input type="checkbox" id="input_add_isppn"></div>
+              <label for="input_add_iscetakbarcode">Cetak Barcode</label>
+              <div class="bs-check"><input type="checkbox" id="input_add_iscetakbarcode"></div>
+            </div></div></div>
 
 
             
           <label for="input_add_satuan2">Satuan 2</label>
-          <div class="bs-full"><div class="d-flex align-items-center" style="gap:8px"><!-- <div class="form-group">
+          <div class="bs-full"><div class="d-flex align-items-center sat-row" style="gap:8px"><!-- <div class="form-group">
                   <input type="text" class="form-control" id="input_add_satuan2" >
                 </div> -->
 
@@ -163,14 +176,20 @@
                   </select>
                 </div>
             <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_add_isi2" >
-            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_add_harga2" ></div></div>
+            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number d-none" id="input_add_harga2" >
+            <div class="sat-ext">
+              <label for="input_add_isbufferstock">Buffer Stock</label>
+              <div class="bs-check"><input type="checkbox" id="input_add_isbufferstock"></div>
+              <label for="input_add_isfullsupply">Full Supply</label>
+              <div class="bs-check"><input type="checkbox" id="input_add_isfullsupply"></div>
+            </div></div></div>
 
 
    
 
             
           <label for="input_add_satuan3">Satuan 3</label>
-          <div class="bs-full"><div class="d-flex align-items-center" style="gap:8px"><!-- <div class="form-group">
+          <div class="bs-full"><div class="d-flex align-items-center sat-row" style="gap:8px"><!-- <div class="form-group">
                   <input type="text" class="form-control" id="input_add_satuan3" >
                 </div> -->
 
@@ -183,7 +202,14 @@
                   </select>
                 </div>
             <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_add_isi3" >
-            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_add_harga3" ></div></div>
+            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number d-none" id="input_add_harga3" >
+            <div class="sat-ext">
+              <label for="input_add_jobcost">Job Costing</label>
+              <select id="input_add_jobcost" class="form-control sat-ext-full">
+                <option value=0 selected>-</option>
+                <option value=1>Assembly</option>
+              </select>
+            </div></div></div>
         </div>
 
 
@@ -301,12 +327,12 @@
 
             <div class="bs-form bs-form-1">
           <label></label>
-          <div class="d-flex" style="gap:8px"><b class="form-control border-0 bg-transparent px-0">Satuan</b><b class="form-control border-0 bg-transparent px-0">Isi</b><b class="form-control border-0 bg-transparent px-0">Harga</b></div>
+          <div class="d-flex sat-head" style="gap:8px"><b class="form-control border-0 bg-transparent px-0 sat-h">Satuan</b><b class="form-control border-0 bg-transparent px-0 isi-h">Isi</b><b class="form-control border-0 bg-transparent px-0 d-none">Harga</b></div>
         </div>
 
             <div class="bs-form bs-form-1">
           <label for="input_edit_satuan">Satuan</label>
-          <div class="bs-full"><div class="d-flex align-items-center" style="gap:8px"><!-- <div class="form-group">
+          <div class="bs-full"><div class="d-flex align-items-center sat-row" style="gap:8px"><!-- <div class="form-group">
                   <input type="text" class="form-control" id="input_edit_satuan" >
                 </div> -->
 
@@ -320,12 +346,18 @@
                   </select>
               </div>
             <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_edit_isi" >
-            <input type="text" inputmode="decimal" value=1000 min=0 class="form-control text-right format-number" id="input_edit_harga" ></div></div>
+            <input type="text" inputmode="decimal" value=1000 min=0 class="form-control text-right format-number d-none" id="input_edit_harga" >
+            <div class="sat-ext">
+              <label for="input_edit_isppn">PPN</label>
+              <div class="bs-check"><input type="checkbox" id="input_edit_isppn"></div>
+              <label for="input_edit_iscetakbarcode">Cetak Barcode</label>
+              <div class="bs-check"><input type="checkbox" id="input_edit_iscetakbarcode"></div>
+            </div></div></div>
 
 
             
           <label for="input_edit_satuan2">Satuan 2</label>
-          <div class="bs-full"><div class="d-flex align-items-center" style="gap:8px"><!-- <div class="form-group">
+          <div class="bs-full"><div class="d-flex align-items-center sat-row" style="gap:8px"><!-- <div class="form-group">
                   <input type="text" class="form-control" id="input_edit_satuan2" >
                 </div> -->
 
@@ -340,12 +372,18 @@
               
                 </div>
             <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_edit_isi2" >
-            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_edit_harga2" ></div></div>
+            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number d-none" id="input_edit_harga2" >
+            <div class="sat-ext">
+              <label for="input_edit_isbufferstock">Buffer Stock</label>
+              <div class="bs-check"><input type="checkbox" id="input_edit_isbufferstock"></div>
+              <label for="input_edit_isfullsupply">Full Supply</label>
+              <div class="bs-check"><input type="checkbox" id="input_edit_isfullsupply"></div>
+            </div></div></div>
 
 
               
           <label for="input_edit_satuan3">Satuan 3</label>
-          <div class="bs-full"><div class="d-flex align-items-center" style="gap:8px"><!-- <div class="form-group">
+          <div class="bs-full"><div class="d-flex align-items-center sat-row" style="gap:8px"><!-- <div class="form-group">
                   <input type="text" class="form-control" id="input_edit_satuan3" >
                 </div> -->
 
@@ -360,7 +398,14 @@
               
                 </div>
             <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_edit_isi3" >
-            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number" id="input_edit_harga3" ></div></div>
+            <input type="text" inputmode="decimal" value=0 min=0 class="form-control text-right format-number d-none" id="input_edit_harga3" >
+            <div class="sat-ext">
+              <label for="input_edit_jobcost">Job Costing</label>
+              <select id="input_edit_jobcost" class="form-control sat-ext-full">
+                <option value=0 selected>-</option>
+                <option value=1>Assembly</option>
+              </select>
+            </div></div></div>
         </div>
 
             <br/>
@@ -645,6 +690,11 @@ function buttonAdd () {
   document.getElementById("input_add_partnumber").value= ''
   document.getElementById("input_add_lokasi").value= ''
   document.getElementById("input_add_kodesku").value= ''
+  document.getElementById("input_add_isppn").checked = false
+  document.getElementById("input_add_iscetakbarcode").checked = false
+  document.getElementById("input_add_isbufferstock").checked = false
+  document.getElementById("input_add_isfullsupply").checked = false
+  document.getElementById("input_add_jobcost").value = 0
 
     $.ajax({
       url: "{!! url('masterbaranglistselect') !!}",
@@ -958,6 +1008,11 @@ function buttonEdit (kodebarang) {
     } else {
       document.getElementById("input_edit_iskontrak").checked = false
     }
+    document.getElementById("input_edit_isppn").checked = !!Number(res[0].pPPN)
+    document.getElementById("input_edit_iscetakbarcode").checked = !!Number(res[0].CBarcode)
+    document.getElementById("input_edit_isbufferstock").checked = !!Number(res[0].pBufferStock)
+    document.getElementById("input_edit_isfullsupply").checked = !!Number(res[0].pFullSupply)
+    document.getElementById("input_edit_jobcost").value = Number(res[0].pJobCost) === 1 ? 1 : 0
 
     console.log('================')
     // console.log(listSelectHeadGroup)
@@ -1361,6 +1416,11 @@ function submitAdd () {
   if (document.getElementById("input_add_iskontrak").checked) {
     iskontrak= 1
   }
+  let isppn = document.getElementById("input_add_isppn").checked ? 1 : 0
+  let iscetakbarcode = document.getElementById("input_add_iscetakbarcode").checked ? 1 : 0
+  let isbufferstock = document.getElementById("input_add_isbufferstock").checked ? 1 : 0
+  let isfullsupply = document.getElementById("input_add_isfullsupply").checked ? 1 : 0
+  let jobcost = Number($("#input_add_jobcost").val()) === 1 ? 1 : 0
   let kodegroup = $("#input_add_kodegroup").val();
   let kodeheadgroup = $("#input_add_kodeheadgroup").val();
   let kodesubgroup = $("#input_add_kodesubgroup").val();
@@ -1493,7 +1553,12 @@ function submitAdd () {
       kodesku,
       proses: 0,
       istakein: 0,
-      iskontrak
+      iskontrak,
+      isppn,
+      iscetakbarcode,
+      isbufferstock,
+      isfullsupply,
+      jobcost
     },
     success: function(res) {
 
@@ -1527,6 +1592,11 @@ function submitEdit () {
   if (document.getElementById("input_edit_iskontrak").checked) {
     iskontrak= 1
   }
+  let isppn = document.getElementById("input_edit_isppn").checked ? 1 : 0
+  let iscetakbarcode = document.getElementById("input_edit_iscetakbarcode").checked ? 1 : 0
+  let isbufferstock = document.getElementById("input_edit_isbufferstock").checked ? 1 : 0
+  let isfullsupply = document.getElementById("input_edit_isfullsupply").checked ? 1 : 0
+  let jobcost = Number($("#input_edit_jobcost").val()) === 1 ? 1 : 0
   let kodegroup = $("#input_edit_kodegroup").val();
   let kodeheadgroup = $("#input_edit_kodeheadgroup").val();
   let kodesubgroup = $("#input_edit_kodesubgroup").val();
@@ -1659,7 +1729,12 @@ function submitEdit () {
       kodesku,
       proses: 0,
       istakein: 0,
-      iskontrak
+      iskontrak,
+      isppn,
+      iscetakbarcode,
+      isbufferstock,
+      isfullsupply,
+      jobcost
     },
     success: function(res) {
 

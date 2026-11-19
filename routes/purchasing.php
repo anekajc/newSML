@@ -310,7 +310,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/sp_hapusinvoice',                 [InvoicePembelianController::class, 'deleteinvoice']);
     Route::get('/invoicebelilistvalas',             [InvoicePembelianController::class, 'listValas']);
     Route::get('/invoicebelilistekspedisi',         [InvoicePembelianController::class, 'listEkspedisi']);
-    Route::post('/invoicebelibiaya',                [InvoicePembelianController::class, 'getBiayaInvoice']);
+    Route::get('/invoicebelilistbiaya',             [InvoicePembelianController::class, 'listBiaya']);
+    Route::post('/invoicebelibiaya',               [InvoicePembelianController::class, 'getBiayaInvoice']);
 
     // ── UANG MUKA BELI ────────────────────────────────────────────────────
     Route::get('/uangmukabeli',                  [UangMukaBeliController::class, 'index']);

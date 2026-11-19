@@ -847,12 +847,14 @@ td input[type="checkbox"] {
 
 
 <!-- start modal editpembelian  ADD -->
-<div class="modal fade" id="editPembelian" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+{{-- Static + tombol tutup lewat invTutupBuatInvoice(): dari mode Tambah LPB (form Edit)
+     modal ini harus kembali ke form Edit saat ditutup. --}}
+<div class="modal fade" id="editPembelian" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog modal-xxl modal-dialog-centered" role="document" style="max-width: 95%;">
     <div class="modal-content rounded-4">
       <div class="modal-header">
         <h5 class="modal-title" id="editPembelianModalLabel"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" onclick="invTutupBuatInvoice()" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -1105,8 +1107,13 @@ td input[type="checkbox"] {
           {{-- 2 baris x 3 kolom (seperti susunan awal): Kode Biaya | Keterangan | Nilai,
                lalu Valas | Ekspedisi | Kurs. --}}
           <div class="bs-form inv-biaya-form">
-            <label for="biayaKode">Kode Biaya</label>
-            <input type="text" class="form-control" id="biayaKode" disabled>
+            {{-- Kode Biaya di-browse dari master Daftar Biaya (DBBIAYA) --}}
+            <label for="biayaKodeNama">Kode Biaya</label>
+            <div class="input-group">
+              <input type="hidden" id="biayaKode">
+              <input type="text" class="form-control" id="biayaKodeNama" placeholder="Pilih kode biaya" readonly>
+              <button type="button" class="btn btn-chip-biru btn-sm" onclick="invBukaBrowseKodeBiaya()" title="Cari kode biaya"><i class="bi bi-search"></i></button>
+            </div>
             <label for="biayaKet">Keterangan</label>
             <input type="text" class="form-control" id="biayaKet" maxlength="200" placeholder="Keterangan biaya">
             <label for="biayaNilai">Nilai</label>
@@ -1133,6 +1140,7 @@ td input[type="checkbox"] {
           <table class="data-table">
             <thead class="text-center"><tr>
               <th style="padding: 4px 12px;" class="text-center">Action</th>
+              <th style="padding: 4px 12px;">Kode Biaya</th>
               <th style="padding: 4px 12px;">Keterangan</th>
               <th style="padding: 4px 12px;" class="text-right">Nilai</th>
               <th style="padding: 4px 12px;">Valas</th>
@@ -1183,6 +1191,41 @@ td input[type="checkbox"] {
   </div>
 </div>
 <!-- end modal pilih ekspedisi -->
+
+<!-- start modal pilih kode biaya (master Daftar Biaya / DBBIAYA) untuk Biaya -->
+<div class="modal fade picker-kas" id="modalPilihKodeBiaya" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Daftar Biaya</h5>
+        <button type="button" class="close" onclick="invTutupPilihKodeBiaya()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid mt-4">
+          <div class="row">
+            <div class="col-12" style="overflow:auto;">
+              <table id="tabel_pilih_kodebiaya">
+                <thead>
+                  <tr>
+                    <th scope="col">Kode Biaya</th>
+                    <th scope="col">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody id="tabel_data_pilih_kodebiaya" class="text-left"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn picker-kas-batal" onclick="invTutupPilihKodeBiaya()">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal pilih kode biaya -->
 
 <!-- //TAB KIRI -->
 
@@ -1620,7 +1663,11 @@ td input[type="checkbox"] {
           <input type="date" id="edittglbpotong3">
         </div>
 
-        <div class="container-fluid mt-3" style="overflow:auto;">
+        {{-- Tambah LPB outstanding ke invoice ini - memakai modal Buat Invoice (tab Outstanding) --}}
+        <div class="container-fluid mt-3 text-right">
+          <button type="button" class="btn btn-chip-biru btn-sm" onclick="invTambahLpbEdit()">Tambah LPB</button>
+        </div>
+        <div class="container-fluid mt-2" style="overflow:auto;">
           <table id="editKelengkapanTable3" class="data-table">
             <thead class="text-center">
               <tr>
@@ -1895,6 +1942,9 @@ td input[type="checkbox"] {
     let invBiayaEditIdx = -1    // index invBiaya yang sedang diedit (-1 = tambah baru)
     let invListValas = []
     let invListEksp = []
+    let invListKodeBiaya = []   // master Daftar Biaya (DBBIAYA)
+    let invTambahKe = ''        // No Bukti invoice saat modal Buat Invoice dibuka dari tombol Tambah LPB (form Edit)
+    let invEditSimpan = null    // isi form Edit (LPB + biaya) yang disimpan selama modal Tambah LPB terbuka
     let dataRefreshPembelian = []
 
     let dataPrint = []
@@ -2104,20 +2154,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
       invBiaya = []
       invLpbOut = []
       invBukaBiayaEditMuat()
-
-      let table_row_detail_inf = ""
-      invLpbOut.forEach((r) => {
-        table_row_detail_inf += `<tr>
-        <td class="text-center inv-aksi" style="white-space:nowrap;">
-          <button class="btn btn-primary btn-sm" type="button" title="Biaya" onclick="invBukaBiayaEdit('${r.NoBukti}')"><i class="bi bi-plus"></i></button>
-          <button class="btn btn-danger btn-sm" type="button" title="Hapus" onclick="hapustransaksi('${dataEdit.NoBukti}')"><i class="bi bi-trash"></i></button>
-        </td>
-        <td>${r.NoBukti}</td>
-        <td class="text-center">${ipbTglSaja(r.Tanggal)}</td>
-        <td>${r.NoPO || ''}</td>
-        <td class="text-center">${ipbTglSaja(r.TglPO)}</td>
-        </tr>`
-      });
+      invRenderEditLpb()
 
       document.getElementById("editKelengkapanModalLabel").innerHTML = dataEdit.NoBukti;
       document.getElementById("editPembelianSupp3").value = (dataEdit.KODECUSTSUPP ? dataEdit.KODECUSTSUPP + ' - ' : '') + (dataEdit.NamaCustSupp || '');
@@ -2129,9 +2166,28 @@ console.log('vvvvvvvvvvvvvvvvvv')
       document.getElementById("editnoinvoice3").value = dataEdit.NoInvoice || '';
       document.getElementById("editnopajak3").value = dataEdit.NoFakturPajak || '';
       document.getElementById("editnobpotong3").value = dataEdit.NoBuktiPotong || '';
-      document.getElementById("editKelengkapanTableData3").innerHTML = table_row_detail_inf
 
       $("#editKelengkapan").modal('show');
+    }
+
+    // Tabel LPB di form Edit dari invLpbOut (dipakai juga saat kembali dari Tambah LPB,
+    // tanpa memuat ulang dari server).
+    function invRenderEditLpb () {
+      let noInv = $("#editnobukti3").val()
+      let html = ""
+      invLpbOut.forEach((r) => {
+        html += `<tr>
+        <td class="text-center inv-aksi" style="white-space:nowrap;">
+          <button class="btn btn-primary btn-sm" type="button" title="Biaya" onclick="invBukaBiayaEdit('${r.NoBukti}')"><i class="bi bi-plus"></i></button>
+          <button class="btn btn-danger btn-sm" type="button" title="Hapus" onclick="hapustransaksi('${noInv}')"><i class="bi bi-trash"></i></button>
+        </td>
+        <td>${r.NoBukti}</td>
+        <td class="text-center">${ipbTglSaja(r.Tanggal)}</td>
+        <td>${r.NoPO || ''}</td>
+        <td class="text-center">${ipbTglSaja(r.TglPO)}</td>
+        </tr>`
+      });
+      document.getElementById("editKelengkapanTableData3").innerHTML = html
     }
 
     function edittransaksi () {
@@ -2163,7 +2219,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
           // Biaya per LPB dari modal Biaya (tombol + di tabel Edit) - disimpan bersamaan
           biayaSync: invBiayaEditDimuat ? 1 : 0,
           biaya: invBiaya.map((b) => ({
-            NoBukti: b.NoBukti, Urut: b.Urut || 0, Keterangan: b.Keterangan, Nilai: b.Nilai,
+            NoBukti: b.NoBukti, Urut: b.Urut || 0, KodeBiaya: b.KodeBiaya, Keterangan: b.Keterangan, Nilai: b.Nilai,
             KodeVls: b.KodeVls, Kurs: b.Kurs, KodeCustSupp: b.KodeCustSupp
           }))
         },
@@ -3607,7 +3663,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
           reqTanggal: $("#editPembelianDate").val(),
           lpbs,
           biaya: invBiaya.map((b) => ({
-            NoBukti: b.NoBukti, Keterangan: b.Keterangan, Nilai: b.Nilai,
+            NoBukti: b.NoBukti, KodeBiaya: b.KodeBiaya, Keterangan: b.Keterangan, Nilai: b.Nilai,
             KodeVls: b.KodeVls, Kurs: b.Kurs, KodeCustSupp: b.KodeCustSupp
           }))
         },
@@ -3619,6 +3675,24 @@ console.log('vvvvvvvvvvvvvvvvvv')
           invBiaya = []
           // Modal ditutup & notifikasi tampil dulu, baru tabel dimuat ulang (server DB jauh,
           // reload ~1 detik). Hak akses tidak perlu diambil ulang seperti di loadAll().
+          if (invTambahKe) {
+            // Mode Tambah LPB: kembali ke form Edit invoice ini TANPA memuat ulang dari server
+            // (header masih terisi, LPB baru ditambahkan dari data modal ini). Biaya form Edit
+            // ditandai belum dimuat supaya modal Biaya mengambil ulang (termasuk biaya LPB baru) -
+            // kalau tidak, Simpan form Edit (biayaSync) akan menghapus biaya LPB baru itu.
+            let noInv = invTambahKe
+            let lpbBaru = invLpbTerpilih()
+            invSetModeBuatInvoice('')
+            invLpbOut = (invEditSimpan ? invEditSimpan.lpb : []).concat(lpbBaru)
+            invEditSimpan = null
+            invBiaya = []
+            invBiayaEditDimuat = false
+            invRenderEditLpb()
+            $("#editPembelian").one('hidden.bs.modal', function () { $("#editKelengkapan").modal('show') }).modal('hide')
+            alertify.success(lpbs.length + ' LPB berhasil ditambahkan ke invoice ' + noInv)
+            invMuatUlangAsync()
+            return
+          }
           $("#editPembelian").modal('hide');
           alertify.success('Invoice ' + $("#editnobukti").val() + ' berhasil disimpan (' + lpbs.length + ' LPB)');
           setTimeout(invMuatUlangSetelahSimpan, 50)
@@ -3643,6 +3717,34 @@ console.log('vvvvvvvvvvvvvvvvvv')
       } else {
         renderTabelOut()
       }
+    }
+
+    // Sama dengan invMuatUlangSetelahSimpan tetapi tidak memblok layar: kedua tab diambil
+    // paralel (async), tab aktif digambar ulang setelah keduanya selesai.
+    function invMuatUlangAsync () {
+      let qOut = $.ajax({ url: "{!! url('getAlloutbeliinv') !!}", type: "get",
+        data: { tglawal: $('#ipbTglAwal1').val(), tglakhir: $('#ipbTglAkhir1').val() } })
+      let qPem = $.ajax({ url: "{!! url('getAllInvoiceBeli') !!}", type: "get",
+        data: { tglawal: $('#ipbTglAwal2').val(), tglakhir: $('#ipbTglAkhir2').val() } })
+      let urut = function (kol) {
+        return function (a, b) {
+          let da = a && a[kol] ? new Date(a[kol]) : 0
+          let db = b && b[kol] ? new Date(b[kol]) : 0
+          if (db - da !== 0) { return db - da }
+          return String((b && b.NoBukti) || '').localeCompare(String((a && a.NoBukti) || ''))
+        }
+      }
+      $.when(qOut, qPem).done(function (rOut, rPem) {
+        dataRefreshPO = (rOut[0] || []).slice().sort(urut('TANGGAL'))
+        dataRefreshPembelian = (rPem[0] || []).slice().sort(urut('Tanggal'))
+        let urutAktif = ipbUrutTabAktif()
+        ipbPerluGambar[1] = (urutAktif !== 1)
+        ipbPerluGambar[2] = (urutAktif !== 2)
+        if (urutAktif === 2) { renderTabelPembelian() } else { renderTabelOut() }
+      }).fail(function (err) {
+        console.log(err)
+        alertify.warning('Gagal memuat ulang tabel, silahkan refresh')
+      })
     }
 
     function invLpbTerpilih () {
@@ -3691,11 +3793,20 @@ console.log('vvvvvvvvvvvvvvvvvv')
         $.ajax({ url: "{!! url('invoicebelilistekspedisi') !!}", type: "get", async: false,
           success: function (res) { invListEksp = res || [] } })
       }
+      if (!invListKodeBiaya.length) {
+        $.ajax({ url: "{!! url('invoicebelilistbiaya') !!}", type: "get", async: false,
+          success: function (res) { invListKodeBiaya = res || [] } })
+      }
+    }
+
+    function invNamaKodeBiaya (kode) {
+      let m = invListKodeBiaya.find((x) => String(x.Kodebiaya).trim() === String(kode || '').trim())
+      return m ? m.Keterangan || '' : ''
     }
 
     // Dari modal Buat Invoice (tab Outstanding)
     function invBukaBiaya (i) {
-      invBukaBiayaLpb(invLpbOut[i], '#editPembelian', $("#editnobukti").val())
+      invBukaBiayaLpb(invLpbOut[i], '#editPembelian')
     }
 
     // Dari form Edit tab Pembelian Invoice: biaya invoice ini dimuat sekali dari dbPBiaya,
@@ -3703,7 +3814,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
     function invBukaBiayaEdit (noLpb) {
       if (!invBiayaEditDimuat && !invBukaBiayaEditMuat()) { return }
       let lpb = invLpbOut.find((r) => r.NoBukti === noLpb) || { NoBukti: noLpb }
-      invBukaBiayaLpb(lpb, '#editKelengkapan', $("#editnobukti3").val())
+      invBukaBiayaLpb(lpb, '#editKelengkapan')
     }
 
     // Muat biaya tersimpan + daftar LPB invoice yang sedang diedit (#editnobukti3).
@@ -3716,7 +3827,8 @@ console.log('vvvvvvvvvvvvvvvvvv')
         data: { _token: $("#_token").val(), nobukti: $("#editnobukti3").val() },
         success: function (res) {
           invBiaya = ((res && res.biaya) || []).map((b) => ({
-            NoBukti: b.NoBukti, Urut: Number(b.Urut) || 0, Keterangan: b.Keterangan || '',
+            NoBukti: b.NoBukti, Urut: Number(b.Urut) || 0, KodeBiaya: b.KodeBiaya || '', NamaBiaya: b.NamaBiaya || '',
+            Keterangan: b.Keterangan || '',
             Nilai: parseFloat(b.Nilai) || 0, KodeVls: b.KodeVls, Kurs: parseFloat(b.Kurs) || 0,
             KodeCustSupp: b.KodeCustSupp, NamaCustSupp: b.NamaCustSupp
           }))
@@ -3732,7 +3844,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
       return ok
     }
 
-    function invBukaBiayaLpb (lpb, parent, kodeInv) {
+    function invBukaBiayaLpb (lpb, parent) {
       if (!lpb) { return }
       invBiayaParent = parent
       invMuatMasterBiaya()
@@ -3745,7 +3857,6 @@ console.log('vvvvvvvvvvvvvvvvvv')
       document.getElementById('biayaVls').innerHTML = opsi
       document.getElementById('modalBiayaLpbLabel').innerHTML =
         `Biaya ${lpb.NoBukti} &nbsp;<small class="text-muted">PO ${lpb.NoPO || '-'}${lpb.KODEEXP && lpb.KODEEXP !== '-' ? ' / Ekspedisi PO: ' + (lpb.NAMAEXP || lpb.KODEEXP) : ''}</small>`
-      document.getElementById('biayaKode').value = kodeInv
       invBiayaResetForm()
       invRenderBiaya()
       $(parent).one('hidden.bs.modal', function () { $('#modalBiayaLpb').modal('show') }).modal('hide')
@@ -3762,6 +3873,8 @@ console.log('vvvvvvvvvvvvvvvvvv')
     function invBiayaResetForm () {
       invBiayaEditIdx = -1
       let lpb = invLpbOut.find((r) => r.NoBukti === invBiayaLpb) || {}
+      $('#biayaKode').val('')
+      $('#biayaKodeNama').val('')
       $('#biayaKet').val('')
       $('#biayaNilai').val('')
       // Default IDR (kurs 1 terkunci)
@@ -3847,16 +3960,48 @@ console.log('vvvvvvvvvvvvvvvvvv')
       invTutupPilihEksp()
     }
 
+    // ---- Pilih Kode Biaya: modal pemilih (picker-kas) dari master Daftar Biaya ----
+    function invBukaBrowseKodeBiaya () {
+      invMuatMasterBiaya()
+      let html = ''
+      invListKodeBiaya.forEach((m, i) => {
+        html += `<tr class="pick-row" onclick="invPilihKodeBiaya(${i})">
+          <td>${m.Kodebiaya}</td>
+          <td>${m.Keterangan || ''}</td>
+        </tr>`
+      })
+      document.getElementById('tabel_data_pilih_kodebiaya').innerHTML = html
+      if (typeof pickerKasInit === 'function') { pickerKasInit('tabel_pilih_kodebiaya') }
+      $('#modalBiayaLpb').one('hidden.bs.modal', function () { $('#modalPilihKodeBiaya').modal('show') }).modal('hide')
+    }
+
+    function invTutupPilihKodeBiaya () {
+      $('#modalPilihKodeBiaya').one('hidden.bs.modal', function () { $('#modalBiayaLpb').modal('show') }).modal('hide')
+    }
+
+    // Keterangan diisi nama biaya kalau masih kosong (boleh diubah user)
+    function invPilihKodeBiaya (i) {
+      let m = invListKodeBiaya[i]
+      if (!m) { return }
+      $('#biayaKode').val(m.Kodebiaya)
+      $('#biayaKodeNama').val(m.Kodebiaya + ' - ' + (m.Keterangan || ''))
+      if (!String($('#biayaKet').val() || '').trim()) { $('#biayaKet').val(m.Keterangan || '') }
+      invTutupPilihKodeBiaya()
+    }
+
     function invSimpanBiaya () {
       let vls = $('#biayaVls').val()
       let nilai = invAngkaBaca('#biayaNilai')
       let kurs = vls === 'IDR' ? 1 : invAngkaBaca('#biayaKurs')
+      if (!$('#biayaKode').val()) { alertify.warning('Kode biaya belum dipilih'); return }
       if (!vls) { alertify.warning('Valas belum dipilih'); return }
       if (!(nilai > 0)) { alertify.warning('Nilai harus lebih dari 0'); return }
       if (!(kurs > 0)) { alertify.warning('Kurs harus lebih dari 0'); return }
       if (!$('#biayaEksp').val()) { alertify.warning('Ekspedisi belum dipilih'); return }
       let data = {
         NoBukti: invBiayaLpb,
+        KodeBiaya: $('#biayaKode').val(),
+        NamaBiaya: invNamaKodeBiaya($('#biayaKode').val()),
         Keterangan: String($('#biayaKet').val() || '').trim(),
         Nilai: nilai,
         KodeVls: vls,
@@ -3884,6 +4029,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
             <button class="btn btn-info btn-sm" type="button" title="Edit" onclick="invEditBiaya(${i})"><i class="bi bi-pencil"></i></button>
             <button class="btn btn-danger btn-sm" type="button" title="Hapus" onclick="invHapusBiaya(${i})"><i class="bi bi-trash"></i></button>
           </td>
+          <td>${b.KodeBiaya || ''}${b.NamaBiaya ? ' - ' + b.NamaBiaya : ''}</td>
           <td>${b.Keterangan || ''}</td>
           <td class="text-right">${formatAngkaX(b.Nilai)}</td>
           <td>${b.KodeVls}</td>
@@ -3891,13 +4037,15 @@ console.log('vvvvvvvvvvvvvvvvvv')
           <td>${b.NamaCustSupp || b.KodeCustSupp}</td>
         </tr>`
       })
-      document.getElementById('biayaTabelData').innerHTML = html || '<tr><td colspan="6" class="text-center">Belum ada biaya</td></tr>'
+      document.getElementById('biayaTabelData').innerHTML = html || '<tr><td colspan="7" class="text-center">Belum ada biaya</td></tr>'
     }
 
     function invEditBiaya (i) {
       let b = invBiaya[i]
       if (!b) { return }
       invBiayaEditIdx = i
+      $('#biayaKode').val(b.KodeBiaya || '')
+      $('#biayaKodeNama').val(b.KodeBiaya ? b.KodeBiaya + ' - ' + (b.NamaBiaya || invNamaKodeBiaya(b.KodeBiaya)) : '')
       $('#biayaKet').val(b.Keterangan)
       invAngkaTulis('#biayaNilai', b.Nilai)
       $('#biayaVls').val(b.KodeVls)
@@ -3914,8 +4062,10 @@ console.log('vvvvvvvvvvvvvvvvvv')
     }
 
     // Ambil LPB outstanding dengan supplier + tipe PPN (+ valuta) sama dengan LPB ini,
-    // dalam rentang PERIODE yang sedang dipakai di tab Outstanding.
-    function invMuatLpb (nobukti) {
+    // dalam rentang PERIODE tab asal: '1' = tab Outstanding (Buat Invoice), '2' = tab
+    // Pembelian Invoice (Tambah LPB dari form Edit).
+    function invMuatLpb (nobukti, tab) {
+      tab = tab || '1'
       let hasil = []
       $.ajax({
         url: "{!! url('detailbeli') !!}",
@@ -3924,8 +4074,8 @@ console.log('vvvvvvvvvvvvvvvvvv')
         data: {
           _token: $("#_token").val(),
           NoBukti: nobukti,
-          tglawal: $('#ipbTglAwal1').val(),
-          tglakhir: $('#ipbTglAkhir1').val()
+          tglawal: $('#ipbTglAwal' + tab).val(),
+          tglakhir: $('#ipbTglAkhir' + tab).val()
         },
         success: function (res) { hasil = res || [] },
         error: function (err) {
@@ -4205,6 +4355,7 @@ if (pcekglobal) {
         return
       }
       setNewNoBukti()
+      invSetModeBuatInvoice('')
       invLpbOut = lpbList
       invBiaya = []
       document.getElementById("editPembelianTableData").innerHTML = ''
@@ -4213,6 +4364,78 @@ if (pcekglobal) {
       document.getElementById("editPembeliantipeppn").value = lpbList[0].MyPPN || ''
 
       $("#editPembelian").modal('show');
+    }
+
+    // Mode modal Buat Invoice: '' = invoice baru (tab Outstanding), No Bukti = tambah LPB ke
+    // invoice itu (form Edit). Saat tambah LPB, No Bukti & Tanggal mengikuti invoice (terkunci).
+    function invSetModeBuatInvoice (noInv) {
+      invTambahKe = noInv
+      document.getElementById("editPembelianModalLabel").innerHTML = noInv ? 'Tambah LPB ke ' + noInv : ''
+      $('#editPembelianDate').prop('disabled', !!noInv)
+    }
+
+    function invTutupBuatInvoice () {
+      let noInv = invTambahKe
+      invSetModeBuatInvoice('')
+      invBiaya = []
+      if (noInv) {
+        // Batal Tambah LPB: kembalikan isi form Edit apa adanya (termasuk perubahan biaya
+        // yang belum disimpan), tanpa memuat ulang dari server.
+        if (invEditSimpan) {
+          invLpbOut = invEditSimpan.lpb
+          invBiaya = invEditSimpan.biaya
+          invBiayaEditDimuat = invEditSimpan.dimuat
+          invEditSimpan = null
+        }
+        invRenderEditLpb()
+        $("#editPembelian").one('hidden.bs.modal', function () { $("#editKelengkapan").modal('show') }).modal('hide')
+      } else {
+        $("#editPembelian").modal('hide')
+      }
+    }
+
+    // Tombol Tambah LPB di form Edit (tab Pembelian Invoice): buka modal Buat Invoice berisi LPB
+    // outstanding dengan supplier + tipe PPN + valuta sama dengan LPB invoice ini, dalam rentang
+    // PERIODE tab Pembelian Invoice - selebihnya sama seperti tombol + di tab Outstanding. Simpan lewat
+    // sp_beligudangInvoiceBeli dengan reqNobukti = invoice ini (detail ditambahkan ke invoice).
+    function invTambahLpbEdit () {
+      let noInv = $("#editnobukti3").val()
+      let acuan = (invLpbOut[0] || {}).NoBukti
+      if (!noInv || !acuan) {
+        alertify.warning('LPB invoice ini tidak ditemukan, silahkan buka ulang form Edit')
+        return
+      }
+      // Cek kunci periode + ambil LPB outstanding dijalankan paralel (async) supaya cepat
+      let qKunci = $.ajax({ url: "{!! url('ceklockperiode') !!}", type: "get" })
+      let qLpb = $.ajax({
+        url: "{!! url('detailbeli') !!}", type: "post",
+        data: { _token: $("#_token").val(), NoBukti: acuan,
+          tglawal: $('#ipbTglAwal2').val(), tglakhir: $('#ipbTglAkhir2').val() }
+      })
+      $.when(qKunci, qLpb).done(function (rKunci, rLpb) {
+        if ((rKunci[0] || []).length) { alertify.warning("Periode sudah dikunci"); return }
+        let lpbList = rLpb[0] || []
+        if (!lpbList.length) {
+          alertify.warning('Tidak ada LPB outstanding lain untuk supplier ini dalam periode tab Pembelian Invoice')
+          return
+        }
+        // Simpan isi form Edit supaya bisa dikembalikan tanpa memuat ulang dari server
+        invEditSimpan = { lpb: invLpbOut, biaya: invBiaya, dimuat: invBiayaEditDimuat }
+        $('.showhide').hide();
+        document.getElementById("editnobukti").value = noInv
+        $('#editPembelianDate').val($("#editPembelianDate3").val())
+        invSetModeBuatInvoice(noInv)
+        invLpbOut = lpbList
+        invBiaya = []
+        document.getElementById("editPembelianTableData").innerHTML = ''
+        invRenderLpb()
+        document.getElementById("editPembelianSupp").value = $("#editPembelianSupp3").val()
+        document.getElementById("editPembeliantipeppn").value = lpbList[0].MyPPN || ''
+        $("#editKelengkapan").one('hidden.bs.modal', function () { $("#editPembelian").modal('show') }).modal('hide')
+      }).fail(function (err) {
+        console.log(err)
+        alertify.warning('Gagal memuat LPB outstanding')
+      })
     }
 
         function buttonOtoPembelian (nobukti) {
