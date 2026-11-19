@@ -215,6 +215,26 @@ class PermintaanUbahKemasanController extends Controller
       }
     }
 
+    // Ditambahkan 2026-11-19: PRU yang dibuat dari menu SO (KETERANGAN diawali 'SO:') --
+    // baris Qty DB (barang assembly dari item SO) dikunci: tidak bisa ditambah/diubah/dihapus
+    // di sini, sehingga dokumennya juga tidak bisa dihapus dari WMS (hapus lewat menu SO).
+    // Komponen (Qty CR) tetap boleh diubah. 4 = ditolak karena dikunci SO.
+    if ($choice == 'I' && (int) $jmlRecord == 0 && strncmp(ltrim((string) $note), 'SO:', 3) === 0) {
+      return 4; // awalan 'SO:' khusus penanda PRU dari SO
+    }
+    $header = DB::connection('SML')->selectOne('select KETERANGAN from DBOutBrg where NOBUKTI = cast(? as varchar(30))', [$nobukti]);
+    if ($header && strncmp((string) $header->KETERANGAN, 'SO:', 3) === 0) {
+      if ($choice != 'D' && (int) $pDebet === 1) {
+        return 4;
+      }
+      if ($choice != 'I') {
+        $lama = DB::connection('SML')->selectOne('select isnull(pDebet,0) pDebet from DBOutBrgDET where NOBUKTI = cast(? as varchar(30)) and URUT = ?', [$nobukti, (int) $urut]);
+        if ($lama && (int) $lama->pDebet === 1) {
+          return 4;
+        }
+      }
+    }
+
 
 
       $values = [

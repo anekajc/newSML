@@ -143,6 +143,7 @@
   #tabel td:first-child .btn,
   #tabel2 td:first-child .btn,
   #tabel_oto td:first-child .btn,
+  #tabel_pru_komponen td:last-child .btn,
   #tabel_add td:last-child .btn {
     width: 30px;
     height: 30px;
@@ -160,6 +161,7 @@
   #tabel td:first-child .btn:hover,
   #tabel2 td:first-child .btn:hover,
   #tabel_oto td:first-child .btn:hover,
+  #tabel_pru_komponen td:last-child .btn:hover,
   #tabel_add td:last-child .btn:hover {
     filter: brightness(0.97);
     transform: translateY(-1px);
@@ -168,6 +170,7 @@
   #tabel td:first-child .btn-success,
   #tabel2 td:first-child .btn-success,
   #tabel_oto td:first-child .btn-success,
+  #tabel_pru_komponen td:last-child .btn-success,
   #tabel_add td:last-child .btn-success {
     color: #16a34a; border-color: #cdebd7; background: #e7f7ed;
   }
@@ -175,6 +178,7 @@
   #tabel td:first-child .btn-warning,
   #tabel2 td:first-child .btn-warning,
   #tabel_oto td:first-child .btn-warning,
+  #tabel_pru_komponen td:last-child .btn-warning,
   #tabel_add td:last-child .btn-warning {
     color: #b45309; border-color: #fbe3bd; background: #fef3e0;
   }
@@ -182,6 +186,7 @@
   #tabel td:first-child .btn-primary,
   #tabel2 td:first-child .btn-primary,
   #tabel_oto td:first-child .btn-primary,
+  #tabel_pru_komponen td:last-child .btn-primary,
   #tabel_add td:last-child .btn-primary {
     color: #2563eb; border-color: #cfdcff; background: #e8edff;
   }
@@ -189,6 +194,7 @@
   #tabel td:first-child .btn-danger,
   #tabel2 td:first-child .btn-danger,
   #tabel_oto td:first-child .btn-danger,
+  #tabel_pru_komponen td:last-child .btn-danger,
   #tabel_add td:last-child .btn-danger {
     color: #dc2626; border-color: #f7cfcf; background: #fdeaea;
   }
@@ -196,6 +202,7 @@
   #tabel td:first-child .btn-info,
   #tabel2 td:first-child .btn-info,
   #tabel_oto td:first-child .btn-info,
+  #tabel_pru_komponen td:last-child .btn-info,
   #tabel_add td:last-child .btn-info {
     color: #0891b2; border-color: #a5f3fc; background: #ecfeff;
   }
@@ -1200,6 +1207,16 @@
           font-weight: 600;
           transition: background-color 0.3s, box-shadow 0.3s;"
           onclick="buttonTambahSOAll()">Tambah Penawaran</button>
+        {{-- Ditambahkan 2026-11-19: hanya muncul saat form Add/Edit Item berisi barang Assembly. --}}
+        <button type="button" id="buttonTambahUbahKemasan" class="btn btn-lg btn-chip-biru" style="
+          display: none;
+          height: 30px;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          transition: background-color 0.3s, box-shadow 0.3s;"
+          onclick="buttonTambahUbahKemasan()">Tambah Ubah Kemasan</button>
       </div>
       <div class="col-md-6 mt-2 text-right">
         <button type="button" id='buttonTambahItem' class="btn btn-lg btn-chip-biru" style="
@@ -2542,6 +2559,158 @@
                 onclick="submitAddTambahSOAll()">Simpan</button>
             </div>
           </div>
+        </div>
+      </div>
+      </div>{{-- /#formBsGrid --}}
+    </div>
+  </div>
+</div>
+
+{{-- Ditambahkan 2026-11-19: modal Ubah Kemasan (PRU) untuk item Assembly, meniru form Add/Edit
+     menu WMS Permintaan Ubah Kemasan. Baris barang assembly (Qty DB) berasal dari item SO dan
+     dikunci; user mengisi komponen (Qty CR). Semua perubahan baru disimpan ke PRU saat tombol
+     Simpan item SO ditekan -- Batal item SO = PRU tidak dibuat / tidak berubah. --}}
+<div class="modal fade" id="modalUbahKemasan" tabindex="-1" role="dialog" aria-labelledby="labelModalUbahKemasan" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:1200px;" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="labelModalUbahKemasan">Ubah Kemasan</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+
+      <div id="formBsGrid">
+      {{-- Tampilan utama: header + form item + tabel komponen --}}
+      <div id="modalBodyPRUUtama" class="modal-body">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-row align-items-center mb-2">
+                <label class="col-md-4 mb-0">No Bukti</label>
+                <div class="col-md-8"><input type="text" class="form-control" id="input_pru_nobukti" disabled></div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-row align-items-center mb-2">
+                <label class="col-md-4 mb-0">Tanggal</label>
+                <div class="col-md-8"><input type="date" class="form-control" id="input_pru_tanggal" disabled></div>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="form-row align-items-center mb-2">
+                <label class="col-md-3 mb-0">Keterangan</label>
+                <div class="col-md-9"><input type="text" class="form-control" id="input_pru_keterangan" disabled></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12 text-right">
+              <button type="button" class="btn btn-lg btn-chip-biru" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;"
+                onclick="buttonAddItemPRU()">Add Item</button>
+            </div>
+          </div>
+
+          <div id="formItemPRU" style="display: none;">
+            <hr/>
+            <div class="row">
+              <div class="col-12">
+                <h4 id="h4AddItemPRU">Add Item</h4>
+                <h4 id="h4EditItemPRU">Edit Item</h4>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-row align-items-center mb-2">
+                  <label class="col-md-3 mb-0">Barang</label>
+                  <div class="col-md-4">
+                    <div class="input-group">
+                      <input id="input_pru_kodebrg" type="text" class="form-control" placeholder="Kode / nama, Enter" onkeypress="onKeyPressBarangPRU(event)" oninput="pruBarangPilih = null; document.getElementById('input_pru_namabrg').value = ''">
+                      <button type="button" id="buttonCariBarangPRU" class="btn btn-chip-biru btn-sm" title="Cari Barang" onclick="buttonCariBarangPRU()"><i class="bi bi-search"></i></button>
+                    </div>
+                  </div>
+                  <div class="col-md-5"><input id="input_pru_namabrg" type="text" class="form-control" disabled></div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-row align-items-center mb-2">
+                  <label class="col-md-3 mb-0">Satuan</label>
+                  <div class="col-md-4">
+                    <select id="input_pru_nosat" class="form-control">
+                      <option value=0 selected disabled>-- Pilih Satuan --</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-row align-items-center mb-2">
+                  <label class="col-md-3 mb-0">Qty DB</label>
+                  <div class="col-md-3"><input id="input_pru_qtydb" type="number" value="0.00" class="form-control text-right" disabled></div>
+                  <label class="col-md-2 mb-0">Qty CR</label>
+                  <div class="col-md-4"><input id="input_pru_qtycr" type="number" min="0" step="any" value="0.00" class="form-control text-right"></div>
+                </div>
+              </div>
+              <div class="col-md-6 text-right">
+                <button type="button" class="btn btn-lg btn-batal-add" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"
+                  onclick="batalItemPRU()">Batal</button>
+                <button type="button" class="btn btn-lg btn-chip-biru" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"
+                  onclick="submitItemPRU()">Simpan</button>
+              </div>
+            </div>
+            <hr/>
+          </div>
+
+          <div class="mt-3" style="overflow-x: auto;">
+            <table id="tabel_pru_komponen" class="data-table">
+              <thead class="text-center">
+                <tr>
+                  <th style="padding: 4px 12px;" scope="col">Kode Brg</th>
+                  <th style="padding: 4px 12px;" scope="col">Nama Brg</th>
+                  <th style="padding: 4px 12px;" scope="col">Nama Merk</th>
+                  <th style="padding: 4px 12px;" scope="col">Qty DB</th>
+                  <th style="padding: 4px 12px;" scope="col">Qty CR</th>
+                  <th style="padding: 4px 12px;" scope="col">Satuan</th>
+                  <th style="padding: 4px 12px;" scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tabel_data_pru_komponen" class="text-left"></tbody>
+            </table>
+          </div>
+          <div class="mt-2 text-muted" style="font-size: 0.8rem;">Perubahan ubah kemasan disimpan ke PRU saat tombol Simpan item SO ditekan.</div>
+        </div>
+      </div>
+
+      {{-- Daftar pilih barang komponen -- pola sama dengan daftar barang di form item SO. --}}
+      <div id="modalBodyPRUListBarang" style="display: none;">
+        <div class="modal-body">
+          <div class="container-fluid mt-4">
+            <div class="row mb-2">
+              <div class="col-12 d-flex justify-content-end align-items-center" style="gap: 10px; margin-top: -20px;">
+                <label for="input_pru_cari_barang" class="mb-0" style="font-weight: bold; font-size: 0.75rem;">SEARCH:</label>
+                <input id="input_pru_cari_barang" type="text" class="form-control" style="width: 220px; border-radius: 10px;" placeholder="Kode / nama, tekan Enter" onkeypress="if (event.which == 13) cariBarangKomponenPRU()">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12" style="overflow:auto; max-height: 420px;">
+                <table class="data-table">
+                  <thead class="text-center">
+                    <tr>
+                      <th style="padding: 4px 12px;" scope="col">Kode</th>
+                      <th style="padding: 4px 12px;" scope="col">Nama</th>
+                      <th style="padding: 4px 12px;" scope="col">Merk</th>
+                      <th style="padding: 4px 12px;" scope="col">Satuan</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabel_data_pru_cari" class="text-left"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-lg btn-batal-add" style="height: 30px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
+            onclick="tutupListBarangPRU()">Batal</button>
         </div>
       </div>
       </div>{{-- /#formBsGrid --}}
@@ -5133,6 +5302,11 @@ function submitAddAdd () {
     return
   }
   console.log('submitAddAdd')
+  // Komponen Ubah Kemasan (Qty CR) untuk barang Assembly; PRU dibuat server setelah item tersimpan.
+  let komponenPRU = dataKomponenPRU()
+  if (komponenPRU === null) {
+    return
+  }
 
 
 let hargaVal = Number(($("#input_add_add_harga").val() || '0').replace(/,/g, ''))
@@ -5230,12 +5404,14 @@ console.log('xhargacek:', xhargacek)
                   idpocust,
                   kodesattax,
                   statuspengiriman,
-                  tglkirimdet: tanggalkirim
+                  tglkirimdet: tanggalkirim,
+                  pru_komponen: komponenPRU
 
                 },
                 success: function(res) {
                   console.log('resspsoadd', res)
-                  if (res == 1) {
+                  // 6 = item SO tersimpan tetapi PRU (ubah kemasan) gagal -> tetap refresh tabel.
+                  if (res == 1 || res == 6) {
                         document.getElementById("input_add_nobukti").value = nobukti;
                         console.log(nobukti,'gggggggggggggggg')
                     loadAll()
@@ -5253,10 +5429,14 @@ console.log('xhargacek:', xhargacek)
                     $('#divhargaterakhir').hide();
                     cleanFormAddAdd()
 
+                    resetUbahKemasan()
                     refreshDataTableAdd(nobukti)
 
-                    alertify.success('Berhasil menambah item')
+                    if (!pesanHasilPRU(res)) {
+                      alertify.success('Berhasil menambah item')
+                    }
                   }
+                  pesanHasilPRU(res == 6 ? 0 : res)
                   if(res == 2) {
                     setNewNoBukti()
                     alertify.warning('Nobukti telah direfresh silahkan submit ulang')
@@ -5338,12 +5518,14 @@ console.log('xhargacek:', xhargacek)
                   idpocust,
                   kodesattax,
                   statuspengiriman,
-                  tglkirimdet: tanggalkirim
+                  tglkirimdet: tanggalkirim,
+                  pru_komponen: komponenPRU
 
                 },
                 success: function(res) {
                   console.log('resspsoadd', res)
-                  if (res == 1) {
+                  // 6 = item SO tersimpan tetapi PRU (ubah kemasan) gagal -> tetap refresh tabel.
+                  if (res == 1 || res == 6) {
                         document.getElementById("input_add_nobukti").value = nobukti;
                         console.log(nobukti,'gggggggggggggggg')
                     loadAll()
@@ -5361,10 +5543,14 @@ console.log('xhargacek:', xhargacek)
                     $('#divhargaterakhir').hide();
                     cleanFormAddAdd()
 
+                    resetUbahKemasan()
                     refreshDataTableAdd(nobukti)
 
-                    alertify.success('Berhasil menambah item')
+                    if (!pesanHasilPRU(res)) {
+                      alertify.success('Berhasil menambah item')
+                    }
                   }
+                  pesanHasilPRU(res == 6 ? 0 : res)
                   if(res == 2) {
                     setNewNoBukti()
                     alertify.warning('Nobukti telah direfresh silahkan submit ulang')
@@ -5631,6 +5817,12 @@ if (!kodepelanggan || !kodesales || !kodebackoffice || !kodesattax || !draftpo |
 
   let tglkirimdet = $("#input_add_add_tglkirim").val() || tanggalkirim
 
+  // Komponen Ubah Kemasan (Qty CR) untuk barang Assembly; PRU ikut diubah server.
+  let komponenPRU = dataKomponenPRU()
+  if (komponenPRU === null) {
+    return
+  }
+
   $.ajax({
     url: "{!! url('sospadd') !!}",
     type: "post",
@@ -5685,20 +5877,29 @@ if (!kodepelanggan || !kodesales || !kodebackoffice || !kodesattax || !draftpo |
       idpocust,
       kodesattax,
       statuspengiriman,
-      tglkirimdet
+      tglkirimdet,
+      pru_komponen: komponenPRU
     },
     success: function(res) {
       console.log('resspsoaddedit', res)
-      if (res != 1) {
+      // 5 / 7 = ditolak sebelum disimpan; 6 = item tersimpan tetapi PRU gagal.
+      if (res == 5 || res == 7) {
+        pesanHasilPRU(res)
+        return
+      }
+      if (res != 1 && res != 6) {
         alertify.warning('Gagal edit item')
         return
       }
 
       loadAll()
       $('.showhide').hide();
+      resetUbahKemasan()
       refreshDataTableAdd(nobukti)
 
-      alertify.success('Berhasil edit item')
+      if (!pesanHasilPRU(res)) {
+        alertify.success('Berhasil edit item')
+      }
     },
     error: function (err) {
       console.log(err)
@@ -5815,6 +6016,320 @@ function onChangeInputAddAddDiscRp () {
 }
 
 
+// ===== Ditambahkan 2026-11-19: Ubah Kemasan (PRU) untuk barang Assembly =====
+// pruAssembly : barang item yang sedang diisi adalah Assembly (DBBARANG.pJobCost = 1)
+// pruKomponen : baris Qty CR [{urut, kodebrg, namabrg, namamerk, nosat, qnt, SAT1..3, ISI1..3}];
+//               urut = urut baris di PRU (0 = baris baru). Disimpan ke PRU saat item SO disimpan.
+let pruAssembly = false
+let pruNoBukti = ''
+let pruKomponen = []
+let pruHasilCari = []
+let pruIndexEdit = -1     // -1 = mode Add Item di modal
+let pruBarangPilih = null // barang yang dipilih di form Add Item modal
+
+function escPRU (v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+function resetUbahKemasan () {
+  pruAssembly = false
+  pruNoBukti = ''
+  pruKomponen = []
+  pruHasilCari = []
+  $('#buttonTambahUbahKemasan').hide()
+  batalItemPRU()
+}
+
+function setUbahKemasan (assembly, noPRU = '', komponen = []) {
+  resetUbahKemasan()
+  pruAssembly = !!assembly
+  if (!pruAssembly) {
+    return
+  }
+  pruNoBukti = noPRU || ''
+  pruKomponen = (komponen || []).map(k => ({
+    urut: Number(k.URUT) || 0,
+    kodebrg: k.KODEBRG,
+    namabrg: k.NAMABRG,
+    namamerk: k.NAMAMERK || '',
+    nosat: Number(k.NOSAT) || 1,
+    qnt: Number(k.QNT) || 0,
+    SAT1: k.SAT1, SAT2: k.SAT2, SAT3: k.SAT3,
+    ISI1: k.ISI1, ISI2: k.ISI2, ISI3: k.ISI3
+  }))
+  $('#buttonTambahUbahKemasan').show()
+}
+
+function buttonTambahUbahKemasan () {
+  if (!pruAssembly || !$('#addAddItem').is(':visible')) {
+    alertify.warning('Buka Tambah Item / Edit Item dengan barang Assembly terlebih dahulu')
+    return
+  }
+  if (!$("#input_add_add_kodebarang").val()) {
+    alertify.warning('Pilih barang terlebih dahulu')
+    return
+  }
+  let noSO = $("#input_add_nobukti").val()
+  document.getElementById("input_pru_nobukti").value = pruNoBukti || '(dibuat otomatis saat item SO disimpan)'
+  document.getElementById("input_pru_tanggal").value = $("#input_add_tanggal").val()
+  document.getElementById("input_pru_keterangan").value = 'Dari SO ' + (noSO || '') + ' - ' + ($("#input_add_add_namabarang").val() || '')
+  batalItemPRU()
+  renderKomponenPRU()
+  $('#modalUbahKemasan').modal('show')
+}
+
+function opsiSatuanPRU (b, nosat) {
+  let opsi = ''
+  for (let n = 1; n <= 3; n++) {
+    if (b['SAT' + n]) {
+      opsi += `<option value=${n} ${Number(nosat) === n ? 'selected' : ''}>${escPRU(b['SAT' + n])} - ${escPRU(b['ISI' + n])}</option>`
+    }
+  }
+  return opsi || '<option value=0 selected disabled>-- Pilih Satuan --</option>'
+}
+
+function namaSatuanPRU (b, nosat) {
+  return b['SAT' + Number(nosat)] || ''
+}
+
+// Baris pertama = barang assembly dari item SO (Qty DB, ikut qty & satuan item SO, dikunci).
+function renderKomponenPRU () {
+  let qtySO = ($("#input_add_add_qty").val() || '0').replace(/,/g, '')
+  let satSO = ($("#input_add_add_nosat option:selected").text() || '').split(' - ')[0]
+  let merkSO = (tipeformitem == 'edit' ? (tempAddEdit.namamerk || '') : (tempAddAdd.NAMAMERK || ''))
+  let rowTable = `<tr>
+    <td>${escPRU($("#input_add_add_kodebarang").val())}</td>
+    <td>${escPRU($("#input_add_add_namabarang").val())}</td>
+    <td>${escPRU(merkSO)}</td>
+    <td class="text-right">${formatAngka((Number(qtySO) || 0).toFixed(2))}</td>
+    <td class="text-right">0.00</td>
+    <td>${escPRU(satSO)}</td>
+    <td class="text-center"></td>
+  </tr>`
+
+  pruKomponen.forEach((k, i) => {
+    rowTable += `<tr>
+      <td>${escPRU(k.kodebrg)}</td>
+      <td>${escPRU(k.namabrg)}</td>
+      <td>${escPRU(k.namamerk)}</td>
+      <td class="text-right">0.00</td>
+      <td class="text-right">${formatAngka((Number(k.qnt) || 0).toFixed(2))}</td>
+      <td>${escPRU(namaSatuanPRU(k, k.nosat))}</td>
+      <td class="text-center">
+        <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="editKomponenPRU(${i})"><i class="bi bi-pen"></i></button>
+        <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="hapusKomponenPRU(${i})"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`
+  })
+  document.getElementById("tabel_data_pru_komponen").innerHTML = rowTable
+}
+
+function buttonAddItemPRU () {
+  pruIndexEdit = -1
+  pruBarangPilih = null
+  document.getElementById("input_pru_kodebrg").value = ''
+  document.getElementById("input_pru_namabrg").value = ''
+  document.getElementById("input_pru_qtydb").value = '0.00'
+  document.getElementById("input_pru_qtycr").value = '0.00'
+  document.getElementById("input_pru_nosat").innerHTML = '<option value=0 selected disabled>-- Pilih Satuan --</option>'
+  $('#h4AddItemPRU').show()
+  $('#h4EditItemPRU').hide()
+  $('#buttonCariBarangPRU').show()
+  document.getElementById("input_pru_kodebrg").disabled = false
+  $('#formItemPRU').show()
+  document.getElementById("input_pru_kodebrg").focus()
+}
+
+// Ketik kode / nama barang lalu Enter: hasil 1 -> langsung terpilih, lebih dari 1 -> buka List Barang
+// (pola sama dengan kolom Barang di form item SO).
+function onKeyPressBarangPRU (e) {
+  if (e.which !== 13) {
+    return
+  }
+  let search = $("#input_pru_kodebrg").val()
+  document.getElementById("input_pru_cari_barang").value = search
+  cariBarangKomponenPRU(true)
+}
+
+function editKomponenPRU (i) {
+  let k = pruKomponen[i]
+  if (!k) {
+    return
+  }
+  pruIndexEdit = i
+  pruBarangPilih = k
+  document.getElementById("input_pru_kodebrg").value = k.kodebrg
+  document.getElementById("input_pru_namabrg").value = k.namabrg
+  document.getElementById("input_pru_qtydb").value = '0.00'
+  document.getElementById("input_pru_qtycr").value = Number(k.qnt) || 0
+  document.getElementById("input_pru_nosat").innerHTML = opsiSatuanPRU(k, k.nosat)
+  $('#h4AddItemPRU').hide()
+  $('#h4EditItemPRU').show()
+  $('#buttonCariBarangPRU').hide()
+  document.getElementById("input_pru_kodebrg").disabled = true
+  $('#formItemPRU').show()
+}
+
+function batalItemPRU () {
+  pruIndexEdit = -1
+  pruBarangPilih = null
+  $('#formItemPRU').hide()
+  tutupListBarangPRU()
+  document.getElementById("input_pru_cari_barang").value = ''
+  document.getElementById("tabel_data_pru_cari").innerHTML = ''
+}
+
+function submitItemPRU () {
+  if (!pruBarangPilih) {
+    alertify.warning('Pilih barang terlebih dahulu')
+    return
+  }
+  let qnt = Number($("#input_pru_qtycr").val())
+  let nosat = Number($("#input_pru_nosat").val())
+  if (!(qnt > 0)) {
+    alertify.warning('Qty CR harus lebih dari 0')
+    return
+  }
+  if (!nosat) {
+    alertify.warning('Satuan harus diisi')
+    return
+  }
+  if (pruIndexEdit >= 0) {
+    pruKomponen[pruIndexEdit].qnt = qnt
+    pruKomponen[pruIndexEdit].nosat = nosat
+  } else {
+    let b = pruBarangPilih
+    pruKomponen.push({
+      urut: 0,
+      kodebrg: b.KODEBRG,
+      namabrg: b.NAMABRG,
+      namamerk: b.NAMAMERK || '',
+      nosat: nosat,
+      qnt: qnt,
+      SAT1: b.SAT1, SAT2: b.SAT2, SAT3: b.SAT3,
+      ISI1: b.ISI1, ISI2: b.ISI2, ISI3: b.ISI3
+    })
+  }
+  batalItemPRU()
+  renderKomponenPRU()
+}
+
+function hapusKomponenPRU (i) {
+  let k = pruKomponen[i]
+  if (!k) {
+    return
+  }
+  alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + escPRU(k.namabrg) + ' ?',
+    function () {
+      pruKomponen.splice(i, 1)
+      batalItemPRU()
+      renderKomponenPRU()
+    },
+    function () {})
+}
+
+// Daftar pilih barang komponen menggantikan isi modal (seperti daftar barang di form item SO).
+function buttonCariBarangPRU () {
+  $('#modalBodyPRUUtama').hide()
+  $('#modalBodyPRUListBarang').show()
+  $('#labelModalUbahKemasan').text('List Barang')
+  document.getElementById("input_pru_cari_barang").focus()
+  if (!pruHasilCari.length) {
+    cariBarangKomponenPRU()
+  }
+}
+
+function tutupListBarangPRU () {
+  $('#modalBodyPRUListBarang').hide()
+  $('#modalBodyPRUUtama').show()
+  $('#labelModalUbahKemasan').text('Ubah Kemasan')
+}
+
+function cariBarangKomponenPRU (dariKolomKode = false) {
+  let search = $("#input_pru_cari_barang").val()
+  $.ajax({
+    url: "{!! url('solistbarangkomponenpru') !!}",
+    type: "get",
+    data: { search },
+    success: function (res) {
+      pruHasilCari = res || []
+      if (dariKolomKode && pruHasilCari.length === 1) {
+        pilihKomponenPRU(0)
+        return
+      }
+      if (dariKolomKode && !pruHasilCari.length) {
+        alertify.warning('Barang tidak ditemukan')
+        return
+      }
+      let rowTable = ''
+      pruHasilCari.forEach((item, i) => {
+        rowTable += `<tr class="pick-row" style="cursor: pointer;" onclick="pilihKomponenPRU(${i})">
+          <td>${escPRU(item.KODEBRG)}</td>
+          <td>${escPRU(item.NAMABRG)}</td>
+          <td>${escPRU(item.NAMAMERK)}</td>
+          <td>${escPRU(item.SAT1)}</td>
+        </tr>`
+      })
+      if (!pruHasilCari.length) {
+        rowTable = `<tr><td class="text-center" colspan=4>Tidak ada data</td></tr>`
+      }
+      document.getElementById("tabel_data_pru_cari").innerHTML = rowTable
+      if (dariKolomKode) {
+        buttonCariBarangPRU() // hasil lebih dari 1 -> tampilkan List Barang
+      }
+    },
+    error: function (err) {
+      console.log(err)
+      alertify.warning('Gagal mencari barang komponen')
+    }
+  })
+}
+
+function pilihKomponenPRU (i) {
+  let item = pruHasilCari[i]
+  if (!item) {
+    return
+  }
+  pruBarangPilih = item
+  document.getElementById("input_pru_kodebrg").value = item.KODEBRG
+  document.getElementById("input_pru_namabrg").value = item.NAMABRG
+  document.getElementById("input_pru_nosat").innerHTML = opsiSatuanPRU(item, 1)
+  tutupListBarangPRU()
+  document.getElementById("input_pru_qtycr").focus()
+}
+
+// null = ada komponen yang belum lengkap (pesan sudah ditampilkan).
+function dataKomponenPRU () {
+  if (!pruAssembly) {
+    return ''
+  }
+  for (let k of pruKomponen) {
+    if (!(Number(k.qnt) > 0)) {
+      alertify.warning('Qty CR komponen ' + k.namabrg + ' harus lebih dari 0')
+      return null
+    }
+  }
+  return JSON.stringify(pruKomponen.map(k => ({ urut: k.urut, kodebrg: k.kodebrg, nosat: k.nosat, qnt: k.qnt })))
+}
+
+function pesanHasilPRU (res) {
+  if (res == 5) {
+    alertify.warning('Ubah kemasan (PRU) item ini sudah diproses WMS, item tidak bisa diubah / dihapus')
+    return true
+  }
+  if (res == 6) {
+    alertify.warning('Item SO tersimpan, tetapi Ubah Kemasan (PRU) gagal diproses. Silahkan simpan ulang lewat Edit Item')
+    return true
+  }
+  if (res == 7) {
+    alertify.warning('Data komponen ubah kemasan tidak valid')
+    return true
+  }
+  return false
+}
+// ===== akhir Ubah Kemasan (PRU) =====
+
 function buttonAddAddItem () {
   let flagnopo = 0
   $.ajax({
@@ -5855,6 +6370,7 @@ function buttonAddAddItem () {
 
 
   cleanFormAddAdd()
+  resetUbahKemasan()
 
   document.getElementById("buttonAddAddListRefPr").disabled = false
   document.getElementById("buttonAddAddListNoPenyerahan").disabled = false
@@ -5897,6 +6413,26 @@ if (tempAddEdit.nopl != '') {
   alertify.warning('Data sudah masuk picking list, tidak bisa di edit')
   return
 }
+
+  // Ubah Kemasan (PRU): komponen dibaca langsung dari PRU (perubahan Qty CR di WMS ikut terlihat).
+  let pruItem = null
+  $.ajax({
+    url: "{!! url('sogetpruitem') !!}",
+    type: "post",
+    async: false,
+    data: { _token, nobukti: tempAddEdit.NoBukti, urut: tempAddEdit.Urut },
+    success: function (res) { pruItem = res },
+    error: function (err) { console.log(err) }
+  })
+  if (!pruItem) {
+    alertify.warning('Gagal membaca data ubah kemasan, silahkan refresh browser')
+    return
+  }
+  if (pruItem.diproses) {
+    alertify.warning('Ubah kemasan (PRU) item ini sudah diproses WMS, item tidak bisa di edit')
+    return
+  }
+  setUbahKemasan(pruItem.assembly, pruItem.nopru, pruItem.komponen)
 
   let selectOption = ''
   console.log('a' ,tempAddEdit.SAT1)
@@ -6099,6 +6635,8 @@ if (tempAddEdit.nopl != '') {
 
 function closeShowHideAdd () {
   $('.showhide').hide();
+  // Batal: komponen ubah kemasan yang belum disimpan dibuang (PRU tidak dibuat / tidak berubah).
+  resetUbahKemasan()
 
 }
 
@@ -8200,6 +8738,8 @@ function buttonAddAddPickBarangAll (kodebrg , x = 0) {
       }
 
       tempAddAdd = res.barang[0]
+      // Barang Assembly -> tombol Tambah Ubah Kemasan muncul (komponen diisi sebelum Simpan).
+      setUbahKemasan(Number(tempAddAdd.pJobCost) === 1)
       document.getElementById("input_add_add_kodebarang").value = tempAddAdd.Kodebrg
       document.getElementById("input_add_add_namabarang").value = tempAddAdd.NamaBrg
       document.getElementById("input_add_add_namaproduk").value = tempAddAdd.NamaBrg
@@ -9470,6 +10010,14 @@ function buttonAddDeleteItem (i) {
           },
           success: function(res) {
             console.log('resdelete', res)
+            // 5 = PRU sudah diproses WMS, 6 = PRU gagal dihapus -> item SO tidak dihapus.
+            if (res == 6) {
+              alertify.warning('Gagal menghapus Ubah Kemasan (PRU), item SO tidak dihapus')
+              return
+            }
+            if (pesanHasilPRU(res)) {
+              return
+            }
             loadAll()
 
             // lockFormAdd()

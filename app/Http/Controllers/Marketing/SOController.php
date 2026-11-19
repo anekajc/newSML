@@ -1828,17 +1828,19 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
   }
 
   public function listBarang (Request $req) {
-
-
+    // Diubah 2026-11-19: teks cari dulu disambung langsung ke SQL (rawan SQL injection) dan
+    // kurung OR-nya salah (cari per nama ikut memunculkan barang non-aktif / di luar BJ,JS).
+    // Sekarang berparameter + kurung dibetulkan + kolom pJobCost (penanda barang Assembly).
+    $pola = '%' . str_replace(['[', '%', '_'], ['[[]', '[%]', '[_]'], (string) $req->input('search', '')) . '%';
     $listData = DB::connection('SML')->select("select a.Kodebrg, a.NamaBrg,I.NamaSubGrp,A.PartNumber,J.NAMAMERK,a.ISI1, a.ISI2, a.ISI3,
-                    A.Sat1,A.Sat2 ,A.Sat3,A.pPPN,Isnull(A.QntMin,0) QntMin ,a.Hrg1_1 , a.Hrg2_1, a.Hrg3_1
+                    A.Sat1,A.Sat2 ,A.Sat3,A.pPPN,Isnull(A.QntMin,0) QntMin ,a.Hrg1_1 , a.Hrg2_1, a.Hrg3_1, isnull(A.pJobCost,0) pJobCost
                     from DBbarang a
                     left OUter JOin DbSubgroup I on A.KodeSubGRp=I.KodeSUbgrp and A.KodeHdGrp=i.KodeHDGrp
                     Left Outer join DbMerk J on A.KodeMerk=J.KodeMerk
                     where a.isaktif=1 and A.KodeGrp in ('BJ','JS')
-                     and (A.KodeBrg like '%" . $req->input('search') . "%') or (a.NamaBrg like '%" . $req->input('search') . "%')
+                     and ((A.KodeBrg like cast(? as varchar(200))) or (a.NamaBrg like cast(? as varchar(200))))
                     and isnull(A.Isaktif,0)=1
-                    order by a.Kodebrg ASC");
+                    order by a.Kodebrg ASC", [$pola, $pola]);
     return $listData;
   }
 
@@ -1923,6 +1925,38 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
       $check = DB::connection('SML')->select('select * from dbbarang where kodebrg = :kodebrg',["kodebrg" => $req->kodebarang]);
         if (!$check) {
           return 3;
+      }
+    }
+
+    // Ditambahkan 2026-11-19: PRU (Permintaan Ubah Kemasan) otomatis untuk barang Assembly.
+    // Dicek SEBELUM sp_SO supaya item SO tidak tersimpan kalau PRU-nya pasti gagal.
+    //   5 = PRU item ini sudah diproses WMS (picking / terima) -> item tidak boleh diubah/dihapus
+    //   7 = data komponen ubah kemasan tidak valid
+    $pruNo = null;
+    if ($choice == 'U' || $choice == 'D') {
+      $pruNo = $this->cariPRUdariSO($nobukti, (int) $req->urut);
+      if ($pruNo && $this->pruSudahDiproses($pruNo)) {
+        return 5;
+      }
+    }
+    // Hapus item: PRU dihapus lebih dulu supaya tidak ada PRU yatim yang menunjuk urut SO
+    // yang sudah hilang (urut itu bisa dipakai lagi oleh item baru).
+    if ($choice == 'D' && $pruNo) {
+      try {
+        DB::connection('SML')->transaction(function () use ($pruNo) {
+          $this->hapusPRU($pruNo);
+        });
+      } catch (\Throwable $e) {
+        \Log::error('Hapus PRU dari SO gagal: ' . $e->getMessage(), ['noso' => $nobukti, 'urut' => $req->urut]);
+        return 6;
+      }
+      $pruNo = null;
+    }
+    $pruKomponen = [];
+    if ($choice == 'I' || $choice == 'U') {
+      $pruKomponen = $this->bacaKomponenPRU($req->input('pru_komponen'));
+      if ($pruKomponen === false) {
+        return 7;
       }
     }
 
@@ -2032,7 +2066,241 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
       if ($choice =='U'){
         $tempX2 =  app('App\Http\Controllers\GlobalController')->LoggingData($choice,'SO',$nobukti,'',$murut,'DBSODET');
       }
+
+      // Ditambahkan 2026-11-19: buat / ubah / hapus PRU item Assembly setelah item SO tersimpan.
+      // 6 = item SO tersimpan tetapi PRU gagal dibuat/diubah (bisa diulang lewat Edit Item).
+      if (!$this->sinkronPRUdariSO($choice, $nobukti, $req, $pruNo, $pruKomponen)) {
+        return 6;
+      }
     return 1;
+  }
+
+  // =====================================================================================
+  // Ditambahkan 2026-11-19: SO <-> PRU (Permintaan Ubah Kemasan, menu WMS) untuk barang
+  // Assembly (DBBARANG.pJobCost = 1). Tanpa perubahan database: PRU dibuat lewat
+  // Sp_OutBrgUKWEB + SP_IsiNobukti apa adanya.
+  //   - 1 item SO = 1 dokumen PRU. Item SO = baris Qty DB (pDebet=1), komponen = Qty CR.
+  //   - Penghubung: DBOutBrg.KETERANGAN diawali 'SO:<NoSO>#<UrutSO>|'. Kolom NoBeli sengaja
+  //     TIDAK dipakai karena sp_sosiapkirim / SP_CheckPL / sp_checksospb menjumlahkan
+  //     DBOutBrgDET per NoBeli+UrutBeli sebagai qty picking list SO.
+  // =====================================================================================
+
+  private function tagPRU ($noSO, $urutSO) {
+    return 'SO:' . $noSO . '#' . (int) $urutSO . '|';
+  }
+
+  private function cariPRUdariSO ($noSO, $urutSO) {
+    $tag = $this->tagPRU($noSO, $urutSO);
+    $row = DB::connection('SML')->selectOne("select top 1 NOBUKTI from DBOutBrg
+      where NOBUKTI like '%PRU%' and left(isnull(KETERANGAN,''), ?) = cast(? as varchar(200))
+      order by NOBUKTI", [strlen($tag), $tag]);
+    return $row ? $row->NOBUKTI : null;
+  }
+
+  // PRU dianggap sudah diproses WMS kalau sudah ada picking (DBOutBrgDET2) atau sudah
+  // masuk ubah kemasan (DBUBAHKEMASANDET) -- sama dengan penanda pPicking di VWMASTERPRUBAHKEMASANWEB.
+  private function pruSudahDiproses ($noPRU) {
+    $row = DB::connection('SML')->selectOne("select
+      case when exists (select 1 from DBOutBrgDET2 where NoBeli = cast(? as varchar(30)))
+             or exists (select 1 from DBUBAHKEMASANDET where NoPRUbah = cast(? as varchar(30)))
+           then 1 else 0 end diproses", [$noPRU, $noPRU]);
+    return $row && (int) $row->diproses === 1;
+  }
+
+  // Komponen (Qty CR) dari form SO: JSON [{urut, kodebrg, nosat, qnt}]. Nama, satuan dan isi
+  // diambil dari DBBARANG (bukan dari browser). false = data tidak valid.
+  private function bacaKomponenPRU ($json) {
+    if ($json === null || $json === '') {
+      return [];
+    }
+    $data = json_decode((string) $json, true);
+    if (!is_array($data)) {
+      return false;
+    }
+    $hasil = [];
+    foreach ($data as $k) {
+      $kodebrg = trim((string) ($k['kodebrg'] ?? ''));
+      $nosat = (int) ($k['nosat'] ?? 0);
+      $qnt = $k['qnt'] ?? null;
+      if ($kodebrg === '' || !in_array($nosat, [1, 2, 3], true) || !is_numeric($qnt) || (float) $qnt <= 0) {
+        return false;
+      }
+      $brg = DB::connection('SML')->selectOne('select KODEBRG, NAMABRG, SAT1, SAT2, SAT3, ISI1, ISI2, ISI3
+        from DBBARANG where KODEBRG = cast(? as varchar(25)) and isnull(ISAKTIF,0) = 1', [$kodebrg]);
+      if (!$brg || trim((string) $brg->{'SAT' . $nosat}) === '') {
+        return false;
+      }
+      $hasil[] = [
+        'urut' => max(0, (int) ($k['urut'] ?? 0)),
+        'kodebrg' => $brg->KODEBRG,
+        'namabrg' => $brg->NAMABRG,
+        'nosat' => $nosat,
+        'satuan' => $brg->{'SAT' . $nosat},
+        'isi' => (float) $brg->{'ISI' . $nosat},
+        'qnt' => (float) $qnt,
+      ];
+    }
+    return $hasil;
+  }
+
+  // Satu baris ke Sp_OutBrgUKWEB (urutan parameter sama dengan PermintaanUbahKemasanController::spAdd).
+  private function execPRU ($choice, $noPRU, $nourut, $tanggal, $keterangan, $urut, $kodebrg, $satuan, $nosat, $isi, $qnt, $pDebet, $namabrg) {
+    DB::connection('SML')->statement('exec Sp_OutBrgUKWEB ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?', [
+      $choice, $noPRU, $tanggal, $keterangan, $urut, $kodebrg, '', $satuan, $nosat, $isi, $qnt,
+      0, $nourut, 1, 0, 0, $pDebet, \Auth::user()->username, 'PRU', date('Y-m-d'), $namabrg,
+    ]);
+  }
+
+  private function hapusPRU ($noPRU) {
+    $rows = DB::connection('SML')->select('select URUT from DBOutBrgDET where NOBUKTI = cast(? as varchar(30)) order by URUT', [$noPRU]);
+    foreach ($rows as $r) {
+      // Sp_OutBrgUKWEB 'D' ikut menghapus header DBOutBrg saat baris terakhir terhapus.
+      $this->execPRU('D', $noPRU, '', null, '', (int) $r->URUT, '', '', 0, 0, 0, 0, '');
+    }
+  }
+
+  private function sinkronPRUdariSO ($choice, $noSO, Request $req, $pruNo, $komponen) {
+    try {
+      $db = DB::connection('SML');
+
+      if ($choice == 'D') {
+        if ($pruNo) {
+          $this->hapusPRU($pruNo);
+        }
+        return true;
+      }
+
+      // Data item diambil ulang dari DBSODET (yang baru saja disimpan sp_SO).
+      $sql = 'select top 1 d.URUT, d.KODEBRG, b.NAMABRG, d.QNT2, d.NOSAT, d.SATUAN, d.ISI, h.TANGGAL,
+          isnull(b.pJobCost,0) pJobCost
+        from DBSODET d
+        join DBSO h on h.NOBUKTI = d.NOBUKTI
+        left join DBBARANG b on b.KODEBRG = d.KODEBRG
+        where d.NOBUKTI = cast(? as varchar(30)) and ';
+      $item = $choice == 'I'
+        ? $db->selectOne($sql . 'd.KODEBRG = cast(? as varchar(25)) order by d.URUT desc', [$noSO, (string) $req->kodebarang])
+        : $db->selectOne($sql . 'd.URUT = ?', [$noSO, (int) $req->urut]);
+
+      if (!$item || (int) $item->pJobCost !== 1) {
+        return true; // bukan barang Assembly -> tidak ada PRU
+      }
+
+      $tanggal = date('Y-m-d', strtotime($item->TANGGAL));
+      $keterangan = mb_substr($this->tagPRU($noSO, $item->URUT) . ' ' . $item->NAMABRG, 0, 200);
+
+      $db->transaction(function () use ($db, $noSO, $item, $komponen, $tanggal, $keterangan, $pruNo, $choice) {
+        $noPRU = $choice == 'U' ? $pruNo : null;
+
+        if (!$noPRU) {
+          // PRU baru: nomor dari SP_IsiNobukti (periode = bulan/tahun tanggal SO). Nomor ini
+          // hanya dihitung (tidak dipesan), jadi pastikan belum terpakai sebelum dipakai.
+          $nomor = null;
+          for ($coba = 0; $coba < 5 && !$nomor; $coba++) {
+            $calon = $db->select('exec SP_IsiNobukti ?,?,?,?', ['PRU', (int) date('n', strtotime($tanggal)), (int) date('Y', strtotime($tanggal)), \Auth::user()->username]);
+            $calon = $calon[0] ?? null;
+            if ($calon && !$db->selectOne('select top 1 NOBUKTI from DBOutBrg where NOBUKTI = cast(? as varchar(30))', [$calon->Nobukti])
+                && !$db->selectOne('select top 1 NOBUKTI from DBOutBrgDET where NOBUKTI = cast(? as varchar(30))', [$calon->Nobukti])) {
+              $nomor = $calon;
+            }
+          }
+          if (!$nomor) {
+            throw new \RuntimeException('Nomor PRU tidak tersedia');
+          }
+          // Baris Qty DB (barang assembly dari item SO) -- baris pertama sekaligus membuat header.
+          $this->execPRU('I', $nomor->Nobukti, $nomor->Nourut, $tanggal, $keterangan, 0, $item->KODEBRG, $item->SATUAN,
+            (int) $item->NOSAT, (float) $item->ISI, (float) $item->QNT2, 1, $item->NAMABRG);
+          foreach ($komponen as $k) {
+            $this->execPRU('I', $nomor->Nobukti, $nomor->Nourut, $tanggal, '', 0, $k['kodebrg'], $k['satuan'],
+              $k['nosat'], $k['isi'], $k['qnt'], 0, $k['namabrg']);
+          }
+          return;
+        }
+
+        // PRU sudah ada: header ikut tanggal SO, baris Qty DB ikut qty/satuan item SO.
+        $db->update('update DBOutBrg set TANGGAL = ? where NOBUKTI = cast(? as varchar(30))', [$tanggal, $noPRU]);
+        $header = $db->selectOne('select NOURUT from DBOutBrg where NOBUKTI = cast(? as varchar(30))', [$noPRU]);
+        $nourut = $header ? $header->NOURUT : '';
+
+        $baris = $db->select('select URUT, KODEBRG, QNT, NOSAT, isnull(pDebet,0) pDebet from DBOutBrgDET
+          where NOBUKTI = cast(? as varchar(30)) order by URUT', [$noPRU]);
+        $barisDB = null;
+        $barisCR = [];
+        foreach ($baris as $b) {
+          if ((int) $b->pDebet === 1 && !$barisDB) {
+            $barisDB = $b;
+          } elseif ((int) $b->pDebet === 0) {
+            $barisCR[(int) $b->URUT] = $b;
+          }
+        }
+
+        if ($barisDB) {
+          $this->execPRU('U', $noPRU, $nourut, $tanggal, '', (int) $barisDB->URUT, $item->KODEBRG, $item->SATUAN,
+            (int) $item->NOSAT, (float) $item->ISI, (float) $item->QNT2, 1, $item->NAMABRG);
+        } else {
+          $this->execPRU('I', $noPRU, $nourut, $tanggal, '', 0, $item->KODEBRG, $item->SATUAN,
+            (int) $item->NOSAT, (float) $item->ISI, (float) $item->QNT2, 1, $item->NAMABRG);
+        }
+
+        // Komponen: urut lama yang dikirim -> ubah, urut 0 -> tambah, urut lama yang tidak dikirim -> hapus.
+        $dipakai = [];
+        foreach ($komponen as $k) {
+          $lama = $k['urut'] ? ($barisCR[$k['urut']] ?? null) : null;
+          if ($lama && $lama->KODEBRG === $k['kodebrg']) {
+            $dipakai[$k['urut']] = true;
+            $this->execPRU('U', $noPRU, $nourut, $tanggal, '', $k['urut'], $k['kodebrg'], $k['satuan'],
+              $k['nosat'], $k['isi'], $k['qnt'], 0, $k['namabrg']);
+          } else {
+            $this->execPRU('I', $noPRU, $nourut, $tanggal, '', 0, $k['kodebrg'], $k['satuan'],
+              $k['nosat'], $k['isi'], $k['qnt'], 0, $k['namabrg']);
+          }
+        }
+        foreach ($barisCR as $urut => $b) {
+          if (!isset($dipakai[$urut])) {
+            $this->execPRU('D', $noPRU, '', null, '', $urut, '', '', 0, 0, 0, 0, '');
+          }
+        }
+      });
+      return true;
+    } catch (\Throwable $e) {
+      \Log::error('SO -> PRU gagal: ' . $e->getMessage(), ['noso' => $noSO, 'urut' => $req->urut, 'choice' => $choice]);
+      return false;
+    }
+  }
+
+  // Data PRU milik satu item SO, untuk form Edit Item (komponen dibaca langsung dari PRU,
+  // jadi perubahan Qty CR di WMS otomatis terlihat di SO).
+  public function getPRUItem (Request $req) {
+    $noSO = (string) $req->input('nobukti');
+    $urut = (int) $req->input('urut');
+    $item = DB::connection('SML')->selectOne('select isnull(b.pJobCost,0) pJobCost from DBSODET d
+      left join DBBARANG b on b.KODEBRG = d.KODEBRG
+      where d.NOBUKTI = cast(? as varchar(30)) and d.URUT = ?', [$noSO, $urut]);
+    $noPRU = $this->cariPRUdariSO($noSO, $urut);
+    $komponen = [];
+    if ($noPRU) {
+      $komponen = DB::connection('SML')->select("select a.URUT, a.KODEBRG, b.NAMABRG, a.QNT, a.NOSAT,
+          b.SAT1, b.SAT2, b.SAT3, b.ISI1, b.ISI2, b.ISI3, isnull(m.NAMAMERK,'') NAMAMERK
+        from DBOutBrgDET a left join DBBARANG b on b.KODEBRG = a.KODEBRG
+        left join DBMERK m on m.KODEMERK = b.KodeMerk
+        where a.NOBUKTI = cast(? as varchar(30)) and isnull(a.pDebet,0) = 0 order by a.URUT", [$noPRU]);
+    }
+    return [
+      'assembly' => $item && (int) $item->pJobCost === 1,
+      'nopru' => $noPRU,
+      'diproses' => $noPRU ? $this->pruSudahDiproses($noPRU) : false,
+      'komponen' => $komponen,
+    ];
+  }
+
+  // Cari barang komponen (semua barang aktif) -- dibatasi 50 baris supaya ringan.
+  public function listBarangKomponenPRU (Request $req) {
+    $pola = '%' . str_replace(['[', '%', '_'], ['[[]', '[%]', '[_]'], trim((string) $req->input('search', ''))) . '%';
+    return DB::connection('SML')->select("select top 50 b.KODEBRG, b.NAMABRG, b.SAT1, b.SAT2, b.SAT3, b.ISI1, b.ISI2, b.ISI3,
+        isnull(m.NAMAMERK,'') NAMAMERK
+      from DBBARANG b left join DBMERK m on m.KODEMERK = b.KodeMerk
+      where isnull(b.ISAKTIF,0) = 1
+        and (b.KODEBRG like cast(? as varchar(200)) or b.NAMABRG like cast(? as varchar(200)))
+      order by b.KODEBRG", [$pola, $pola]);
   }
 
   public function spCekHarga (Request $req) {
@@ -2107,7 +2375,8 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
 // join DBMERK b on a.KodeMerk = b.KODEMERK
 //  where a.KODEGRP = 'BJ' and a.pAgen = 1
     $barang = DB::connection('SML')->select(" select a.Kodebrg, a.NamaBrg,I.NamaSubGrp,A.PartNumber,J.NAMAMERK,a.ISI1, a.ISI2, a.ISI3,
-                    A.Sat1,A.Sat2 ,A.Sat3,A.pPPN,Isnull(A.QntMin,0) QntMin ,a.Hrg1_1 , a.Hrg2_1, a.Hrg3_1
+                    A.Sat1,A.Sat2 ,A.Sat3,A.pPPN,Isnull(A.QntMin,0) QntMin ,a.Hrg1_1 , a.Hrg2_1, a.Hrg3_1,
+                    isnull(A.pJobCost,0) pJobCost
                     from DBbarang a
                     left OUter JOin DbSubgroup I on A.KodeSubGRp=I.KodeSUbgrp and A.KodeHdGrp=i.KodeHDGrp
                     Left Outer join DbMerk J on A.KodeMerk=J.KodeMerk
