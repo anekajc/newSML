@@ -216,7 +216,8 @@ join DBMERK f on a.KodeMerk = f.KODEMERK where a.KODEGRP = 'BJ'");
 
     $edit = DB::connection('SML')->update('update DBBARANG set NAMABRG = :namabarang , NamaBrg2 = :namabarang2 , pAgen = :isagen , SAT1 = :satuan , SAT2 = :satuan2  , SAT3 = :satuan3, 
     ISI1 = :isi , ISI2 = :isi2 , ISI3 = :isi3 , QntMin = :qtymin , QntMax = :qtymax , Tolerate = :toleransi , pBerat = :isberat , ISAKTIF = :isaktif , Berat = :beratvolume , 
-    PartNumber = :partnumber , Mlokasi = :lokasi , SKU = :kodesku , pKontrak = :iskontrak , Hrg1_1 = :harga , Hrg2_1 = :harga2 , Hrg3_1 = :harga3  where KODEBRG = :kodebarang' , [
+    PartNumber = :partnumber , Mlokasi = :lokasi , SKU = :kodesku , pKontrak = :iskontrak , Hrg1_1 = :harga , Hrg2_1 = :harga2 , Hrg3_1 = :harga3 ,
+    pPPN = :isppn , CBarcode = :iscetakbarcode , pBufferStock = :isbufferstock , pFullSupply = :isfullsupply , pJobCost = :jobcost  where KODEBRG = :kodebarang' , [
       'namabarang' => $req->namabarang ,
       'namabarang2' => $req->namabarang2 ,
       'isagen' => $isagen ,
@@ -239,6 +240,11 @@ join DBMERK f on a.KodeMerk = f.KODEMERK where a.KODEGRP = 'BJ'");
       'harga' => $req->harga,
       'harga2' => $req->harga2,
       'harga3' => $req->harga3,
+      'isppn' => $req->isppn ? 1 : 0,
+      'iscetakbarcode' => $req->iscetakbarcode ? 1 : 0,
+      'isbufferstock' => $req->isbufferstock ? 1 : 0,
+      'isfullsupply' => $req->isfullsupply ? 1 : 0,
+      'jobcost' => (int)$req->jobcost === 1 ? 1 : 0,
       'kodebarang' => $req->kodebarang
     ]);
 
@@ -341,8 +347,8 @@ join DBMERK f on a.KodeMerk = f.KODEMERK where a.KODEGRP = 'BJ'");
     }
 
 
-      $listData = DB::connection('SML')->update('insert into DBBARANG (KODEGRP , KodeHdGrp ,  KODESUBGRP , KODESUBKATEGORI , KodeMerk, KODEBRG , NAMABRG , NamaBrg2 , pAgen , SAT1, SAT2 ,sat3, ISI1, ISI2,isi3, QntMin, QntMax , Tolerate, pBerat, ISAKTIF, Berat, PartNumber, Mlokasi, SKU , Proses, IsTakeIn , pKontrak, Hrg1_1 , Hrg2_1, Hrg3_1) 
-      values ( :kodegroup , :kodeheadgroup ,  :kodesubgroup , :kodesubkategori , :kodemerk , :kodebarang , :namabarang , :namabarang2 , :isagen , :satuan , :satuan2, :satuan3 , :isi , :isi2, :isi3  , :qtymin , :qtymax , :toleransi , :isberat , :isaktif , :beratvolume , :partnumber , :lokasi , :kodesku , :proses , :istakein , :iskontrak , :harga , :harga2 , :harga3)' , [
+      $listData = DB::connection('SML')->update('insert into DBBARANG (KODEGRP , KodeHdGrp ,  KODESUBGRP , KODESUBKATEGORI , KodeMerk, KODEBRG , NAMABRG , NamaBrg2 , pAgen , SAT1, SAT2 ,sat3, ISI1, ISI2,isi3, QntMin, QntMax , Tolerate, pBerat, ISAKTIF, Berat, PartNumber, Mlokasi, SKU , Proses, IsTakeIn , pKontrak, Hrg1_1 , Hrg2_1, Hrg3_1, pPPN, CBarcode, pBufferStock, pFullSupply, pJobCost)
+      values ( :kodegroup , :kodeheadgroup ,  :kodesubgroup , :kodesubkategori , :kodemerk , :kodebarang , :namabarang , :namabarang2 , :isagen , :satuan , :satuan2, :satuan3 , :isi , :isi2, :isi3  , :qtymin , :qtymax , :toleransi , :isberat , :isaktif , :beratvolume , :partnumber , :lokasi , :kodesku , :proses , :istakein , :iskontrak , :harga , :harga2 , :harga3 , :isppn , :iscetakbarcode , :isbufferstock , :isfullsupply , :jobcost)' , [
         'kodegroup' => $req->kodegroup ,
         'kodeheadgroup' => $req->kodeheadgroup ,
         'kodesubgroup' => $req->kodesubgroup ,
@@ -371,8 +377,13 @@ join DBMERK f on a.KodeMerk = f.KODEMERK where a.KODEGRP = 'BJ'");
         'istakein' => $req->istakein,
         'iskontrak' => $req->iskontrak,
         'harga' => $req->harga,
-        'harga2' => $req->harga2, 
-        'harga3' => $req->harga3 
+        'harga2' => $req->harga2,
+        'harga3' => $req->harga3,
+        'isppn' => $req->isppn ? 1 : 0,
+        'iscetakbarcode' => $req->iscetakbarcode ? 1 : 0,
+        'isbufferstock' => $req->isbufferstock ? 1 : 0,
+        'isfullsupply' => $req->isfullsupply ? 1 : 0,
+        'jobcost' => (int)$req->jobcost === 1 ? 1 : 0
         ] );
 
 

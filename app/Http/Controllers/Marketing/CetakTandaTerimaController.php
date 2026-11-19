@@ -100,7 +100,7 @@ class CetakTandaTerimaController extends Controller
                 group by NoInvoice
                 ) D on A.nobukti=D.Noinvoice
     WHERE /*MONTH(A.Tanggal)=:0 */ YEAR(A.Tanggal) > 2020 AND
-    D.NoInvoice IS NULL      and  isnull(A.IsBatal,0)=0
+    D.NoInvoice IS NULL      and  isnull(A.IsBatal,0)=0 and isnull(a.nopajak,'')<>'' and isnull(a.isbatal,0)=0
     " , []);
 
         // Satu baris per invoice; bentuk [row] dipertahankan karena JS membaca row[0].

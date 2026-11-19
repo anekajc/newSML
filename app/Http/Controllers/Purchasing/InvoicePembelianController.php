@@ -376,12 +376,21 @@ private function validasiBiaya (array $biaya, array $lpbBoleh) {
   foreach (DB::connection('SML')->select("select KODEVLS from DBVALAS") as $v) {
     $valas[strtoupper(trim($v->KODEVLS))] = trim($v->KODEVLS);
   }
+  // Kode biaya wajib dari master Daftar Biaya (DBBIAYA)
+  $master = [];
+  foreach (DB::connection('SML')->select("select Kodebiaya from DBBIAYA") as $m) {
+    $master[strtoupper(trim($m->Kodebiaya))] = trim($m->Kodebiaya);
+  }
   $bersih = [];
   foreach ($biaya as $b) {
     $lpb = trim((string) ($b['NoBukti'] ?? ''));
     if (!in_array($lpb, $lpbBoleh, true)) {
       return ['LPB ' . $lpb . ' punya biaya tapi belum dicentang.', []];
     }
+    $kodeInput = trim((string) ($b['KodeBiaya'] ?? ''));
+    $kode = $master[strtoupper($kodeInput)] ?? null;
+    if ($kodeInput === '') { return ['Kode biaya LPB ' . $lpb . ' belum dipilih.', []]; }
+    if (!$kode) { return ['Kode biaya ' . $kodeInput . ' (LPB ' . $lpb . ') tidak ada di master Daftar Biaya.', []]; }
     $vls = $valas[strtoupper(trim((string) ($b['KodeVls'] ?? '')))] ?? null;
     $nilai = (float) ($b['Nilai'] ?? 0);
     $kurs = strtoupper((string) $vls) === 'IDR' ? 1 : (float) ($b['Kurs'] ?? 0);
@@ -391,7 +400,7 @@ private function validasiBiaya (array $biaya, array $lpbBoleh) {
     if ($kurs <= 0) { return ['Kurs biaya LPB ' . $lpb . ' harus lebih dari 0.', []]; }
     if ($eksp === '') { return ['Ekspedisi biaya LPB ' . $lpb . ' belum dipilih.', []]; }
     $bersih[] = [
-      'lpb' => $lpb, 'vls' => $vls, 'nilai' => $nilai, 'kurs' => $kurs, 'eksp' => $eksp,
+      'lpb' => $lpb, 'kode' => $kode, 'vls' => $vls, 'nilai' => $nilai, 'kurs' => $kurs, 'eksp' => $eksp,
       'ket' => mb_substr(trim((string) ($b['Keterangan'] ?? '')), 0, 200),
       'urut' => (int) ($b['Urut'] ?? 0),
     ];
@@ -399,30 +408,38 @@ private function validasiBiaya (array $biaya, array $lpbBoleh) {
   return [null, $bersih];
 }
 
-// Samakan dbPBiaya milik invoice ini (KodeBiaya = No Bukti invoice) dengan daftar dari form
-// Edit: yang hilang dihapus (sp_PBiaya 'D'), yang ada Urut-nya diubah ('U'), sisanya
-// ditambah ('I'). Dipanggil di dalam transaksi.
+// Samakan dbPBiaya milik invoice ini dengan daftar dari form Edit: yang hilang dihapus
+// (sp_PBiaya 'D'), yang ada Urut-nya diubah ('U'), sisanya ditambah ('I'). Dipanggil di
+// dalam transaksi. KodeBiaya = kode master DBBIAYA, NoBuktiInv = No LPB; biaya milik invoice
+// = biaya semua LPB di DBInvoiceDET invoice ini (satu LPB hanya masuk satu invoice).
 private function sinkronBiaya ($nobukti, array $biayaBersih) {
   $db = DB::connection('SML');
-  $lama = $db->select("select Kodebiaya, NoBuktiInv, Urut from dbPBiaya where Kodebiaya = :kode", ['kode' => $nobukti]);
+  $lama = $db->select("
+    select rtrim(Kodebiaya) Kodebiaya, rtrim(NoBuktiInv) NoBuktiInv, Urut from dbPBiaya
+    where NoBuktiInv in (select NoBeli from DBInvoiceDET where NOBUKTI = :nobukti)
+  ", ['nobukti' => $nobukti]);
+  $kodeLama = [];
+  foreach ($lama as $l) { $kodeLama[$l->NoBuktiInv . '|' . (int) $l->Urut] = $l->Kodebiaya; }
   $dipakai = [];
   foreach ($biayaBersih as $b) {
     if ($b['urut'] > 0) { $dipakai[$b['lpb'] . '|' . $b['urut']] = 1; }
   }
   foreach ($lama as $l) {
-    if (!isset($dipakai[trim($l->NoBuktiInv) . '|' . (int) $l->Urut])) {
-      $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?', ['D', $nobukti, '', 0, '', 0, trim($l->NoBuktiInv), $nobukti, (int) $l->Urut]);
+    if (!isset($dipakai[$l->NoBuktiInv . '|' . (int) $l->Urut])) {
+      $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?', ['D', $l->Kodebiaya, '', 0, '', 0, $l->NoBuktiInv, $l->Kodebiaya, (int) $l->Urut]);
     }
   }
   foreach ($biayaBersih as $b) {
-    if ($b['urut'] > 0) {
+    $kunci = $b['lpb'] . '|' . $b['urut'];
+    if ($b['urut'] > 0 && isset($kodeLama[$kunci])) {
+      // @OldKode = KodeBiaya lama baris itu (kode biaya boleh diganti saat edit)
       $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?,?,?,?', [
-        'U', $nobukti, $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'], $nobukti, $b['urut'], '', 0, $b['eksp'],
+        'U', $b['kode'], $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'], $kodeLama[$kunci], $b['urut'], '', 0, $b['eksp'],
       ]);
     } else {
       $po = $db->selectOne("select NoPOHd from DBBELI where NOBUKTI = :lpb", ['lpb' => $b['lpb']]);
       $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?,?,?,?', [
-        'I', $nobukti, $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'], '', 0, (string) ($po->NoPOHd ?? ''), 0, $b['eksp'],
+        'I', $b['kode'], $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'], '', 0, (string) ($po->NoPOHd ?? ''), 0, $b['eksp'],
       ]);
     }
   }
@@ -433,12 +450,14 @@ private function sinkronBiaya ($nobukti, array $biayaBersih) {
 public function getBiayaInvoice (Request $req) {
   $nobukti = (string) $req->input('nobukti');
   $biaya = DB::connection('SML')->select("
-    select rtrim(B.NoBuktiInv) NoBukti, B.Urut, B.Keterangan, B.Nilai, rtrim(B.KodeVls) KodeVls, B.Kurs,
+    select rtrim(B.NoBuktiInv) NoBukti, B.Urut, rtrim(B.Kodebiaya) KodeBiaya, isnull(M.Keterangan, '') NamaBiaya,
+      B.Keterangan, B.Nilai, rtrim(B.KodeVls) KodeVls, B.Kurs,
       rtrim(B.KODECUSTSUPP) KodeCustSupp,
       rtrim(B.KODECUSTSUPP) + ' - ' + isnull(E.NAMACUSTSUPP, '') NamaCustSupp
     from dbPBiaya B
     left outer join DBCUSTSUPP E on E.KODECUSTSUPP = B.KODECUSTSUPP
-    where B.Kodebiaya = :nobukti
+    left outer join DBBIAYA M on M.Kodebiaya = B.Kodebiaya
+    where B.NoBuktiInv in (select NoBeli from DBInvoiceDET where NOBUKTI = :nobukti)
     order by B.NoBuktiInv, B.Urut
   ", ['nobukti' => $nobukti]);
   $lpb = DB::connection('SML')->select("
@@ -554,6 +573,11 @@ public function listValas () {
 // Browse ekspedisi di modal Biaya (master ekspedisi = dbcustsupp JENIS 3, hanya yang aktif)
 public function listEkspedisi () {
   return DB::connection('SML')->select("select KODECUSTSUPP, NAMACUSTSUPP from DBCUSTSUPP where JENIS = 3 and IsAktif = 1 order by NAMACUSTSUPP");
+}
+
+// Browse kode biaya di modal Biaya (master Daftar Biaya = DBBIAYA)
+public function listBiaya () {
+  return DB::connection('SML')->select("select rtrim(Kodebiaya) Kodebiaya, Keterangan from DBBIAYA order by Kodebiaya");
 }
 
 // Simpan invoice per LPB: setiap LPB yang dicentang masuk beserta SEMUA item outstanding-nya
@@ -682,11 +706,11 @@ public function spBeliGudang (Request $req) {
       ", ['nobukti' => $nobuktiInv, 'nobukti2' => $nobuktiInv, 'lpb' => $lpb]);
     }
 
-    // Biaya per LPB: KodeBiaya = No Bukti invoice, NoBuktiInv = No LPB, NoBiayaPO = PO LPB,
+    // Biaya per LPB: KodeBiaya = kode master DBBIAYA, NoBuktiInv = No LPB, NoBiayaPO = PO LPB,
     // UrutBiayaPO = 0. Urut dinomori sp_PBiaya sendiri (max urut per LPB + 1).
     foreach ($biayaBersih as $b) {
       $db->statement('exec sp_PBiaya ?,?,?,?,?,?,?,?,?,?,?,?', [
-        'I', $nobuktiInv, $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'],
+        'I', $b['kode'], $b['ket'], $b['nilai'], $b['vls'], $b['kurs'], $b['lpb'],
         '', 0, (string) $poLpb[$b['lpb']], 0, $b['eksp'],
       ]);
     }
