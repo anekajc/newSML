@@ -471,7 +471,7 @@
                                                 <input class="form-check-input" type="checkbox" value=""
                                                     id="checkBoxSKB" onclick="onclickPSKB()">
                                                 <label class="form-check-label" for="flexCheckDefault">
-                                                    pSKB
+                                                    SKB
                                                 </label>
                                             </div>
                                         </div>
