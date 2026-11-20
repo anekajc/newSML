@@ -1587,9 +1587,12 @@ function buttonFilterKN () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterKN', function (v) {
+UserFilter.restore('#modalFilterKN', function (v, changed) {
   knUpdateFilterBadge();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterKN(); }); }
+}, { resetUnsaved: true });
 
 function onChangePeriodeKN () {
   let tglawal = $('#input_tanggalawal_kn').val()

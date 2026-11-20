@@ -2867,10 +2867,15 @@ console.log('vvvvvvvvvvvvvvvvvv')
 
     // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
     // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-    UserFilter.restore('#modalFilterIpb', function (v) {
+    UserFilter.restore('#modalFilterIpb', function (v, changed) {
       if (v.ipbModalStatus !== undefined) { ipbFilterStatus = v.ipbModalStatus; }
       ipbUpdateFilterBadge();
-    });
+      // samakan isi select dengan filter yang benar-benar berlaku
+      $('#ipbModalStatus').val(ipbFilterStatus);
+      // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+      // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+      if (changed) { UserFilter.afterReady(function () { ipbTerapkanFilter(); }); }
+    }, { resetUnsaved: true });
 
     function ipbIkatOtoStatus () {
       let modal = document.getElementById('modalFilterIpb')

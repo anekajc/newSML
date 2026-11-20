@@ -1929,10 +1929,15 @@
 
         // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
         // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-        UserFilter.restore('#modalFilter', function (v) {
+        UserFilter.restore('#modalFilter', function (v, changed) {
           if (v.modalOtorisasi !== undefined) { globalOtorisasi = v.modalOtorisasi; }
           updateFilterBadge();
-        });
+          // samakan isi select dengan filter yang benar-benar berlaku
+          $('#modalOtorisasi').val(globalOtorisasi);
+          // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+          // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+          if (changed) { UserFilter.afterReady(function () { applyModalFilter(); }); }
+        }, { resetUnsaved: true });
 
         $(document).ready(function() {
             doSetHeader(g_modeReport);

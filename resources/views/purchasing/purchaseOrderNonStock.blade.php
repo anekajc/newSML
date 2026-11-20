@@ -5954,11 +5954,17 @@ function ponsResetFilter () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterPONS', function (v) {
+UserFilter.restore('#modalFilterPONS', function (v, changed) {
   if (v.ponsModalStatus !== undefined) { ponsFilterStatus = v.ponsModalStatus; }
   if (v.ponsModalOtorisasi !== undefined) { ponsFilterOtorisasi = v.ponsModalOtorisasi; }
   ponsUpdateFilterBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#ponsModalStatus').val(ponsFilterStatus);
+  $('#ponsModalOtorisasi').val(ponsFilterOtorisasi);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { ponsTerapkanFilter(); }); }
+}, { resetUnsaved: true });
 
 let ponsTab2Sudahdimuat = false
 

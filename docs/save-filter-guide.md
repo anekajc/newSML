@@ -80,6 +80,12 @@ Ada tiga pola:
 
 Catatan: filter `pons*` di `purchasing/partials/poNonStockScript` (yang di-include `purchaseOrder`) tidak punya modal di halaman PO, jadi tidak ada yang perlu disimpan di sana. Modalnya hanya ada di `purchaseOrderNonStock`, dan halaman itu sudah ditangani.
 
+**Data harus ikut filter yang dipulihkan.** Banyak halaman (mis. SO) mengirim data awal dari server (`@json(...)`) yang sudah difilter dengan default. Karena itu setiap blok restore di modul ini:
+- memakai `UserFilter.restore('#modal', function (v, changed) {...}, { resetUnsaved: true })`. `changed` bernilai true kalau ada nilai tersimpan yang berbeda dari default HTML select-nya;
+- kalau `changed`, menjalankan fungsi Terapkan halaman itu sekali lewat `UserFilter.afterReady(...)`, yaitu setelah semua `$(document).ready` selesai. Hasilnya sama dengan user klik Terapkan;
+- pada pola F1, menyamakan select dengan variabel global. Dengan begitu Jenis dari link `?jenis=` tidak tertimpa oleh Terapkan otomatis;
+- dengan `resetUnsaved`, select tanpa nilai tersimpan dikembalikan ke default HTML. Isian yang dipulihkan browser saat F5 jadi tidak membuat filter terlihat beda dengan datanya.
+
 > **Penting saat restore dipanggil di level atas script:** script itu harus berada di `@section('js')`, yang dicetak setelah `user-filter.js`. Kalau berada di `@section('content')`, `UserFilter` belum ada dan sisa script halaman akan berhenti.
 
 ## Menambah ke halaman baru

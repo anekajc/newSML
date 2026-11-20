@@ -2932,11 +2932,17 @@ function pdppResetFilter () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterPdpp', function (v) {
+UserFilter.restore('#modalFilterPdpp', function (v, changed) {
   if (v.pdppModalOtorisasi !== undefined) { pdppFilterOtorisasi = v.pdppModalOtorisasi; }
   if (v.pdppModalPenagih !== undefined) { pdppFilterPenagih = v.pdppModalPenagih; }
   pdppUpdateFilterBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#pdppModalOtorisasi').val(pdppFilterOtorisasi);
+  $('#pdppModalPenagih').val(pdppFilterPenagih);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { pdppTerapkanFilter(); }); }
+}, { resetUnsaved: true });
 
 /* ---------- Simpan / muat susunan kolom ---------- */
 window.g_href = PDPP_HREF
@@ -3158,10 +3164,15 @@ function outResetFilter () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterOut', function (v) {
+UserFilter.restore('#modalFilterOut', function (v, changed) {
   if (v.outModalPenagih !== undefined) { outFilterPenagih = v.outModalPenagih; }
   outUpdateFilterBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#outModalPenagih').val(outFilterPenagih);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { outTerapkanFilter(); }); }
+}, { resetUnsaved: true });
 
 function outKolomTampil () {
   return (outCart || []).filter(c => Number(c[2]) === 1)

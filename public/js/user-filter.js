@@ -91,24 +91,51 @@
    * berjalan — sama seperti pola loadXxxDropdown yang sudah ada.
    * onRestored(values) hanya dipanggil dengan nilai yang benar-benar terpasang.
    */
-  function restore(modalSelector, onRestored) {
+  /** Nilai default select menurut markup HTML (option ber-atribut selected, atau option pertama). */
+  function htmlDefault(sel) {
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].defaultSelected) { return sel.options[i].value; }
+    }
+    return sel.options.length ? sel.options[0].value : '';
+  }
+
+  /*
+   * onRestored(values, changed):
+   *   values  = nilai yang benar-benar terpasang { idSelect: nilai }
+   *   changed = true kalau ada nilai terpasang yang BEDA dari default HTML select-nya — dipakai
+   *             halaman yang data awalnya dikirim server dengan filter default, untuk memuat ulang.
+   * opts.resetUnsaved = true: select tanpa nilai tersimpan dikembalikan ke default HTML
+   *   (membatalkan isian yang dipulihkan browser saat F5, supaya tampilan = data).
+   */
+  function restore(modalSelector, onRestored, opts) {
     var $modal = $(modalSelector);
     if (!$modal.length || !cfg.getUrl) { return {}; }
+    opts = opts || {};
 
     var saved = load(modalKey($modal));
 
     var applied = {};
+    var changed = false;
     fields($modal).each(function () {
       var $s = $(this);
       var id = this.id;
+      var def = htmlDefault(this);
       if (has(saved, id) && saved[id] !== null && hasOption($s, saved[id])) {
         $s.val(String(saved[id]));
         applied[id] = String(saved[id]);
+        if (String(saved[id]) !== String(def)) { changed = true; }
+      } else if (opts.resetUnsaved) {
+        $s.val(def);
       }
     });
 
-    if (typeof onRestored === 'function') { onRestored(applied); }
+    if (typeof onRestored === 'function') { onRestored(applied, changed); }
     return applied;
+  }
+
+  /** Jalankan fn sekali setelah SEMUA handler $(document).ready halaman selesai. */
+  function afterReady(fn) {
+    $(function () { setTimeout(fn, 0); });
   }
 
   /** Simpan nilai select di modal (background, gagal diam-diam). */
@@ -241,6 +268,7 @@
 
   window.UserFilter = {
     restore: restore,
+    afterReady: afterReady,
     save: save,
     load: load,
     store: store,

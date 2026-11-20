@@ -8319,10 +8319,15 @@ function poResetFilterOutPR () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterOutPR', function (v) {
+UserFilter.restore('#modalFilterOutPR', function (v, changed) {
   if (v.poModalJenisPR !== undefined) { poFilterJenisPR = v.poModalJenisPR; }
   poUpdateFilterOutPRBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#poModalJenisPR').val(poFilterJenisPR);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { poTerapkanFilterOutPR(); }); }
+}, { resetUnsaved: true });
 
 function poUpdateFilterBadge () {
   let jml = 0
@@ -8358,12 +8363,19 @@ function poResetFilter () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterPO', function (v) {
+UserFilter.restore('#modalFilterPO', function (v, changed) {
   if (v.poModalStatus !== undefined) { poFilterStatus = v.poModalStatus; }
   if (v.poModalOtorisasi !== undefined) { poFilterOtorisasi = v.poModalOtorisasi; }
   if (v.poModalJenis !== undefined && (!{!! json_encode($jenisAwal) !!})) { poFilterJenis = v.poModalJenis; }
   poUpdateFilterBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#poModalStatus').val(poFilterStatus);
+  $('#poModalOtorisasi').val(poFilterOtorisasi);
+  $('#poModalJenis').val(poFilterJenis);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { poTerapkanFilter(); }); }
+}, { resetUnsaved: true });
 
 // Kotak scroll tabel dibuat setinggi sisa ruang di #content supaya halaman TIDAK perlu
 // scrollbar sendiri - yang discroll hanya isi tabel. Diukur dari DOM, bukan angka mati

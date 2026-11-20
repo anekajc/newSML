@@ -3051,9 +3051,12 @@ function buttonFilterNRP () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterNRP', function (v) {
+UserFilter.restore('#modalFilterNRP', function (v, changed) {
   nrpUpdateFilterBadge();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterNRP(); }); }
+}, { resetUnsaved: true });
 
 function onChangePeriodeNRP () {
   let tglawal = $('#input_tanggalawal_nrp').val()

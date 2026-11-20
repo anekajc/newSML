@@ -4179,9 +4179,14 @@ function buttonFilterGiro () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterGiro', function (v) {
+UserFilter.restore('#modalFilterGiro', function (v, changed) {
   if (v.input_filtertransgiro !== undefined) { giroFilterTrans = v.input_filtertransgiro; }
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#input_filtertransgiro').val(giroFilterTrans);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterGiro(); }); }
+}, { resetUnsaved: true });
 function giroFilterRows (rows) {
   if (!giroFilterTrans) { return rows }
   return (rows || []).filter(function (r) { return giroPickCI(r, 'TipeTransHd') === giroFilterTrans })

@@ -1533,9 +1533,12 @@ function buttonFilterPRJ () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilter', function (v) {
+UserFilter.restore('#modalFilter', function (v, changed) {
   prjUpdateFilterBadge();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterPRJ(); }); }
+}, { resetUnsaved: true });
 
 function onChangePeriodePRJ () {
   let awal = $("#input_tanggalawal").val()

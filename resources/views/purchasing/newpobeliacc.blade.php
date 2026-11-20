@@ -1717,11 +1717,17 @@ td input[type="checkbox"] {
 
       // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
       // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-      UserFilter.restore('#modalFilterPBA', function (v) {
+      UserFilter.restore('#modalFilterPBA', function (v, changed) {
         if (v.pbaModalJenis !== undefined) { pbaFilterJenis = v.pbaModalJenis; }
         if (v.pbaModalOtorisasi !== undefined) { pbaFilterOtorisasi = v.pbaModalOtorisasi; }
         pbaUpdateFilterBadge();
-      });
+        // samakan isi select dengan filter yang benar-benar berlaku
+        $('#pbaModalJenis').val(pbaFilterJenis);
+        $('#pbaModalOtorisasi').val(pbaFilterOtorisasi);
+        // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+        // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+        if (changed) { UserFilter.afterReady(function () { pbaTerapkanFilter(); }); }
+      }, { resetUnsaved: true });
 
       window.g_href = PBA_HREF
       window.g_modeReport = 1
