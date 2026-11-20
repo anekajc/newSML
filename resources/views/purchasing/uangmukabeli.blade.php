@@ -1145,6 +1145,7 @@ function umbUpdateFilterBadge () {
 function umbTerapkanFilter () {
   umbFilterOtorisasi = $('#umbModalOtorisasi').val() || 'SEMUA'
   umbUpdateFilterBadge()
+  UserFilter.save('#modalFilterUMB');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterUMB').modal('hide')
   renderTabelUMB()
 }
@@ -1153,9 +1154,17 @@ function umbResetFilter () {
   umbFilterOtorisasi = 'SEMUA'
   $('#umbModalOtorisasi').val('SEMUA')
   umbUpdateFilterBadge()
+  UserFilter.save('#modalFilterUMB');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterUMB').modal('hide')
   renderTabelUMB()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterUMB', function (v) {
+  if (v.umbModalOtorisasi !== undefined) { umbFilterOtorisasi = v.umbModalOtorisasi; }
+  umbUpdateFilterBadge();
+});
 
 /* ---- Jembatan ke mesin penyimpan milik report-table.js ----
  * doMoveHeader / doButtonVisibility / doSetDesimal / doButtonTotal SENGAJA tidak

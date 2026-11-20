@@ -190,7 +190,7 @@
         <button type="button" class="rt-reset-link" onclick="resetAllFilters()">Reset semua</button>
         <div class="rt-footer-buttons">
           <button type="button" class="rt-btn rt-btn-ghost" data-bs-dismiss="modal">Batal</button>
-          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal">Terapkan</button>
+          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.commit('modalFilter')">Terapkan</button>
         </div>
       </div>
 
@@ -430,6 +430,13 @@
 
   $(document).ready(function() {
     $("#gButtonCustomizeTable").hide();
+
+    // Filter tersimpan per user (public/js/user-filter.js): pilihan terakhir dipulihkan di sini
+    // (sebelum ReportTable.init), disimpan saat klik Terapkan. Switcher Tampilan disimpan oleh report-table.js.
+    UserFilter.track('modalFilter', {
+      inputGudang: UserFilter.input('#inputGudang'),
+      inputGrup: UserFilter.input('#inputGrup')
+    });
 
     renderPickFields();
 

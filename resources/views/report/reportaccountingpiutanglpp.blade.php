@@ -353,6 +353,15 @@
       }
     });
 
+    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+    UserFilter.track('modalPick', {
+      inputSuppAwal: UserFilter.input('#inputSuppAwal'),
+      inputSuppAkhir: UserFilter.input('#inputSuppAkhir')
+    });
+    if (typeof renderPickFields === 'function') { renderPickFields(); }
+    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
     // Header tabel interaktif (drag/gear/hide/decimal/total). "Tampilan" di sini hanya
     // MENCERMINKAN select "Valas" di modal Filter Laporan -- keduanya lewat setReportMode(),
     // tidak ada state baru.
@@ -566,6 +575,7 @@
     setPerkiraan(kode, ket);
     if ($('#modalReportMode').length) { setReportMode($('#modalReportMode').val()); }
     UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+    UserFilter.commit('modalPick');
     $('#modalFilter').modal('hide');
   }
 

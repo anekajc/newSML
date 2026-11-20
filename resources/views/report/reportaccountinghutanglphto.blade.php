@@ -230,6 +230,15 @@
       }
     });
 
+    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+    UserFilter.track('modalPick', {
+      inputSuppAwal: UserFilter.input('#inputSuppAwal'),
+      inputSuppAkhir: UserFilter.input('#inputSuppAkhir')
+    });
+    if (typeof renderPickFields === 'function') { renderPickFields(); }
+    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
     // Header tabel interaktif (drag/gear/hide/decimal/total). Tanpa "Tampilan": laporan ini
     // cuma punya satu mode (tanpa valas/Order By), jadi tak ada apa pun untuk di-switch.
     ReportTable.init({
@@ -619,6 +628,7 @@
     const ket = $('#modalPerkiraan option:selected').data('ket') || '';
     setPerkiraan(kode, ket);
     UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+    UserFilter.commit('modalPick');
     $('#modalFilter').modal('hide');
   }
 

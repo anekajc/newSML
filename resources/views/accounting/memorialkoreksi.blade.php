@@ -2738,6 +2738,7 @@ function mkTerapkanFilter () {
   mkFilterOtorisasi = $('#mkModalOtorisasi').val() || 'SEMUA'
   mkFilterTrans = $('#mkModalTrans').val() || 'SEMUA'
   mkUpdateFilterBadge()
+  UserFilter.save('#modalFilterMk');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterMk').modal('hide')
   renderTabelMk()
 }
@@ -2748,9 +2749,18 @@ function mkResetFilter () {
   $('#mkModalOtorisasi').val('SEMUA')
   $('#mkModalTrans').val('SEMUA')
   mkUpdateFilterBadge()
+  UserFilter.save('#modalFilterMk');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterMk').modal('hide')
   renderTabelMk()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterMk', function (v) {
+  if (v.mkModalOtorisasi !== undefined) { mkFilterOtorisasi = v.mkModalOtorisasi; }
+  if (v.mkModalTrans !== undefined) { mkFilterTrans = v.mkModalTrans; }
+  mkUpdateFilterBadge();
+});
 
 /* ---------- Simpan / muat susunan kolom ---------- */
 window.g_href = MK_HREF

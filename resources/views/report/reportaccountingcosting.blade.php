@@ -206,6 +206,13 @@
     setReportMode(globalReportMode);   // memuat gcart_header untuk mode aktif
     populatePeriodSelectors();
 
+    // Filter tersimpan per user (public/js/user-filter.js): pilihan terakhir dipulihkan di sini
+    // (sebelum ReportTable.init), disimpan saat klik Terapkan. Switcher Tampilan disimpan oleh report-table.js.
+    UserFilter.track('modalFilter', {
+      inputPerkiraan: UserFilter.input('#inputPerkiraan'),
+      inputSubCosting: UserFilter.input('#inputSubCosting')
+    });
+
     // Header tabel interaktif. "Tampilan" = mode report halaman ini (Bulan = detail,
     // Tahun = rekap), satu-satunya switcher mode sekarang (tidak diduplikasi di modal
     // Filter — lihat docs/new-filter-modal-ui-guide.md §3a).
@@ -514,6 +521,7 @@
   });
 
   function applyModalFilter() {
+    UserFilter.commit('modalFilter');   // simpan pilihan sebagai filter terakhir user
     $('#modalFilter').modal('hide');
   }
 

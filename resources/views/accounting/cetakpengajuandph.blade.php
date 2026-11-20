@@ -2140,8 +2140,16 @@
         function applyModalFilterPenerimaan() {
             globalOtorisasiPenerimaan = $('#modalOtorisasiPenerimaan').val();
             renderTabelPenerimaan();
+            UserFilter.save('#modalFilterPenerimaan');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
             $('#modalFilterPenerimaan').modal('hide');
         }
+
+        // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+        // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+        UserFilter.restore('#modalFilterPenerimaan', function (v) {
+          if (v.modalOtorisasiPenerimaan !== undefined) { globalOtorisasiPenerimaan = v.modalOtorisasiPenerimaan; }
+          updateFilterBadgePenerimaan();
+        });
 
         $(document).ready(function() {
             doSetHeaderOut(g_modeReportOut);

@@ -540,7 +540,7 @@
                       <button type="button" class="rt-reset-link" onclick="$('#input_filtertransgiro').val('')">Reset semua</button>
                       <div class="rt-footer-buttons">
                         <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal" onclick="$('#modalFilterGiro').modal('hide')">Batal</button>
-                        <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterGiro(); $('#modalFilterGiro').modal('hide');">Terapkan</button>
+                        <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterGiro'); buttonFilterGiro(); $('#modalFilterGiro').modal('hide');">Terapkan</button>
                       </div>
                     </div>
                   </div>
@@ -3798,6 +3798,12 @@ function buttonFilterGiro () {
   giroFilterTrans = $('#input_filtertransgiro').val()
   reinitTabel()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterGiro', function (v) {
+  if (v.input_filtertransgiro !== undefined) { giroFilterTrans = v.input_filtertransgiro; }
+});
 function giroFilterRows (rows) {
   if (!giroFilterTrans) { return rows }
   return (rows || []).filter(function (r) { return giroPickCI(r, 'TipeTransHd') === giroFilterTrans })

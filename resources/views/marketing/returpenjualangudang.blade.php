@@ -298,7 +298,7 @@
                   <div class="rt-footer-buttons">
                     <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
                       onclick="$('#modalFilterSPR').modal('hide')">Batal</button>
-                    <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterSPR(); $('#modalFilterSPR').modal('hide');">Terapkan</button>
+                    <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterSPR'); buttonFilterSPR(); $('#modalFilterSPR').modal('hide');">Terapkan</button>
                   </div>
                 </div>
 
@@ -1597,6 +1597,12 @@ function rpgUpdateFilterBadge () {
 function buttonFilterSPR () {
   loadAll()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterSPR', function (v) {
+  rpgUpdateFilterBadge();
+});
 
 // Rentang tanggal siap dipakai query: dua-duanya terisi, tahunnya sudah lengkap, dan awal
 // <= akhir. Saat tahun diketik manual, browser memicu onchange dengan tahun setengah jadi

@@ -244,7 +244,7 @@
           <div class="rt-footer-buttons">
             <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
               onclick="$('#modalFilterKN').modal('hide')">Batal</button>
-            <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterKN(); $('#modalFilterKN').modal('hide');">Terapkan</button>
+            <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterKN'); buttonFilterKN(); $('#modalFilterKN').modal('hide');">Terapkan</button>
           </div>
         </div>
 
@@ -1584,6 +1584,12 @@ function buttonFilterKN () {
     error: function (err) { console.log(err); alertify.warning('Terjadi kesalahan silahkan refresh browser') }
   })
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterKN', function (v) {
+  knUpdateFilterBadge();
+});
 
 function onChangePeriodeKN () {
   let tglawal = $('#input_tanggalawal_kn').val()

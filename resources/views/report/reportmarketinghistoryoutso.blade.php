@@ -182,6 +182,15 @@
             // Nilai halaman ini dibaca langsung dari <select> saat Tampilkan (tanpa setter), jadi cukup dipulihkan ke select-nya.
             UserFilter.restore('#modalFilter');
 
+            // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+            // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+            UserFilter.track('modalPick', {
+              inputCustomer: UserFilter.input('#inputCustomer'),
+              inputLokasi: UserFilter.input('#inputLokasi')
+            });
+            if (typeof renderPickFields === 'function') { renderPickFields(); }
+            if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
             ReportTable.init({
                 table: '#mainTable', // the <table class="tb">
                 bar: '#rtBar', // the div from Step 1
@@ -266,6 +275,7 @@
         // saat makeTable() jalan.
         function applyModalFilter() {
             UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+            UserFilter.commit('modalPick');
             $('#modalFilter').modal('hide');
         }
 

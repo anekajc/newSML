@@ -2914,6 +2914,7 @@ function pdppTerapkanFilter () {
   pdppFilterOtorisasi = $('#pdppModalOtorisasi').val() || 'SEMUA'
   pdppFilterPenagih   = $('#pdppModalPenagih').val() || 'SEMUA'
   pdppUpdateFilterBadge()
+  UserFilter.save('#modalFilterPdpp');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPdpp').modal('hide')
   renderTabelPdpp()
 }
@@ -2924,9 +2925,18 @@ function pdppResetFilter () {
   $('#pdppModalOtorisasi').val('SEMUA')
   $('#pdppModalPenagih').val('SEMUA')
   pdppUpdateFilterBadge()
+  UserFilter.save('#modalFilterPdpp');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPdpp').modal('hide')
   renderTabelPdpp()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterPdpp', function (v) {
+  if (v.pdppModalOtorisasi !== undefined) { pdppFilterOtorisasi = v.pdppModalOtorisasi; }
+  if (v.pdppModalPenagih !== undefined) { pdppFilterPenagih = v.pdppModalPenagih; }
+  pdppUpdateFilterBadge();
+});
 
 /* ---------- Simpan / muat susunan kolom ---------- */
 window.g_href = PDPP_HREF
@@ -3132,6 +3142,7 @@ function outUpdateFilterBadge () {
 function outTerapkanFilter () {
   outFilterPenagih = $('#outModalPenagih').val() || 'SEMUA'
   outUpdateFilterBadge()
+  UserFilter.save('#modalFilterOut');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterOut').modal('hide')
   renderTabelOutstanding()
 }
@@ -3140,9 +3151,17 @@ function outResetFilter () {
   outFilterPenagih = 'SEMUA'
   $('#outModalPenagih').val('SEMUA')
   outUpdateFilterBadge()
+  UserFilter.save('#modalFilterOut');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterOut').modal('hide')
   renderTabelOutstanding()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterOut', function (v) {
+  if (v.outModalPenagih !== undefined) { outFilterPenagih = v.outModalPenagih; }
+  outUpdateFilterBadge();
+});
 
 function outKolomTampil () {
   return (outCart || []).filter(c => Number(c[2]) === 1)

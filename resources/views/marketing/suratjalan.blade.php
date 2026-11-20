@@ -609,7 +609,7 @@
               <div class="rt-footer-buttons">
                 <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
                   onclick="$('#modalFilterTabel1').modal('hide')">Batal</button>
-                <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterTabel('tabel'); $('#modalFilterTabel1').modal('hide');">Terapkan</button>
+                <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterTabel1'); buttonFilterTabel('tabel'); $('#modalFilterTabel1').modal('hide');">Terapkan</button>
               </div>
             </div>
 
@@ -691,7 +691,7 @@
               <div class="rt-footer-buttons">
                 <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
                   onclick="$('#modalFilterTabel2').modal('hide')">Batal</button>
-                <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterTabel('tabel2'); $('#modalFilterTabel2').modal('hide');">Terapkan</button>
+                <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterTabel2'); buttonFilterTabel('tabel2'); $('#modalFilterTabel2').modal('hide');">Terapkan</button>
               </div>
             </div>
 
@@ -776,7 +776,7 @@
               <div class="rt-footer-buttons">
                 <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
                   onclick="$('#modalFilterSPB').modal('hide')">Batal</button>
-                <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterSPB(); $('#modalFilterSPB').modal('hide');">Terapkan</button>
+                <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterSPB'); buttonFilterSPB(); $('#modalFilterSPB').modal('hide');">Terapkan</button>
               </div>
             </div>
 
@@ -3895,6 +3895,20 @@ function buttonFilterTabel (key) {
   sjUpdateFilterBadgeTabel(key)
 }
 
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterTabel2', function (v) {
+  if (v.input_filterprioritas2 !== undefined) { sjPageState.tabel2.prioritas = v.input_filterprioritas2; }
+  sjUpdateFilterBadgeTabel('tabel2');
+});
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterTabel1', function (v) {
+  if (v.input_filterprioritas1 !== undefined) { sjPageState.tabel.prioritas = v.input_filterprioritas1; }
+  sjUpdateFilterBadgeTabel('tabel');
+});
+
 function reinitTabel5() {
   try {
     if ($.fn.DataTable.isDataTable('#tabel5')) { $('#tabel5').DataTable().destroy(); }
@@ -4534,6 +4548,12 @@ function buttonFilterSPB () {
   loadAll()
   sjUpdateFilterBadgeSPB()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterSPB', function (v) {
+  sjUpdateFilterBadgeSPB();
+});
 
 function onChangePeriodeSPB () {
   let tglawal = $('#input_tanggalawal_spb').val()

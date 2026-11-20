@@ -277,7 +277,7 @@
                   <div class="rt-footer-buttons">
                     <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
                       onclick="$('#modalFilterUMJ').modal('hide')">Batal</button>
-                    <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterUMJ(); $('#modalFilterUMJ').modal('hide');">Terapkan</button>
+                    <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterUMJ'); buttonFilterUMJ(); $('#modalFilterUMJ').modal('hide');">Terapkan</button>
                   </div>
                 </div>
 
@@ -906,6 +906,12 @@ function buttonFilterUMJ () {
     error: function (err) { console.log(err); alertify.warning('Terjadi kesalahan silahkan refresh browser') }
   })
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterUMJ', function (v) {
+  umjUpdateFilterBadge();
+});
 
 function onChangePeriodeUMJ () {
   let tglawal = $('#input_tanggalawal_umj').val()

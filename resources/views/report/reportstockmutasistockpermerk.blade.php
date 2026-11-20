@@ -189,7 +189,7 @@
         <button type="button" class="rt-reset-link" onclick="resetAllFilters()">Reset semua</button>
         <div class="rt-footer-buttons">
           <button type="button" class="rt-btn rt-btn-ghost" data-bs-dismiss="modal">Batal</button>
-          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal">Terapkan</button>
+          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.commit('modalFilter')">Terapkan</button>
         </div>
       </div>
 
@@ -255,6 +255,20 @@
 
   $(document).ready(function() {
     populatePeriodSelectors();
+
+    // Filter tersimpan per user (public/js/user-filter.js): Tampilan, Gudang & Merk terakhir
+    // dipulihkan di sini (sebelum ReportTable.init). Tampilan tersimpan saat diganti,
+    // Gudang/Merk saat klik Terapkan. Periode tidak disimpan.
+    UserFilter.track('modalFilter', {
+      reportMode: {
+        get: function () { return $('#selectReportMode').val(); },
+        set: function (v) { $('#selectReportMode').val(v); setReportMode(v); },
+        valid: function (v) { return $('#selectReportMode option[value="' + v + '"]').length > 0; },
+        wrap: 'setReportMode'
+      },
+      inputGudang: UserFilter.input('#inputGudang'),
+      inputMerk: UserFilter.input('#inputMerk')
+    });
 
     ReportTable.init({
       table: '#tabel',

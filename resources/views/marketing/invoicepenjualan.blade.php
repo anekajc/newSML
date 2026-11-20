@@ -753,7 +753,7 @@
                     <div class="rt-footer-buttons">
                       <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
                         onclick="$('#modalFilterIP').modal('hide')">Batal</button>
-                      <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterIP(); $('#modalFilterIP').modal('hide');">Terapkan</button>
+                      <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterIP'); buttonFilterIP(); $('#modalFilterIP').modal('hide');">Terapkan</button>
                     </div>
                   </div>
 
@@ -3386,6 +3386,12 @@ function buttonFilterIP () {
   ipUpdateFilterBadge()
   loadAll({ bagian : 'invoice' })
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterIP', function (v) {
+  ipUpdateFilterBadge();
+});
 
 // Ganti tanggal awal lalu tanggal akhir dulu memicu 2x muat ulang beruntun --
 // ditunggu sebentar supaya cukup sekali muat setelah user selesai memilih.

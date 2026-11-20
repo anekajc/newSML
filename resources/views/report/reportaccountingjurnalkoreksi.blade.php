@@ -127,6 +127,17 @@
     document.getElementById('printTime').textContent = new Date().toLocaleString('id-ID');
     loadDivisiDropdown();   // isi dropdown Divisi (default: divisi pertama)
 
+    // Filter tersimpan per user (public/js/user-filter.js): Divisi terakhir dipulihkan
+    // sebelum laporan dimuat, dan disimpan lagi setiap kali user memilih Divisi.
+    UserFilter.track('toolbar', {
+      divisi: {
+        get: function () { return $('#inputDivisi').val(); },
+        set: function (v) { applyDivisi(v, $(`#dropdownDivisi .divisi-item[data-value='${v}']`).data('nama')); },
+        valid: function (v) { return UserFilter.menuHas('#dropdownDivisi', v); },
+        wrap: 'setDivisi'
+      }
+    });
+
     setTimeout(() => { makeTable('REPORT'); }, 100);
   });
 

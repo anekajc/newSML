@@ -643,12 +643,12 @@
                 <div>
                   <label class="rt-field-label" for="input_filterso">Status</label>
                   <select class="rt-native" id="input_filterso">
-                    <option value=0 selected>Semua</option>
-                    <option value=5>Sudah</option>
-                    <option value=3>Belum</option>
-                    <option value=4>Sebagian</option>
-                    <option value=6>Batal</option>
-                    <option value=1>Belum Otorisasi</option>
+                    <option value=0>Semua</option>
+                    <option value=5>Full Supply</option>
+                    <option value=3>No Supply</option>
+                    <option value=4>Partial Supply</option>
+                    <option value=6>Cancel</option>
+                    <option value=1 selected>Belum Otorisasi</option>
                     <option value=2>Sudah Otorisasi</option>
                   </select>
                 </div>
@@ -670,7 +670,7 @@
             <div class="rt-footer-buttons">
               <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
                 onclick="$('#modalFilter').modal('hide')">Batal</button>
-              <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterSO(); $('#modalFilter').modal('hide');">Terapkan</button>
+              <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilter'); buttonFilterSO(); $('#modalFilter').modal('hide');">Terapkan</button>
             </div>
           </div>
 
@@ -3663,7 +3663,7 @@ $(document).ready(function(){
 // function buat input angka jadi rp
 
 function soResetFilterFields () {
-  $('#input_filterso').val('0');
+  $('#input_filterso').val('1'); // default: Belum Otorisasi
   $('#input_tipebayar').val('4');
 }
 
@@ -3785,6 +3785,12 @@ function buttonFilterSO () {
 
 
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilter', function (v) {
+  // SO tidak punya penghitung badge filter.
+});
 
 function formatRupiah(el) {
   let angka = el.value.replace(/\./g, '').replace(/[^0-9]/g, '');

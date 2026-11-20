@@ -432,7 +432,7 @@
           <div class="rt-footer-buttons">
             <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
               onclick="$('#modalFilter').modal('hide')">Batal</button>
-            <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterPRJ(); $('#modalFilter').modal('hide');">Terapkan</button>
+            <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilter'); buttonFilterPRJ(); $('#modalFilter').modal('hide');">Terapkan</button>
           </div>
         </div>
 
@@ -1340,6 +1340,12 @@ function buttonFilterPRJ () {
   // Endpoint & parameter sama; loadAll() async supaya layar tidak membeku saat memuat.
   loadAll()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilter', function (v) {
+  prjUpdateFilterBadge();
+});
 
 function onChangePeriodePRJ () {
   let awal = $("#input_tanggalawal").val()
