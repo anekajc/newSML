@@ -761,6 +761,7 @@
                             <hr />
                         </div>
                         <div class="col-md-12 mt-2 text-right">
+                            <button type="button" class="btn btn-chip-biru" onclick="exportExcelDph()">Export Excel</button>
                             <button type="button" class="btn btn-chip-biru" onclick="submitPrint()">Cetak</button>
                         </div>
                         <div class="container-fluid mt-4" style="overflow-x: auto; padding:0; margin:0;">
@@ -1537,6 +1538,7 @@
 
 @section('js')
     <script src="{!! URL::asset('js/report-table.js') !!}?v={{ @filemtime(base_path('public/js/report-table.js')) ?: '1' }}"></script>
+    <script src="{{ asset('js/exceljs.min.js') }}?v={{ @filemtime(public_path('js/exceljs.min.js')) ?: '1' }}"></script>
     <script type="text/javascript">
         let listData = []
         let listOutstanding = []
@@ -4469,6 +4471,160 @@
                 }
             })
 
+        }
+
+        // Export Excel "REKAP DPH" — kolom & data sama persis dengan submitPrint():
+        // hanya invoice yang dicentang (kolom v), diambil dari endpoint cetak yang sama.
+        async function exportExcelDph() {
+            if (typeof window.ExcelJS === 'undefined') {
+                alertify.warning('Library ExcelJS belum termuat, silahkan refresh browser')
+                return
+            }
+            let noinvoice = []
+            listOutstanding.forEach((item, i) => {
+                let cb = document.getElementById(`addChecklist${i}`)
+                if (cb && cb.checked) {
+                    noinvoice.push(item.noinvoice)
+                }
+            })
+            if (!noinvoice.length) {
+                alertify.warning('Pilih minimal satu data yang akan diexport')
+                return
+            }
+
+            let dataExport = []
+            try {
+                dataExport = await $.ajax({
+                    url: "{!! url('cetakpengajuandphdetailCetak') !!}",
+                    type: "post",
+                    data: {
+                        _token: $('#_token').val(),
+                        noinvoice: noinvoice
+                    }
+                }) || []
+            } catch (err) {
+                console.log(err)
+                alertify.warning('Terjadi kesalahan silahkan refresh browser')
+                return
+            }
+            if (!dataExport.length) {
+                alertify.warning('Data export tidak ditemukan')
+                return
+            }
+
+            // "2026-11-20 00:00:00.000" -> Date (lokal); selain itu biarkan teks apa adanya
+            const toTanggal = (s) => {
+                if (!s) return ''
+                const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/)
+                return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : String(s)
+            }
+
+            const wb = new ExcelJS.Workbook()
+            const ws = wb.addWorksheet('Rekap DPH', {
+                pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+                views: [{ state: 'frozen', ySplit: 4 }]
+            })
+            ws.columns = [
+                { key: 'no', width: 6 },
+                { key: 'tgl', width: 13 },
+                { key: 'nobukti', width: 20 },
+                { key: 'supplier', width: 38 },
+                { key: 'jumlah', width: 20 },
+                { key: 'bank', width: 18 },
+                { key: 'noacc', width: 20 },
+                { key: 'ket', width: 45 },
+            ]
+
+            const thin = { style: 'thin', color: { argb: 'FF3C3C3C' } }
+            const border = { top: thin, left: thin, bottom: thin, right: thin }
+            const headFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8EDFF' } }
+
+            // Judul
+            ws.mergeCells('A1:H1')
+            ws.getCell('A1').value = 'REKAP DPH'
+            ws.getCell('A1').font = { bold: true, size: 14 }
+            ws.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' }
+            ws.getRow(1).height = 24
+
+            // Header 2 baris (sama dengan cetak: DPH = TGL + NO)
+            ws.getRow(3).values = ['No.', 'DPH', '', 'SUPPLIER', 'JUMLAH', 'BANK', 'NO ACC', 'KETERANGAN']
+            ws.getRow(4).values = ['', 'TGL', 'NO', '', '', '', '', '']
+            ws.mergeCells('B3:C3');
+            ['A', 'D', 'E', 'F', 'G', 'H'].forEach(c => ws.mergeCells(`${c}3:${c}4`))
+            for (let r = 3; r <= 4; r++) {
+                for (let c = 1; c <= 8; c++) {
+                    const cell = ws.getRow(r).getCell(c)
+                    cell.font = { bold: true }
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+                    cell.fill = headFill
+                    cell.border = border
+                }
+            }
+
+            // Data
+            const firstData = 5
+            dataExport.forEach((it, i) => {
+                const row = ws.addRow({
+                    no: i + 1,
+                    tgl: toTanggal(it.Tanggal),
+                    nobukti: it.NoBukti ?? '',
+                    supplier: it.NamaCustSupp ?? '',
+                    jumlah: it.NILAINOTA !== null && it.NILAINOTA !== undefined && it.NILAINOTA !== '' ?
+                        Number(it.NILAINOTA) || 0 : null,
+                    bank: it.bank ?? '',
+                    noacc: it.NoAcc ?? '',
+                    ket: it.ATN ?? '',
+                })
+                row.eachCell({ includeEmpty: true }, (cell, col) => {
+                    cell.border = border
+                    cell.alignment = { vertical: 'top', wrapText: col === 4 || col === 8 }
+                })
+                row.getCell('no').alignment = { horizontal: 'center', vertical: 'top' }
+                row.getCell('tgl').numFmt = 'dd/mm/yyyy'
+                row.getCell('tgl').alignment = { horizontal: 'center', vertical: 'top' }
+                row.getCell('jumlah').numFmt = '#,##0.00'
+                // No ACC disimpan sebagai teks agar angka 0 di depan tidak hilang
+                row.getCell('noacc').numFmt = '@'
+            })
+            const lastData = firstData + dataExport.length - 1
+
+            // Total
+            const total = dataExport.reduce((s, it) => s + (Number(it.NILAINOTA) || 0), 0)
+            const totRow = ws.addRow([])
+            ws.mergeCells(`A${totRow.number}:D${totRow.number}`)
+            ws.mergeCells(`F${totRow.number}:H${totRow.number}`)
+            totRow.getCell(1).value = 'Total :'
+            totRow.getCell(1).alignment = { horizontal: 'right' }
+            totRow.getCell(5).value = { formula: `SUM(E${firstData}:E${lastData})`, result: total }
+            totRow.getCell(5).numFmt = '#,##0.00'
+            for (let c = 1; c <= 8; c++) {
+                const cell = totRow.getCell(c)
+                cell.font = { bold: true }
+                cell.border = border
+                cell.fill = headFill
+            }
+
+            ws.pageSetup.printTitlesRow = '3:4'
+
+            const nobukti = ($('#input_add_nobukti').val() || '').replace(/[\\\/:*?"<>|]/g, '-')
+            const tgl = new Date()
+            const stamp = tgl.getFullYear() + String(tgl.getMonth() + 1).padStart(2, '0') + String(tgl.getDate())
+                .padStart(2, '0')
+            const fileName = `Rekap_DPH_${nobukti || stamp}.xlsx`
+
+            const buf = await wb.xlsx.writeBuffer()
+            const blob = new Blob([buf], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            })
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = fileName
+            document.body.appendChild(a)
+            a.click()
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+                a.remove()
+            }, 1000)
         }
 
         function submitPrint(nobukti) {
