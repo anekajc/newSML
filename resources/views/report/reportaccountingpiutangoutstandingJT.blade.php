@@ -311,6 +311,17 @@
       if (v.modalGroup !== undefined) { setGroupBy(v.modalGroup); }
     });
 
+    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+    UserFilter.track('modalPick', {
+      inputSuppAwal: UserFilter.input('#inputSuppAwal'),
+      inputSuppAkhir: UserFilter.input('#inputSuppAkhir'),
+      inputCust: UserFilter.input('#inputCust'),
+      inputLokasi: UserFilter.input('#inputLokasi')
+    });
+    if (typeof renderPickFields === 'function') { renderPickFields(); }
+    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
     // Header tabel interaktif (drag/gear/hide/decimal/total). Halaman ini tidak punya
     // mode Valas, jadi tanpa switcher "Tampilan".
     ReportTable.init({
@@ -460,6 +471,7 @@
     if ($('#modalOrder').length) { setOrderBy($('#modalOrder').val()); }
     if ($('#modalGroup').length) { setGroupBy($('#modalGroup').val()); }
     UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+    UserFilter.commit('modalPick');
     $('#modalFilter').modal('hide');
   }
 

@@ -307,7 +307,7 @@
         <button type="button" class="rt-reset-link" onclick="resetAllFilters()">Reset semua</button>
         <div class="rt-footer-buttons">
           <button type="button" class="rt-btn rt-btn-ghost" data-bs-dismiss="modal">Batal</button>
-          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.save('#modalFilter')">Terapkan</button>
+          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.save('#modalFilter'); UserFilter.commit('modalPick')">Terapkan</button>
         </div>
       </div>
 
@@ -627,6 +627,18 @@
       if (v.inputAgenSelect !== undefined) { setAgen(v.inputAgenSelect); }
       updateFilterBadge();
     });
+
+    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+    UserFilter.track('modalPick', {
+      inputGudang: UserFilter.input('#inputGudang'),
+      inputGrup: UserFilter.input('#inputGrup'),
+      inputKategori: UserFilter.input('#inputKategori'),
+      inputSubKategori: UserFilter.input('#inputSubKategori'),
+      inputMerk: UserFilter.input('#inputMerk')
+    });
+    if (typeof renderPickFields === 'function') { renderPickFields(); }
+    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
 
     // Header interaktif (drag/gear/hide kolom) hanya untuk mode QTY -- header
     // QTYRP/PERIODE pakai grouping rowspan/colspan manual (setRowHeaderQtyRp) yang

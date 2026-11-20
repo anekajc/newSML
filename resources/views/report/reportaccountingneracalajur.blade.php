@@ -183,6 +183,21 @@
 
     populatePeriodSelectors();
 
+    // Filter tersimpan per user (public/js/user-filter.js): filter jenis akun (Semua/Aset/...)
+    // terakhir dipulihkan di sini, dan disimpan lagi setiap kali user mengganti. Periode tidak disimpan.
+    UserFilter.track('toolbar', {
+      jenisAkun: {
+        get: function () { return typeFilter; },
+        set: function (v) {
+          typeFilter = v;
+          document.querySelectorAll('.tf').forEach(b => b.classList.remove('on'));
+          $(`.tf[onclick*="'${v}'"]`).addClass('on');
+        },
+        valid: function (v) { return /^[a-z]+$/.test(v) && $(`.tf[onclick*="'${v}'"]`).length > 0; },
+        wrap: 'setTypeFilter'
+      }
+    });
+
     // Header tabel interaktif TANPA drag (lihat komentar di atas file): gear per kolom
     // untuk sembunyikan/total, + bar "Reset kolom"/kolom tersembunyi. Tidak ada "Tampilan"
     // switcher -- mode Rekap tidak pernah dipakai (tidak ada kontrol UI yang mengubahnya

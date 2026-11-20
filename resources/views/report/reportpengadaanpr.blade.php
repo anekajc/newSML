@@ -234,6 +234,18 @@
         if (v.modalStatusPO !== undefined) { setStatusPO(v.modalStatusPO); }
       });
 
+      // Picker (Customer/Supplier/Gudang/...) dan Jenis terakhir juga dipulihkan (public/js/user-filter.js,
+      // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan, Jenis juga saat diganti.
+      UserFilter.track('modalPick', {
+        jenis: {
+          get: function () { return globalMode; },
+          set: function (v) { $('#inputMode').val(v); setMode(v); },
+          valid: function (v) { return $('#inputMode option[value="' + v + '"]').length > 0; },
+          wrap: 'setMode'
+        }
+      });
+      if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
       // Header tabel interaktif standar (drag-reorder + gear per kolom + bar "kolom
       // tersembunyi"/"Reset kolom"), plus "Tampilan" switcher untuk Order By -- halaman ini
       // SUDAH punya mode yang menukar susunan kolom (g_modeReport/setDefaultHeader(), lihat
@@ -261,6 +273,7 @@
     setOtorisasi($("#modalOtorisasi").val());
     setStatusPO($("#modalStatusPO").val());
     UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+    UserFilter.commit('modalPick');
     $('#modalFilter').modal('hide');
     applyFilters(); // langsung update tabel dari data yg sudah dimuat, tanpa nunggu Tampilkan
   }

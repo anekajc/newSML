@@ -575,9 +575,19 @@ $(document).on('change', '#modalFilter select.rt-native', updateFilterBadge);
 function applyModalFilter() {
     globalOtorisasi = $('#modalOtorisasi').val();
     globalTipeTrans = $('#modalTipeTrans').val();
+    UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
     renderTabel();
     $('#modalFilter').modal('hide');
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script ini dibaca, jadi sudah berlaku sebelum tabel pertama digambar.
+// Modal #modalFilter ada di accounting/bank/_list.blade.php (sudah di DOM saat file ini dimuat).
+UserFilter.restore('#modalFilter', function (v) {
+    if (v.modalOtorisasi !== undefined) { globalOtorisasi = v.modalOtorisasi; }
+    if (v.modalTipeTrans !== undefined) { globalTipeTrans = v.modalTipeTrans; }
+    updateFilterBadge();
+});
 
 let listInvoice = []
 // let tempNoBukti = ''

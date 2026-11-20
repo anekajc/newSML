@@ -2851,6 +2851,7 @@ console.log('vvvvvvvvvvvvvvvvvv')
     function ipbTerapkanFilter () {
       ipbFilterStatus = $('#ipbModalStatus').val() || ''
       ipbUpdateFilterBadge()
+      UserFilter.save('#modalFilterIpb');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
       $('#modalFilterIpb').modal('hide')
       renderTabelPembelian()
     }
@@ -2859,9 +2860,17 @@ console.log('vvvvvvvvvvvvvvvvvv')
       ipbFilterStatus = ''
       $('#ipbModalStatus').val('')
       ipbUpdateFilterBadge()
+      UserFilter.save('#modalFilterIpb');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
       $('#modalFilterIpb').modal('hide')
       renderTabelPembelian()
     }
+
+    // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+    // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+    UserFilter.restore('#modalFilterIpb', function (v) {
+      if (v.ipbModalStatus !== undefined) { ipbFilterStatus = v.ipbModalStatus; }
+      ipbUpdateFilterBadge();
+    });
 
     function ipbIkatOtoStatus () {
       let modal = document.getElementById('modalFilterIpb')

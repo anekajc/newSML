@@ -121,6 +121,21 @@
     return data;
   }
 
+  // Filter tersimpan per user (public/js/user-filter.js): Mode (No Bukti / Kode Barang) dan
+  // Otorisasi terakhir dipulihkan saat halaman dibuka, dan disimpan lagi setiap kali diganti.
+  // Tanggal tidak disimpan. Order By disembunyikan dan tidak dipakai makeTable(), jadi tidak ikut.
+  $(document).ready(function () {
+    UserFilter.track('toolbar', {
+      reportMode: {
+        get: function () { return String(g_modeReport); },
+        set: function (v) { doReportMode(Number(v)); },
+        valid: function (v) { return v === '0' || v === '1'; },
+        wrap: 'doReportMode'
+      },
+      otorisasi: UserFilter.input('#inputOtorisasi')
+    });
+  });
+
 </script>
 
 @endsection

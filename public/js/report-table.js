@@ -1154,10 +1154,47 @@
       if (view) {
         e.stopPropagation();
         closeBarMenus();
-        if (cfg.views && typeof cfg.views.set === "function") { cfg.views.set(view.getAttribute("data-rtview")); }
+        if (cfg.views && typeof cfg.views.set === "function") {
+          cfg.views.set(view.getAttribute("data-rtview"));
+          saveView(cfg);
+        }
         renderBar();
       }
     });
+  }
+
+  /* ---------------- pilihan Tampilan tersimpan per user ----------------
+     Pilihan switcher "Tampilan"/"Order By" (cfg.views) disimpan per user lewat
+     public/js/user-filter.js (tabel DBUSERFILTER), kunci "rtview<selektor tabel>".
+     Dipulihkan sekali per tabel saat init(), hanya kalau nilainya masih ada di options.
+     Halaman bisa menolak dengan views.persist = false. */
+  var viewRestored = {};
+
+  function viewKey(opt) {
+    return ("rtview" + String(opt.table || "").replace(/[^A-Za-z0-9_-]/g, "")).slice(0, 50);
+  }
+
+  function viewPersist(opt) {
+    var v = opt && opt.views;
+    return !!(v && v.persist !== false && v.options && v.options.length &&
+              typeof v.get === "function" && typeof v.set === "function" &&
+              window.UserFilter && typeof window.UserFilter.load === "function");
+  }
+
+  function restoreView(opt) {
+    if (!viewPersist(opt) || viewRestored[opt.table]) { return; }
+    viewRestored[opt.table] = true;
+    var saved = window.UserFilter.load(viewKey(opt));
+    if (!saved || saved.view === undefined || saved.view === null) { return; }
+    var want = String(saved.view);
+    var ada = opt.views.options.some(function (o) { return String(o.value) === want; });
+    if (!ada || String(opt.views.get()) === want) { return; }
+    try { opt.views.set(want); } catch (e) { console.warn("ReportTable: gagal memulihkan Tampilan", e); }
+  }
+
+  function saveView(opt) {
+    if (!viewPersist(opt)) { return; }
+    window.UserFilter.store(viewKey(opt), { view: String(opt.views.get()) });
   }
 
   /* ---------------- init ---------------- */
@@ -1178,6 +1215,7 @@
 
     cfg = opt;
     if (typeof opt.onActivate === "function") { opt.onActivate(); }
+    restoreView(opt);
 
     var thead = t.querySelector("thead");
     if (thead && !thead.dataset.rtBound) {

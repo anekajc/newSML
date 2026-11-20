@@ -1699,6 +1699,7 @@ td input[type="checkbox"] {
         pbaFilterJenis = $('#pbaModalJenis').val() || 'SEMUA'
         pbaFilterOtorisasi = $('#pbaModalOtorisasi').val() || 'SEMUA'
         pbaUpdateFilterBadge()
+        UserFilter.save('#modalFilterPBA');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
         $('#modalFilterPBA').modal('hide')
         renderTabelPBA()
       }
@@ -1709,9 +1710,18 @@ td input[type="checkbox"] {
         $('#pbaModalJenis').val('SEMUA')
         $('#pbaModalOtorisasi').val('SEMUA')
         pbaUpdateFilterBadge()
+        UserFilter.save('#modalFilterPBA');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
         $('#modalFilterPBA').modal('hide')
         renderTabelPBA()
       }
+
+      // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+      // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+      UserFilter.restore('#modalFilterPBA', function (v) {
+        if (v.pbaModalJenis !== undefined) { pbaFilterJenis = v.pbaModalJenis; }
+        if (v.pbaModalOtorisasi !== undefined) { pbaFilterOtorisasi = v.pbaModalOtorisasi; }
+        pbaUpdateFilterBadge();
+      });
 
       window.g_href = PBA_HREF
       window.g_modeReport = 1

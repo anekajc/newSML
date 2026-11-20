@@ -269,6 +269,15 @@
       }
     });
 
+    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+    UserFilter.track('modalPick', {
+      inputSuppAwal: UserFilter.input('#inputSuppAwal'),
+      inputSuppAkhir: UserFilter.input('#inputSuppAkhir')
+    });
+    if (typeof renderPickFields === 'function') { renderPickFields(); }
+    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
     // Header tabel interaktif (drag/gear/hide/decimal/total). Tanpa "Tampilan": kolom sama
     // persis utk IDR/$ (setDefaultHeader tidak bercabang per mode, cuma nilainya beda) --
     // mode dipilih lewat select Valas di modal Filter saja.
@@ -640,6 +649,7 @@
     setPerkiraan(kode, ket);
     if ($('#modalReportMode').length) { setReportMode($('#modalReportMode').val()); }
     UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+    UserFilter.commit('modalPick');
     $('#modalFilter').modal('hide');
   }
 

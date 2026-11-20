@@ -126,6 +126,17 @@
     // utk slot kolom Jenis default (Semua), jadi tidak perlu dipanggil terpisah di sini.
     setJenis(globalJenis);
 
+    // Filter tersimpan per user (public/js/user-filter.js): Jenis terakhir dipulihkan di sini
+    // (sebelum ReportTable.init), dan disimpan lagi setiap kali user mengganti Jenis. Tanggal tidak disimpan.
+    UserFilter.track('toolbar', {
+      jenis: {
+        get: function () { return globalJenis; },
+        set: function (v) { $('#inputJenis').val(v); setJenis(v); },
+        valid: function (v) { return $('#inputJenis option[value="' + v + '"]').length > 0; },
+        wrap: 'setJenis'
+      }
+    });
+
     // Header tabel interaktif: drag-reorder + gear (sembunyikan/desimal/total) + bar
     // "Reset kolom"/kolom tersembunyi. Tidak ada "Tampilan" switcher -- Order By tidak
     // pernah punya kontrol UI sungguhan di halaman ini (selalu "N"), sama seperti sebelum migrasi.

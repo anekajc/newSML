@@ -4455,6 +4455,7 @@ function dppUpdateFilterBadge () {
 function dppTerapkanFilter () {
   dppFilterOtorisasi = $('#dppModalOtorisasi').val() || 'SEMUA'
   dppUpdateFilterBadge()
+  UserFilter.save('#modalFilterDpp');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterDpp').modal('hide')
   renderTabelDpp()
 }
@@ -4463,9 +4464,17 @@ function dppResetFilter () {
   dppFilterOtorisasi = 'SEMUA'
   $('#dppModalOtorisasi').val('SEMUA')
   dppUpdateFilterBadge()
+  UserFilter.save('#modalFilterDpp');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterDpp').modal('hide')
   renderTabelDpp()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterDpp', function (v) {
+  if (v.dppModalOtorisasi !== undefined) { dppFilterOtorisasi = v.dppModalOtorisasi; }
+  dppUpdateFilterBadge();
+});
 
 /* ---------- Simpan / muat susunan kolom ---------- */
 window.g_href = DPP_HREF

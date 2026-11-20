@@ -1767,6 +1767,7 @@ function prTerapkanFilter () {
   prFilterStatus = $('#prModalStatus').val() || 'SEMUA'
   prFilterOtorisasi = $('#prModalOtorisasi').val() || 'SEMUA'
   prUpdateFilterBadge()
+  UserFilter.save('#modalFilterPR');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPR').modal('hide')
   renderTabelPR()
 }
@@ -1779,9 +1780,19 @@ function prResetFilter () {
   $('#prModalStatus').val('SEMUA')
   $('#prModalOtorisasi').val('SEMUA')
   prUpdateFilterBadge()
+  UserFilter.save('#modalFilterPR');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPR').modal('hide')
   renderTabelPR()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterPR', function (v) {
+  if (v.prModalJenis !== undefined && (!PR_JENIS_AWAL)) { prFilterJenis = v.prModalJenis; }
+  if (v.prModalStatus !== undefined) { prFilterStatus = v.prModalStatus; }
+  if (v.prModalOtorisasi !== undefined) { prFilterOtorisasi = v.prModalOtorisasi; }
+  prUpdateFilterBadge();
+});
 
 /* ---- Jembatan ke mesin penyimpan milik report-table.js ----
  * doMoveHeader / doButtonVisibility / doSetDesimal / doButtonTotal SENGAJA tidak

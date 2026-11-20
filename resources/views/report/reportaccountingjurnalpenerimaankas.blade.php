@@ -160,6 +160,23 @@
     applyJurnal(g_jurnalKey);   // set reportUrl + voucher config awal (Penerimaan Kas)
     loadDivisiDropdown();       // isi dropdown Divisi (default divisi pertama)
 
+    // Filter tersimpan per user (public/js/user-filter.js): Jurnal & Divisi terakhir dipulihkan
+    // sebelum laporan dimuat, dan disimpan lagi setiap kali user mengganti pilihan.
+    UserFilter.track('toolbar', {
+      jurnal: {
+        get: function () { return g_jurnalKey; },
+        set: function (v) { applyJurnal(v); },
+        valid: function (v) { return Object.prototype.hasOwnProperty.call(JURNAL, v); },
+        wrap: 'setJurnal'
+      },
+      divisi: {
+        get: function () { return $('#inputDivisi').val(); },
+        set: function (v) { applyDivisi(v, $(`#dropdownDivisi .divisi-item[data-value='${v}']`).data('nama')); },
+        valid: function (v) { return UserFilter.menuHas('#dropdownDivisi', v); },
+        wrap: 'setDivisi'
+      }
+    });
+
     setTimeout(() => { makeTable('REPORT'); }, 100);
   });
 

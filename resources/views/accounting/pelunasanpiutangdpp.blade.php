@@ -2844,6 +2844,7 @@ function pldUpdateFilterBadge () {
 function pldTerapkanFilter () {
   pldFilterOtorisasi = $('#pldModalOtorisasi').val() || 'SEMUA'
   pldUpdateFilterBadge()
+  UserFilter.save('#modalFilterPld');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPld').modal('hide')
   renderTabelPld()
 }
@@ -2852,9 +2853,17 @@ function pldResetFilter () {
   pldFilterOtorisasi = 'SEMUA'
   $('#pldModalOtorisasi').val('SEMUA')
   pldUpdateFilterBadge()
+  UserFilter.save('#modalFilterPld');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPld').modal('hide')
   renderTabelPld()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterPld', function (v) {
+  if (v.pldModalOtorisasi !== undefined) { pldFilterOtorisasi = v.pldModalOtorisasi; }
+  pldUpdateFilterBadge();
+});
 
 /* ---------- Simpan / muat susunan kolom ---------- */
 window.g_href = PLD_HREF

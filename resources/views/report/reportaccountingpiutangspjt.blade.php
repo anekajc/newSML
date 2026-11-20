@@ -237,6 +237,15 @@
       }
     });
 
+    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+    UserFilter.track('modalPick', {
+      inputSuppAwal: UserFilter.input('#inputSuppAwal'),
+      inputSuppAkhir: UserFilter.input('#inputSuppAkhir')
+    });
+    if (typeof renderPickFields === 'function') { renderPickFields(); }
+    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
     // Header tabel interaktif (drag/gear/hide/decimal/total). Tanpa "Tampilan": report ini
     // mode tunggal IDR, setDefaultHeader() tidak bercabang per mode.
     ReportTable.init({
@@ -588,6 +597,7 @@
     const ket  = $('#modalPerkiraan option:selected').data('ket') || '';
     setPerkiraan(kode, ket);
     UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+    UserFilter.commit('modalPick');
     $('#modalFilter').modal('hide');
   }
 

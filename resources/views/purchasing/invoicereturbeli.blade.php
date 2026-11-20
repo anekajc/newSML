@@ -2078,6 +2078,7 @@ function irbUpdateFilterBadge () {
 function irbTerapkanFilter () {
   irbFilterOtorisasi = $('#irbModalOtorisasi').val() || 'SEMUA'
   irbUpdateFilterBadge()
+  UserFilter.save('#modalFilterIRB');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterIRB').modal('hide')
   renderTabelIRB()
 }
@@ -2086,9 +2087,17 @@ function irbResetFilter () {
   irbFilterOtorisasi = 'SEMUA'
   $('#irbModalOtorisasi').val('SEMUA')
   irbUpdateFilterBadge()
+  UserFilter.save('#modalFilterIRB');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterIRB').modal('hide')
   renderTabelIRB()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterIRB', function (v) {
+  if (v.irbModalOtorisasi !== undefined) { irbFilterOtorisasi = v.irbModalOtorisasi; }
+  irbUpdateFilterBadge();
+});
 
 /* ---- Jembatan ke mesin penyimpan milik report-table.js ----
  * doMoveHeader / doButtonVisibility / doSetDesimal / doButtonTotal SENGAJA tidak

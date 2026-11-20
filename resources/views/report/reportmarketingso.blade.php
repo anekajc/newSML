@@ -367,6 +367,25 @@
               if (v.modalAgen !== undefined) { setAgen(v.modalAgen); }
             });
 
+            // Picker (Customer/Supplier/Gudang/...) dan Jenis terakhir juga dipulihkan (public/js/user-filter.js,
+            // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan, Jenis juga saat diganti.
+            UserFilter.track('modalPick', {
+              jenis: {
+                get: function () { return globalMode; },
+                set: function (v) { $('#inputMode').val(v); setMode(v); },
+                valid: function (v) { return $('#inputMode option[value="' + v + '"]').length > 0; },
+                wrap: 'setMode'
+              },
+              inputCustomer: UserFilter.input('#inputCustomer'),
+              inputGroup: UserFilter.input('#inputGroup'),
+              inputPIC: UserFilter.input('#inputPIC'),
+              inputKategori: UserFilter.input('#inputKategori'),
+              inputSubKategori: UserFilter.input('#inputSubKategori'),
+              inputMerk: UserFilter.input('#inputMerk')
+            });
+            if (typeof renderPickFields === 'function') { renderPickFields(); }
+            if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
             // Header tabel interaktif + switcher "Order By" di #rtBar (bukan lagi Detail/Rekap).
             ReportTable.init({
                 table: '#mainTable',
@@ -571,6 +590,7 @@
             setAgen($("#modalAgen").val());
 
             UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+            UserFilter.commit('modalPick');
             $('#modalFilter').modal('hide');
         }
 

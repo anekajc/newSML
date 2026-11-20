@@ -280,6 +280,19 @@
       if (v.modalAgen !== undefined) { setAgen(v.modalAgen); }
     });
 
+    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
+    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
+    UserFilter.track('modalPick', {
+      inputCustomer: UserFilter.input('#inputCustomer'),
+      inputGroup: UserFilter.input('#inputGroup'),
+      inputPIC: UserFilter.input('#inputPIC'),
+      inputKategori: UserFilter.input('#inputKategori'),
+      inputSubKategori: UserFilter.input('#inputSubKategori'),
+      inputMerk: UserFilter.input('#inputMerk')
+    });
+    if (typeof renderPickFields === 'function') { renderPickFields(); }
+    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
+
     ReportTable.init({
       table: '#mainTable',
       bar: '#rtBar',
@@ -397,6 +410,7 @@
     setAgen($('#modalAgen').val());
 
     UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (semua device)
+    UserFilter.commit('modalPick');
     $('#modalFilter').modal('hide');
   }
 

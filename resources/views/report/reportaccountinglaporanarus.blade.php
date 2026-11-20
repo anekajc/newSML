@@ -163,6 +163,17 @@
     populatePeriodSelectors();
     loadDivisiDropdown();           // isi dropdown Divisi + pilih divisi pertama
 
+    // Filter tersimpan per user (public/js/user-filter.js): Perkiraan terakhir dipulihkan,
+    // dan disimpan lagi setiap kali user memilih Perkiraan. Periode tidak disimpan.
+    UserFilter.track('toolbar', {
+      perkiraan: {
+        get: function () { return $('#inputPerkiraan').val(); },
+        set: function (v) { setDivisi(v, $(`#dropdownPerkiraan .divisi-item[data-value='${v}']`).data('nama')); },
+        valid: function (v) { return UserFilter.menuHas('#dropdownPerkiraan', v); },
+        wrap: 'setDivisi'
+      }
+    });
+
     // Header tabel interaktif TANPA drag (lihat komentar di atas file): gear per kolom untuk
     // sembunyikan/total, + bar "Reset kolom"/kolom tersembunyi.
     ReportTable.init({

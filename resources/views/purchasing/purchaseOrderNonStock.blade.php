@@ -5936,6 +5936,7 @@ function ponsTerapkanFilter () {
   ponsFilterStatus = $('#ponsModalStatus').val() || 'SEMUA'
   ponsFilterOtorisasi = $('#ponsModalOtorisasi').val() || 'SEMUA'
   ponsUpdateFilterBadge()
+  UserFilter.save('#modalFilterPONS');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPONS').modal('hide')
   loadTabelPO(true, true)
 }
@@ -5946,9 +5947,18 @@ function ponsResetFilter () {
   $('#ponsModalStatus').val('SEMUA')
   $('#ponsModalOtorisasi').val('SEMUA')
   ponsUpdateFilterBadge()
+  UserFilter.save('#modalFilterPONS');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPONS').modal('hide')
   loadTabelPO(true, true)
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterPONS', function (v) {
+  if (v.ponsModalStatus !== undefined) { ponsFilterStatus = v.ponsModalStatus; }
+  if (v.ponsModalOtorisasi !== undefined) { ponsFilterOtorisasi = v.ponsModalOtorisasi; }
+  ponsUpdateFilterBadge();
+});
 
 let ponsTab2Sudahdimuat = false
 

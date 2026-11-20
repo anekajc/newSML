@@ -637,6 +637,18 @@ let tipeedit = ''
 $(document).ready(function(){
 
   bsSetPerkiraan('{{ count($perkiraan) ? addslashes($perkiraan[0]->Perkiraan) : "" }}')
+
+  // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): Perkiraan terakhir
+  // (dipakai bersama tab Outstanding & Penambahan Bon) dipulihkan sebelum loadAll() pertama,
+  // dan disimpan lagi tiap kali user klik Terapkan di salah satu modal filter.
+  UserFilter.track('perkiraan', {
+    perkiraan: {
+      get: function () { return bsPerkiraan; },
+      set: function (v) { bsSetPerkiraan(v); },
+      valid: function (v) { return $('#bsModalPerkiraan option').filter(function () { return this.value === v; }).length > 0; },
+      wrap: ['outTerapkanFilter', 'bsTerapkanFilter']
+    }
+  });
   bsInitReportTableSekali()
   bsPasangSeparatorInput('input_add_jumlah')
   bsPasangSeparatorInput('input_add_kredit')

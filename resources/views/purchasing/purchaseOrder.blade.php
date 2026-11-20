@@ -8303,6 +8303,7 @@ function poMuatUlangOutPR () {
 function poTerapkanFilterOutPR () {
   poFilterJenisPR = $('#poModalJenisPR').val() || 'SEMUA'
   poUpdateFilterOutPRBadge()
+  UserFilter.save('#modalFilterOutPR');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterOutPR').modal('hide')
   poMuatUlangOutPR()
 }
@@ -8311,9 +8312,17 @@ function poResetFilterOutPR () {
   poFilterJenisPR = 'SEMUA'
   $('#poModalJenisPR').val('SEMUA')
   poUpdateFilterOutPRBadge()
+  UserFilter.save('#modalFilterOutPR');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterOutPR').modal('hide')
   poMuatUlangOutPR()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterOutPR', function (v) {
+  if (v.poModalJenisPR !== undefined) { poFilterJenisPR = v.poModalJenisPR; }
+  poUpdateFilterOutPRBadge();
+});
 
 function poUpdateFilterBadge () {
   let jml = 0
@@ -8329,6 +8338,7 @@ function poTerapkanFilter () {
   poFilterOtorisasi = $('#poModalOtorisasi').val() || 'SEMUA'
   poFilterJenis = $('#poModalJenis').val() || 'SEMUA'
   poUpdateFilterBadge()
+  UserFilter.save('#modalFilterPO');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPO').modal('hide')
   loadTabelPO(true, true)
 }
@@ -8341,9 +8351,19 @@ function poResetFilter () {
   $('#poModalOtorisasi').val('SEMUA')
   $('#poModalJenis').val('SEMUA')
   poUpdateFilterBadge()
+  UserFilter.save('#modalFilterPO');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
   $('#modalFilterPO').modal('hide')
   loadTabelPO(true, true)
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+UserFilter.restore('#modalFilterPO', function (v) {
+  if (v.poModalStatus !== undefined) { poFilterStatus = v.poModalStatus; }
+  if (v.poModalOtorisasi !== undefined) { poFilterOtorisasi = v.poModalOtorisasi; }
+  if (v.poModalJenis !== undefined && (!{!! json_encode($jenisAwal) !!})) { poFilterJenis = v.poModalJenis; }
+  poUpdateFilterBadge();
+});
 
 // Kotak scroll tabel dibuat setinggi sisa ruang di #content supaya halaman TIDAK perlu
 // scrollbar sendiri - yang discroll hanya isi tabel. Diukur dari DOM, bukan angka mati

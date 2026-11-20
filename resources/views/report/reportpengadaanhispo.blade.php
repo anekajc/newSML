@@ -236,6 +236,13 @@
     doSetHeader(g_modeReport);   // muat gcart_header (default / hasil Reset kolom tersimpan)
     loadPickerDefaults();        // isi #inputCust/#inputLokasi default "-"
 
+    // Filter tersimpan per user (public/js/user-filter.js): pilihan terakhir dipulihkan di sini
+    // (sebelum ReportTable.init), disimpan saat klik Terapkan. Switcher Tampilan disimpan oleh report-table.js.
+    UserFilter.track('modalFilter', {
+      inputCust: UserFilter.input('#inputCust'),
+      inputLokasi: UserFilter.input('#inputLokasi')
+    });
+
     // Header tabel interaktif standar (drag-reorder + gear per kolom + bar "kolom
     // tersembunyi"/"Reset kolom") -- tidak ada band di halaman ini jadi drag aman.
     ReportTable.init({
@@ -570,6 +577,7 @@
   function applyModalFilter() {
     // PICK_FIELDS sudah commit langsung ke hidden input saat dipilih (buttonPilih) -- tidak ada
     // field lain di modal ini yang perlu disinkronkan, jadi Terapkan cukup menutup modal.
+    UserFilter.commit('modalFilter');   // simpan pilihan sebagai filter terakhir user
     $('#modalFilter').modal('hide');
   }
 

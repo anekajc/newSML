@@ -134,6 +134,21 @@
       makeTable('REPORT');
     });
 
+    // Filter tersimpan per user (public/js/user-filter.js): Gudang & No Satuan terakhir dipulihkan
+    // sebelum laporan dimuat, dan disimpan lagi setiap kali laporan ditampilkan. Tanggal tidak disimpan.
+    UserFilter.track('toolbar', {
+      inputGudang: {
+        get: function () { return $('#inputGudang').val(); },
+        set: function (v) { $('#inputGudang').val(v); },
+        wrap: 'makeTable'
+      },
+      inputIsi: {
+        get: function () { return $('#inputIsi').val(); },
+        set: function (v) { $('#inputIsi').val(v); },
+        valid: function (v) { return /^[0-9]+$/.test(v); }
+      }
+    });
+
     // setReportMode(globalReportMode);
     // setOtorisasi(globalOtorisasi);
     // setOrderBy(globalOrderBy);

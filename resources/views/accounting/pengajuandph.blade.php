@@ -1923,8 +1923,16 @@
         function applyModalFilter() {
             globalOtorisasi = $('#modalOtorisasi').val();
             renderTabel();
+            UserFilter.save('#modalFilter');   // ingat pilihan ini untuk user ini (DBUSERFILTER)
             $('#modalFilter').modal('hide');
         }
+
+        // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+        // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
+        UserFilter.restore('#modalFilter', function (v) {
+          if (v.modalOtorisasi !== undefined) { globalOtorisasi = v.modalOtorisasi; }
+          updateFilterBadge();
+        });
 
         $(document).ready(function() {
             doSetHeader(g_modeReport);

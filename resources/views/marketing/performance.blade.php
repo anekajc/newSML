@@ -149,7 +149,7 @@
           <div class="rt-footer-buttons">
             <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
               onclick="$('#modalFilterPerf').modal('hide')">Batal</button>
-            <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterPerf(); $('#modalFilterPerf').modal('hide');">Terapkan</button>
+            <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterPerf'); buttonFilterPerf(); $('#modalFilterPerf').modal('hide');">Terapkan</button>
           </div>
         </div>
 
@@ -614,6 +614,12 @@ function buttonFilterPerf () {
   loadAll()
   perfUpdateFilterBadge()
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterPerf', function (v) {
+  perfUpdateFilterBadge();
+});
 
 function onChangePeriodePerf () {
   let tglawal = $('#input_tanggalawal_perf').val()

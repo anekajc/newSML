@@ -498,7 +498,7 @@
           <div class="rt-footer-buttons">
             <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal"
               onclick="$('#modalFilterIJ').modal('hide')">Batal</button>
-            <button type="button" class="rt-btn rt-btn-primary" onclick="buttonFilterIJ(); $('#modalFilterIJ').modal('hide');">Terapkan</button>
+            <button type="button" class="rt-btn rt-btn-primary" onclick="UserFilter.save('#modalFilterIJ'); buttonFilterIJ(); $('#modalFilterIJ').modal('hide');">Terapkan</button>
           </div>
         </div>
 
@@ -2481,6 +2481,12 @@ function buttonFilterIJ () {
     error: function (err) { console.log(err); alertify.warning('Terjadi kesalahan silahkan refresh browser') }
   })
 }
+
+// Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
+// dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
+UserFilter.restore('#modalFilterIJ', function (v) {
+  ijUpdateFilterBadge();
+});
 
 function onChangePeriodeIJ () {
   let tglawal = $('#input_tanggalawal_ij').val()

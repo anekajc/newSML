@@ -85,6 +85,13 @@
     });
 
     setOrderBy(globalOrderBy);
+
+    // Filter tersimpan per user (public/js/user-filter.js): pilihan terakhir dipulihkan
+    // sebelum laporan dimuat, dan disimpan lagi setiap kali user mengganti pilihan.
+    UserFilter.track('toolbar', {
+      orderBy: UserFilter.menu('setOrderBy', '#dropdownOrder', function () { return globalOrderBy; })
+    });
+
     showPeriode();
     setDefaultHeader();
 
