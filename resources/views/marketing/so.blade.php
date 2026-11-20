@@ -3788,9 +3788,12 @@ function buttonFilterSO () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilter', function (v) {
+UserFilter.restore('#modalFilter', function (v, changed) {
   // SO tidak punya penghitung badge filter.
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterSO(); }); }
+}, { resetUnsaved: true });
 
 function formatRupiah(el) {
   let angka = el.value.replace(/\./g, '').replace(/[^0-9]/g, '');

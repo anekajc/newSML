@@ -617,9 +617,12 @@ function buttonFilterPerf () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterPerf', function (v) {
+UserFilter.restore('#modalFilterPerf', function (v, changed) {
   perfUpdateFilterBadge();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterPerf(); }); }
+}, { resetUnsaved: true });
 
 function onChangePeriodePerf () {
   let tglawal = $('#input_tanggalawal_perf').val()

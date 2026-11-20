@@ -1171,10 +1171,15 @@ function dnResetFilter () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterDN', function (v) {
+UserFilter.restore('#modalFilterDN', function (v, changed) {
   if (v.dnModalOtorisasi !== undefined) { dnFilterOtorisasi = v.dnModalOtorisasi; }
   dnUpdateFilterBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#dnModalOtorisasi').val(dnFilterOtorisasi);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { dnTerapkanFilter(); }); }
+}, { resetUnsaved: true });
 
 window.g_href = DN_HREF
 window.g_modeReport = 1

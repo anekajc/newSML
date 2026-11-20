@@ -6435,9 +6435,12 @@ function buttonFilterPSO () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterPSO', function (v) {
+UserFilter.restore('#modalFilterPSO', function (v, changed) {
   psoUpdateFilterBadgePSO();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterPSO(); }); }
+}, { resetUnsaved: true });
 
 function loadAll () {
   psoSetupSekali();

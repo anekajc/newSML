@@ -2094,10 +2094,15 @@ function irbResetFilter () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterIRB', function (v) {
+UserFilter.restore('#modalFilterIRB', function (v, changed) {
   if (v.irbModalOtorisasi !== undefined) { irbFilterOtorisasi = v.irbModalOtorisasi; }
   irbUpdateFilterBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#irbModalOtorisasi').val(irbFilterOtorisasi);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { irbTerapkanFilter(); }); }
+}, { resetUnsaved: true });
 
 /* ---- Jembatan ke mesin penyimpan milik report-table.js ----
  * doMoveHeader / doButtonVisibility / doSetDesimal / doButtonTotal SENGAJA tidak

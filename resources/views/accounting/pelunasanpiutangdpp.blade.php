@@ -2860,10 +2860,15 @@ function pldResetFilter () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca, jadi sudah berlaku sebelum tabel pertama dimuat.
-UserFilter.restore('#modalFilterPld', function (v) {
+UserFilter.restore('#modalFilterPld', function (v, changed) {
   if (v.pldModalOtorisasi !== undefined) { pldFilterOtorisasi = v.pldModalOtorisasi; }
   pldUpdateFilterBadge();
-});
+  // samakan isi select dengan filter yang benar-benar berlaku
+  $('#pldModalOtorisasi').val(pldFilterOtorisasi);
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { pldTerapkanFilter(); }); }
+}, { resetUnsaved: true });
 
 /* ---------- Simpan / muat susunan kolom ---------- */
 window.g_href = PLD_HREF

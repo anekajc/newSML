@@ -3389,9 +3389,12 @@ function buttonFilterIP () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterIP', function (v) {
+UserFilter.restore('#modalFilterIP', function (v, changed) {
   ipUpdateFilterBadge();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterIP(); }); }
+}, { resetUnsaved: true });
 
 // Ganti tanggal awal lalu tanggal akhir dulu memicu 2x muat ulang beruntun --
 // ditunggu sebentar supaya cukup sekali muat setelah user selesai memilih.

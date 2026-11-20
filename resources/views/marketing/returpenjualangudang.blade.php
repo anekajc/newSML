@@ -1600,9 +1600,12 @@ function buttonFilterSPR () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterSPR', function (v) {
+UserFilter.restore('#modalFilterSPR', function (v, changed) {
   rpgUpdateFilterBadge();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterSPR(); }); }
+}, { resetUnsaved: true });
 
 // Rentang tanggal siap dipakai query: dua-duanya terisi, tahunnya sudah lengkap, dan awal
 // <= akhir. Saat tahun diketik manual, browser memicu onchange dengan tahun setengah jadi

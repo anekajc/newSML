@@ -3897,17 +3897,23 @@ function buttonFilterTabel (key) {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterTabel2', function (v) {
+UserFilter.restore('#modalFilterTabel2', function (v, changed) {
   if (v.input_filterprioritas2 !== undefined) { sjPageState.tabel2.prioritas = v.input_filterprioritas2; }
   sjUpdateFilterBadgeTabel('tabel2');
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterTabel('tabel2'); }); }
+}, { resetUnsaved: true });
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterTabel1', function (v) {
+UserFilter.restore('#modalFilterTabel1', function (v, changed) {
   if (v.input_filterprioritas1 !== undefined) { sjPageState.tabel.prioritas = v.input_filterprioritas1; }
   sjUpdateFilterBadgeTabel('tabel');
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterTabel('tabel'); }); }
+}, { resetUnsaved: true });
 
 function reinitTabel5() {
   try {
@@ -4551,9 +4557,12 @@ function buttonFilterSPB () {
 
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script dibaca (sebelum tabel pertama dimuat); disimpan saat klik Terapkan.
-UserFilter.restore('#modalFilterSPB', function (v) {
+UserFilter.restore('#modalFilterSPB', function (v, changed) {
   sjUpdateFilterBadgeSPB();
-});
+  // data awal halaman bisa saja masih memakai filter default (mis. dikirim server),
+  // jadi muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default.
+  if (changed) { UserFilter.afterReady(function () { buttonFilterSPB(); }); }
+}, { resetUnsaved: true });
 
 function onChangePeriodeSPB () {
   let tglawal = $('#input_tanggalawal_spb').val()

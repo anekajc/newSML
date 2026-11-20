@@ -583,11 +583,15 @@ function applyModalFilter() {
 // Filter tersimpan per user (public/js/user-filter.js, tabel DBUSERFILTER): pilihan terakhir
 // dipulihkan saat script ini dibaca, jadi sudah berlaku sebelum tabel pertama digambar.
 // Modal #modalFilter ada di accounting/kas/_list.blade.php (sudah di DOM saat file ini dimuat).
-UserFilter.restore('#modalFilter', function (v) {
+UserFilter.restore('#modalFilter', function (v, changed) {
     if (v.modalOtorisasi !== undefined) { globalOtorisasi = v.modalOtorisasi; }
     if (v.modalTipeTrans !== undefined) { globalTipeTrans = v.modalTipeTrans; }
+    $('#modalOtorisasi').val(globalOtorisasi);   // samakan select dengan filter yang berlaku
+    $('#modalTipeTrans').val(globalTipeTrans);
     updateFilterBadge();
-});
+    // muat ulang sekali lewat Terapkan kalau filter tersimpan beda dari default
+    if (changed) { UserFilter.afterReady(function () { applyModalFilter(); }); }
+}, { resetUnsaved: true });
 
 let listInvoice = []
 // let tempNoBukti = ''
