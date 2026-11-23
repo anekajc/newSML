@@ -39,6 +39,19 @@ use App\Http\Controllers\Wms\OpnameGdgInspeksiController;
 use App\Http\Controllers\Wms\DashboardOpnameHarianController;
 use App\Http\Controllers\Wms\LockPeriodeController;
 use App\Http\Controllers\Wms\UbahKemasanController;
+use App\Http\Controllers\Wms\KartuStockGudangController;
+use App\Http\Controllers\Wms\ReportKartuStokController;
+use App\Http\Controllers\Wms\ReportStokLokasiController;
+use App\Http\Controllers\Wms\ReportStokGudangController;
+use App\Http\Controllers\Wms\ReportSoSpbController;
+use App\Http\Controllers\Wms\ReportOutReceivingController;
+use App\Http\Controllers\Wms\ReportPickSpbController;
+use App\Http\Controllers\Wms\ReportPlPController;
+use App\Http\Controllers\Wms\ReportRelokasiController;
+use App\Http\Controllers\Wms\ReportOutDispatchController;
+use App\Http\Controllers\Wms\ReportOpnameHarianController;
+use App\Http\Controllers\Wms\ReportPutawayController;
+use App\Http\Controllers\Wms\ReportPickingController;
 
 // GudangController
 Route::get('/gudang', [GudangController::class, 'index'])->middleware('auth');
@@ -353,3 +366,37 @@ Route::post('/lockperiodecheck', [LockPeriodeController::class, 'check'])->middl
 Route::get('/getnobuktiubahkemasan', [UbahKemasanController::class, 'getNoBukti'])->middleware('auth');
 Route::post('/detailpenerimaanubahkemasan', [UbahKemasanController::class, 'getDetailPenerimaan'])->middleware('auth');
 Route::post('/koreksiubahkemasan', [UbahKemasanController::class, 'spKoreksi'])->middleware('auth');
+
+// Report WMS (menu 2106, dipindah dari ajcwms new_menureport)
+
+
+Route::get('/reportkartustok', [ReportKartuStokController::class, 'index'])->middleware('auth');
+Route::get('/reportkartustoklistlokasi', [ReportKartuStokController::class, 'listLokasi'])->middleware('auth');
+Route::get('/reportkartustoklistbarang', [ReportKartuStokController::class, 'listBarang'])->middleware('auth');
+Route::get('/reportkartustokspreport', [ReportKartuStokController::class, 'spReport'])->middleware('auth');
+Route::get('/reportstoklokasi', [ReportStokLokasiController::class, 'index'])->middleware('auth');
+Route::post('/reportstoklokasispfilter', [ReportStokLokasiController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportstokgudang', [ReportStokGudangController::class, 'index'])->middleware('auth');
+Route::post('/reportstokgudangspfilter', [ReportStokGudangController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportputaway', [ReportPutawayController::class, 'index'])->middleware('auth');
+Route::post('/reportputawayspfilter', [ReportPutawayController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportpicking', [ReportPickingController::class, 'index'])->middleware('auth');
+Route::post('/reportpickingspfilter', [ReportPickingController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportoutdispatch', [ReportOutDispatchController::class, 'index'])->middleware('auth');
+Route::post('/reportoutdispatchspfilter', [ReportOutDispatchController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportsospb', [ReportSoSpbController::class, 'index'])->middleware('auth');
+Route::post('/reportsospbspfilter', [ReportSoSpbController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportopnameharian', [ReportOpnameHarianController::class, 'index'])->middleware('auth');
+Route::post('/reportopnameharianspfilter', [ReportOpnameHarianController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportoutreceiving', [ReportOutReceivingController::class, 'index'])->middleware('auth');
+Route::post('/reportoutreceivingspfilter', [ReportOutReceivingController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportpickspb', [ReportPickSpbController::class, 'index'])->middleware('auth');
+Route::post('/reportpickspbspfilter', [ReportPickSpbController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportplp', [ReportPlPController::class, 'index'])->middleware('auth');
+Route::post('/reportplpspfilter', [ReportPlPController::class, 'spFilter'])->middleware('auth');
+Route::get('/reportrelokasi', [ReportRelokasiController::class, 'index'])->middleware('auth');
+Route::post('/reportrelokasispfilter', [ReportRelokasiController::class, 'spFilter'])->middleware('auth');
+Route::get('/kartustockgudang', [KartuStockGudangController::class, 'index'])->middleware('auth');
+Route::get('/kartustockgudanglistlokasi', [KartuStockGudangController::class, 'listLokasi'])->middleware('auth');
+Route::get('/kartustockgudanglistbarang', [KartuStockGudangController::class, 'listBarang'])->middleware('auth');
+Route::get('/kartustockgudangspreport', [KartuStockGudangController::class, 'spReport'])->middleware('auth');
