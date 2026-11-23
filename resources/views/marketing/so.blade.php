@@ -1217,6 +1217,8 @@
           font-weight: 600;
           transition: background-color 0.3s, box-shadow 0.3s;"
           onclick="buttonTambahUbahKemasan()">Tambah Ubah Kemasan</button>
+        {{-- Ditambahkan 2026-11-23: status PRU (picking / finalisasi ubah kemasan) item yang diedit. --}}
+        <span id="infoUbahKemasan" class="text-danger ml-2" style="display: none; font-size: 0.75rem; font-weight: 600;"></span>
       </div>
       <div class="col-md-6 mt-2 text-right">
         <button type="button" id='buttonTambahItem' class="btn btn-lg btn-chip-biru" style="
@@ -1310,63 +1312,35 @@
         </div>
       </div>
 
+      {{-- Diubah 2026-11-23: susunan disamakan dengan baris QTY / Harga di atasnya
+           (col-md-6 -> form-row -> label col-md-3 + input col-md-3) supaya label dan
+           input sejajar. Sebelumnya 4 kolom col-md-3 terpisah sehingga posisinya bergeser. --}}
       <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-6">
           <div class="form-row align-items-center mb-2">
-            <label class="col-md-6 mb-0">Satuan Tax</label>
-            <div class="col-md-6">
+            <label class="col-md-3 mb-0">Satuan Tax</label>
+            <div class="col-md-3">
               <div class="input-group">
                 <input type="hidden" class="form-control" id="input_add_add_kodesattax" disabled>
                 <input type="text" class="form-control" id="input_add_add_sattax" disabled>
                 <button onclick="buttonAddAddListSattax()" id="buttonAddAddListSattax" class="btn btn-chip-biru btn-sm"><i class="bi bi-search"></i></button>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-row align-items-center mb-2">
-            <label class="col-md-4 mb-0">Sat Alias</label>
-            <div class="col-md-8">
+            <label class="col-md-3 mb-0">Sat Alias</label>
+            <div class="col-md-3">
               <input type="text" class="form-control" id="input_add_add_satuanproduk">
             </div>
           </div>
-        </div>
-        <div class="col-md-3">
           <div class="form-row align-items-center mb-2">
-            <label class="col-md-6 mb-0">Satuan</label>
-            <div class="col-md-6">
-              <select id="input_add_add_nosat" onchange="onChangeInputAddAddNosat()" class="form-control" tabindex="4">
-                <option value=0 selected>Pilih Satuan</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-row align-items-center mb-2">
-            <label class="col-md-6 mb-0">Tgl Kirim</label>
-            <div class="col-md-6">
-              <input type="date" class="form-control text-right" id="input_add_add_tglkirim" tabindex="6">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-3">
-          <div class="form-row align-items-center mb-2">
-            <label class="col-md-6 mb-0">Booking</label>
-            <div class="col-md-6">
+            <label class="col-md-3 mb-0">Booking</label>
+            <div class="col-md-3">
               <select id="input_add_add_booking" class="form-control" tabindex="10">
                 <option value=0 selected>Tidak</option>
                 <option value=1>Ya</option>
               </select>
             </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-row align-items-center mb-2">
-            <label class="col-md-6 mb-0">Urgent</label>
-            <div class="col-md-6">
+            <label class="col-md-3 mb-0">Urgent</label>
+            <div class="col-md-3">
               <select id="input_add_add_urgent" class="form-control" tabindex="11">
                 <option value=0 selected>Tidak</option>
                 <option value=1>Ya</option>
@@ -1374,21 +1348,29 @@
             </div>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-6">
           <div class="form-row align-items-center mb-2">
-            <label class="col-md-6 mb-0">Tambah ke PO</label>
-            <div class="col-md-6">
+            <label class="col-md-3 mb-0">Satuan</label>
+            <div class="col-md-3">
+              <select id="input_add_add_nosat" onchange="onChangeInputAddAddNosat()" class="form-control" tabindex="4">
+                <option value=0 selected>Pilih Satuan</option>
+              </select>
+            </div>
+            <label class="col-md-3 mb-0">Tgl Kirim</label>
+            <div class="col-md-3">
+              <input type="date" class="form-control text-right" id="input_add_add_tglkirim" tabindex="6">
+            </div>
+          </div>
+          <div class="form-row align-items-center mb-2">
+            <label class="col-md-3 mb-0">Tambah ke PO</label>
+            <div class="col-md-3">
               <select id="input_add_add_tambahkepo" class="form-control" tabindex="9">
                 <option value=0 selected>Tidak</option>
                 <option value=1>Ya</option>
               </select>
             </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-row align-items-center mb-2">
-            <label class="col-md-6 mb-0">Status</label>
-            <div class="col-md-6">
+            <label class="col-md-3 mb-0">Status</label>
+            <div class="col-md-3">
               <select id="input_add_add_status" class="form-control" tabindex="9">
                 <option value=0 selected>R</option>
                 <option value=1>P0</option>
@@ -2601,6 +2583,11 @@
                 <div class="col-md-9"><input type="text" class="form-control" id="input_pru_keterangan" disabled></div>
               </div>
             </div>
+          </div>
+
+          {{-- Ditambahkan 2026-11-23: peringatan komponen yang sudah di picking list ubah kemasan. --}}
+          <div id="pruInfoPicking" class="alert alert-warning py-2 mb-2" style="display: none; font-size: 0.8rem;">
+            Item bertanda <b>Sudah Picking</b> sudah masuk picking list ubah kemasan, jadi tidak bisa di edit maupun di hapus. Hanya bisa tambah item.
           </div>
 
           <div class="row">
@@ -5891,8 +5878,8 @@ if (!kodepelanggan || !kodesales || !kodebackoffice || !kodesattax || !draftpo |
     },
     success: function(res) {
       console.log('resspsoaddedit', res)
-      // 5 / 7 = ditolak sebelum disimpan; 6 = item tersimpan tetapi PRU gagal.
-      if (res == 5 || res == 7) {
+      // 5 / 7 / 8 = ditolak sebelum disimpan; 6 = item tersimpan tetapi PRU gagal.
+      if (res == 5 || res == 7 || res == 8) {
         pesanHasilPRU(res)
         return
       }
@@ -6035,6 +6022,11 @@ let pruKomponen = []
 let pruHasilCari = []
 let pruIndexEdit = -1     // -1 = mode Add Item di modal
 let pruBarangPilih = null // barang yang dipilih di form Add Item modal
+// Ditambahkan 2026-11-23: status PRU di WMS.
+// pruPicking : ada komponen yang sudah di picking list ubah kemasan (baris itu dikunci, tambah tetap boleh)
+// pruFinal   : PRU sudah difinalisasi ubah kemasan (modal dikunci, Qty & Satuan item SO dikunci)
+let pruPicking = false
+let pruFinal = false
 
 function escPRU (v) {
   return String(v === null || v === undefined ? '' : v)
@@ -6046,18 +6038,28 @@ function resetUbahKemasan () {
   pruNoBukti = ''
   pruKomponen = []
   pruHasilCari = []
+  pruPicking = false
+  pruFinal = false
   $('#buttonTambahUbahKemasan').hide()
+  $('#buttonTambahUbahKemasan').css({ opacity: '', cursor: '' })
+  $('#infoUbahKemasan').hide().text('')
+  // Qty & Satuan item SO dibuka lagi (dikunci hanya saat PRU sudah difinalisasi).
+  document.getElementById("input_add_add_qty").disabled = false
+  document.getElementById("input_add_add_nosat").disabled = false
   batalItemPRU()
 }
 
-function setUbahKemasan (assembly, noPRU = '', komponen = []) {
+function setUbahKemasan (assembly, noPRU = '', komponen = [], status = {}) {
   resetUbahKemasan()
   pruAssembly = !!assembly
   if (!pruAssembly) {
     return
   }
   pruNoBukti = noPRU || ''
+  pruPicking = !!status.picking
+  pruFinal = !!status.final
   pruKomponen = (komponen || []).map(k => ({
+    picked: Number(k.pPicking) === 1,
     urut: Number(k.URUT) || 0,
     kodebrg: k.KODEBRG,
     namabrg: k.NAMABRG,
@@ -6068,9 +6070,22 @@ function setUbahKemasan (assembly, noPRU = '', komponen = []) {
     ISI1: k.ISI1, ISI2: k.ISI2, ISI3: k.ISI3
   }))
   $('#buttonTambahUbahKemasan').show()
+  if (pruFinal) {
+    // Tombol hanya tampil disabled (tidak pakai atribut disabled) supaya klik tetap memunculkan warning.
+    $('#buttonTambahUbahKemasan').css({ opacity: 0.5, cursor: 'not-allowed' })
+    document.getElementById("input_add_add_qty").disabled = true
+    document.getElementById("input_add_add_nosat").disabled = true
+    $('#infoUbahKemasan').text('Sudah finalisasi ubah kemasan - Qty & Satuan tidak bisa diubah').show()
+  } else if (pruPicking) {
+    $('#infoUbahKemasan').text('Sebagian ubah kemasan sudah di picking list').show()
+  }
 }
 
 function buttonTambahUbahKemasan () {
+  if (pruFinal) {
+    alertify.warning('Ubah kemasan (PRU) item ini sudah di finalisasi ubah kemasan. Ubah kemasan, Qty dan Satuan tidak bisa diubah')
+    return
+  }
   if (!pruAssembly || !$('#addAddItem').is(':visible')) {
     alertify.warning('Buka Tambah Item / Edit Item dengan barang Assembly terlebih dahulu')
     return
@@ -6085,6 +6100,11 @@ function buttonTambahUbahKemasan () {
   document.getElementById("input_pru_keterangan").value = 'Dari SO ' + (noSO || '') + ' - ' + ($("#input_add_add_namabarang").val() || '')
   batalItemPRU()
   renderKomponenPRU()
+  if (pruKomponen.some(k => k.picked)) {
+    $('#pruInfoPicking').show()
+  } else {
+    $('#pruInfoPicking').hide()
+  }
   $('#modalUbahKemasan').modal('show')
 }
 
@@ -6126,8 +6146,9 @@ function renderKomponenPRU () {
       <td class="text-right">${formatAngka((Number(k.qnt) || 0).toFixed(2))}</td>
       <td>${escPRU(namaSatuanPRU(k, k.nosat))}</td>
       <td class="text-center">
-        <button title="Edit" class="btn btn-success btn-sm" type="button" onclick="editKomponenPRU(${i})"><i class="bi bi-pen"></i></button>
-        <button title="Hapus" class="btn btn-danger btn-sm" type="button" onclick="hapusKomponenPRU(${i})"><i class="bi bi-trash"></i></button>
+        ${k.picked ? '<span class="badge badge-warning d-block mb-1">Sudah Picking</span>' : ''}
+        <button title="${k.picked ? 'Sudah di picking list ubah kemasan' : 'Edit'}" class="btn btn-success btn-sm" type="button" ${k.picked ? 'disabled' : ''} onclick="editKomponenPRU(${i})"><i class="bi bi-pen"></i></button>
+        <button title="${k.picked ? 'Sudah di picking list ubah kemasan' : 'Hapus'}" class="btn btn-danger btn-sm" type="button" ${k.picked ? 'disabled' : ''} onclick="hapusKomponenPRU(${i})"><i class="bi bi-trash"></i></button>
       </td>
     </tr>`
   })
@@ -6163,6 +6184,10 @@ function onKeyPressBarangPRU (e) {
 
 function editKomponenPRU (i) {
   let k = pruKomponen[i]
+  if (k && k.picked) {
+    alertify.warning('Item ' + k.namabrg + ' sudah di picking list ubah kemasan, tidak bisa di edit maupun di hapus')
+    return
+  }
   if (!k) {
     return
   }
@@ -6227,6 +6252,10 @@ function submitItemPRU () {
 function hapusKomponenPRU (i) {
   let k = pruKomponen[i]
   if (!k) {
+    return
+  }
+  if (k.picked) {
+    alertify.warning('Item ' + k.namabrg + ' sudah di picking list ubah kemasan, tidak bisa di edit maupun di hapus')
     return
   }
   alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + escPRU(k.namabrg) + ' ?',
@@ -6324,7 +6353,11 @@ function dataKomponenPRU () {
 
 function pesanHasilPRU (res) {
   if (res == 5) {
-    alertify.warning('Ubah kemasan (PRU) item ini sudah diproses WMS, item tidak bisa diubah / dihapus')
+    alertify.warning('Ubah kemasan (PRU) item ini sudah di picking list ubah kemasan, item tidak bisa dihapus')
+    return true
+  }
+  if (res == 8) {
+    alertify.warning('Ubah kemasan (PRU) item ini sudah di finalisasi ubah kemasan, item tidak bisa dihapus')
     return true
   }
   if (res == 6) {
@@ -6437,11 +6470,12 @@ if (tempAddEdit.nopl != '') {
     alertify.warning('Gagal membaca data ubah kemasan, silahkan refresh browser')
     return
   }
-  if (pruItem.diproses) {
-    alertify.warning('Ubah kemasan (PRU) item ini sudah diproses WMS, item tidak bisa di edit')
-    return
+  // Diubah 2026-11-23: picking / finalisasi ubah kemasan tidak lagi menolak Edit Item.
+  // Warning finalisasi muncul saat tombol Tambah Ubah Kemasan diklik (bukan saat buka Edit Item).
+  if (!pruItem.final && pruItem.picking) {
+    alertify.warning('Sebagian ubah kemasan (PRU) item ini sudah di picking list. Item yang sudah dipicking tidak bisa di edit maupun di hapus, hanya bisa tambah item')
   }
-  setUbahKemasan(pruItem.assembly, pruItem.nopru, pruItem.komponen)
+  setUbahKemasan(pruItem.assembly, pruItem.nopru, pruItem.komponen, { picking: pruItem.picking, final: pruItem.final })
 
   let selectOption = ''
   console.log('a' ,tempAddEdit.SAT1)
@@ -9955,6 +9989,29 @@ function buttonAddDeleteItem (i) {
   return
 }
 
+  // Ditambahkan 2026-11-23: cek status Ubah Kemasan (PRU) sebelum konfirmasi hapus.
+  // Server tetap menolak (5 / 8) kalau pengecekan ini terlewati.
+  let pruHapus = null
+  $.ajax({
+    url: "{!! url('sogetpruitem') !!}",
+    type: "post",
+    async: false,
+    data: { _token: $("#_token").val(), nobukti: dataDelete.NoBukti, urut: dataDelete.Urut },
+    success: function (res) { pruHapus = res },
+    error: function (err) { console.log(err) }
+  })
+  if (!pruHapus) {
+    alertify.warning('Gagal membaca data ubah kemasan, silahkan refresh browser')
+    return
+  }
+  if (pruHapus.final) {
+    pesanHasilPRU(8)
+    return
+  }
+  if (pruHapus.picking) {
+    pesanHasilPRU(5)
+    return
+  }
 
   alertify.confirm('Hapus Item', 'Apakah yakin ingin menghapus item ' + dataDelete.NamaBrg + ' ?',
       function() {
@@ -10019,7 +10076,7 @@ function buttonAddDeleteItem (i) {
           },
           success: function(res) {
             console.log('resdelete', res)
-            // 5 = PRU sudah diproses WMS, 6 = PRU gagal dihapus -> item SO tidak dihapus.
+            // 5 = PRU sudah di picking, 8 = PRU sudah difinalisasi, 6 = PRU gagal dihapus -> item SO tidak dihapus.
             if (res == 6) {
               alertify.warning('Gagal menghapus Ubah Kemasan (PRU), item SO tidak dihapus')
               return

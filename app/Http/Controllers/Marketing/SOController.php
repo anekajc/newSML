@@ -1930,13 +1930,38 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
 
     // Ditambahkan 2026-11-19: PRU (Permintaan Ubah Kemasan) otomatis untuk barang Assembly.
     // Dicek SEBELUM sp_SO supaya item SO tidak tersimpan kalau PRU-nya pasti gagal.
-    //   5 = PRU item ini sudah diproses WMS (picking / terima) -> item tidak boleh diubah/dihapus
+    //   5 = PRU item ini sudah di picking list ubah kemasan -> item SO tidak boleh dihapus
     //   7 = data komponen ubah kemasan tidak valid
+    //   8 = PRU item ini sudah difinalisasi ubah kemasan -> item SO tidak boleh dihapus
+    // Diubah 2026-11-23: picking tidak lagi mengunci seluruh Edit Item. Saat picking, komponen
+    // yang sudah dipicking dikunci (tidak bisa diubah/dihapus) tetapi boleh tambah komponen.
+    // Saat finalisasi, PRU tidak disentuh lagi dan Qty/Satuan/Isi item SO dikunci.
     $pruNo = null;
+    $pruStatus = ['picking' => false, 'final' => false, 'urutPicked' => []];
     if ($choice == 'U' || $choice == 'D') {
       $pruNo = $this->cariPRUdariSO($nobukti, (int) $req->urut);
-      if ($pruNo && $this->pruSudahDiproses($pruNo)) {
+      if ($pruNo) {
+        $pruStatus = $this->statusPRU($pruNo);
+      }
+      if ($choice == 'D' && $pruStatus['final']) {
+        return 8;
+      }
+      if ($choice == 'D' && $pruStatus['picking']) {
         return 5;
+      }
+      if ($choice == 'U' && $pruStatus['final']) {
+        // Qty / Satuan / Isi item SO dikunci: pakai nilai yang tersimpan, bukan dari browser.
+        $lama = DB::connection('SML')->selectOne('select QNT, QNT2, NOSAT, ISI, SATUAN from DBSODET
+          where NOBUKTI = cast(? as varchar(30)) and URUT = ?', [$nobukti, (int) $req->urut]);
+        if ($lama) {
+          $req->merge([
+            'qnt1' => (float) $lama->QNT,
+            'qty' => (float) $lama->QNT2,
+            'nosat' => (int) $lama->NOSAT,
+            'isi' => (float) $lama->ISI,
+            'satuan' => $lama->SATUAN,
+          ]);
+        }
       }
     }
     // Hapus item: PRU dihapus lebih dulu supaya tidak ada PRU yatim yang menunjuk urut SO
@@ -1953,7 +1978,7 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
       $pruNo = null;
     }
     $pruKomponen = [];
-    if ($choice == 'I' || $choice == 'U') {
+    if ($choice == 'I' || ($choice == 'U' && !$pruStatus['final'])) {
       $pruKomponen = $this->bacaKomponenPRU($req->input('pru_komponen'));
       if ($pruKomponen === false) {
         return 7;
@@ -2069,7 +2094,8 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
 
       // Ditambahkan 2026-11-19: buat / ubah / hapus PRU item Assembly setelah item SO tersimpan.
       // 6 = item SO tersimpan tetapi PRU gagal dibuat/diubah (bisa diulang lewat Edit Item).
-      if (!$this->sinkronPRUdariSO($choice, $nobukti, $req, $pruNo, $pruKomponen)) {
+      // PRU yang sudah difinalisasi tidak diubah lagi.
+      if (!$pruStatus['final'] && !$this->sinkronPRUdariSO($choice, $nobukti, $req, $pruNo, $pruKomponen, $pruStatus['urutPicked'])) {
         return 6;
       }
     return 1;
@@ -2097,14 +2123,20 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
     return $row ? $row->NOBUKTI : null;
   }
 
-  // PRU dianggap sudah diproses WMS kalau sudah ada picking (DBOutBrgDET2) atau sudah
-  // masuk ubah kemasan (DBUBAHKEMASANDET) -- sama dengan penanda pPicking di VWMASTERPRUBAHKEMASANWEB.
-  private function pruSudahDiproses ($noPRU) {
-    $row = DB::connection('SML')->selectOne("select
-      case when exists (select 1 from DBOutBrgDET2 where NoBeli = cast(? as varchar(30)))
-             or exists (select 1 from DBUBAHKEMASANDET where NoPRUbah = cast(? as varchar(30)))
-           then 1 else 0 end diproses", [$noPRU, $noPRU]);
-    return $row && (int) $row->diproses === 1;
+  // Ditambahkan 2026-11-23 (menggantikan pruSudahDiproses yang mengunci semua tahap sekaligus): status PRU per tahap WMS.
+  //   picking    = sudah ada baris di picking list ubah kemasan (DBOutBrgDET2.NoBeli = PRU)
+  //   final      = sudah masuk finalisasi ubah kemasan (DBUBAHKEMASANDET.NoPRUbah = PRU)
+  //   urutPicked = urut baris PRU (DBOutBrgDET.URUT) yang sudah dipicking -- dikunci per baris
+  private function statusPRU ($noPRU) {
+    $db = DB::connection('SML');
+    $urut = array_map(function ($r) { return (int) $r->UrutBeli; },
+      $db->select('select distinct UrutBeli from DBOutBrgDET2 where NoBeli = cast(? as varchar(30))', [$noPRU]));
+    $final = $db->selectOne('select top 1 1 ada from DBUBAHKEMASANDET where NoPRUbah = cast(? as varchar(30))', [$noPRU]);
+    return [
+      'picking' => count($urut) > 0,
+      'final' => (bool) $final,
+      'urutPicked' => $urut,
+    ];
   }
 
   // Komponen (Qty CR) dari form SO: JSON [{urut, kodebrg, nosat, qnt}]. Nama, satuan dan isi
@@ -2159,7 +2191,7 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
     }
   }
 
-  private function sinkronPRUdariSO ($choice, $noSO, Request $req, $pruNo, $komponen) {
+  private function sinkronPRUdariSO ($choice, $noSO, Request $req, $pruNo, $komponen, $urutPicked = []) {
     try {
       $db = DB::connection('SML');
 
@@ -2188,7 +2220,7 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
       $tanggal = date('Y-m-d', strtotime($item->TANGGAL));
       $keterangan = mb_substr($this->tagPRU($noSO, $item->URUT) . ' ' . $item->NAMABRG, 0, 200);
 
-      $db->transaction(function () use ($db, $noSO, $item, $komponen, $tanggal, $keterangan, $pruNo, $choice) {
+      $db->transaction(function () use ($db, $noSO, $item, $komponen, $tanggal, $keterangan, $pruNo, $choice, $urutPicked) {
         $noPRU = $choice == 'U' ? $pruNo : null;
 
         if (!$noPRU) {
@@ -2242,8 +2274,15 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
         }
 
         // Komponen: urut lama yang dikirim -> ubah, urut 0 -> tambah, urut lama yang tidak dikirim -> hapus.
+        // Baris yang sudah dipicking (ubah kemasan) dikunci: tidak diubah dan tidak dihapus.
         $dipakai = [];
+        foreach ($urutPicked as $u) {
+          $dipakai[(int) $u] = true;
+        }
         foreach ($komponen as $k) {
+          if ($k['urut'] && in_array((int) $k['urut'], $urutPicked, true)) {
+            continue;
+          }
           $lama = $k['urut'] ? ($barisCR[$k['urut']] ?? null) : null;
           if ($lama && $lama->KODEBRG === $k['kodebrg']) {
             $dipakai[$k['urut']] = true;
@@ -2278,16 +2317,22 @@ select SS.NOBUKTI,C.TANGGAL,C.REFPR,a.KODEBRG,D.namaBrg,A.SAT_1  ,a.SAT_2  ,
     $noPRU = $this->cariPRUdariSO($noSO, $urut);
     $komponen = [];
     if ($noPRU) {
+      // pPicking = 1 kalau baris komponen ini sudah masuk picking list ubah kemasan.
       $komponen = DB::connection('SML')->select("select a.URUT, a.KODEBRG, b.NAMABRG, a.QNT, a.NOSAT,
-          b.SAT1, b.SAT2, b.SAT3, b.ISI1, b.ISI2, b.ISI3, isnull(m.NAMAMERK,'') NAMAMERK
+          b.SAT1, b.SAT2, b.SAT3, b.ISI1, b.ISI2, b.ISI3, isnull(m.NAMAMERK,'') NAMAMERK,
+          case when exists (select 1 from DBOutBrgDET2 g where g.NoBeli = a.NOBUKTI and g.UrutBeli = a.URUT)
+            then 1 else 0 end pPicking
         from DBOutBrgDET a left join DBBARANG b on b.KODEBRG = a.KODEBRG
         left join DBMERK m on m.KODEMERK = b.KodeMerk
         where a.NOBUKTI = cast(? as varchar(30)) and isnull(a.pDebet,0) = 0 order by a.URUT", [$noPRU]);
     }
+    $status = $noPRU ? $this->statusPRU($noPRU) : ['picking' => false, 'final' => false];
     return [
       'assembly' => $item && (int) $item->pJobCost === 1,
       'nopru' => $noPRU,
-      'diproses' => $noPRU ? $this->pruSudahDiproses($noPRU) : false,
+      // Diubah 2026-11-23: 'diproses' diganti 'picking' & 'final' (Edit Item tetap bisa dibuka).
+      'picking' => $status['picking'],
+      'final' => $status['final'],
       'komponen' => $komponen,
     ];
   }
