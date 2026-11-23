@@ -621,6 +621,10 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
 #addTable td .btn:hover { filter: brightness(0.97); transform: translateY(-1px); }
 #addTable td .btn-success { color:#16a34a; border-color:#cdebd7; background:#e7f7ed; }
 #addTable td .btn-danger  { color:#dc2626; border-color:#f7cfcf; background:#fdeaea; }
+/* Kolom #addTable & #detailTable yang sementara disembunyikan atas permintaan user (KreditRp,
+   Debet, Kredit, Valas, Kurs). Datanya tetap digambar - hapus aturan ini untuk menampilkannya lagi. */
+#addTable .mk-kol-sembunyi,
+#detailTable .mk-kol-sembunyi { display: none; }
 
 /* ---------- Modal lookup DPP (#form) - baris diklik langsung ---------- */
 #tabel_add_list_modal thead th,
@@ -1083,10 +1087,9 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
             <th style="padding: 4px 12px;" scope="col">Actions</th>
             <th style="padding: 4px 12px;" scope="col">No Bukti</th>
             <th style="padding: 4px 12px;" scope="col">Tanggal</th>
-            <th style="padding: 4px 12px;" scope="col">Trans</th>
-            <th style="padding: 4px 12px;" scope="col">Perkiraan</th>
+            <th style="padding: 4px 12px;" scope="col">COA</th>
             <th style="padding: 4px 12px;" scope="col">Keterangan</th>
-            <th style="padding: 4px 12px;" scope="col">Jumlah Rp</th>
+            <th style="padding: 4px 12px;" scope="col">Jumlah</th>
           </tr>
         </thead>
         <tbody id="tabel_data" class="text-left">
@@ -1233,15 +1236,15 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
           <thead class="text-center">
             <tr>
               <th style="padding: 4px 12px;" scope="col">Devisi</th>
-              <th style="padding: 4px 12px;" scope="col">Perkiraan</th>
-              <th style="padding: 4px 12px;" scope="col">Lawan</th>
+              <th style="padding: 4px 12px;" scope="col">COA Debet</th>
+              <th style="padding: 4px 12px;" scope="col">COA Kredit</th>
               <th style="padding: 4px 12px;" scope="col">Keterangan</th>
-              <th style="padding: 4px 12px;" scope="col">DebetRp</th>
-              <th style="padding: 4px 12px;" scope="col">KreditRp</th>
-              <th style="padding: 4px 12px;" scope="col">Debet</th>
-              <th style="padding: 4px 12px;" scope="col">Kredit</th>
-              <th style="padding: 4px 12px;" scope="col">Valas</th>
-              <th style="padding: 4px 12px;" scope="col">Kurs</th>
+              <th style="padding: 4px 12px;" scope="col">Jumlah</th>
+              <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">KreditRp</th>
+              <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Debet</th>
+              <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Kredit</th>
+              <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Valas</th>
+              <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Kurs</th>
 
 
               <th style="padding: 4px 12px;" scope="col">Actions</th>
@@ -1667,15 +1670,15 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
             <thead class="text-center">
               <tr>
                 <th style="padding: 4px 12px;" scope="col">Devisi</th>
-                <th style="padding: 4px 12px;" scope="col">Perkiraan</th>
-                <th style="padding: 4px 12px;" scope="col">Lawan</th>
+                <th style="padding: 4px 12px;" scope="col">COA Debet</th>
+                <th style="padding: 4px 12px;" scope="col">COA Kredit</th>
                 <th style="padding: 4px 12px;" scope="col">Keterangan</th>
-                <th style="padding: 4px 12px;" scope="col">DebetRp</th>
-                <th style="padding: 4px 12px;" scope="col">KreditRp</th>
-                <th style="padding: 4px 12px;" scope="col">Debet</th>
-                <th style="padding: 4px 12px;" scope="col">Kredit</th>
-                <th style="padding: 4px 12px;" scope="col">Valas</th>
-                <th style="padding: 4px 12px;" scope="col">Kurs</th>
+                <th style="padding: 4px 12px;" scope="col">Jumlah</th>
+                <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">KreditRp</th>
+                <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Debet</th>
+                <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Kredit</th>
+                <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Valas</th>
+                <th class="mk-kol-sembunyi" style="padding: 4px 12px;" scope="col">Kurs</th>
 
               </tr>
             </thead>
@@ -6565,12 +6568,12 @@ function refreshDataTable (nobukti) {
                   <td>${item.NamaLawan}</td>
                   <td>${item.Note}</td>
                   <td class="text-right">${formatAngka(parseFloat(item.DebetRp).toFixed(2))}</td>
-                  <td class="text-right">${formatAngka(parseFloat(item.KreditRp).toFixed(2))}</td>
-                  <td class="text-right">${formatAngka(parseFloat(item.Debet).toFixed(2))}</td>
-                  <td class="text-right">${formatAngka(parseFloat(item.Kredit).toFixed(2))}</td>
-                  <td>${item.Valas}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.KreditRp).toFixed(2))}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.Debet).toFixed(2))}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.Kredit).toFixed(2))}</td>
+                  <td class="mk-kol-sembunyi">${item.Valas}</td>
 
-                  <td class="text-right">${formatAngka(parseFloat(item.Kurs).toFixed(2))}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.Kurs).toFixed(2))}</td>
 
 
                   <td class="text-center">
@@ -6646,12 +6649,12 @@ function refreshDataTableDetail (nobukti) {
                   <td>${item.NamaLawan}</td>
                   <td>${item.Note}</td>
                   <td class="text-right">${formatAngka(parseFloat(item.DebetRp).toFixed(2))}</td>
-                  <td class="text-right">${formatAngka(parseFloat(item.KreditRp).toFixed(2))}</td>
-                  <td class="text-right">${formatAngka(parseFloat(item.Debet).toFixed(2))}</td>
-                  <td class="text-right">${formatAngka(parseFloat(item.Kredit).toFixed(2))}</td>
-                  <td>${item.Valas}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.KreditRp).toFixed(2))}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.Debet).toFixed(2))}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.Kredit).toFixed(2))}</td>
+                  <td class="mk-kol-sembunyi">${item.Valas}</td>
 
-                  <td class="text-right">${formatAngka(parseFloat(item.Kurs).toFixed(2))}</td>
+                  <td class="text-right mk-kol-sembunyi">${formatAngka(parseFloat(item.Kurs).toFixed(2))}</td>
 
                 </tr>
 

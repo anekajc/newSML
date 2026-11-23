@@ -4361,11 +4361,11 @@ if (pcekglobal) {
 }
       $('.showhide').hide();
 
-      // Modal berisi semua LPB outstanding (satu baris per LPB) yang supplier + tipe PPN
-      // (+ valuta) sama dengan LPB yang diklik, tanpa batas tanggal.
+      // Modal berisi semua LPB outstanding (satu baris per LPB) yang No PO + supplier + tipe PPN
+      // (+ valuta) sama dengan LPB yang diklik, dalam periode tab Outstanding.
       let lpbList = invMuatLpb(nobukti)
       if (!lpbList.length) {
-        alertify.warning('Tidak ada LPB outstanding untuk supplier ini, silahkan refresh')
+        alertify.warning('Tidak ada LPB outstanding untuk PO ini, silahkan refresh')
         return
       }
       setNewNoBukti()
@@ -4409,7 +4409,7 @@ if (pcekglobal) {
     }
 
     // Tombol Tambah LPB di form Edit (tab Pembelian Invoice): buka modal Buat Invoice berisi LPB
-    // outstanding dengan supplier + tipe PPN + valuta sama dengan LPB invoice ini, dalam rentang
+    // outstanding dengan No PO + supplier + tipe PPN + valuta sama dengan LPB invoice ini, dalam rentang
     // PERIODE tab Pembelian Invoice - selebihnya sama seperti tombol + di tab Outstanding. Simpan lewat
     // sp_beligudangInvoiceBeli dengan reqNobukti = invoice ini (detail ditambahkan ke invoice).
     function invTambahLpbEdit () {
@@ -4430,7 +4430,7 @@ if (pcekglobal) {
         if ((rKunci[0] || []).length) { alertify.warning("Periode sudah dikunci"); return }
         let lpbList = rLpb[0] || []
         if (!lpbList.length) {
-          alertify.warning('Tidak ada LPB outstanding lain untuk supplier ini dalam periode tab Pembelian Invoice')
+          alertify.warning('Tidak ada LPB outstanding lain dari PO yang sama dalam periode tab Pembelian Invoice')
           return
         }
         // Simpan isi form Edit supaya bisa dikembalikan tanpa memuat ulang dari server

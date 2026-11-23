@@ -32,10 +32,9 @@ class MemorialKoreksiController extends Controller
     return [
       'No Bukti'   => 0,
       'Tanggal'    => 2,
-      'Trans'      => 0,
-      'Perkiraan'  => 0,
+      'COA'        => 0,
       'Keterangan' => 0,
-      'Jumlah Rp'  => 1,
+      'Jumlah'     => 1,
     ];
   }
 
@@ -86,6 +85,26 @@ class MemorialKoreksiController extends Controller
       $headertablevalue    = json_decode($headertable[0]->value);
       $headertableheader   = json_decode($headertable[0]->header);
       $headerisshown       = json_decode($headertable[0]->isshown);
+
+      // Migrasi susunan kolom yang sudah tersimpan sebelum kolom diganti: 'Trans' tidak
+      // ditampilkan lagi di tabel (field-nya tetap ada di query untuk filter Trans),
+      // 'Perkiraan' -> 'COA', 'Jumlah Rp' -> 'Jumlah'. Array tipe (desimal) ikut disaring
+      // supaya indeksnya tetap sejajar.
+      $tipeLama = json_decode($headertable[0]->tipe);
+      $ganti = ['Perkiraan' => 'COA', 'Jumlah Rp' => 'Jumlah'];
+      $v2 = []; $h2 = []; $n2 = []; $s2 = []; $t2 = [];
+      foreach ((array) $headertablevalue as $i => $val) {
+        if ($val === 'Trans') { continue; }
+        $hdr = $headertableheader[$i] ?? $val;
+        $v2[] = $ganti[$val] ?? $val;
+        $h2[] = $ganti[$hdr] ?? $hdr;
+        $n2[] = $isnumberheadertable[$i] ?? 0;
+        $s2[] = $headerisshown[$i] ?? 1;
+        if (is_array($tipeLama)) { $t2[] = $tipeLama[$i] ?? null; }
+      }
+      $headertablevalue = $v2; $headertableheader = $h2;
+      $isnumberheadertable = $n2; $headerisshown = $s2;
+      $tipeTersaring = is_array($tipeLama) ? $t2 : null;
     } else {
       $isparsed = 1;
       foreach ($this->kolomDefault() as $key => $tipe) {
@@ -104,8 +123,7 @@ class MemorialKoreksiController extends Controller
     // Desimal dititipkan sebagai JSON array di kolom `tipe` DBHEADERTABLE.
     $tersimpan = [];
     if (count($headertable) > 0) {
-      $decoded = json_decode($headertable[0]->tipe);
-      if (is_array($decoded)) { $tersimpan = $decoded; }
+      if (is_array($tipeTersaring)) { $tersimpan = $tipeTersaring; }
     }
 
     $desimal = [];
@@ -146,9 +164,9 @@ select  A.NoUrut, A.NoBukti,
         convert(varchar(10), A.Tanggal, 23)  as [Tanggal],
         A.TipeTransHd                        as [Trans],
         isnull((select top 1 B2.Perkiraan from dbTransaksi B2
-                where B2.NoBukti = A.NoBukti order by B2.Urut), '') as [Perkiraan],
+                where B2.NoBukti = A.NoBukti order by B2.Urut), '') as [COA],
         isnull(A.Note, '')                   as [Keterangan],
-        sum((B.Debet) * B.Kurs)              as [Jumlah Rp],
+        sum((B.Debet) * B.Kurs)              as [Jumlah],
         A.IsOtorisasi1, A.OtoUser1, A.TglOto1
 from dbTrans A
 left outer join dbTransaksi B on B.NoBukti=A.NoBukti
