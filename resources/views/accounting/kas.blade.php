@@ -235,6 +235,14 @@ table.data-table.po-aksi-hover tbody tr:hover td:first-child .btn {
   font-size: inherit;
   padding-top: 0.755em !important;
 }
+/* Tabel item: BKK/BBK sembunyikan Perk. + Ket. Perk (kolom 2-3), BKM/BBM sembunyikan Lawan +
+   Ket. Lawan (kolom 4-5). Class dipasang aturKolomTabelItem() di public/js/kas.js. */
+.dph-tb.mode-keluar > * > tr > :nth-child(2),
+.dph-tb.mode-keluar > * > tr > :nth-child(3),
+.dph-tb.mode-masuk > * > tr > :nth-child(4),
+.dph-tb.mode-masuk > * > tr > :nth-child(5) {
+  display: none;
+}
 </style>
 
 {{-- Reopened below: kembali ke aturan .tb-report/#tabel_xxx_filter asli halaman ini (blok

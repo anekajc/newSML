@@ -526,7 +526,9 @@ order by A.NOBUKTI
 // dengan tab Outstanding (tglawal/tglakhir, default satu bulan periode kerja).
 public function getDetailPO (Request $req) {
   $acuan = DB::connection("SML")->selectOne("
-    select KODESUPP, PPN, isnull(KODEVLS, '') KODEVLS from DBBELI where NOBUKTI = :nobukti
+    select B.KODESUPP, B.PPN, isnull(B.KODEVLS, '') KODEVLS,
+      isnull((select top 1 isnull(D.NoPO, '') from DBBELIDET D where D.NOBUKTI = B.NOBUKTI), '') NOPO
+    from DBBELI B where B.NOBUKTI = :nobukti
   ", ['nobukti' => (string) $req->input('NoBukti')]);
   if (!$acuan) {
     return [];
@@ -551,12 +553,14 @@ public function getDetailPO (Request $req) {
         case max(A.PPN) when 0 then 'NONE' when 1 then 'EXCLUDE' when 2 then 'INCLUDE' end MyPPN
       " . $this->sqlItemOutstanding() . "
         and A.KODECUSTSUPP = :kodesupp and A.PPN = :ppn and isnull(C.KODEVLS, '') = :kodevls
+        and isnull(A.NOPO, '') = :nopo
         and A.TANGGAL >= :tglawal and A.TANGGAL < :tglakhirplus
       group by A.NOBUKTI
     ) L
     left outer join DBCUSTSUPP E on E.KODECUSTSUPP = L.KODEEXP
     order by L.Tanggal, L.NoBukti
   ", ['kodesupp' => $acuan->KODESUPP, 'ppn' => (int) $acuan->PPN, 'kodevls' => $acuan->KODEVLS,
+      'nopo' => $acuan->NOPO,
       'tglawal' => $tglawal, 'tglakhirplus' => $tglakhirPlus]);
 }
 
@@ -581,8 +585,8 @@ public function listBiaya () {
 }
 
 // Simpan invoice per LPB: setiap LPB yang dicentang masuk beserta SEMUA item outstanding-nya
-// (qty penuh, kolom sama dengan SP_INVB). LPB boleh dari beberapa PO selama Supplier + Tipe
-// PPN + Valuta sama. Header dibuat dari PO LPB pertama (salinan bagian header SP_INVB) dengan
+// (qty penuh, kolom sama dengan SP_INVB). LPB yang bisa dipilih sudah dibatasi satu PO
+// (filter di getDetailPO), selain Supplier + Tipe PPN + Valuta sama. Header dibuat dari PO LPB pertama (salinan bagian header SP_INVB) dengan
 // No/Tgl Invoice, Faktur Pajak dan Bukti Potong kosong (diisi nanti lewat tab Pembelian
 // Invoice > Edit). Biaya per LPB disimpan lewat sp_PBiaya 'I' dalam transaksi yang sama -
 // kalau invoice gagal, biaya ikut batal.

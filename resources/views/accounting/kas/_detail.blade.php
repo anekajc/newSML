@@ -36,7 +36,7 @@
                               <div class="row kas-row-tight">
                                   <div class="col-md-5">
                                       <div class="form-group">
-                                          <label>Kas</label>
+                                          <label>COA</label>
                                       </div>
                                   </div>
                                   <div class="col-md-7">
@@ -161,10 +161,10 @@
                                   <thead>
                                       <tr>
                                           <th scope="col">Devisi</th>
-                                          <th scope="col">Perk.</th>
-                                          <th scope="col">Ket. Perk</th>
-                                          <th scope="col">Lawan</th>
-                                          <th scope="col">Ket. Lawan</th>
+                                          <th scope="col">COA</th>
+                                          <th scope="col">Keterangan COA</th>
+                                          <th scope="col">COA</th>
+                                          <th scope="col">Keterangan COA</th>
                                           <th scope="col">Sumber</th>
                                           <th scope="col" class="num">Jumlah</th>
                                           <th scope="col">Keterangan</th>

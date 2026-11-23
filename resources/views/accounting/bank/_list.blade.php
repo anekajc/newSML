@@ -66,10 +66,9 @@
             <th style="padding: 4px 12px;" scope="col">Actions</th>
             <th style="padding: 4px 12px;" scope="col">No. Bukti</th>
             <th style="padding: 4px 12px;" scope="col">Tanggal</th>
-            <th style="padding: 4px 12px;" scope="col">Trans</th>
-            <th style="padding: 4px 12px;" scope="col">Perk.</th>
-            <th style="padding: 4px 12px;" scope="col">Ket.</th>
-            <th style="padding: 4px 12px;" scope="col">Jumlah Rp</th>
+            <th style="padding: 4px 12px;" scope="col">COA</th>
+            <th style="padding: 4px 12px;" scope="col">Keterangan</th>
+            <th style="padding: 4px 12px;" scope="col">Jumlah</th>
             <th style="padding: 4px 12px;" scope="col">Oto</th>
             <th style="padding: 4px 12px;" scope="col">User Oto</th>
             <th style="padding: 4px 12px;" scope="col">Tgl Oto</th>

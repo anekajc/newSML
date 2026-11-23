@@ -35,10 +35,9 @@ function setDefaultHeader() {
     gcart_header = [
         ['NoBukti', 'No. Bukti', 1, 'varchar', 0, 0],
         ['Tanggal', 'Tanggal', 1, 'date', 0, 0],
-        ['TipeTransHd', 'Trans', 1, 'varchar', 0, 0],
-        ['Perkiraan', 'Perk.', 1, 'varchar', 0, 0],
-        ['Note', 'Ket.', 1, 'varchar', 0, 0],
-        ['TotalRp', 'Jumlah Rp', 1, 'float', 0, 2],
+        ['Perkiraan', 'COA', 1, 'varchar', 0, 0],
+        ['Note', 'Keterangan', 1, 'varchar', 0, 0],
+        ['TotalRp', 'Jumlah', 1, 'float', 0, 2],
     ];
 }
 
@@ -46,11 +45,40 @@ function doSetHeader(_modereport, _isReset = false) {
     let _strHeader = (!_isReset) ? doLoadHeader(g_href, _modereport) : "";
 
     if (_strHeader != "") {
-        gcart_header = doGetHeader(_strHeader);
+        gcart_header = normalisasiHeaderKasBank(doGetHeader(_strHeader));
     } else if ($.isFunction(window.setDefaultHeader)) {
         setDefaultHeader();
         doSimpanHeader(g_href, g_modeReport, gcart_header, gsum_issubtotal, gsum_isgrandtotal);
     }
+}
+
+// Kolom Trans (TipeTransHd) sudah tidak dipakai & label kolom diganti (COA/Keterangan/Jumlah).
+// Header tersimpan per user (doLoadHeader) bisa masih versi lama, jadi dirapikan di sini lalu
+// disimpan ulang sekali kalau ada yang berubah.
+function normalisasiHeaderKasBank(cart) {
+    const label = { Perkiraan: 'COA', Note: 'Keterangan', TotalRp: 'Jumlah' };
+    let berubah = false;
+    const hasil = cart.filter(c => {
+        if (c[0] === 'TipeTransHd') { berubah = true; return false; }
+        return true;
+    });
+    hasil.forEach(c => {
+        if (label[c[0]] && c[1] !== label[c[0]]) { c[1] = label[c[0]]; berubah = true; }
+    });
+    if (berubah) {
+        doSimpanHeader(g_href, g_modeReport, hasil, gsum_issubtotal, gsum_isgrandtotal);
+    }
+    return hasil;
+}
+
+// Tabel item (#addTable / #detailTable): transaksi keluar (BKK/BBK) sembunyikan Perk. + Ket. Perk,
+// transaksi masuk (BKM/BBM) sembunyikan Lawan + Ket. Lawan. Penyembunyian lewat CSS
+// .dph-tb.mode-keluar / .mode-masuk (lihat @section('css') di view-nya).
+function aturKolomTabelItem(tableId, trans) {
+    const t = String(trans || '').trim().toUpperCase();
+    $('#' + tableId)
+        .toggleClass('mode-masuk', t.endsWith('M'))
+        .toggleClass('mode-keluar', t.endsWith('K'));
 }
 
 function doLoadHeader(_href, _mode) {
@@ -1035,6 +1063,7 @@ function onChangeTransaksi () {
     let value = $("#input_add_transaksi").val()
     console.log(value)
     $(`.part${value}`).show();
+    aturKolomTabelItem('addTable', value)
 
 
 }
@@ -5578,6 +5607,7 @@ function refreshDataTable (nobukti) {
 
 
         document.getElementById("input_add_transaksi").value = listData[0].TipeTransHD
+        aturKolomTabelItem('addTable', listData[0].TipeTransHD)
         document.getElementById("input_add_kodeperkiraan").value = listData[0].PerkiraanHd
         document.getElementById("input_add_keteranganperkiraan").value = listData[0].NamaPerkiraanHd
         document.getElementById("input_add_kepadaterima").value = listData[0].Note
@@ -5683,6 +5713,7 @@ function refreshDataTableDetail (nobukti) {
 
 
         document.getElementById("input_detail_transaksi").value = listData[0].TipeTransHD
+        aturKolomTabelItem('detailTable', listData[0].TipeTransHD)
         document.getElementById("input_detail_kodeperkiraan").value = listData[0].PerkiraanHd
         document.getElementById("input_detail_keteranganperkiraan").value = listData[0].NamaPerkiraanHd
         document.getElementById("input_detail_kepadaterima").value = listData[0].Note
