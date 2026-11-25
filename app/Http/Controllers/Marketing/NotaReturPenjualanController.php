@@ -639,7 +639,7 @@ order by A.TANGGAL, A.NoBUKTI"
  $detail = DB::connection("SML")->select("
 
 
-select  a.* , b.PPN PPNCUST
+select  a.* , b.PPN PPNCUST, b.KODEVLS VLSCUST, b.KODESLS SLSCUST, b.HARI HARICUST
 from vwBrowsOutSPBRJual A
 left outer join DBCUSTSUPP b on a.KODECUSTSUPP =  b.KODECUSTSUPP
 where a.nobukti = :nobukti
@@ -662,6 +662,19 @@ if ($detail) {
 if (!$listData) {
   $listData = $detail;
 }
+// SPR yang tidak terhubung ke invoice tidak punya Valas/Kurs/Sales di view, padahal
+// DBINVOICERPJ.KODEVLS wajib diisi. Pakai data customer, kalau kosong juga pakai IDR kurs 1.
+$xvalas = trim((string) $listData[0]->Valas);
+if ($xvalas === '') {
+  $xvalas = trim((string) $detail[0]->VLSCUST);
+}
+if ($xvalas === '') {
+  $xvalas = 'IDR';
+}
+$xkurs = (float) $listData[0]->Kurs > 0 ? $listData[0]->Kurs : 1;
+$xsales = $listData[0]->kodeSls ? $listData[0]->kodeSls : $detail[0]->SLSCUST;
+// Hari jatuh tempo: dari SPR, kalau kosong ikut hari customer.
+$xhari = (int) $listData[0]->HARI > 0 ? (int) $listData[0]->HARI : (int) $detail[0]->HARICUST;
 
 $username = \Auth::user()->username;
 $periode = app('App\Http\Controllers\GlobalController')->getPeriode();
@@ -727,11 +740,11 @@ if ((int) substr($tglServer, 0, 4) !== (int) $periode->tahun || (int) substr($tg
       $listData[0]->KODECUSTSUPP,
       $listData[0]->Noinv ? $listData[0]->Noinv : '',
       0,
-      $listData[0]->Valas,
-      $listData[0]->Kurs,
+      $xvalas,
+      $xkurs,
       $xppn, // 10
-      $listData[0]->HARI > 0 ? 1 : 0,
-      $listData[0]->HARI ? $listData[0]->HARI : 0 ,
+      $xhari > 0 ? 1 : 0,
+      $xhari,
       \Auth::User()->username,
       0,
       $d->KODEBRG,
@@ -755,7 +768,7 @@ if ((int) substr($tglServer, 0, 4) !== (int) $periode->tahun || (int) substr($tg
       0,
       0,
       $xppn,
-      $listData[0]->kodeSls,
+      $xsales,
       ''
 
     ];
