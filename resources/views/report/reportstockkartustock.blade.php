@@ -614,11 +614,9 @@
       $('#tabelPickMaster').DataTable().clear().destroy();
     }
 
-    barangTableDT = $('#tabelPickMaster').DataTable({
+    barangTableDT = rtPickerInit('tabelPickMaster', {
       data: list,
       deferRender: true,
-      paging: list.length > 10,
-      lengthChange: false,
       searching: true,
       order: [],
       language: { emptyTable: 'Tidak ada data' },

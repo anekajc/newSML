@@ -49,22 +49,17 @@
 
 <script>
 
-// Picker "v2" hanya aktif di halaman yang menyalakan window.g_pickerV2 — saat falsy,
-// output identik dengan versi lama (kolom Actions + tombol Select), supaya halaman lain
-// yang meng-include modal ini tidak berubah sama sekali.
+// Picker gaya baru: TANPA kolom Actions / tombol Select, baris langsung diklik untuk
+// memilih. Sekarang SELALU aktif (tidak lagi digerbang window.g_pickerV2) untuk semua
+// halaman yang meng-include modal ini; baris `window.g_pickerV2 = true` di halaman
+// sudah tidak berpengaruh (no-op).
 function pickerHeadHtml(cols) {
-  return '<tr>' + cols.map(c => '<th>' + c + '</th>').join('') +
-    (window.g_pickerV2 ? '' : '<th>Actions</th>') + '</tr>';
+  return '<tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr>';
 }
 
 function pickerRowHtml(idPart, kode, cellsHtml) {
-  if (window.g_pickerV2) {
-    return '<tr class="pick-row" onclick="buttonPilih(\'' + idPart + '\',\'' + kode + '\')">' +
-      cellsHtml + '</tr>';
-  }
-  return '<tr>' + cellsHtml + '<td class="text-center">' +
-    '<button class="btn btn-success btn-sm" type="button" onclick="buttonPilih(\'' + idPart +
-    '\',\'' + kode + '\')">Select</button></td></tr>';
+  return '<tr class="pick-row" onclick="buttonPilih(\'' + idPart + '\',\'' + kode + '\')">' +
+    cellsHtml + '</tr>';
 }
 
 function buttonPilih(idPart, selectedData)
@@ -115,7 +110,7 @@ function buttonPilih(idPart, selectedData)
 
 function buttonSelect (idModal)
 {
-  $("#formSelect").toggleClass('rt-picker-v2', !!window.g_pickerV2);
+  $("#formSelect").addClass('rt-picker-v2');
   $("#formSelect").modal('toggle')
 
   if (idModal == "selectCustomer")
@@ -182,10 +177,7 @@ function loadSelectCustomer() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 function loadSelectGroup() {
@@ -218,10 +210,7 @@ function loadSelectGroup() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 function loadSelectPIC() {
@@ -254,10 +243,7 @@ function loadSelectPIC() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 function loadSelectKategori() {
@@ -290,10 +276,7 @@ function loadSelectKategori() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 function loadSelectSubKategori() {
@@ -326,10 +309,7 @@ function loadSelectSubKategori() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 function loadSelectMerk() {
@@ -364,10 +344,7 @@ function loadSelectMerk() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 function loadSelectJenis() {
@@ -400,10 +377,7 @@ function loadSelectJenis() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 function loadSelectGroup2() {
@@ -436,10 +410,7 @@ function loadSelectGroup2() {
   });
 
   document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-  $("#tabelSelect").DataTable({
-    "lengthChange": false,
-    "paging": true,
-  });
+  rtPickerInit('tabelSelect');
 }
 
 </script>

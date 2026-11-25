@@ -883,7 +883,7 @@
       </tr>`;
     });
     document.getElementById("tabel_dataSelectSuppAwal").innerHTML = rowTable;
-    $("#tabelSelectSuppAwal").DataTable({ "lengthChange": false, "paging": true });
+    rtPickerInit('tabelSelectSuppAwal');
   }
 
   /* ── MODAL SUPPLIER AKHIR ── */
@@ -913,7 +913,7 @@
       </tr>`;
     });
     document.getElementById("tabel_dataSelectSuppAkhir").innerHTML = rowTable;
-    $("#tabelSelectSuppAkhir").DataTable({ "lengthChange": false, "paging": true });
+    rtPickerInit('tabelSelectSuppAkhir');
   }
 
   /* ── MODAL VALAS ── */
@@ -939,7 +939,7 @@
       </tr>`;
     });
     document.getElementById("tabel_dataSelectValas").innerHTML = rowTable;
-    $("#tabelSelectValas").DataTable({ "lengthChange": false, "paging": true });
+    rtPickerInit('tabelSelectValas');
   }
 
   /* ── FILTER MODAL (Perkiraan, Valas, Supp Awal/Akhir) ──

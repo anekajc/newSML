@@ -137,10 +137,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectDivisi() {
@@ -174,10 +171,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectPerkiraan2() {
@@ -210,10 +204,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectKategori() {
@@ -247,10 +238,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectSubKategori() {
@@ -284,10 +272,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectMerk() {
@@ -323,9 +308,6 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 </script>

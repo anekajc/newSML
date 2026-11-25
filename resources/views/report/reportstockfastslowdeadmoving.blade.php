@@ -613,10 +613,7 @@
     $("#tabelPickMaster_data").html(bodyHtml);
 
     try {
-      $('#tabelPickMaster').DataTable({
-        lengthChange: false,
-        paging: rows.length > 10
-      });
+      rtPickerInit('tabelPickMaster');
     } catch (e) {
       console.error('renderPickMaster: gagal inisialisasi DataTable', e);
     }

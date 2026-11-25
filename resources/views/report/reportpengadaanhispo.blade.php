@@ -483,7 +483,7 @@
         `<td>${item.KodeCustSupp}</td><td>${item.NamaCustSupp}</td><td>${item.NamaKota}</td>`);
     });
     document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-    $("#tabelSelect").DataTable({ "lengthChange": false, "paging": true });
+    rtPickerInit('tabelSelect');
   }
 
   function loadSelectLokasi() {
@@ -505,7 +505,7 @@
         `<td>${item.KodeKebun}</td><td>${item.namaKebun}</td>`);
     });
     document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-    $("#tabelSelect").DataTable({ "lengthChange": false, "paging": true });
+    rtPickerInit('tabelSelect');
   }
 
   /* ══════════════════ FILTER MODAL (PICK_FIELDS: Supplier + Lokasi) ══════════════════
