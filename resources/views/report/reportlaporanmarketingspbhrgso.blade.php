@@ -35,7 +35,7 @@
       <!-- Periode (date range) -->
       <div class="filter-wrap">
         <label id="periodeLabel">Periode</label>
-        <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-d') !!}">
+        <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-01') !!}">
         <span class="filter-sep" id="dateSep">s/d</span>
         <input type="date" class="filter-inp" id="inputDate2" value="{!! date('Y-m-d') !!}">
       </div>

@@ -24,7 +24,7 @@
                 <!-- Periode Akhir (per tanggal; tgl awal di-hardcode 01/01/2019 di controller) -->
                 <div class="filter-wrap">
                     <label>Periode Awal</label>
-                    <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-d') !!}">
+                    <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-01') !!}">
                     <label>Periode Akhir</label>
                     <input type="date" class="filter-inp" id="inputDate2" value="{!! date('Y-m-d') !!}">
                 </div>

@@ -18,7 +18,7 @@
                     <label for="inputDate1" style="">Periode</label>
                   </div>
                   <div class="col-3" style="padding: 0 7px; flex-basis: 0;">
-                    <input type="date" class="form-control" id="inputDate1" value="{!! date('Y-m-d') !!}">
+                    <input type="date" class="form-control" id="inputDate1" value="{!! date('Y-m-01') !!}">
                   </div>
                   <div class="col-2" style="padding: 0 7px; flex-basis: 0;">
                     <label for="inputDate2">s/d</label>

@@ -93,6 +93,60 @@
   .modal-picker .modal-dialog {
     margin: 1.75rem auto;
   }
+
+  /* Dropdown + kotak cari khusus field Gudang di modal Filter. Menu MENGAMBANG (absolute
+     terhadap .rt-combo yang sudah position:relative) tepat di bawah .rt-combo-input, jadi
+     tidak mendorong field lain ke bawah. Aman dari pemotongan karena .modal-body tidak
+     punya overflow dan Gudang field pertama (ruang di bawahnya masih banyak). */
+  #modalFilter .rt-dd-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 4px;
+    background: #fff;
+    border: 1px solid #E2E8F4;
+    border-radius: 9px;
+    padding: 8px;
+    box-shadow: 0 12px 28px -8px rgba(20, 30, 60, .25);
+  }
+  #modalFilter .rt-dd-search {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #E2E8F4;
+    border-radius: 8px;
+    font-size: 13.5px;
+    outline: none;
+  }
+  #modalFilter .rt-dd-search:focus {
+    border-color: #2F6FED;
+    box-shadow: 0 0 0 3px #EAF1FF;
+  }
+  #modalFilter .rt-dd-list {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 6px;
+  }
+  #modalFilter .rt-dd-opt {
+    padding: 8px 10px;
+    font-size: 13.5px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  #modalFilter .rt-dd-opt:hover { background: #F8F9FF; }
+  #modalFilter .rt-dd-opt.is-selected {
+    background: #EAF1FF;
+    color: #2F6FED;
+    font-weight: 600;
+  }
+  #modalFilter .rt-dd-empty {
+    padding: 10px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12.5px;
+  }
 </style>
 
 <div class="tb-report main" style="font-family: 'Segoe UI', sans-serif;">
@@ -122,7 +176,7 @@
       <div class="filter-wrap">
         <label>Periode</label>
         @if ($mode_menu == 'PERIODE')
-          <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-d') !!}">
+          <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-01') !!}">
           <span class="filter-sep">s/d</span>
           <input type="date" class="filter-inp" id="inputDate2" value="{!! date('Y-m-d') !!}">
         @else
@@ -307,7 +361,7 @@
         <button type="button" class="rt-reset-link" onclick="resetAllFilters()">Reset semua</button>
         <div class="rt-footer-buttons">
           <button type="button" class="rt-btn rt-btn-ghost" data-bs-dismiss="modal">Batal</button>
-          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.save('#modalFilter'); UserFilter.commit('modalPick')">Terapkan</button>
+          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.save('#modalFilter')">Terapkan</button>
         </div>
       </div>
 
@@ -318,7 +372,7 @@
 
 <!-- modal pilih data master (Gudang/Grup/Kategori/SubKategori/Merk) -->
 <div class="modal-picker-backdrop" id="modalPickMasterBackdrop" onclick="closePickMaster()"></div>
-<div class="modal-picker" id="modalPickMaster" tabindex="-1" role="dialog" aria-labelledby="modalPickMasterLabel" aria-hidden="true">
+<div class="modal-picker rt-picker-v2" id="modalPickMaster" tabindex="-1" role="dialog" aria-labelledby="modalPickMasterLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width: 900px">
     <div class="modal-content">
       <div class="modal-header">
@@ -389,24 +443,70 @@
   // (1071/1072) sudah di atas modalFilter -- jadi tidak perlu hide/reopen modalFilter seperti
   // pickFromModal() di guide.
   const PICK_FIELDS = [
-    { id: 'inputGudang',      label: 'Gudang',        url: '{!! $gudang !!}',      title: 'Pilih Gudang' },
+    // type 'dropdown' -> menu + kotak cari di dalam modal Filter (lihat renderGudangMenu());
+    // field lain tetap membuka popup "Pilih Data" lewat openPickMaster().
+    { id: 'inputGudang',      label: 'Gudang',        url: '{!! $gudang !!}',      title: 'Pilih Gudang', type: 'dropdown' },
     { id: 'inputGrup',        label: 'Grup',          url: '{!! $grup !!}',        title: 'Pilih Grup' },
     { id: 'inputKategori',    label: 'Kategori',      url: '{!! $kategori !!}',    title: 'Pilih Kategori' },
     { id: 'inputSubKategori', label: 'Sub Kategori',  url: '{!! $subkategori !!}', title: 'Pilih Sub Kategori' },
     { id: 'inputMerk',        label: 'Merk',          url: '{!! $merk !!}',        title: 'Pilih Merk' },
   ];
 
+  // Dropdown Gudang: daftar diambil sekali dari endpoint Gudang (format {kolom, table} yang
+  // sama dengan popup picker) lalu di-cache; mengetik di kotak cari hanya menyaring cache
+  // ini di sisi klien, tanpa AJAX lagi.
+  let gudangRows = null;        // null = belum dimuat
+  let gudangLoading = false;
+  let gudangOpen = false;
+
+  function gudangKode(r) { return String(pickCIChart(r, 'KODEGDG') == null ? '' : pickCIChart(r, 'KODEGDG')).trim(); }
+  function gudangNama(r) { return String(pickCIChart(r, 'NAMA') == null ? '' : pickCIChart(r, 'NAMA')).trim(); }
+  function gudangLabel(r) { return gudangNama(r) ? gudangKode(r) + ' - ' + gudangNama(r) : gudangKode(r); }
+
+  function loadGudangRows(url) {
+    if (gudangRows !== null || gudangLoading) { return; }
+    gudangLoading = true;
+    $.ajax({
+      url: url,
+      type: 'get',
+      success: function (res) {
+        gudangRows = (res && res.table) || [];
+        gudangLoading = false;
+        // Menu sedang terbuka (user sudah mengetik di kotak cari) -> cukup segarkan daftarnya
+        // saja; render ulang penuh akan membuang teks yang sedang diketik.
+        if (gudangOpen) { renderGudangList(); } else { renderPickFields(); }
+      },
+      error: function () {
+        gudangLoading = false;
+        gudangRows = [];
+        if (gudangOpen) { renderGudangList(); }
+      }
+    });
+  }
+
   function renderPickFields() {
     let html = '';
     PICK_FIELDS.forEach(function (f) {
       const val = $('#' + f.id).val() || '-';
       const isSet = (val !== '-' && val !== '');
+      const isDropdown = (f.type === 'dropdown');
+
+      // Tag menampilkan "KODE - NAMA" begitu daftar Gudang sudah termuat; sebelum itu
+      // (mis. nilai hasil restore) cukup kodenya saja.
+      let tagText = esc(val);
+      if (isDropdown && isSet && gudangRows) {
+        const hit = gudangRows.find(function (r) { return gudangKode(r) === String(val).trim(); });
+        if (hit) { tagText = esc(gudangLabel(hit)); }
+      }
+
       html += '<div>';
       html += '<label class="rt-field-label">' + f.label + '</label>';
-      html += '<div class="rt-combo">';
-      html += '<div class="rt-combo-input" onclick="openPickMaster(\'' + f.id + '\', \'' + f.url + '\', \'' + f.title + '\')">';
+      html += '<div class="rt-combo"' + (isDropdown ? ' id="gudangCombo"' : '') + '>';
+      html += '<div class="rt-combo-input" onclick="' + (isDropdown
+        ? 'toggleGudangMenu()'
+        : 'openPickMaster(\'' + f.id + '\', \'' + f.url + '\', \'' + f.title + '\')') + '">';
       if (isSet) {
-        html += '<span class="rt-combo-tag">' + val +
+        html += '<span class="rt-combo-tag">' + tagText +
           '<button type="button" onclick="event.stopPropagation(); clearPickField(\'' + f.id +
           '\')">&times;</button></span>';
       } else {
@@ -415,13 +515,99 @@
       html += '<span class="rt-combo-chevron">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>' +
         '</span>';
-      html += '</div></div></div>';
+      html += '</div>';
+      if (isDropdown && gudangOpen) {
+        html += '<div class="rt-dd-menu">' +
+          '<input type="text" class="rt-dd-search" id="gudangSearch" placeholder="Cari gudang..." autocomplete="off"' +
+          ' oninput="renderGudangList()" onkeydown="gudangSearchKey(event)">' +
+          '<div class="rt-dd-list" id="gudangList"></div></div>';
+      }
+      html += '</div></div>';
+
+      if (isDropdown) { loadGudangRows(f.url); }
     });
     $('#pickFields').html(html);
+
+    if (gudangOpen) {
+      renderGudangList();
+      $('#gudangSearch').trigger('focus');
+    }
   }
+
+  function filteredGudang() {
+    const term = ($('#gudangSearch').val() || '').trim().toLowerCase();
+    return (gudangRows || []).filter(function (r) {
+      return !term || gudangLabel(r).toLowerCase().indexOf(term) !== -1;
+    });
+  }
+
+  function renderGudangList() {
+    const el = document.getElementById('gudangList');
+    if (!el) { return; }
+    if (gudangRows === null) {
+      el.innerHTML = '<div class="rt-dd-empty">' + loadingHtml('Memuat data...') + '</div>';
+      return;
+    }
+    const current = String($('#inputGudang').val() || '').trim();
+    const rows = filteredGudang();
+    if (!rows.length) {
+      el.innerHTML = '<div class="rt-dd-empty">Tidak ada data ditemukan</div>';
+      return;
+    }
+    el.innerHTML = rows.map(function (r) {
+      const kode = gudangKode(r);
+      return '<div class="rt-dd-opt' + (kode === current ? ' is-selected' : '') +
+        '" data-kode="' + esc(kode) + '">' + esc(gudangLabel(r)) + '</div>';
+    }).join('');
+  }
+
+  function toggleGudangMenu() {
+    gudangOpen = !gudangOpen;
+    renderPickFields();
+  }
+
+  function closeGudangMenu() {
+    if (!gudangOpen) { return; }
+    gudangOpen = false;
+    renderPickFields();
+  }
+
+  function gudangSearchKey(e) {
+    if (e.key === 'Escape') {
+      // stopPropagation supaya Esc cuma menutup menu, bukan ikut menutup modal Filter.
+      e.stopPropagation();
+      closeGudangMenu();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const rows = filteredGudang();
+      if (rows.length) { selectGudang(gudangKode(rows[0])); }
+    }
+  }
+
+  function selectGudang(kode) {
+    $('#inputGudang').val(kode);
+    gudangOpen = false;
+    renderPickFields();
+    updateFilterBadge();
+  }
+
+  // Opsi dibangun lewat innerHTML tiap render, jadi klik didelegasikan (data-kode, bukan
+  // onclick inline) -- sekaligus menghindari masalah tanda kutip di dalam kode gudang.
+  $(document).on('click', '#pickFields .rt-dd-opt', function () {
+    selectGudang($(this).attr('data-kode'));
+  });
+
+  // Klik di luar combo Gudang menutup menu. Penjaga document.contains() penting: klik pada
+  // combo/opsi me-render ulang #pickFields, sehingga e.target sudah terlepas dari DOM saat
+  // handler ini jalan -- tanpa penjaga, closest() gagal dan menu langsung tertutup lagi.
+  $(document).on('click', function (e) {
+    if (!gudangOpen || !document.contains(e.target)) { return; }
+    if (!$(e.target).closest('#gudangCombo').length) { closeGudangMenu(); }
+  });
 
   function clearPickField(id) {
     $('#' + id).val('-');
+    gudangOpen = false;
     renderPickFields();
     updateFilterBadge();
   }
@@ -483,14 +669,18 @@
     const rows = (res && res.table) || [];
 
     let headHtml = '<tr>';
-    kolom.forEach(function (k) { headHtml += '<th class="text-center">' + k[1] + '</th>'; });
-    headHtml += '<th class="text-center">Actions</th></tr>';
+    kolom.forEach(function (k) { headHtml += '<th>' + k[1] + '</th>'; });
+    headHtml += '</tr>';
     $("#tabelPickMaster_header").html(headHtml);
 
+    // Gaya picker baru (docs/new-cust-supp-modal-guide.md): TANPA kolom Actions / tombol "+",
+    // seluruh baris (tr.pick-row) bisa diklik langsung untuk memilih -- sama seperti
+    // pemilih Perkiraan di reportaccountingbukubesar.blade.php.
     let bodyHtml = '';
     if (rows.length) {
       rows.forEach(function (item) {
-        bodyHtml += '<tr>';
+        const kode = kolom.length ? item[kolom[0][0]] : '';
+        bodyHtml += '<tr class="pick-row" onclick="pickMasterSelect(\'' + String(kode).replace(/'/g, "\\'") + '\')">';
         kolom.forEach(function (k) {
           let val;
           if (k[2] === 'date') { val = format_date(item[k[0]]); }
@@ -498,13 +688,10 @@
           else { val = nullToEmpty(item[k[0]]); }
           bodyHtml += '<td>' + val + '</td>';
         });
-        const kode = kolom.length ? item[kolom[0][0]] : '';
-        bodyHtml += '<td class="text-center">' +
-          '<button type="button" class="btn btn-primary btn-sm" onclick="pickMasterSelect(\'' + String(kode).replace(/'/g, "\\'") + '\')"><i class="bi bi-plus-lg"></i></button>' +
-          '</td></tr>';
+        bodyHtml += '</tr>';
       });
     } else {
-      bodyHtml = '<tr><td colspan="' + (kolom.length + 1) + '" class="text-center">Tidak ada data ditemukan</td></tr>';
+      bodyHtml = '<tr><td colspan="' + kolom.length + '" class="text-center">Tidak ada data ditemukan</td></tr>';
     }
     $("#tabelPickMaster_data").html(bodyHtml);
 
@@ -547,11 +734,13 @@
     setAgen('2');
     $('#inputIsi').val('1');
     $('#inputStockMinus').prop('checked', false);
+    gudangOpen = false;
     renderPickFields();
     updateFilterBadge();
   }
 
-  $('#modalFilter').on('show.bs.modal', function () { renderPickFields(); updateFilterBadge(); });
+  $('#modalFilter').on('show.bs.modal', function () { gudangOpen = false; renderPickFields(); updateFilterBadge(); });
+  $('#modalFilter').on('hide.bs.modal', function () { gudangOpen = false; });
   $('#modalFilter').on('change', 'select.rt-native, #inputStockMinus', updateFilterBadge);
   $('#modalFilter').on('input', '#inputIsi', updateFilterBadge);
 
@@ -627,18 +816,6 @@
       if (v.inputAgenSelect !== undefined) { setAgen(v.inputAgenSelect); }
       updateFilterBadge();
     });
-
-    // Picker (Customer/Supplier/Gudang/...) terakhir juga dipulihkan (public/js/user-filter.js,
-    // kunci 'modalPick'); disimpan bersama UserFilter.save di Terapkan.
-    UserFilter.track('modalPick', {
-      inputGudang: UserFilter.input('#inputGudang'),
-      inputGrup: UserFilter.input('#inputGrup'),
-      inputKategori: UserFilter.input('#inputKategori'),
-      inputSubKategori: UserFilter.input('#inputSubKategori'),
-      inputMerk: UserFilter.input('#inputMerk')
-    });
-    if (typeof renderPickFields === 'function') { renderPickFields(); }
-    if (typeof updateFilterBadge === 'function') { updateFilterBadge(); }
 
     // Header interaktif (drag/gear/hide kolom) hanya untuk mode QTY -- header
     // QTYRP/PERIODE pakai grouping rowspan/colspan manual (setRowHeaderQtyRp) yang

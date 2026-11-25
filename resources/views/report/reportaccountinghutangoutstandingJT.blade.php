@@ -39,7 +39,7 @@
       <!-- Per Tanggal (JT/Nota) / Periode rentang (LHPJT — #inputDate2 tampil saat dateRange) -->
       <div class="filter-wrap">
         <label id="dateLabel">Per Tanggal</label>
-        <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-d') !!}">
+        <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-01') !!}">
         <span class="filter-sep" id="dateSep" style="display:none">s/d</span>
         <input type="date" class="filter-inp" id="inputDate2" value="{!! date('Y-m-d') !!}" style="display:none">
       </div>

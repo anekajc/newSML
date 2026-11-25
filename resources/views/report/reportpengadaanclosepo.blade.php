@@ -16,7 +16,7 @@
           <!-- Periode (date range) -- dikonsumsi Sp_ReportPODetClose (tgl1/tgl2) -->
           <div class="filter-wrap">
             <label>Periode</label>
-            <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-d') !!}">
+            <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-01') !!}">
             <span class="filter-sep">s/d</span>
             <input type="date" class="filter-inp" id="inputDate2" value="{!! date('Y-m-d') !!}">
           </div>
