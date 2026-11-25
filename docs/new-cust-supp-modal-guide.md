@@ -41,12 +41,16 @@ and the same three functions: `buttonSelect(idModal)` (opens + dispatches),
 
 | Modal blade | Included by | Picker style |
 |---|---|---|
-| `modalMarketingSO.blade.php` | 19 pages | **gated** â€” needs `window.g_pickerV2 = true` |
-| `modalAccountingJurnal.blade.php` | 8 pages | **ungated** â€” always click-row |
+| `modalMarketingSO.blade.php` | 9 report pages | **ungated** â€” always click-row |
+| `modalAccountingJurnal.blade.php` | 4 report pages (biaya, jurnalcomputer, neracalajur, trialbalance) | **ungated** â€” always click-row |
 | `modalMarketingHistorySO.blade.php` | 2 pages | **ungated** â€” always click-row |
-| `modalMarketingInvoice.blade.php` | 1 page | **gated** |
-| `modalMarketingRegUangMuka.blade.php` | 1 page | **gated** |
+| `modalMarketingInvoice.blade.php` | 1 page | **ungated** â€” always click-row |
+| `modalMarketingRegUangMuka.blade.php` | **not included anywhere** | gated (unchanged, not in use) |
 | `modalStock.blade.php` | **0 pages** | dead code â€” don't bother |
+
+> All four live shared modals (Jurnal, HistorySO, SO, Invoice) are now ungated. On report pages
+> `window.g_pickerV2` no longer has any effect; report pickers are initialised with `rtPickerInit()`
+> (see section 4b).
 
 ### Gated vs ungated
 
@@ -171,8 +175,56 @@ function buttonSelect(idModal) {
 window.g_pickerV2 = true;
 ```
 
-Leave the `DataTable({...})` init alone â€” its search box, info line and pagination are skinned by
-CSS, not replaced.
+On report pages, initialise the picker table with `rtPickerInit('<tableId>', {page-specific opts})`
+instead of `.DataTable({...})` (see section 4b). Outside report pages, leave the `DataTable({...})`
+init alone â€” its search box, info line and pagination are skinned by CSS, not replaced.
+
+---
+
+## 4b. `rtPickerInit()`: per-page dropdown + Kas look (report pages)
+
+Report pages get the Kas picker look from a shared helper rather than from their own DataTables
+options. `public/js/report-picker.js` defines `rtPickerInit(idTabel, opsi)` and `rtPickerSkin(idTabel)`,
+and `public/css/picker-kas.css` supplies the styling. Both are loaded once globally from
+`resources/views/report/newmaster2.blade.php` and `newmaster2x.blade.php`, so every report page that
+uses those layouts (masterreport2, masterreport2x, masterreport4, Gudang, Neraca) has them.
+
+What `rtPickerInit()` does:
+
+- **Table behaviour** is copied from `kasInitPicker()` in `public/js/kas.js`: `lengthChange: true`,
+  a "Tampilkan" dropdown with 10 / 25 / 50 / 100 / Semua, `pageLength: 10`, and Indonesian
+  language strings.
+- **Layout** uses `dom: 'lfr<"rt-picker-scroll"t><"rt-picker-bawah"ip>'`: only the table body
+  scrolls, and the info and pager stay pinned below it.
+- **Page options** are passed as the second argument and shallow-merged over the defaults.
+  `language` is merged separately, so a page that sets only `language.emptyTable` still keeps the
+  "Tampilkan" label.
+- **Skin** is applied at init time: it adds `rt-picker-v2 picker-kas` to the closest
+  `.modal, .modal-picker`, and `picker-kas-batal` to the footer button whose text is exactly
+  "Batal". It runs at init rather than on `show.bs.modal` because pickers init right before they
+  open, and the reportstock* `.modal-picker` overlays never fire Bootstrap events.
+- **Re-init is safe.** If the table is already a DataTable, the helper destroys it while keeping
+  the freshly built rows. A `colspan` placeholder row ("Belum ada data") is removed first, since it
+  makes DataTables error.
+
+Fill `<tbody>` first, then call `rtPickerInit()`:
+
+```js
+// BEFORE
+$("#tabelSelectValas").DataTable({ "lengthChange": false, "paging": true });
+
+// AFTER
+rtPickerInit('tabelSelectValas');
+```
+
+Pass only the options the page really needs, for example `rtPickerInit('tabelSelect', { order: [] })`.
+
+The shared CSS selectors use `:is(.modal, .modal-picker).picker-kas`, so custom overlays are skinned as
+well. Specificity is unchanged.
+
+> **Not used for the multi-select `#formFilterData` / `#tabelfilter` modal** in the masterreport*
+> layouts. That one sets `paging: false` on purpose, because selection and drag need every row
+> visible.
 
 ---
 
@@ -213,6 +265,7 @@ is itself a shared-file edit â†’ ask first.
 | Wrong field gets filled | `idPart` changed â€” it maps to a specific hidden input in `buttonPilih()` |
 | Picker opens but table is empty / wrong data | two picker modals included â†’ duplicate `#formSelect` (Â§5) |
 | Modal won't close | open/close going through different Bootstrap versions â€” see the all-guide |
+| No Tampilkan dropdown / plain Bootstrap look on a report picker | table initialised with `.DataTable({...})` instead of `rtPickerInit()`, or the page doesn't extend a layout that loads report-picker.js |
 | Header/cell order mismatch | pre-existing in some loaders (e.g. Merk prints header `Nama, Kode Merk` but cells `KodeMerk, NamaMerk`). Preserve as-is unless asked; changing it affects every including page |
 
 ---
@@ -225,6 +278,6 @@ is itself a shared-file edit â†’ ask first.
 - [ ] Every `loadSelectXxx()` refactored; `idPart` + value unchanged
 - [ ] `buttonSelect()` applies `rt-picker-v2` (unconditionally if ungated)
 - [ ] Gated: the page sets `window.g_pickerV2 = true`
-- [ ] DataTables init untouched
+- [ ] Table initialised via `rtPickerInit()` (report pages)
 - [ ] Page includes exactly **one** picker modal
 - [ ] Tested: open each entity, click a row, confirm the right field is filled and the modal closes

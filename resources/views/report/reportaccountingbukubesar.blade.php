@@ -737,16 +737,12 @@
 
             document.getElementById("tabel_dataSelect").innerHTML = rowTable;
             $("#formSelect").addClass('rt-picker-v2');
-            $("#tabelSelect").DataTable({
-                "lengthChange": false,
-                "paging": true,
-                // Sebelum konversi, kolom Actions (isinya tombol identik di tiap baris) ada di
-                // index 0, jadi sort default DataTables ("order": [[0,'asc']]) adalah no-op
-                // stabil -> baris tampil sesuai urutan API. Setelah Actions dihapus, Perkiraan
-                // jadi kolom 0 dan sort default itu betulan mengurutkan -- matikan biar urutan
-                // sama seperti sebelumnya (klik header masih tetap bisa sort manual).
-                "order": [],
-            });
+            // Sebelum konversi, kolom Actions (isinya tombol identik di tiap baris) ada di
+            // index 0, jadi sort default DataTables ("order": [[0,'asc']]) adalah no-op
+            // stabil -> baris tampil sesuai urutan API. Setelah Actions dihapus, Perkiraan
+            // jadi kolom 0 dan sort default itu betulan mengurutkan -- matikan biar urutan
+            // sama seperti sebelumnya (klik header masih tetap bisa sort manual).
+            rtPickerInit('tabelSelect', { order: [] });
 
             $("#formSelect").modal('toggle'); // <-- tampilkan modalnya
         }

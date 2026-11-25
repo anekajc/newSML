@@ -340,7 +340,7 @@
             });
             $('#tabel_dataSelect').html(rowTable);
             if ($.fn.DataTable) {
-                $('#tabelSelect').DataTable({ lengthChange: false, paging: true });
+                rtPickerInit('tabelSelect');
             }
         }
 

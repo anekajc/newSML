@@ -31,6 +31,9 @@
 
     <!-- Shared styling for .tb-report styled report tables (used by report* pages) -->
     <link rel="stylesheet" href="{!! URL::asset('css/report-table.css') !!}?v={{ @filemtime(base_path('public/css/report-table.css')) ?: '1' }}">
+    {{-- Modal pemilih (picker) di halaman report disamakan dengan modal pemilih menu Kas:
+         class .picker-kas dipasang oleh rtPickerInit() (public/js/report-picker.js). --}}
+    <link rel="stylesheet" href="{!! URL::asset('css/picker-kas.css') !!}?v={{ @filemtime(base_path('public/css/picker-kas.css')) ?: '1' }}">
 
     <!-- Modal "Atur Kolom" (#formCustomizeTable.ct-modal) milik masterreport2 -->
     <link rel="stylesheet" href="{!! URL::asset('css/customize-table.css') !!}?v={{ @filemtime(base_path('public/css/customize-table.css')) ?: '1' }}">
@@ -423,6 +426,7 @@
     <script src="{!! URL::asset('js/alertify.js') !!}"></script>
     <script src="{!! URL::asset('js/autoNumeric.js') !!}"></script>
     <script src="{!! URL::asset('js/datatables.min.js') !!}"></script>
+    <script src="{!! URL::asset('js/report-picker.js') !!}?v={{ @filemtime(base_path('public/js/report-picker.js')) ?: '1' }}"></script>
     <script src="{!! URL::asset('js/jquery-ui.min.js') !!}"></script>
     <script src="{!! URL::asset('js/qrcode.min.js') !!}"></script>
     <script src="{!! URL::asset('js/browsemaster.js') !!}"></script>

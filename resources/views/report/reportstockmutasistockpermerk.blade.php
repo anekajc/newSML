@@ -200,7 +200,7 @@
 
 <!-- modal pilih data master (Gudang/Merk) -->
 <div class="modal-picker-backdrop" id="modalPickMasterBackdrop" onclick="closePickMaster()"></div>
-<div class="modal-picker" id="modalPickMaster" tabindex="-1" role="dialog" aria-labelledby="modalPickMasterLabel" aria-hidden="true">
+<div class="modal-picker rt-picker-v2" id="modalPickMaster" tabindex="-1" role="dialog" aria-labelledby="modalPickMasterLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width: 900px">
     <div class="modal-content">
       <div class="modal-header">
@@ -836,41 +836,48 @@
     }
   });
 
+  // kode master bisa mengandung tanda kutip / backslash. Nilainya masuk ke dalam string
+  // JS yang ada DI DALAM atribut onclick="...", jadi harus di-escape dua kali: dulu
+  // untuk JS (backslash + petik satu), lalu untuk atribut HTML (& dan petik dua).
+  function jsQuote(_val) {
+    return String(_val)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;');
+  }
+
   function renderPickMaster(res) {
     const kolom = (res && res.kolom) || [];
     const rows = (res && res.table) || [];
 
     let headHtml = '<tr>';
     kolom.forEach(function (k) { headHtml += '<th class="text-center">' + k[1] + '</th>'; });
-    headHtml += '<th class="text-center">Actions</th></tr>';
+    headHtml += '</tr>';
     $("#tabelPickMaster_header").html(headHtml);
 
     let bodyHtml = '';
     if (rows.length) {
       rows.forEach(function (item) {
-        bodyHtml += '<tr>';
+        let cellsHtml = '';
         kolom.forEach(function (k) {
           let val;
           if (k[2] === 'date') { val = format_date(item[k[0]]); }
           else if (k[2] === 'float') { val = format_number(currencyNormalizer(item[k[0]]), k[3]); }
           else { val = nullToEmpty(item[k[0]]); }
-          bodyHtml += '<td>' + val + '</td>';
+          cellsHtml += '<td>' + val + '</td>';
         });
         const kode = kolom.length ? item[kolom[0][0]] : '';
-        bodyHtml += '<td class="text-center">' +
-          '<button type="button" class="btn btn-primary btn-sm" onclick="pickMasterSelect(\'' + String(kode).replace(/'/g, "\\'") + '\')"><i class="bi bi-plus-lg"></i></button>' +
-          '</td></tr>';
+        bodyHtml += '<tr class="pick-row" onclick="pickMasterSelect(\'' + jsQuote(kode) + '\')">' +
+          cellsHtml + '</tr>';
       });
     } else {
-      bodyHtml = '<tr><td colspan="' + (kolom.length + 1) + '" class="text-center">Tidak ada data ditemukan</td></tr>';
+      bodyHtml = '<tr><td colspan="' + kolom.length + '" class="text-center">Tidak ada data ditemukan</td></tr>';
     }
     $("#tabelPickMaster_data").html(bodyHtml);
 
     try {
-      $('#tabelPickMaster').DataTable({
-        lengthChange: false,
-        paging: rows.length > 10
-      });
+      rtPickerInit('tabelPickMaster');
     } catch (e) {
       console.error('renderPickMaster: gagal inisialisasi DataTable', e);
     }

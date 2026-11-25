@@ -134,10 +134,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectLokasi() {
@@ -170,10 +167,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectPIC() {
@@ -206,10 +200,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectKategori() {
@@ -242,10 +233,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectSubKategori() {
@@ -278,10 +266,7 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 
     function loadSelectMerk() {
@@ -316,9 +301,6 @@
         });
 
         document.getElementById("tabel_dataSelect").innerHTML = rowTable;
-        $("#tabelSelect").DataTable({
-            "lengthChange": false,
-            "paging": true,
-        });
+        rtPickerInit('tabelSelect');
     }
 </script>

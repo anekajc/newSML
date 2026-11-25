@@ -584,10 +584,7 @@
     });
 
     document.getElementById('tabel_dataSelectPerkiraan').innerHTML = rowTable;
-    $('#tabelSelectPerkiraan').DataTable({
-      lengthChange: false,
-      paging: true,
-    });
+    rtPickerInit('tabelSelectPerkiraan');
   }
 
   /* ══════════════════ PICKER: SELECT SUB COSTING ══════════════════ */
@@ -632,10 +629,7 @@
     });
 
     $('#tabel_dataSelectSubCosting').html(rowTable);
-    $('#tabelSelectSubCosting').DataTable({
-      lengthChange: false,
-      paging: true,
-    });
+    rtPickerInit('tabelSelectSubCosting');
   }
 </script>
 
