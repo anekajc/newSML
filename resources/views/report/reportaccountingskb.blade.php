@@ -109,7 +109,9 @@
     kasUrl    : "{{ url('laporanaccountingskb_doKasharian') }}",
     invoiceUrl: "{{ url('laporanaccountingskb_doInvoice') }}",
     lpbUrl    : "{{ url('laporanaccountingskb_doLpb') }}",
-    bpUrl     : "{{ url('laporanaccountingskb_doBp') }}"
+    bpUrl     : "{{ url('laporanaccountingskb_doBp') }}",
+    opnUrl    : "{{ url('laporanaccountingskb_doOpn') }}",   // Jenis OPN -> koreksi stock (CetakOpnameBahan)
+    jenisTitle: { OPN: 'KOREKSI STOCK' }
   };
 
   // Susunan kolom (mode "Nomor Bukti"). Kolom No Bukti dapat diklik (voucher).

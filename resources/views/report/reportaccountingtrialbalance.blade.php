@@ -160,7 +160,9 @@
     kasUrl    : "{{ url('laporanaccountingtrialbalance_doKasharian') }}",
     invoiceUrl: "{{ url('laporanaccountingtrialbalance_doInvoice') }}",
     lpbUrl    : "{{ url('laporanaccountingtrialbalance_doLpb') }}",
-    bpUrl     : "{{ url('laporanaccountingtrialbalance_doBp') }}"
+    bpUrl     : "{{ url('laporanaccountingtrialbalance_doBp') }}",
+    opnUrl    : "{{ url('laporanaccountingtrialbalance_doOpn') }}",   // Jenis OPN -> koreksi stock (CetakOpnameBahan)
+    jenisTitle: { OPN: 'KOREKSI STOCK' }
   };
 
   var jenisreport = 0; // ini untuk detail dan rekap

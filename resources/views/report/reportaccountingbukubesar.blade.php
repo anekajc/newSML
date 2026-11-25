@@ -191,10 +191,12 @@
             kasUrl: "{{ url('laporanaccountingbukubesar_doKasharian') }}",
             invoiceUrl: "{{ url('laporanaccountingbukubesar_doInvoice') }}",
             lpbUrl: "{{ url('laporanaccountingbukubesar_doLpb') }}",
+            opnUrl: "{{ url('laporanaccountingbukubesar_doOpn') }}",   // Jenis OPN -> koreksi stock (CetakOpnameBahan)
             // Voucher titles per Jenis. BBK/BBM/BKK/BKM/BMM/BJK/INVC are already covered by
-            // report-table.js. Unmapped jenis (TDP/BPL/UMJ/R/L/OPN/RPB/BP/KRS/…) fall back to
+            // report-table.js. Unmapped jenis (TDP/BPL/UMJ/R/L/RPB/BP/KRS/…) fall back to
             // "Bukti Kas". Add overrides here later, e.g.  TDP: 'BUKTI TITIPAN',
             jenisTitle: {
+                OPN: 'KOREKSI STOCK'
                 // KODE: 'JUDUL VOUCHER',
             }
         };

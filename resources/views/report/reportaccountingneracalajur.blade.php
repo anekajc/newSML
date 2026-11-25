@@ -159,7 +159,9 @@
     kasUrl    : "{{ url('laporanaccountingneracalajur_doKasharian') }}",
     invoiceUrl: "{{ url('laporanaccountingneracalajur_doInvoice') }}",
     lpbUrl    : "{{ url('laporanaccountingneracalajur_doLpb') }}",
-    bpUrl     : "{{ url('laporanaccountingneracalajur_doBp') }}"
+    bpUrl     : "{{ url('laporanaccountingneracalajur_doBp') }}",
+    opnUrl    : "{{ url('laporanaccountingneracalajur_doOpn') }}",   // Jenis OPN -> koreksi stock (CetakOpnameBahan)
+    jenisTitle: { OPN: 'KOREKSI STOCK' }
   };
 
   var jenisreport = 0; // ini untuk detail dan rekap
