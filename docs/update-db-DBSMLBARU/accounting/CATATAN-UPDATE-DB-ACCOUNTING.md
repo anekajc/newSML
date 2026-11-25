@@ -9,6 +9,7 @@ Keputusan user: SP accounting ikut DBSMLNEW, **asal tidak memengaruhi purchasing
 | No | File | Isi | Status |
 |---|---|---|---|
 | 14 | `14_sp_accounting_ikut_ajc.sql` | ALTER `sp_TransaksiKasBankDPH`, `CetakTTDPH` (isi DBSMLNEW) dan `SP_IsiNobukti` (isi DBSMLBARU + cabang `TDP`). | Sudah dijalankan 2026-10-14 |
+| 15 | `15_rename_menu_pengajuan_dph_um.sql` | UPDATE `DBMENUWEB` KODEMENU `02072` (href `pengajuandph`): nama menu sidebar "Pengajuan DPH UM" → "Pengajuan Pembayaran Uang Muka". Rollback ada di komentar skrip. | Sudah dijalankan di DBSMLBARU 2026-11-23, 1 baris berubah |
 
 Script umum terkait: `umum/15_sp_flmenuweb1_dbflmenuweb.sql` (hak akses Berkas > Pemakai).
 

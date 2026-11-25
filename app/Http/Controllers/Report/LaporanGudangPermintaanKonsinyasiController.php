@@ -27,17 +27,14 @@ class LaporanGudangPermintaanKonsinyasiController extends Controller {
     }
   }
 
+  // 2026-11-25: tampilan & query disamakan dengan Laporan Permintaan Sample, hanya jenis no
+  // buktinya PRK (Permintaan Konsinyasi). Filter Sales + Order By No Bukti / Barang.
   public function doReport(Request $req) {
-    $tglAwal  = $req->get('date1');
-    $tglAkhir = $req->get('date2');
-    $Ordr     = $req->get('inputOrd');
+    return app(LaporanPermintaanSampleController::class)->reportSerahSamplePR($req, 'PRK');
+  }
 
-    $values  = [$tglAwal, $tglAkhir, $Ordr];
-    
-    $res = DB::connection('MGL')->select("select * from VWREPORTSERAHSAMPLEPR where tanggal between :date1 and :date2   
-                                          and cast (KodeSls as varchar(2)) like '%%' and NObukti LIke '%PRK%' order by tanggal,nobukti
-",['date1' => $req->date1, 'date2' => $req->date2]);
-    return $res;
+  public function loadSales() {
+    return app(LaporanPermintaanSampleController::class)->loadSales();
   }
 
   public function doFilter(Request $req) {

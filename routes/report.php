@@ -447,6 +447,7 @@ Route::get('/laporanpermintaansample', [LaporanPermintaanSampleController::class
 Route::get('/laporanpermintaansample_doReport', [LaporanPermintaanSampleController::class, 'doReport']);
 Route::get('/laporanpermintaansample_doFilter', [LaporanPermintaanSampleController::class, 'doFilter']);
 Route::get('/laporanpermintaansample_doReportFilter', [LaporanPermintaanSampleController::class, 'doReportFilter']);
+Route::get('/laporanpermintaansample_loadsales', [LaporanPermintaanSampleController::class, 'loadSales']);
 
 // OUTSTANDING PERMINTAAN SAMPLE
 Route::get('/laporanoutstandingpermintaansample', [LaporanOutstandingPermintaanSampleController::class, 'index']);
@@ -499,6 +500,7 @@ Route::get('/laporangudangpermintaankonsinyasi', [LaporanGudangPermintaanKonsiny
 Route::get('/laporangudangpermintaankonsinyasi_doReport', [LaporanGudangPermintaanKonsinyasiController::class, 'doReport']);
 Route::get('/laporangudangpermintaankonsinyasi_doFilter', [LaporanGudangPermintaanKonsinyasiController::class, 'doFilter']);
 Route::get('/laporangudangpermintaankonsinyasi_doReportFilter', [LaporanGudangPermintaanKonsinyasiController::class, 'doReportFilter']);
+Route::get('/laporangudangpermintaankonsinyasi_loadsales', [LaporanGudangPermintaanKonsinyasiController::class, 'loadSales']);
 
 // GUDANG OUTSTANDING PR KONSINYASI
 Route::get('/laporangudangoutprkonsin', [LaporanGudangOutPRKonsinController::class, 'index']);

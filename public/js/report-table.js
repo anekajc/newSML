@@ -55,7 +55,9 @@
  *     table    : '#mainTable',
  *     bar      : '#rtBar',
  *     onChange : render,                       // fungsi render tabel halaman
- *     views    : {                             // opsional (Detail/Rekap saja)
+ *     views    : {                             // opsional (Detail/Rekap saja).
+ *                                               // Boleh juga array berisi beberapa switcher
+ *                                               // (mis. [Order By, Jenis]) -- tampil berdampingan.
  *       label   : 'Tampilan',
  *       options : [{ value: '0', label: 'Detail', desc: 'Rincian per baris' }],
  *       get     : function () { return globalReportMode; },
@@ -1072,14 +1074,22 @@
     html += '  <div class="rt-drop-menu">' + items + "</div>";
     html += "</div>";
 
-    if (cfg && cfg.views && cfg.views.options && cfg.views.options.length) { html += viewHtml(); }
+    viewList(cfg).forEach(function (v, idx) { html += viewHtml(v, idx); });
 
     bar.classList.add("rt-bar");
     bar.innerHTML = html;
   }
 
-  function viewHtml() {
-    var v       = cfg.views;
+  // cfg.views boleh satu objek (cara lama) atau array beberapa switcher (2026-11-25,
+  // dipakai Laporan Permintaan Pemakaian: Order By + Jenis Detail/Rekap).
+  function viewList(opt) {
+    var v = opt && opt.views;
+    if (!v) { return []; }
+    var list = Array.isArray(v) ? v : [v];
+    return list.filter(function (x) { return x && x.options && x.options.length; });
+  }
+
+  function viewHtml(v, idx) {
     var current = String(v.get ? v.get() : "");
     var label   = "";
     var items   = "";
@@ -1087,7 +1097,7 @@
     v.options.forEach(function (o) {
       var on = (String(o.value) === current);
       if (on) { label = o.label; }
-      items += '<div class="rt-drop-item' + (on ? " active" : "") + '" data-rtview="' + esc(o.value) + '">' +
+      items += '<div class="rt-drop-item' + (on ? " active" : "") + '" data-rtview="' + esc(o.value) + '" data-rtviewidx="' + idx + '">' +
                "<span>" + esc(o.label) + "</span>" +
                (o.desc ? "<small>" + esc(o.desc) + "</small>" : "") +
                "</div>";
@@ -1154,8 +1164,9 @@
       if (view) {
         e.stopPropagation();
         closeBarMenus();
-        if (cfg.views && typeof cfg.views.set === "function") {
-          cfg.views.set(view.getAttribute("data-rtview"));
+        var vi = viewList(cfg)[Number(view.getAttribute("data-rtviewidx")) || 0];
+        if (vi && typeof vi.set === "function") {
+          vi.set(view.getAttribute("data-rtview"));
           saveView(cfg);
         }
         renderBar();
@@ -1170,31 +1181,38 @@
      Halaman bisa menolak dengan views.persist = false. */
   var viewRestored = {};
 
-  function viewKey(opt) {
-    return ("rtview" + String(opt.table || "").replace(/[^A-Za-z0-9_-]/g, "")).slice(0, 50);
+  // Switcher pertama memakai kunci lama (pilihan tersimpan user tidak hilang);
+  // switcher berikutnya diberi akhiran _<urutan>.
+  function viewKey(opt, idx) {
+    var key = ("rtview" + String(opt.table || "").replace(/[^A-Za-z0-9_-]/g, "")).slice(0, 50);
+    return idx ? (key.slice(0, 47) + "_" + idx) : key;
   }
 
-  function viewPersist(opt) {
-    var v = opt && opt.views;
+  function viewPersist(v) {
     return !!(v && v.persist !== false && v.options && v.options.length &&
               typeof v.get === "function" && typeof v.set === "function" &&
               window.UserFilter && typeof window.UserFilter.load === "function");
   }
 
   function restoreView(opt) {
-    if (!viewPersist(opt) || viewRestored[opt.table]) { return; }
+    if (viewRestored[opt.table]) { return; }
     viewRestored[opt.table] = true;
-    var saved = window.UserFilter.load(viewKey(opt));
-    if (!saved || saved.view === undefined || saved.view === null) { return; }
-    var want = String(saved.view);
-    var ada = opt.views.options.some(function (o) { return String(o.value) === want; });
-    if (!ada || String(opt.views.get()) === want) { return; }
-    try { opt.views.set(want); } catch (e) { console.warn("ReportTable: gagal memulihkan Tampilan", e); }
+    viewList(opt).forEach(function (v, idx) {
+      if (!viewPersist(v)) { return; }
+      var saved = window.UserFilter.load(viewKey(opt, idx));
+      if (!saved || saved.view === undefined || saved.view === null) { return; }
+      var want = String(saved.view);
+      var ada = v.options.some(function (o) { return String(o.value) === want; });
+      if (!ada || String(v.get()) === want) { return; }
+      try { v.set(want); } catch (e) { console.warn("ReportTable: gagal memulihkan Tampilan", e); }
+    });
   }
 
   function saveView(opt) {
-    if (!viewPersist(opt)) { return; }
-    window.UserFilter.store(viewKey(opt), { view: String(opt.views.get()) });
+    viewList(opt).forEach(function (v, idx) {
+      if (!viewPersist(v)) { return; }
+      window.UserFilter.store(viewKey(opt, idx), { view: String(v.get()) });
+    });
   }
 
   /* ---------------- init ---------------- */

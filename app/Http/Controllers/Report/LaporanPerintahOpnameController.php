@@ -42,6 +42,16 @@ class LaporanPerintahOpnameController extends Controller {
     $res = DB::connection('MGL')->select('exec Sp_ReportPerintahOP ?,?,?,?,?,?,?,?',
       $values);
 
+    // 2026-11-25: kolom Group menampilkan nama head group (view hanya punya KodeHdGrp).
+    $grup = [];
+    foreach (DB::connection('MGL')->select('select KODEHDGRP, NAMAHDGRP from DBHDGROUP') as $g) {
+      $grup[trim($g->KODEHDGRP)] = $g->NAMAHDGRP;
+    }
+    foreach ($res as $r) {
+      $kode = trim((string) $r->KodeHdGrp);
+      $r->NamaHdGrp = $grup[$kode] ?? $r->KodeHdGrp;
+    }
+
     return $res;
   }
 

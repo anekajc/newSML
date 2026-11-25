@@ -40,6 +40,28 @@ class LaporanPermintaanPemakaianController extends Controller {
     $res = DB::connection('MGL')->select('exec Sp_reportBPPR ?,?,?,?,?,?',
       $values);
 
+    // Jenis Rekap (2026-11-25): baris dengan No Bukti + Kode Barang + Satuan yang sama
+    // digabung, Qty dijumlahkan. Urutan hasil SP (Order By) dipertahankan.
+    if ($req->get('inputJenis') == 'R') {
+      $rekap = [];
+      foreach ($res as $r) {
+        $key = $r->NoBukti . '|' . $r->KodeBrg . '|' . $r->Satuan;
+        if (!isset($rekap[$key])) {
+          $rekap[$key] = [
+            'Tanggal'       => $r->Tanggal,
+            'NoBukti'       => $r->NoBukti,
+            'KodeBrg'       => $r->KodeBrg,
+            'NamaBrg'       => $r->NamaBrg,
+            'Satuan'        => $r->Satuan,
+            'Qnt'           => 0,
+            'NeedOtorisasi' => $r->NeedOtorisasi,
+          ];
+        }
+        $rekap[$key]['Qnt'] += (float) $r->Qnt;
+      }
+      return array_values($rekap);
+    }
+
     return $res;
   }
 

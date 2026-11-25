@@ -27,18 +27,45 @@ class LaporanPermintaanSampleController extends Controller {
     }
   }
 
+  // 2026-11-25: filter Sales (KeyNIK dbKaryawan) + Order By No Bukti / Barang.
+  // Query dasar dari user: ... where tanggal between :0 and :1
+  //   and cast(KodeSls as varchar(2)) like '%PRS%' order by tanggal,nobukti
+  // PRS/PRK = jenis no bukti (VWREPORTSERAHSAMPLEPR berisi Permintaan Sample SML/PRS/... dan
+  // Permintaan Konsinyasi SML/PRK/...), dikonfirmasi user. Sales difilter terpisah: kosong =
+  // semua sales; bila dipilih dicocokkan persis supaya sales 8 tidak ikut menarik 80/83.
   public function doReport(Request $req) {
-    $Ordr    = $req->get('inputOrd');
-    $tgl1    = $req->get('date1');
-    $tgl2    = $req->get('date2');
+    return $this->reportSerahSamplePR($req, 'PRS');
+  }
 
-    $values  = [$tgl1, $tgl2];
-    $kolom = ($req->get('inputOrd') == "N") ? 'nobukti, Tanggal' : 'KODEBRG';
-    
-    $res = DB::connection('MGL')->select('select * from VWREPORTSERAHSAMPLEPR where TANGGAL between :tgl1 and :tgl2 order by ' . $kolom,
-      $values);
+  // Dipakai juga oleh LaporanGudangPermintaanKonsinyasiController (jenis 'PRK').
+  public function reportSerahSamplePR(Request $req, string $jenis) {
+    $tgl1  = $req->query('date1');
+    $tgl2  = $req->query('date2');
+    $sales = trim((string) $req->query('inputSales', ''));
+    if ($sales === '-') { $sales = ''; }
+
+    $order = ($req->query('inputOrd') == 'B') ? 'KODEBRG, TANGGAL, NOBUKTI' : 'TANGGAL, NOBUKTI';
+
+    $sql    = 'select * from VWREPORTSERAHSAMPLEPR where TANGGAL between ? and ? and NOBUKTI like ?';
+    $values = [$tgl1, $tgl2, '%/' . $jenis . '/%'];
+    if ($sales !== '') {
+      $sql     .= ' and cast(KODESLS as varchar(10)) = ?';
+      $values[] = $sales;
+    }
+
+    $res = DB::connection('MGL')->select($sql . ' order by ' . $order, $values);
+
+    // Nama gudang kosong (mis. kode '-') -> tampilkan kodenya.
+    foreach ($res as $r) {
+      $r->GudangAsal  = $r->NAMAGDGASAL ?? $r->GDGASAL;
+      $r->GudangTujuan = $r->NAMAGDGTUJUAN ?? $r->GDGTUJUAN;
+    }
 
     return $res;
+  }
+
+  public function loadSales() {
+    return DB::connection('MGL')->select('select KeyNIK, Nama from dbKaryawan where IsSales=1 and Aktif=1 order by Nama');
   }
 
   public function doFilter(Request $req) {

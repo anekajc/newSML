@@ -1,6 +1,6 @@
 @extends('newmasterTest')
 {{-- @extends('accounting.newmaster') --}}
-@section('page-title', 'Pengajuan DPH UM')
+@section('page-title', 'Pengajuan Pembayaran Uang Muka')
 @section('buttons')
 @endsection
 
