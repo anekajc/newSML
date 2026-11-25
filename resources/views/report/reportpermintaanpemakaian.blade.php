@@ -1,79 +1,124 @@
 @extends('report.masterreport2')
 
-<!-- Warna centang -->
-  <style>
-    .checkmark-red {
-      color: red !important;
-      font-weight: bold;
-      margin-left: 6px;
-    }
-  </style>
-<!-- Warna centang -->
+{{-- Laporan Permintaan Pemakaian (2026-11-25): tampilan disamakan dengan Laporan Pemakaian Qty
+     (reportpemakaian.blade.php). Data dari Sp_ReportBpPR (view VwreportBPPR) lewat
+     laporanpermintaanpemakaian_doReport. Ada dua switcher di bar kolom: Order By (No Bukti /
+     Barang, parameter Ordr SP) dan Jenis (Detail / Rekap). Rekap = baris dijumlah per
+     No Bukti + Kode Barang + Satuan di controller, tanpa kolom HPP. --}}
 
-@include('report/modalMarketingSO')
+<style>
+    .tb-report .table-wrap {
+        min-height: 10vh;
+    }
+</style>
 
 @section('header2')
-  <div class="w-100 bg-light shadow-sm py-3 px-4 border-bottom d-flex align-items-center justify-content-between" style="margin-top:-20px; margin-bottom:150px;">
-    <!-- Kiri: ikon -->
-    <div class="d-flex" style="gap: 10px;">
-      <div class="dropdown">
-        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="btnPeriode" data-bs-toggle="dropdown" aria-expanded="false" title="Periode">
-          <i class="fas fa-calendar-alt"></i>
-        </button>
-        <div class="dropdown-menu p-3" style="min-width: 350px;">
-          <input type="date" class="form-control mb-2" id="inputDate1" value="{!! date('Y-m-01') !!}">
-          <label for="inputDate2" class="mb-0">s/d</label>
-          <input type="date" class="form-control mt-1" id="inputDate2" value="{!! date('Y-m-d') !!}">
-          {{-- <button class="btn btn-primary btn-sm mt-2 w-100" onclick="showPeriode()">Terapkan</button> --}}
+  <div class="tb-report main">
+    <div class="content">
+
+      <!-- toolbar-->
+      <div class="toolbar">
+        <!-- date range-->
+        <div class="filter-wrap">
+          <label>Periode</label>
+          <input type="date" class="filter-inp" id="inputDate1" value="{!! date('Y-m-01') !!}">
+          <span class="filter-sep">s/d</span>
+          <input type="date" class="filter-inp" id="inputDate2" value="{!! date('Y-m-d') !!}">
         </div>
-      </div> 
 
-      <div class="dropdown">
-        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="inputReportMode" data-bs-toggle="dropdown" aria-expanded="false" title="Report Mode" style="cursor: pointer;">
-          <i class="fas fa-book"></i>
-        </button>
-        <ul class="dropdown-menu" id="dropdownReportMode" aria-labelledby="inputReportMode">
-          <li><a class="dropdown-item" style="cursor: pointer;" data-value="1" onclick="setReportMode('1')">Rekap</a></li>
-          <li><a class="dropdown-item" style="cursor: pointer;" data-value="0" onclick="setReportMode('0')">Detail</a></li>
-        </ul>
+        <input class="search-inp" type="text" id="searchBox2" placeholder="Cari data..." oninput="applyFilters()">
+
+        <div class="action-group">
+          {{-- Dibuka lewat plugin jQuery (Bootstrap 4), sama seperti reportpemakaian.blade.php. --}}
+          <button class="btn-load" type="button" onclick="$('#modalFilter').modal('show')">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+          <button class="btn-load" onclick="makeTable('REPORT')" title="Tampilkan laporan"><i class="fas fa-check"></i> Tampilkan</button>
+          <div class="export-wrap" id="exportWrap">
+            <button class="export-btn" onclick="toggleExport()"><i class="bi bi-arrow-down"></i> Export <i class="bi bi-caret-down-fill"></i></button>
+            <div class="export-drop" id="exportDrop">
+              <div class="export-opt" onclick="doExport('Excel')"> Ekspor ke <span class="ext">XLSX</span></div>
+              <div class="export-opt" onclick="doExport('Print')"> Cetak Laporan</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="dropdown">
-        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="inputOtorisasi" data-bs-toggle="dropdown" aria-expanded="false" title="Otorisasi" style="cursor: pointer;">
-          <i class="fas fa-key"></i>
-        </button>
-        <ul class="dropdown-menu" id="dropdownOtorisasi" aria-labelledby="inputOtorisasi">
-          <li><a class="dropdown-item" style="cursor: pointer;" data-value="0" onclick="setOtorisasi('0')">Non Otorisasi</a></li>
-          <li><a class="dropdown-item" style="cursor: pointer;" data-value="1" onclick="setOtorisasi('1')">Otorisasi</a></li>
-          <li><a class="dropdown-item" style="cursor: pointer;" data-value="2" onclick="setOtorisasi('2')">Semua</a></li>
-        </ul>
+      <!-- Bar kolom tersembunyi + switcher Order By & Jenis (report-table.js / ReportTable) -->
+      <div id="rtBar"></div>
+
+      <!-- tabel-->
+      <div class="table-outer">
+        <div class="table-wrap">
+          <table class="tb" id="mainTable">
+            <thead>
+            </thead>
+            <tbody id="tableBody">
+              <tr class="empty-row"><td colspan="8">Atur filter lalu klik <b>Tampilkan</b> untuk memuat laporan.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="footerLabel">Belum ada data dimuat</span>
+        </div>
       </div>
 
-      <div class="dropdown">
-        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="inputOrder" data-bs-toggle="dropdown" aria-expanded="false" title="Order By">
-          <i class="fas fa-exchange-alt" style="cursor: pointer;"></i>
-        </button>
-        <ul class="dropdown-menu" id="dropdownOrder" aria-labelledby="inputOrder" style="max-height: 125px; overflow-y: auto;">
-          <li><a class="dropdown-item" style="cursor: pointer;" data-value="N" onclick="setOrderBy('N')">Nomor Bukti</a></li>
-          <li><a class="dropdown-item" style="cursor: pointer;" data-value="B" onclick="setOrderBy('B')">Nomor Barang</a></li>
-        </ul>
+      <div class="rt-hint">
+        <i class="bi bi-info-circle"></i>
+        Seret judul kolom untuk mengurutkan. Klik <i class="bi bi-gear"></i> pada judul kolom untuk
+        sembunyikan kolom atau atur desimal &amp; total.
       </div>
-
     </div>
 
-    <!-- Kanan: tombol aksi menempel ke ujung kanan layar -->
-    <div class="d-flex ms-auto" style="gap: 8px;">
-      <button type="button" class="btn btn-outline-primary" onclick="doShowFormFilterData()" title="Filter Data">
-        <i class="fas fa-magnifying-glass"></i>
-      </button>
-      <button type="button" class="btn btn-outline-primary" onclick="doShowFormCustomizeTable()" title="Customize Table">
-        <i class="fas fa-cog"></i>
-      </button>
-      <button type="button" class="btn btn-outline-primary" onclick="makeTable('REPORT')" title="Submit">
-        <i class="fas fa-check"></i>
-      </button>
+    <!-- toast-->
+    <div class="toast" id="toast"><span id="ti"></span><span id="tm"></span></div>
+  </div>
+
+  {{-- Modal di luar .tb-report supaya reset CSS report-table.css tidak merusak modal Bootstrap. --}}
+
+  <!-- modal filter -->
+  <div class="modal fade rt-filter" id="modalFilter">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-filter"></i>
+            Filter Laporan
+            <span class="rt-active-badge" id="filterBadge">0 aktif</span>
+          </h5>
+          <button type="button" class="btn-close" aria-label="Close" data-dismiss="modal" data-bs-dismiss="modal"
+              onclick="$('#modalFilter').modal('hide')"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="rt-section">
+            <div class="rt-grid-2">
+              <div>
+                <label class="rt-field-label" for="modalOtorisasi">Otorisasi</label>
+                <select class="rt-native" id="modalOtorisasi">
+                  <option value="2">Semua</option>
+                  <option value="1">Belum</option>
+                  <option value="0">Sudah</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="rt-reset-link" onclick="resetAllFilters()">Reset semua</button>
+          <div class="rt-footer-buttons">
+            <button type="button" class="rt-btn rt-btn-ghost" data-dismiss="modal" data-bs-dismiss="modal"
+                onclick="$('#modalFilter').modal('hide')">Batal</button>
+            <button type="button" class="rt-btn rt-btn-primary" onclick="applyModalFilter()">Terapkan</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
+  <!-- modal filter -->
 
 @endsection
 
@@ -82,239 +127,292 @@
 <script type="text/javascript">
   let globalDate1 = "{!! date('Y-m-d') !!}";
   let globalDate2 = "{!! date('Y-m-d') !!}";
-  let globalOtorisasi = "2"; // default: Semua
-  let globalOrderBy = "N";   // default: Nomor Bukti
-  let globalReportMode = "0"; // default: Detail
+  let globalOtorisasi = "2";
+  let globalOrderBy = "N";  // N = No Bukti, B = Barang (parameter Ordr Sp_ReportBpPR)
+  let globalJenis = "D";    // D = Detail, R = Rekap
+  let lastRows = [];
+  let currentGroupby = 'NoBukti';
 
-  var jenisreport = 0; // ini untuk detail dan rekap
-  
+  // Slot kolom tersimpan (DBSIMPANHEADER.reportmode) per kombinasi Jenis x Order By, karena
+  // kolom Detail dan Rekap berbeda. Nomor 11..14 dipakai supaya layout tersimpan dari
+  // halaman lama (kolomnya lain) tidak ikut terbaca.
+  const MODE_SLOT = { 'D|N': 11, 'D|B': 12, 'R|N': 13, 'R|B': 14 };
+  g_modeReport = MODE_SLOT['D|N'];
+
+  const ORDER_OPTIONS = [
+    { value: 'N', label: 'No Bukti', desc: 'Dikelompokkan per No Bukti' },
+    { value: 'B', label: 'Barang', desc: 'Dikelompokkan per Kode Barang' },
+  ];
+  const JENIS_OPTIONS = [
+    { value: 'D', label: 'Detail' },
+    { value: 'R', label: 'Rekap' },
+  ];
+
+  // Dua switcher berdampingan di #rtBar (report-table.js menerima views berupa array).
+  let viewsCfg = [
+    {
+      label: 'Order By',
+      options: ORDER_OPTIONS,
+      get: function() { return globalOrderBy; },
+      set: function(v) {
+        globalOrderBy = String(v);
+        applyMode();
+        if (lastRows.length) { makeTable('REPORT'); } // re-fetch: inputOrd adalah parameter SP
+      }
+    },
+    {
+      label: 'Jenis',
+      options: JENIS_OPTIONS,
+      get: function() { return globalJenis; },
+      set: function(v) {
+        globalJenis = String(v);
+        applyMode();
+        if (lastRows.length) { makeTable('REPORT'); } // re-fetch: Rekap dijumlah di server
+      }
+    }
+  ];
+
+  const reportUrl = "{{ url('laporanpermintaanpemakaian_doReport') }}";
+
   $(document).ready(function() {
-    console.log("Script sudah jalan. Coba klik tombol untuk tes fungsi.");
-    $("#btnFilterData").on("click", function() {
-      if (typeof doShowFormFilterData === "function") doShowFormFilterData();
-      else alert(" Fungsi doShowFormFilterData belum tersedia.");
-    });
+    $("#showTableReport").empty().hide();
 
-    $("#btnCustomizeTable").on("click", function() {
-      if (typeof doShowFormCustomizeTable === "function") doShowFormCustomizeTable();
-      else alert(" Fungsi doShowFormCustomizeTable belum tersedia.");
-    });
-
-    $("#btnSubmitReport").on("click", function() {
-      makeTable('REPORT');
-    });
-
-    setReportMode(globalReportMode);
-    setOtorisasi(globalOtorisasi);
-    setOrderBy(globalOrderBy);
-
-    // Filter tersimpan per user (public/js/user-filter.js): pilihan terakhir dipulihkan
-    // sebelum laporan dimuat, dan disimpan lagi setiap kali user mengganti pilihan.
-    UserFilter.track('toolbar', {
-      reportMode: UserFilter.menu('setReportMode', '#dropdownReportMode', function () { return globalReportMode; }),
-      otorisasi: UserFilter.menu('setOtorisasi', '#dropdownOtorisasi', function () { return globalOtorisasi; }),
-      orderBy: UserFilter.menu('setOrderBy', '#dropdownOrder', function () { return globalOrderBy; })
-    });
-
-    showPeriode();
     setDefaultHeader();
+    applyMode();
 
-    setTimeout(() => {
-      makeTable('REPORT');
-    }, 100);
+    // pulihkan Otorisasi terakhir yang di-Terapkan user ini (DBUSERFILTER).
+    UserFilter.restore('#modalFilter', function (v) {
+      if (v.modalOtorisasi !== undefined) { setOtorisasi(v.modalOtorisasi); }
+    });
+
+    ReportTable.init({
+      table: '#mainTable',
+      bar: '#rtBar',
+      onChange: function() {
+        if (lastRows.length) { applyFilters(); } else { renderRows([], currentGroupby); }
+      },
+      views: viewsCfg
+    });
   });
 
-  // periode
-  function showPeriode() {
-    globalDate1 = $('#inputDate1').val();
-    globalDate2 = $('#inputDate2').val();
-    // alertify.success(`Periode: ${globalDate1} s/d ${globalDate2}`);
+  /* -- FILTER MODAL -- */
+  function updateFilterBadge() {
+    let count = 0;
+    if ($('#modalOtorisasi').val() !== '2') { count++; }
+    $('#filterBadge').text(count + ' aktif');
   }
 
-  // otorisasi
-  function setOtorisasi(val) {
-    globalOtorisasi = val;
-    let text = (val == '2') ? 'Semua' : (val == '1') ? 'Otorisasi' : 'Non Otorisasi';
-    // alertify.success(`Otorisasi: ${text}`);
-
-    // hapus semua centang
-    $('#dropdownOtorisasi .dropdown-item').each(function() {
-      let itemText = $(this).text().replace(' ?', '').trim(); 
-      $(this).text(itemText);
-    });
-
-    // tambah centang di item yg di pilih
-    $(`#dropdownOtorisasi .dropdown-item[data-value='${val}']`).each(function() {
-      $(this).html(`${$(this).text()} <span class="checkmark-red">?</span>`);
-    });
+  function resetAllFilters() {
+    $('#modalOtorisasi').val('2');
+    updateFilterBadge();
   }
 
-  // order by
-  function setOrderBy (val) {
-
-    globalOrderBy = val;
-    let text = ''
-
-    if ( val == 'N'){
-      text = 'Nomor Bukti'
-    } else if ( val == 'B'){
-      text = 'Nomor Barang'
-    } else if ( val == 'C'){
-      text = 'Nomor Customer'
-    } else if ( val == 'S'){
-      text = 'Sales'
-    } else if ( val == 'HG'){
-      text = 'Head Group'
-    } else if ( val == 'P'){
-      text = 'PIC'
-    }
-    // alertify.success(`Order By: ${text}`);
-
-    // hapus semua centang
-    $('#dropdownOrder .dropdown-item').each(function() {
-      let itemText = $(this).text().replace(' ?', '').trim();
-      $(this).text(itemText);
-    });
-
-    // tambah centang di item yg di pilih
-    $(`#dropdownOrder .dropdown-item[data-value='${val}']`).each(function() {
-      $(this).html(`${$(this).text()} <span class="checkmark-red">?</span>`);
-    });
-
-    setModeReport();
-
-  }
-
-  function setReportMode(val) {
-    globalReportMode = val;
-    jenisreport = Number(val);   // 0 = Detail, 1 = Rekap
-    DetOrRekap = Number(val);    // samakan dengan variabel yang ada di setModeReport
-
-    console.log(val)
-    // hapus centang dulu
-    $('#dropdownReportMode .dropdown-item').each(function() {
-      let itemText = $(this).text().replace(' ?', '').trim();
-      $(this).text(itemText);
-    });
-
-    // tambah centang di item terpilih
-    $(`#dropdownReportMode .dropdown-item[data-value='${val}']`).each(function() {
-      $(this).html(`${$(this).text()} <span class="checkmark-red">?</span>`);
-    });
-
-    // update g_modeReport sesuai pilihan order & detail/rekap
-    // setModeReport() sudah mengatur g_modeReport berdasarkan $("#inputOrder").val() dan jenisreport/DetOrRekap
-    setModeReport();
-  }
-  
-  var modereport_detail = 0, modereport_rekap = 1;
-  g_modeReport = modereport_detailnobukti;
+  $('#modalFilter').on('change', 'select.rt-native', updateFilterBadge);
 
   function setDefaultHeader() {
-    if (g_modeReport == modereport_detail) {
+    if (globalJenis === 'R') {
       gcart_header = [
-        ['Nomor', 'Nomor (No)', 1, 'index', 0, 0],
-        ['NoBukti', 'No Bukti', 1, 'varchar', 0, 0],
         ['Tanggal', 'Tanggal', 1, 'date', 0, 0],
-        ['KodeBrg', 'Kode Brg', 1, 'varchar', 0, 0],
+        ['NoBukti', 'No. Bukti', 1, 'varchar', 0, 0],
+        ['KodeBrg', 'Kode Barang', 1, 'varchar', 0, 0],
         ['NamaBrg', 'Nama Barang', 1, 'varchar', 0, 0],
-        ['Satuan', 'Sat', 1, 'varchar', 0, 0],
-        ['Qnt', 'Qnt', 1, 'float', 1, 2],
-        ['NilaiHPP', 'HPP', 1, 'float', 1, 0]
+        ['Satuan', 'Satuan', 1, 'varchar', 0, 0],
+        ['Qnt', 'Qty', 1, 'float', 1, 2],
+        ['StatusOto', 'Otorisasi', 1, 'status', 0, 0]
       ];
-      gsum_issubtotal = 0; gsum_isgrandtotal = 1;
     } else {
       gcart_header = [
-        ['Nomor', 'Nomor (No)', 1, 'index', 0, 0],
-        ['NoBukti', 'No Bukti', 1, 'varchar', 0, 0],
         ['Tanggal', 'Tanggal', 1, 'date', 0, 0],
-        ['KodeBrg', 'Kode Brg', 1, 'varchar', 0, 0],
+        ['NoBukti', 'No. Bukti', 1, 'varchar', 0, 0],
+        ['KodeBrg', 'Kode Barang', 1, 'varchar', 0, 0],
         ['NamaBrg', 'Nama Barang', 1, 'varchar', 0, 0],
-        ['Satuan', 'Sat', 1, 'varchar', 0, 0],
-        ['Qnt', 'Qnt', 1, 'float', 1, 0]
+        ['Satuan', 'Satuan', 1, 'varchar', 0, 0],
+        ['Qnt', 'Qty', 1, 'float', 1, 2],
+        ['NilaiHPP', 'HPP', 1, 'float', 1, 2],
+        ['StatusOto', 'Otorisasi', 1, 'status', 0, 0]
       ];
-      gsum_issubtotal = 0; gsum_isgrandtotal = 1;
+    }
+    gsum_issubtotal = 1;
+    gsum_isgrandtotal = 1;
+  }
+
+  // NeedOtorisasi = 1 -> Belum, 0 -> Sudah (sama dengan Laporan Pemakaian).
+  function getOtoStatusLabel(r) {
+    const need = pickCI(r, 'NeedOtorisasi');
+    const s = String(need == null ? '' : need).trim().toUpperCase();
+    const needTruthy = (need === 1 || need === true || s === '1' || s === 'Y' || s === 'TRUE');
+    return needTruthy
+      ? { text: 'Belum', color: '#B91C1C', bg: '#FEE2E2' }
+      : { text: 'Sudah', color: '#15803D', bg: '#DCFCE7' };
+  }
+
+  function renderOtoStatusCell(r) {
+    const st = getOtoStatusLabel(r);
+    return '<td><span style="display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:999px; font-size:11.5px; font-weight:700; color:' + st.color + '; background:' + st.bg + ';"><span style="width:6px; height:6px; border-radius:50%; background:' + st.color + '; flex-shrink:0;"></span>' + st.text + '</span></td>';
+  }
+
+  $('#modalFilter').on('show.bs.modal', function () {
+    $("#modalOtorisasi").val(globalOtorisasi);
+    updateFilterBadge();
+  });
+
+  function applyModalFilter() {
+    setOtorisasi($("#modalOtorisasi").val());
+    UserFilter.save('#modalFilter');
+    $('#modalFilter').modal('hide');
+  }
+
+  function setOtorisasi(val) { globalOtorisasi = val; }
+
+  // Order By menentukan groupby subtotal; Jenis menentukan kolom. Keduanya memilih slot
+  // kolom tersimpan lewat g_modeReport.
+  function applyMode() {
+    currentGroupby = (globalOrderBy === 'B') ? 'KodeBrg' : 'NoBukti';
+    g_modeReport = MODE_SLOT[globalJenis + '|' + globalOrderBy] || MODE_SLOT['D|N'];
+    setDefaultHeader();
+    if (typeof doSetHeader === 'function') { doSetHeader(g_modeReport); }
+    if (typeof doShowCustomize === 'function') { doShowCustomize(); }
+    if (!lastRows.length && window.ReportTable && document.querySelector('#rtBar.rt-bar')) {
+      renderRows([], currentGroupby);
     }
   }
 
   function makeTable(_mode) {
-    // nilai groupby adalah nama kolom (sesuai database) untuk pengelompokan subtotal
-    // mode report menentukan kolom yang dipakai
-    let groupby = '';
-    let _date1    = $("#inputDate1").val();
-    let _date2    = $("#inputDate2").val();
-    let inputOto = globalOtorisasi;
-    let _inputCustomer = $("#inputCustomer").val();
-    let _inputGroup = $("#inputGroup").val();
-    let _inputPIC = $("#inputPIC").val();
-    let _inputKategori = $("#inputKategori").val();
-    let _inputSubKategori = $("#inputSubKategori").val();
-    let _inputMerk = $("#inputMerk").val();
-    let input_order = globalOrderBy;
-
-      if (input_order == "N") {
-        groupby = 'NoBukti';
-      } else if (input_order == "B") {
-        groupby = 'KODEBRG';
-      } else if( input_order == "C"){
-        groupby = 'KodeCustSupp';
-      } else if( input_order == "S"){
-        groupby = 'KodeSls';
-      } else if( input_order == "HG"){
-        groupby = 'KodeCustSupp';
-      } else if( input_order == "P"){
-        groupby = 'KodeCustSupp';
-      }
+    globalDate1 = $('#inputDate1').val();
+    globalDate2 = $('#inputDate2').val();
 
     setDefaultHeader();
-    if (typeof doSetHeader === 'function') {
-      doSetHeader(g_modeReport);
-    }
+    if (typeof doSetHeader === 'function') { doSetHeader(g_modeReport); }
+    document.getElementById('footerLabel').innerHTML = loadingHtml('Memuat data...');
 
-    let data = {
-      date1    : _date1,
-      date2    : _date2,
-      inputCustomer : _inputCustomer,
-      inputGroup : _inputGroup,
-      inputPIC : _inputPIC,
-      inputKategori: _inputKategori,
-      inputSubKategori: _inputSubKategori,
-      inputMerk : _inputMerk,
-      inputOto : inputOto,
-      inputOrd : input_order,
+    let filterData = {
+      date1: globalDate1,
+      date2: globalDate2,
+      inputOto: globalOtorisasi,
+      inputOrd: globalOrderBy,
+      inputJenis: globalJenis
     };
 
-    doMakeTable(_mode, groupby, data, "REPORT MARKETING SO", _date1, _date2, _inputCustomer, _inputGroup, _inputPIC, _inputKategori, _inputSubKategori, _inputMerk);
-  }
-
-  function getKolomFilter() {
-    // tentukan kolom (sesuai database & gcart_header) yang mau ditampilkan
-    // mode report menentukan kolom yang dipakai
-    // berapa pun bisa asal dalam bentuk array
-
-    let data = [];
-    if (g_modeReport == modereport_detail) {
-      data = ['NoBukti', 'Tanggal'];
-    } else {
-      data = ['NoBukti', 'Tanggal'];
-    }
-
-    return data;
-  }
-
-  function setModeReport () {
-    if (globalOrderBy == "N") {
-      if (jenisreport === 0) {
-        g_modeReport = modereport_detail;
-      } else {
-        g_modeReport = modereport_rekap;
+    $.ajax({
+      url: reportUrl,
+      type: 'get',
+      data: filterData,
+      success: function (res) {
+        lastRows = Array.isArray(res) ? res : [];
+        $('#searchBox2').val('');
+        renderRows(lastRows, currentGroupby);
+      },
+      error: function () {
+        lastRows = [];
+        renderRows([], currentGroupby);
       }
-    }
-
-    doSetHeader(g_modeReport);
-    doShowCustomize();
+    });
   }
 
-</script>
+  function renderRows(rows, groupby) {
+    const cols  = gcart_header.filter(c => c[2] === 1);
+    const thead = document.querySelector('#mainTable thead');
+    const tbody = document.getElementById('tableBody');
 
+    const totalCols = cols.filter(c => (c[3] === 'float' || c[3] === 'int') && c[4] === 1);
+    const totalKeys = totalCols.map(c => c[0]);
+    const hasTotal  = totalCols.length > 0;
+    const showSub   = hasTotal && (gsum_issubtotal === 1);
+    const showGrand = hasTotal && (gsum_isgrandtotal === 1);
+
+    thead.innerHTML = ReportTable.headHtml(cols);
+
+    if (!rows || !rows.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="' + cols.length + '">Tidak ada data ditemukan.</td></tr>';
+      document.getElementById('footerLabel').textContent = 'Tidak ada data';
+      return;
+    }
+
+    let html = '', prev = null;
+    let sub = {}, grand = {};
+    totalKeys.forEach(k => { sub[k] = 0; grand[k] = 0; });
+
+    rows.forEach(function (r, i) {
+      const now = pickCI(r, groupby);
+
+      if (showSub && i !== 0 && prev !== now) {
+        html += totalRow('Subtotal', sub, cols, totalKeys, 'subtotal-row');
+        totalKeys.forEach(k => sub[k] = 0);
+      }
+
+      totalKeys.forEach(function (k) {
+        const v = currencyNormalizer(r[k]);
+        sub[k] += v; grand[k] += v;
+      });
+
+      html += '<tr class="data-row">' + cols.map(function (c) {
+        const key = c[0], type = c[3];
+        if (type === 'date') return '<td>' + format_date(r[key]) + '</td>';
+        if (type === 'status') return renderOtoStatusCell(r);
+        if (type === 'float' || type === 'int') return '<td class="num">' + format_number(currencyNormalizer(r[key]), c[5]) + '</td>';
+        return '<td>' + nullToEmpty(r[key]) + '</td>';
+      }).join('') + '</tr>';
+
+      prev = now;
+    });
+
+    if (showSub)   html += totalRow('Subtotal', sub, cols, totalKeys, 'subtotal-row');
+    if (showGrand) html += totalRow('GRAND TOTAL', grand, cols, totalKeys, 'grand-total');
+
+    tbody.innerHTML = html;
+    document.getElementById('footerLabel').textContent = 'Menampilkan ' + rows.length + ' baris';
+  }
+
+  function totalRow(label, sums, cols, totalKeys, cls) {
+    const labelIdx = cols.findIndex(c => totalKeys.indexOf(c[0]) === -1);
+    const tds = cols.map(function (c, idx) {
+      if (totalKeys.indexOf(c[0]) !== -1) return '<td class="num">' + format_number(sums[c[0]], c[5]) + '</td>';
+      if (idx === labelIdx) return '<td>' + label + '</td>';
+      return '<td></td>';
+    });
+    return '<tr class="' + cls + '">' + tds.join('') + '</tr>';
+  }
+
+  function pickCI(r, key) {
+    if (r[key] !== undefined) return r[key];
+    const lk = String(key).toLowerCase();
+    for (const k in r) { if (k.toLowerCase() === lk) return r[k]; }
+    return undefined;
+  }
+
+  function applyFilters() {
+    if (!lastRows.length) return;
+    const term = ($('#searchBox2').val() || '').trim().toLowerCase();
+    if (!term) { renderRows(lastRows, currentGroupby); return; }
+
+    const cols = gcart_header.filter(c => c[2] === 1);
+    const filtered = lastRows.filter(r => rowSearchText(r, cols).indexOf(term) !== -1);
+    renderRows(filtered, currentGroupby);
+  }
+
+  function rowSearchText(r, cols) {
+    return cols.map(function (c) {
+      if (c[3] === 'status') return getOtoStatusLabel(r).text;
+      const v = r[c[0]];
+      if (c[3] === 'date') return format_date(v);
+      return (v == null ? '' : String(v));
+    }).join(' ').toLowerCase();
+  }
+
+  function toggleExport() { document.getElementById('exportDrop').classList.toggle('open'); }
+  function doExport(fmt) {
+    document.getElementById('exportDrop').classList.remove('open');
+    if (fmt === 'Print') { window.print(); return; }
+    if (!document.querySelector('#tableBody tr.data-row')) {
+      const msg = 'Tidak ada data untuk di-export. Klik Tampilkan terlebih dahulu.';
+      if (window.alertify && typeof alertify.alert === 'function') { alertify.alert(msg); } else { alert(msg); }
+      return;
+    }
+    doExportTableToExcel('mainTable');
+  }
+  document.addEventListener('click', function (e) {
+    const wrap = document.getElementById('exportWrap');
+    if (wrap && !wrap.contains(e.target)) { document.getElementById('exportDrop').classList.remove('open'); }
+  });
+</script>
 @endsection

@@ -25,6 +25,7 @@ Nomor file tetap urut lintas folder (01, 02, 03, ...), jadi urutan menjalankanny
 4. `umum/06_menu_pemakai_acc_nonacc.sql`. Butuh baris menu Pemakai ACC / Non ACC yang sudah ada di DBMENUWEB (di bawah menu 0004).
 5. `umum/37_menu_wms_kode_21.sql`. Jalankan setelah menu WMS sudah ada di DBMENUWEB/DBFLMENUWEB.
 6. `umum/38_tabel_dbuserfilter.sql`. Tidak bergantung ke skrip lain, boleh dijalankan kapan saja.
+7. `report/39_menu_report_gudang_cabang.sql`. Butuh menu report gudang 04010..04060 yang sudah ada di DBMENUREPORTWEB.
 
 Catatan: tabel pengaturan kolom `DBHEADERTABLE` dan `DBHEADERTABLEALIAS` dibuat di `purchasing/01_vwppl_dan_headertable.sql`. Kalau modul lain (misalnya marketing) di-update lebih dulu dan butuh tabel itu, jalankan file 01 tersebut juga.
 
