@@ -120,7 +120,9 @@
     kasUrl    : "{{ url('laporanaccountingjurnalmemorial_doKasharian') }}",
     invoiceUrl: "{{ url('laporanaccountingjurnalmemorial_doInvoice') }}",
     lpbUrl    : "{{ url('laporanaccountingjurnalmemorial_doLpb') }}",
-    bpUrl     : "{{ url('laporanaccountingjurnalmemorial_doBp') }}"
+    bpUrl     : "{{ url('laporanaccountingjurnalmemorial_doBp') }}",
+    opnUrl    : "{{ url('laporanaccountingjurnalmemorial_doOpn') }}",   // Jenis OPN -> koreksi stock (CetakOpnameBahan)
+    jenisTitle: { OPN: 'KOREKSI STOCK' }
   };
 
   $(document).ready(function () {

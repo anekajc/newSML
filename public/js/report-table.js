@@ -281,6 +281,9 @@
     if (key === 'INVC') { window.openInvoice(nobukti); }
     else if (key === 'BPL') { window.openLpb(nobukti); }
     else if (key === 'BP') { window.openBp(nobukti); }
+    // OPN (koreksi stock) hanya untuk halaman yang mengisi ReportTableConfig.opnUrl;
+    // halaman lain tetap jatuh ke Bukti Kas seperti sebelumnya.
+    else if (key === 'OPN' && cfg().opnUrl) { window.openOpn(nobukti); }
     else { window.openKasharian(nobukti, jenis); }
   };
 
@@ -620,6 +623,74 @@
           '<td colspan="5" class="kas-totlbl" style="text-align:right">Total :</td>' +
           '<td class="num">' + window.fmtRp(grand) + '</td>' +
           '<td colspan="3"></td>' +
+        '</tr></tfoot>' +
+      '</table>';
+  }
+
+
+  /* -- KOREKSI STOCK / OPNAME (OPN) -- layout mengikuti cetak di gudang/koreksistock.blade.php
+        (EXEC dbo.CetakOpnameBahan): header perusahaan + Nomor/Tanggal/Gudang, 8 kolom, baris Total. -- */
+  window.openOpn = function (nobukti) {
+    var title = window.jenisTitle('OPN');
+    var panel = ensurePanel();
+    showLoading(panel, title + ' - ' + nobukti);
+    $.ajax({
+      url: cfg().opnUrl, type: 'get', data: { nobukti: nobukti },
+      success: function (rows) { renderOpn(nobukti, title, rows || []); },
+      error: function () { showError('Gagal memuat ' + title + '.'); }
+    });
+  };
+
+  function renderOpn(nobukti, title, rows) {
+    var data = lc(rows);
+    var h = data[0] || {};
+    function v(x) { return (x != null && String(x).trim() !== '') ? x : '-'; }
+
+    var grand = 0, items = '';
+    data.forEach(function (e, i) {
+      var db =window.num(e.qntdb), kr = window.num(e.qntcr), harga = window.num(e.harga);
+      // Jumlah = Qty Debet * Harga ATAU Qty Kredit * Harga (salah satunya selalu 0), sama dengan cetak koreksistock.
+      var jumlah = (db || kr || 0) * harga;
+      grand += jumlah;
+      items += '<tr>' +
+        '<td style="text-align:center">' + (i + 1) + '</td>' +
+        '<td>' + (e.kodebrg != null ? e.kodebrg : '') + '</td>' +
+        '<td>' + (e.namabrg != null ? e.namabrg : '') + '</td>' +
+        '<td style="text-align:center">' + (e.satuan != null ? e.satuan : '') + '</td>' +
+        '<td class="num">' + (db ? window.fmtRp(db) : '') + '</td>' +
+        '<td class="num">' + (kr ? window.fmtRp(kr) : '') + '</td>' +
+        '<td class="num">' + window.fmtRp(harga) + '</td>' +
+        '<td class="num">' + window.fmtRp(jumlah) + '</td>' +
+      '</tr>';
+    });
+    if (!data.length) {
+      items = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:14px">Tidak ada data</td></tr>';
+    }
+
+    document.getElementById('kasBody').innerHTML =
+      '<div class="inv-head" style="justify-content:flex-start">' +
+        '<div class="inv-head-left">' +
+          '<div class="inv-doctitle">' + title + '</div>' +
+          '<table class="inv-meta"><tbody>' +
+            '<tr><td>Gudang</td><td>:</td><td>' + v(h.kodegdg) + '</td></tr>' +
+          '</tbody></table>' +
+        '</div>' +
+      '</div>' +
+      '<table class="kas-voucher inv-table">' +
+        '<thead><tr class="kas-colhead">' +
+          '<th style="width:42px">No.</th>' +
+          '<th style="width:170px">KODE BARANG</th>' +
+          '<th>NAMA BARANG</th>' +
+          '<th style="width:70px">SATUAN</th>' +
+          '<th class="num" style="width:100px">DEBET</th>' +
+          '<th class="num" style="width:100px">KREDIT</th>' +
+          '<th class="num" style="width:130px">HARGA</th>' +
+          '<th class="num" style="width:150px">JUMLAH</th>' +
+        '</tr></thead>' +
+        '<tbody>' + items + '</tbody>' +
+        '<tfoot><tr class="kas-foot">' +
+          '<td colspan="7" class="kas-totlbl" style="text-align:right">Total :</td>' +
+          '<td class="num">' + window.fmtRp(grand) + '</td>' +
         '</tr></tfoot>' +
       '</table>';
   }
