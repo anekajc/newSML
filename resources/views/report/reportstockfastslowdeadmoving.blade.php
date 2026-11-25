@@ -44,6 +44,58 @@
   .modal-picker .modal-dialog {
     margin: 1.75rem auto;
   }
+
+  /* Dropdown + kotak cari khusus field Gudang di modal Filter. Menu MENGAMBANG tepat di
+     bawah .rt-combo-input tanpa mendorong apa pun. Modal Filter di halaman ini cuma punya
+     SATU field (pendek), sedangkan .modal-content di report-table.css ber-overflow:hidden
+     -- menu absolute akan terpotong tepi bawah modal. Jadi memakai position:fixed;
+     top/left/width diisi positionGudangMenu() dari posisi kotak Gudang di layar (elemen
+     fixed tidak terpotong overflow:hidden milik leluhurnya). */
+  #modalFilter .rt-dd-menu {
+    position: fixed;
+    z-index: 20;
+    background: #fff;
+    border: 1px solid #E2E8F4;
+    border-radius: 9px;
+    padding: 8px;
+    box-shadow: 0 12px 28px -8px rgba(20, 30, 60, .25);
+  }
+  #modalFilter .rt-dd-search {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #E2E8F4;
+    border-radius: 8px;
+    font-size: 13.5px;
+    outline: none;
+  }
+  #modalFilter .rt-dd-search:focus {
+    border-color: #2F6FED;
+    box-shadow: 0 0 0 3px #EAF1FF;
+  }
+  #modalFilter .rt-dd-list {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 6px;
+  }
+  #modalFilter .rt-dd-opt {
+    padding: 8px 10px;
+    font-size: 13.5px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  #modalFilter .rt-dd-opt:hover { background: #F8F9FF; }
+  #modalFilter .rt-dd-opt.is-selected {
+    background: #EAF1FF;
+    color: #2F6FED;
+    font-weight: 600;
+  }
+  #modalFilter .rt-dd-empty {
+    padding: 10px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12.5px;
+  }
 </style>
 
 <div class="tb-report main" style="font-family: 'Segoe UI', sans-serif;">
@@ -184,7 +236,7 @@
         <button type="button" class="rt-reset-link" onclick="resetAllFilters()">Reset semua</button>
         <div class="rt-footer-buttons">
           <button type="button" class="rt-btn rt-btn-ghost" data-bs-dismiss="modal">Batal</button>
-          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal" onclick="UserFilter.commit('modalFilter')">Terapkan</button>
+          <button type="button" class="rt-btn rt-btn-primary" data-bs-dismiss="modal">Terapkan</button>
         </div>
       </div>
 
@@ -274,20 +326,69 @@
   // Daftar field picker di modal Filter. Combo (.rt-combo) cuma tampilan; nilai aslinya
   // disimpan di input hidden ber-id sama -- lihat docs/new-filter-modal-ui-guide.md #4.
   const PICK_FIELDS = [
-    { id: 'inputGudang', label: 'Gudang', url: '{!! $gudang !!}', title: 'Pilih Gudang' }
+    // type 'dropdown' -> menu + kotak cari di dalam modal Filter (lihat renderGudangList()).
+    { id: 'inputGudang', label: 'Gudang', url: '{!! $gudang !!}', title: 'Pilih Gudang', type: 'dropdown' }
   ];
+
+  // Dropdown Gudang: daftar diambil sekali dari endpoint Gudang (format {kolom, table} yang
+  // sama dengan popup picker) lalu di-cache; mengetik di kotak cari hanya menyaring cache
+  // ini di sisi klien, tanpa AJAX lagi.
+  let gudangRows = null;        // null = belum dimuat
+  let gudangLoading = false;
+  let gudangOpen = false;
+
+  function gudangKode(r) { return String(r.KODEGDG == null ? '' : r.KODEGDG).trim(); }
+  function gudangNama(r) { return String(r.NAMA == null ? '' : r.NAMA).trim(); }
+  function gudangLabel(r) { return gudangNama(r) ? gudangKode(r) + ' - ' + gudangNama(r) : gudangKode(r); }
+
+  // htmlEscape() tidak meng-escape petik dua, padahal nilainya dipakai di dalam atribut
+  // data-kode="..." -- jadi petik dua perlu di-escape juga.
+  function attrEscape(_val) { return htmlEscape(_val).replace(/"/g, '&quot;'); }
+
+  function loadGudangRows(url) {
+    if (gudangRows !== null || gudangLoading) { return; }
+    gudangLoading = true;
+    $.ajax({
+      url: url,
+      type: 'get',
+      success: function (res) {
+        gudangRows = (res && res.table) || [];
+        gudangLoading = false;
+        // Menu sedang terbuka (user sudah mengetik di kotak cari) -> cukup segarkan daftarnya
+        // saja; render ulang penuh akan membuang teks yang sedang diketik.
+        if (gudangOpen) { renderGudangList(); } else { renderPickFields(); }
+      },
+      error: function () {
+        gudangLoading = false;
+        gudangRows = [];
+        if (gudangOpen) { renderGudangList(); }
+      }
+    });
+  }
 
   function renderPickFields() {
     let html = '';
     PICK_FIELDS.forEach(function (f) {
       const val = $('#' + f.id).val() || '-';
       const isSet = (val !== '-' && val !== '');
+      const isDropdown = (f.type === 'dropdown');
+
+      // Tag menampilkan "KODE - NAMA" begitu daftar Gudang sudah termuat; sebelum itu
+      // cukup kodenya saja.
+      let tagText = htmlEscape(val);
+      if (isDropdown && isSet && gudangRows) {
+        const hit = gudangRows.find(function (r) { return gudangKode(r) === String(val).trim(); });
+        if (hit) { tagText = htmlEscape(gudangLabel(hit)); }
+      }
+
       html += '<div>';
       html += '<label class="rt-field-label">' + f.label + '</label>';
-      html += '<div class="rt-combo">';
-      html += '<div class="rt-combo-input" onclick="openPickMaster(\'' + f.id + '\')">';
+      html += '<div class="rt-combo"' + (isDropdown ? ' id="gudangCombo"' : '') + '>';
+      html += '<div class="rt-combo-input" onclick="' + (isDropdown
+        ? 'toggleGudangMenu()'
+        : 'openPickMaster(\'' + f.id + '\')') + '">';
       if (isSet) {
-        html += '<span class="rt-combo-tag">' + htmlEscape(val) +
+        html += '<span class="rt-combo-tag">' + tagText +
                 '<button type="button" onclick="event.stopPropagation(); clearPickField(\'' + f.id +
                 '\')">&times;</button></span>';
       } else {
@@ -296,13 +397,114 @@
       html += '<span class="rt-combo-chevron">' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>' +
               '</span>';
-      html += '</div></div></div>';
+      html += '</div>';
+      if (isDropdown && gudangOpen) {
+        html += '<div class="rt-dd-menu">' +
+          '<input type="text" class="rt-dd-search" id="gudangSearch" placeholder="Cari gudang..." autocomplete="off"' +
+          ' oninput="renderGudangList()" onkeydown="gudangSearchKey(event)">' +
+          '<div class="rt-dd-list" id="gudangList"></div></div>';
+      }
+      html += '</div></div>';
+
+      if (isDropdown) { loadGudangRows(f.url); }
     });
     $('#pickFields').html(html);
+
+    if (gudangOpen) {
+      renderGudangList();
+      positionGudangMenu();
+      // preventScroll: menu position:fixed, jangan sampai fokus menggeser layar.
+      const search = document.getElementById('gudangSearch');
+      if (search) { search.focus({ preventScroll: true }); }
+    }
   }
+
+  // Menaruh menu (position:fixed) tepat di bawah kotak Gudang, selebar kotak itu.
+  function positionGudangMenu() {
+    const input = document.querySelector('#gudangCombo .rt-combo-input');
+    const menu = document.querySelector('#gudangCombo .rt-dd-menu');
+    if (!input || !menu) { return; }
+    const r = input.getBoundingClientRect();
+    menu.style.top = (r.bottom + 4) + 'px';
+    menu.style.left = r.left + 'px';
+    menu.style.width = r.width + 'px';
+  }
+  $(window).on('resize', positionGudangMenu);
+
+  function filteredGudang() {
+    const term = ($('#gudangSearch').val() || '').trim().toLowerCase();
+    return (gudangRows || []).filter(function (r) {
+      return !term || gudangLabel(r).toLowerCase().indexOf(term) !== -1;
+    });
+  }
+
+  function renderGudangList() {
+    const el = document.getElementById('gudangList');
+    if (!el) { return; }
+    if (gudangRows === null) {
+      el.innerHTML = '<div class="rt-dd-empty">' + loadingHtml('Memuat data...') + '</div>';
+      return;
+    }
+    const current = String($('#inputGudang').val() || '').trim();
+    const rows = filteredGudang();
+    if (!rows.length) {
+      el.innerHTML = '<div class="rt-dd-empty">Tidak ada data ditemukan</div>';
+      return;
+    }
+    el.innerHTML = rows.map(function (r) {
+      const kode = gudangKode(r);
+      return '<div class="rt-dd-opt' + (kode === current ? ' is-selected' : '') +
+        '" data-kode="' + attrEscape(kode) + '">' + htmlEscape(gudangLabel(r)) + '</div>';
+    }).join('');
+  }
+
+  function toggleGudangMenu() {
+    gudangOpen = !gudangOpen;
+    renderPickFields();
+  }
+
+  function closeGudangMenu() {
+    if (!gudangOpen) { return; }
+    gudangOpen = false;
+    renderPickFields();
+  }
+
+  function gudangSearchKey(e) {
+    if (e.key === 'Escape') {
+      // stopPropagation supaya Esc cuma menutup menu, bukan ikut menutup modal Filter.
+      e.stopPropagation();
+      closeGudangMenu();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const rows = filteredGudang();
+      if (rows.length) { selectGudang(gudangKode(rows[0])); }
+    }
+  }
+
+  function selectGudang(kode) {
+    $('#inputGudang').val(kode);
+    gudangOpen = false;
+    renderPickFields();
+    updateFilterBadge();
+  }
+
+  // Opsi dibangun lewat innerHTML tiap render, jadi klik didelegasikan (data-kode, bukan
+  // onclick inline) -- sekaligus menghindari masalah tanda kutip di dalam kode gudang.
+  $(document).on('click', '#pickFields .rt-dd-opt', function () {
+    selectGudang($(this).attr('data-kode'));
+  });
+
+  // Klik di luar combo Gudang menutup menu. Penjaga document.contains() penting: klik pada
+  // combo/opsi me-render ulang #pickFields, sehingga e.target sudah terlepas dari DOM saat
+  // handler ini jalan -- tanpa penjaga, closest() gagal dan menu langsung tertutup lagi.
+  $(document).on('click', function (e) {
+    if (!gudangOpen || !document.contains(e.target)) { return; }
+    if (!$(e.target).closest('#gudangCombo').length) { closeGudangMenu(); }
+  });
 
   function clearPickField(id) {
     $('#' + id).val('-');
+    gudangOpen = false;
     renderPickFields();
     updateFilterBadge();
   }
@@ -443,22 +645,18 @@
 
   function resetAllFilters() {
     PICK_FIELDS.forEach(function (f) { $('#' + f.id).val('-'); });
+    gudangOpen = false;
     renderPickFields();
     updateFilterBadge();
   }
 
-  $('#modalFilter').on('show.bs.modal', function () { renderPickFields(); updateFilterBadge(); });
+  $('#modalFilter').on('show.bs.modal', function () { gudangOpen = false; renderPickFields(); updateFilterBadge(); });
+  $('#modalFilter').on('hide.bs.modal', function () { gudangOpen = false; });
 
   $(document).ready(function() {
     $("#gButtonCustomizeTable").hide();
 
     setTipe(globalTipe);
-    // Filter tersimpan per user (public/js/user-filter.js): pilihan terakhir dipulihkan di sini
-    // (sebelum ReportTable.init), disimpan saat klik Terapkan. Switcher Tampilan disimpan oleh report-table.js.
-    UserFilter.track('modalFilter', {
-      inputGudang: UserFilter.input('#inputGudang')
-    });
-
     renderPickFields();
 
     $("#btnFilterData").on("click", function() {

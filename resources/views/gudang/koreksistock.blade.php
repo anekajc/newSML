@@ -1132,7 +1132,7 @@
                   <th style="padding: 4px 12px;" scope="col">Actions</th>
                   <th style="padding: 4px 12px;" scope="col">Kode</th>
                   <th style="padding: 4px 12px;" scope="col">Nama</th>
-                  
+
 
                 </tr>
               </thead>
@@ -1430,7 +1430,7 @@ function ksValueCell (row, col) {
   {{-- Kolom Status (IsOtorisasi1) dirender sebagai badge hijau (Sudah Otorisasi)
        atau amber (Belum Otorisasi), bukan ikon check/x bool biasa -- sama seperti
        gudangpermintaansample.blade.php. --}}
-       
+
   if (col[0] === 'IsOtorisasi1') {
     return Number(raw) === 1
       ? '<td class="text-success text-center"><i class="bi bi-check2" style="-webkit-text-stroke-width: 2px;"></i></td>'
@@ -1705,12 +1705,12 @@ function submitPrint (nobukti) {
         dataPrint = res
         console.log(res[0])
         console.log(res[0][0])
-        
+
         // console.log(res[0][0].IsOtorisasi1)
 
       }
     })
-    
+
     let arrayDataPrint = []
     for (let i = 0; i < dataPrint.length; i+=7) {
       let tempArray = dataPrint.slice(i,i+7)
@@ -2185,10 +2185,17 @@ function submitPrint (nobukti) {
                     <td class="text-center" style="width: 10%">DEBET</td>
                     <td class="text-center" style="width: 10%">KREDIT</td>
                     <td class="text-center" style="width: 10%">HARGA</td>
+                    <td class="text-center" style="width: 10%">JUMLAH</td>
                   </tr>
                 </thead> `;
 
     let z = 0
+    // Grand total Jumlah seluruh item (semua halaman), ditampilkan di baris Total
+    // pada halaman terakhir saja. Rumus per baris sama dengan kolom JUMLAH di bawah.
+    let grandTotalJumlah = dataPrint.reduce((sum, row) => {
+      let qty = parseFloat(row.Qntdb) || parseFloat(row.QntCr) || 0
+      return sum + qty * (parseFloat(row.Harga) || 0)
+    }, 0)
     let tempPrintStr = ``
     tempPrintStr += `<html>
     <head>
@@ -2211,9 +2218,10 @@ function submitPrint (nobukti) {
         tempPrintStr += hdr
         tempPrintStr += `<tbody border="1">`;
         item.forEach((itemSub, j) => {
-          tempPrintStr += ``
-
-
+          // Jumlah = Qty Debet * Harga ATAU Qty Kredit * Harga. Salah satu dari Qntdb/QntCr
+          // selalu 0 (lihat onchangeqntdb/onchangeqntcr), jadi cukup ambil yang tidak 0.
+          let qtyJumlah = parseFloat(itemSub.Qntdb) || parseFloat(itemSub.QntCr) || 0
+          let jumlah = qtyJumlah * (parseFloat(itemSub.Harga) || 0)
 
          tempPrintStr += `
          <tr>
@@ -2230,13 +2238,26 @@ function submitPrint (nobukti) {
          <td class="text-align: text-right"
                style="width: 10%;  ">${itemSub.QntCr ? parseFloat(itemSub.QntCr).toFixed(2) : ''}</td>
          <td class="text-align: text-right"
-               style="width: 10%;  ">${itemSub.Harga 
+               style="width: 10%;  ">${itemSub.Harga
                ? parseFloat(itemSub.Harga).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}</td>
+         <td class="text-align: text-right"
+               style="width: 10%;  ">${jumlah.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
          </tr>`;
 
            z++;
 
         });
+
+        // Baris Total hanya di halaman terakhir: 7 kolom pertama di-merge berisi teks
+        // "Total", sel terakhir sejajar di bawah kolom JUMLAH.
+        if (i === arrayDataPrint.length - 1) {
+          tempPrintStr += `
+          <tr>
+            <td colspan="7" style="text-align: right; font-weight: bold;">Total</td>
+            <td style="text-align: right; font-weight: bold;">${grandTotalJumlah.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>`;
+        }
+
         tempPrintStr +=`
           <tr style>
 
@@ -2245,7 +2266,7 @@ function submitPrint (nobukti) {
          tempPrintStr += `</tbody>`;
 
          tempPrintStr += `</table>
-         
+
           <hr style="margin-top: -6px" />
 
          <div class="footer-sign font-family: sans-serif;

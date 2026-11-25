@@ -85,6 +85,13 @@ trait ReportVoucherTrait {
     return $res;
   }
 
+  //   untuk koreksi opname dengan jenis OPN
+  public function doOpn(Request $req) {
+    $res = DB::connection('SML')->select("SET NOCOUNT ON; exec dbo.CetakOpnameBahan :nobukti",
+      ['nobukti' => trim($req->nobukti)]);
+    return $res;
+  }
+
   public function loadDivisi () {
     $listData = DB::connection('SML')->select('select Devisi, NamaDevisi from DBDEVISI');
     return $listData;

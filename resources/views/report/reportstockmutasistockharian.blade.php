@@ -40,7 +40,7 @@
         <input type="date"
                class="form-control mb-2"
                id="inputDate1"
-               value="{!! date('Y-m-d') !!}">
+               value="{!! date('Y-m-01') !!}">
 
         <label for="inputDate2" class="mb-1">s/d</label>
         <input type="date"

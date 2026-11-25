@@ -21,7 +21,7 @@
           <i class="fas fa-calendar-alt"></i>
         </button>
         <div class="dropdown-menu p-3" style="min-width: 350px;">
-          <input type="date" class="form-control mb-2" id="inputDate1" value="{!! date('Y-m-d') !!}">
+          <input type="date" class="form-control mb-2" id="inputDate1" value="{!! date('Y-m-01') !!}">
           <label for="inputDate2" class="mb-0">s/d</label>
           <input type="date" class="form-control mt-1" id="inputDate2" value="{!! date('Y-m-d') !!}">
           {{-- <button class="btn btn-primary btn-sm mt-2 w-100" onclick="showPeriode()">Terapkan</button> --}}
@@ -77,7 +77,7 @@
                     <label for="inputDate1" style="">Periode</label>
                   </div>
                   <div class="col-3" style="padding: 0 7px; flex-basis: 0;">
-                    <input type="date" class="form-control" id="inputDate1" value="{!! date('Y-m-d') !!}">
+                    <input type="date" class="form-control" id="inputDate1" value="{!! date('Y-m-01') !!}">
                   </div>
                   <div class="col-2" style="padding: 0 7px; flex-basis: 0;">
                     <label for="inputDate2">s/d</label>
@@ -93,7 +93,7 @@
                   </div>
 
                   <div class="col-4 d-flex align-items-center justify-content-center">
-                    <input type="date" class="form-control" id="inputDate1" value="{!! date('Y-m-d') !!}" style="width: 150px;">
+                    <input type="date" class="form-control" id="inputDate1" value="{!! date('Y-m-01') !!}" style="width: 150px;">
                     <label for="inputDate2" class="mx-2 mb-0">s/d</label>
                     <input type="date" class="form-control" id="inputDate2" value="{!! date('Y-m-d') !!}" style="width: 150px;">
                   </div>
